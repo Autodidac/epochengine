@@ -120,7 +120,7 @@ namespace almondnamespace::core
         void EnqueueRenderCommand(HWND hwnd, MultiContextManager::RenderCommand cmd);
 
         // ---- Context API ----
-        static void SetCurrent(const std::shared_ptr<core::Context>& ctx);
+        static void SetCurrent(std::shared_ptr<core::Context> ctx);
         static std::shared_ptr<core::Context> GetCurrent();
 
         // ---- Windows Message Handling ----
@@ -146,14 +146,13 @@ namespace almondnamespace::core
 
         // ---- Internals ----
         void RenderLoop(WindowData& win);
-        std::shared_ptr<core::Context> acquireContext(ContextType type);
         void SetupPixelFormat(HDC hdc);
         HGLRC CreateSharedGLContext(HDC hdc);
         //bool ProcessBackend(ContextType type);
         int get_title_bar_thickness(const HWND window_handle);
 
         // ---- Static Shared ----
-        inline static thread_local std::shared_ptr<core::Context> currentContext;
+        inline static std::shared_ptr<core::Context> currentContext;
     };
 
     // ======================================================
