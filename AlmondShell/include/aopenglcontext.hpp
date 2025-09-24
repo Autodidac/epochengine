@@ -319,9 +319,10 @@ namespace almondnamespace::openglcontext
         // -----------------------------------------------------------------
         // Step 9: Hook texture uploads
         // -----------------------------------------------------------------
-        atlasmanager::ensure_uploaded_backend = [](const TextureAtlas& atlas) {
-            opengltextures::ensure_uploaded(atlas);
-            };
+        atlasmanager::register_backend_uploader(core::ContextType::OpenGL,
+            [](const TextureAtlas& atlas) {
+                opengltextures::ensure_uploaded(atlas);
+            });
 
         // -----------------------------------------------------------------
         // Step 10: Sync context with GL state
@@ -360,6 +361,8 @@ namespace almondnamespace::openglcontext
     {
         auto& backend = opengltextures::get_opengl_backend();
         auto& glState = backend.glState;
+
+        atlasmanager::process_pending_uploads(core::ContextType::OpenGL);
 
         if (!ctx.hdc || !ctx.hglrc) {
             std::cerr << "[OpenGL] Context not ready (hdc=" << ctx.hdc

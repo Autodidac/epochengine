@@ -32,6 +32,7 @@
 #include "aatomicfunction.hpp"  // AlmondAtomicFunction
 #include "acommandqueue.hpp"    // CommandQueue
 #include "awindowdata.hpp"      // WindowData
+#include "acontexttype.hpp"     // ContextType enum
 
 #include <map>
 #include <memory>
