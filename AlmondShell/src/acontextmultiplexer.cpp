@@ -334,7 +334,7 @@ namespace almondnamespace::core
             if (!state.master) {
                 std::cerr << "[Init] Missing prototype context for backend type "
                     << static_cast<int>(type) << "\n";
-                continue;
+                return;
             }
 
             std::vector<std::shared_ptr<Context>> ctxs;

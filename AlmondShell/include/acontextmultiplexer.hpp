@@ -128,7 +128,7 @@ namespace almondnamespace::core
         static LRESULT CALLBACK ChildProc(HWND, UINT, WPARAM, LPARAM);
         void HandleDropFiles(HWND, HDROP);
 
-        void InitializeAllContexts();
+        //void InitializeAllContexts();
         static ATOM RegisterParentClass(HINSTANCE, LPCWSTR);
         static ATOM RegisterChildClass(HINSTANCE, LPCWSTR);
 
