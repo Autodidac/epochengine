@@ -393,9 +393,11 @@ namespace almondnamespace::opengltextures
             << ", u2=" << entry.region.u2 << ", v2=" << entry.region.v2 << '\n';
 
         const float u0 = entry.region.u1;
-        const float v0 = entry.region.v1;
         const float du = entry.region.u2 - entry.region.u1;
-        const float dv = entry.region.v2 - entry.region.v1;
+        // Image loader already provides vertically flipped data, so feed the
+        // shader a reversed V span to avoid a second flip on the GPU side.
+        const float v0 = entry.region.v2;
+        const float dv = entry.region.v1 - entry.region.v2;
 
         std::cerr << "[DrawSprite] UVs: u0=" << u0 << ", du=" << du << "\n";
         std::cerr << "[DrawSprite] UVs: v0=" << v0 << ", dv=" << dv << "\n";
