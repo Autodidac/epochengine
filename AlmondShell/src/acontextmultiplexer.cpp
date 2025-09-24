@@ -77,6 +77,50 @@ namespace almondnamespace::core
         return (it != windows.end()) ? it->get() : nullptr;
     }
 
+    std::shared_ptr<core::Context> MultiContextManager::acquireContext(ContextType type) {
+        auto backendIt = g_backends.find(type);
+        if (backendIt == g_backends.end()) {
+            return nullptr;
+        }
+
+        auto& state = backendIt->second;
+        if (!state.master) {
+            return nullptr;
+        }
+
+        std::scoped_lock lock(windowsMutex);
+
+        auto contextInUse = [&](const std::shared_ptr<core::Context>& candidate) {
+            if (!candidate) {
+                return false;
+            }
+            for (const auto& windowPtr : windows) {
+                if (windowPtr && windowPtr->context == candidate) {
+                    return true;
+                }
+            }
+            return false;
+        };
+
+        if (!contextInUse(state.master)) {
+            return state.master;
+        }
+
+        for (auto& duplicate : state.duplicates) {
+            if (!contextInUse(duplicate)) {
+                return duplicate;
+            }
+        }
+
+        auto clone = std::make_shared<Context>(*state.master);
+        clone->windowData = nullptr;
+        clone->hwnd = nullptr;
+        clone->hdc = nullptr;
+        clone->hglrc = nullptr;
+        state.duplicates.push_back(clone);
+        return clone;
+    }
+
     // ======================================================
     // Inline Implementations
     // ======================================================
@@ -84,8 +128,8 @@ namespace almondnamespace::core
     // ---------------- MultiContextManager (static) ----------------
     //inline std::shared_ptr<core::Context> MultiContextManager::currentContext = nullptr;
 
-    inline void MultiContextManager::SetCurrent(std::shared_ptr<core::Context> ctx) {
-        currentContext = std::move(ctx); }
+    inline void MultiContextManager::SetCurrent(const std::shared_ptr<core::Context>& ctx) {
+        currentContext = ctx; }
 
     inline std::shared_ptr<almondnamespace::core::Context> almondnamespace::core::MultiContextManager::GetCurrent() {
         return currentContext; }
@@ -230,6 +274,10 @@ namespace almondnamespace::core
             RayLibWinCount + SDLWinCount + SFMLWinCount + OpenGLWinCount + SoftwareWinCount;
         if (totalRequested <= 0) return false;
 
+        if (g_backends.empty()) {
+            InitializeAllContexts();
+        }
+
         RegisterParentClass(hInst, L"AlmondParent");
         RegisterChildClass(hInst, L"AlmondChild");
 
@@ -318,45 +366,40 @@ namespace almondnamespace::core
 
                 auto winPtr = std::make_unique<WindowData>(hwnd, hdc, glrc, true, type);
                 if (parent) MakeDockable(hwnd, parent);
+                WindowData* rawWindow = winPtr.get();
                 {
                     std::scoped_lock lock(windowsMutex);
                     windows.emplace_back(std::move(winPtr));
                 }
+                auto ctx = acquireContext(type);
+                if (!ctx) {
+                    InitializeAllContexts();
+                    ctx = acquireContext(type);
+                }
+                if (ctx) {
+                    ctx->type = type;
+                    ctx->hwnd = hwnd;
+                    ctx->hdc = rawWindow->hdc;
+                    ctx->hglrc = rawWindow->glContext;
+                    ctx->windowData = rawWindow;
+                    rawWindow->context = ctx;
+
+                    RECT rc{};
+                    if (parent) GetClientRect(parent, &rc);
+                    else GetClientRect(hwnd, &rc);
+                    ctx->width = std::max<LONG>(1, rc.right - rc.left);
+                    ctx->height = std::max<LONG>(1, rc.bottom - rc.top);
+                }
                 created.push_back(hwnd);
             }
 
-            // Wire contexts to the windows in order: master first, then duplicates
-            BackendState& state = g_backends[type];
-
-            if (!state.master) {
-                state.master = std::make_shared<Context>();
-                for (int i = 1; i < count; ++i)
-                    state.duplicates.push_back(std::make_shared<Context>());
-            }
-
-            std::vector<std::shared_ptr<Context>> ctxs;
-            ctxs.push_back(state.master);
-            for (auto& d : state.duplicates) ctxs.push_back(d);
-
-            const size_t n = std::min(created.size(), ctxs.size());
-            for (size_t i = 0; i < n; ++i) {
-                HWND hwnd = created[i];
+            for (HWND hwnd : created) {
                 auto* w = findWindowByHWND(hwnd);
-                auto& ctx = ctxs[i];
-
-                ctx->type = type;
-                ctx->hwnd = hwnd;
-                if (w) {
-                    ctx->hdc = w->hdc;
-                    ctx->hglrc = w->glContext;
-                    w->context = ctx;
+                if (!w || !w->context) {
+                    continue;
                 }
 
-                RECT rc{};
-                if (parent) GetClientRect(parent, &rc);
-                else GetClientRect(hwnd, &rc);
-                ctx->width = std::max<LONG>(1, rc.right - rc.left);
-                ctx->height = std::max<LONG>(1, rc.bottom - rc.top);
+                auto ctx = w->context;
 
                 // ---------------- Immediate backend initialization ----------------
                 switch (type) {
@@ -468,20 +511,9 @@ namespace almondnamespace::core
         // Make window dockable if a parent is provided
         if (parent) MakeDockable(hwnd, parent);
 
-        // --- Create Context object ---
-        auto ctx = std::make_shared<core::Context>();
-        ctx->hwnd = hwnd;
-        ctx->hdc = hdc;
-        ctx->hglrc = glContext;
-        ctx->type = type;
-        //ctx->running = true;
-
         // Prepare WindowData (unique_ptr)
         auto winPtr = std::make_unique<WindowData>(hwnd, hdc, glContext, usesSharedContext, type);
         winPtr->onResize = std::move(onResize);
-        winPtr->context = ctx;  // <-- hook it up
-        ctx->windowData = winPtr.get(); // set the back-pointer immediately
-
         // Keep raw pointer for thread use
         WindowData* rawWinPtr = winPtr.get();
 
@@ -489,6 +521,22 @@ namespace almondnamespace::core
             std::scoped_lock lock(windowsMutex);
             windows.emplace_back(std::move(winPtr));
         }
+
+        auto ctx = acquireContext(type);
+        if (!ctx) {
+            InitializeAllContexts();
+            ctx = acquireContext(type);
+        }
+        if (!ctx) {
+            ctx = std::make_shared<core::Context>();
+        }
+
+        ctx->hwnd = hwnd;
+        ctx->hdc = hdc;
+        ctx->hglrc = glContext;
+        ctx->type = type;
+        ctx->windowData = rawWinPtr;
+        rawWinPtr->context = ctx;
 
         // Launch render thread if needed
         if (!gThreads.contains(hwnd) && rawWinPtr) {
@@ -672,6 +720,12 @@ namespace almondnamespace::core
         if (win.context) {
             win.context->windowData = &win;
         }
+
+        struct CurrentContextGuard {
+            ~CurrentContextGuard() { MultiContextManager::SetCurrent(nullptr); }
+        } guard;
+
+        SetCurrent(win.context);
 
         // Ensure per-thread initialization flags are outside switch
         static thread_local bool glInit = false;
