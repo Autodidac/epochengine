@@ -392,17 +392,13 @@ namespace almondnamespace::opengltextures
             << "u1=" << entry.region.u1 << ", v1=" << entry.region.v1
             << ", u2=" << entry.region.u2 << ", v2=" << entry.region.v2 << '\n';
 
-        // Flip V coords for OpenGL (bottom-left origin)
-        float u0 = entry.region.u1;
-        float u1 = entry.region.u2;
-        float v0 = 1.0f - entry.region.v1;
-        float v1 = 1.0f - entry.region.v2;
+        const float u0 = entry.region.u1;
+        const float v0 = entry.region.v1;
+        const float du = entry.region.u2 - entry.region.u1;
+        const float dv = entry.region.v2 - entry.region.v1;
 
-        float du = u1 - u0;
-        float dv = v1 - v0;
-
-        std::cerr << "[DrawSprite] UVs: u0=" << u0 << ", u1=" << u1 << ", du=" << du << "\n";
-        std::cerr << "[DrawSprite] UVs: v0=" << v0 << ", v1=" << v1 << ", dv=" << dv << "\n";
+        std::cerr << "[DrawSprite] UVs: u0=" << u0 << ", du=" << du << "\n";
+        std::cerr << "[DrawSprite] UVs: v0=" << v0 << ", dv=" << dv << "\n";
 
         if (backend.glState.uUVRegionLoc >= 0)
             glUniform4f(backend.glState.uUVRegionLoc, u0, v0, du, dv);
