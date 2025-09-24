@@ -195,7 +195,7 @@ namespace almondnamespace::sdlcontext
         upload_atlas_to_gpu(atlas);
     }
 
-    inline Handle load_atlas(TextureAtlas& atlas, int atlasIndex = 0) {
+    inline Handle load_atlas(const TextureAtlas& atlas, int atlasIndex = 0) {
         atlasmanager::ensure_uploaded(atlas);
         return make_handle(atlasIndex, 0);
     }

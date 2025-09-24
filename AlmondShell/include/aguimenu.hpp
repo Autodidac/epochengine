@@ -188,8 +188,8 @@ namespace almondnamespace::menu
 
             if (auto* win = ctx->windowData) {
                 win->commandQueue.enqueue([atlas = &registrar->atlas]() {
-                    opengltextures::ensure_uploaded(*atlas);
-                    });
+                    atlasmanager::ensure_uploaded(*atlas);
+                });
             }
 
             constexpr int expectedColumns = 4;

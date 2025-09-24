@@ -199,7 +199,7 @@ namespace almondnamespace::raylibtextures
         s_generation.fetch_add(1, std::memory_order_relaxed);
     }
 
-    inline Handle load_atlas(TextureAtlas& atlas, int atlasIndex = 0) {
+    inline Handle load_atlas(const TextureAtlas& atlas, int atlasIndex = 0) {
         atlasmanager::ensure_uploaded(atlas);
         return make_handle(atlasIndex, 0);
     }

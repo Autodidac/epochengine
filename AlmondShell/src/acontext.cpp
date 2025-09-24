@@ -163,28 +163,37 @@ namespace almondnamespace::core {
         }
     }
 
-    inline uint32_t AddAtlasThunk(TextureAtlas atlas, ContextType type) {
+    inline uint32_t AddAtlasThunk(const TextureAtlas& atlas, ContextType type) {
+        atlasmanager::ensure_uploaded(atlas);
+
+        uint32_t handle = 0;
         switch (type) {
 #ifdef ALMOND_USING_OPENGL
-        case ContextType::OpenGL: return opengltextures::load_atlas(atlas, 0);
+        case ContextType::OpenGL: handle = opengltextures::load_atlas(atlas, 0); break;
 #endif
 #ifdef ALMOND_USING_SDL
-        case ContextType::SDL:  return sdlcontext::load_atlas(atlas, 0);
+        case ContextType::SDL:  handle = sdlcontext::load_atlas(atlas, 0); break;
 #endif
 #ifdef ALMOND_USING_SFML
-        case ContextType::SFML: return sfmlcontext::load_atlas(atlas, 0);
+        case ContextType::SFML: handle = sfmlcontext::load_atlas(atlas, 0); break;
 #endif
 #ifdef ALMOND_USING_RAYLIB
-        case ContextType::RayLib: return raylibtextures::load_atlas(atlas, 0);
+        case ContextType::RayLib: handle = raylibtextures::load_atlas(atlas, 0); break;
 #endif
 #ifdef ALMOND_USING_VULKAN
-        case ContextType::Vulkan: return vulkancontext::load_atlas(atlas, 0);
+        case ContextType::Vulkan: handle = vulkancontext::load_atlas(atlas, 0); break;
 #endif
 #ifdef ALMOND_USING_DIRECTX
-        case ContextType::DirectX: return directxcontext::load_atlas(atlas, 0);
+        case ContextType::DirectX: handle = directxcontext::load_atlas(atlas, 0); break;
 #endif
-        default: (void)atlas; return 0;
+        default:
+            std::cerr << "[AddAtlasThunk] Unsupported context type\n";
+            break;
         }
+        if (handle != 0) {
+            atlasmanager::process_pending_uploads(type);
+        }
+        return handle;
     }
 
     // ─── Backend stubs (minimal no-op defaults) ──────────────
@@ -335,6 +344,10 @@ namespace almondnamespace::core {
         openglContext->backendName = "OpenGL";
         openglContext->type = ContextType::OpenGL;
         AddContextForBackend(ContextType::OpenGL, openglContext);
+        atlasmanager::register_backend_uploader(ContextType::OpenGL,
+            [](const TextureAtlas& atlas) {
+                opengltextures::ensure_uploaded(atlas);
+            });
 #endif
 
 #if defined(ALMOND_USING_SDL)
@@ -359,12 +372,18 @@ namespace almondnamespace::core {
         sdlContext->add_texture = [&](TextureAtlas& a, const std::string& n, const ImageData& i) {
             return AddTextureThunk(a, n, i, ContextType::SDL);
             };
-        sdlContext->add_atlas = [](const TextureAtlas&) { return 1; };
+        sdlContext->add_atlas = [&](const TextureAtlas& a) {
+            return AddAtlasThunk(a, ContextType::SDL);
+        };
         sdlContext->add_model = [](const char*, const char*) { return 0; };
 
         sdlContext->backendName = "SDL";
         sdlContext->type = ContextType::SDL;
         AddContextForBackend(ContextType::SDL, sdlContext);
+        atlasmanager::register_backend_uploader(ContextType::SDL,
+            [](const TextureAtlas& atlas) {
+                sdlcontext::ensure_uploaded(atlas);
+            });
 #endif
 
 #if defined(ALMOND_USING_SFML)
@@ -389,12 +408,18 @@ namespace almondnamespace::core {
         sfmlContext->add_texture = [&](TextureAtlas& a, const std::string& n, const ImageData& i) {
             return AddTextureThunk(a, n, i, ContextType::SFML);
             };
-        sfmlContext->add_atlas = [](const TextureAtlas&) { return 1; };
+        sfmlContext->add_atlas = [&](const TextureAtlas& a) {
+            return AddAtlasThunk(a, ContextType::SFML);
+        };
         sfmlContext->add_model = [](const char*, const char*) { return 0; };
 
         sfmlContext->backendName = "SFML";
         sfmlContext->type = ContextType::SFML;
         AddContextForBackend(ContextType::SFML, sfmlContext);
+        atlasmanager::register_backend_uploader(ContextType::SFML,
+            [](const TextureAtlas& atlas) {
+                sfmlcontext::ensure_uploaded(atlas);
+            });
 #endif
 
 #if defined(ALMOND_USING_RAYLIB)
@@ -419,12 +444,18 @@ namespace almondnamespace::core {
         raylibContext->add_texture = [&](TextureAtlas& a, const std::string& n, const ImageData& i) {
             return AddTextureThunk(a, n, i, ContextType::RayLib);
             };
-        raylibContext->add_atlas = [](const TextureAtlas&) { return 1; };
+        raylibContext->add_atlas = [&](const TextureAtlas& a) {
+            return AddAtlasThunk(a, ContextType::RayLib);
+        };
         raylibContext->add_model = [](const char*, const char*) { return 0; };
 
         raylibContext->backendName = "RayLib";
         raylibContext->type = ContextType::RayLib;
         AddContextForBackend(ContextType::RayLib, raylibContext);
+        atlasmanager::register_backend_uploader(ContextType::RayLib,
+            [](const TextureAtlas& atlas) {
+                raylibtextures::ensure_uploaded(atlas);
+            });
 #endif
 
 #if defined(ALMOND_USING_VULKAN)
@@ -449,7 +480,9 @@ namespace almondnamespace::core {
         vulkanContext->add_texture = [&](TextureAtlas& a, const std::string& n, const ImageData& i) {
             return AddTextureThunk(a, n, i, ContextType::Vulkan);
             };
-        vulkanContext->add_atlas = [](const TextureAtlas&) { return 1; };
+        vulkanContext->add_atlas = [&](const TextureAtlas& a) {
+            return AddAtlasThunk(a, ContextType::Vulkan);
+        };
         vulkanContext->add_model = [](const char*, const char*) { return 0; };
 
         vulkanContext->backendName = "Vulkan";
@@ -479,7 +512,9 @@ namespace almondnamespace::core {
         directxContext->add_texture = [&](TextureAtlas& a, const std::string& n, const ImageData& i) {
             return AddTextureThunk(a, n, i, ContextType::DirectX);
             };
-        directxContext->add_atlas = [](const TextureAtlas&) { return 1; };
+        directxContext->add_atlas = [&](const TextureAtlas& a) {
+            return AddAtlasThunk(a, ContextType::DirectX);
+        };
         directxContext->add_model = [](const char*, const char*) { return 0; };
 
         directxContext->backendName = "DirectX";
@@ -509,7 +544,9 @@ namespace almondnamespace::core {
         customContext->add_texture = [&](TextureAtlas& a, const std::string& n, const ImageData& i) {
             return AddTextureThunk(a, n, i, ContextType::Custom);
             };
-        customContext->add_atlas = [](const TextureAtlas&) { return 1; };
+        customContext->add_atlas = [&](const TextureAtlas& a) {
+            return AddAtlasThunk(a, ContextType::Custom);
+        };
         customContext->add_model = [](const char*, const char*) { return 0; };
 
         customContext->backendName = "Custom";
@@ -539,7 +576,9 @@ namespace almondnamespace::core {
         softwareContext->add_texture = [&](TextureAtlas& a, const std::string& n, const ImageData& i) {
             return AddTextureThunk(a, n, i, ContextType::Software);
             };
-        softwareContext->add_atlas = [](const TextureAtlas&) { return 1; };
+        softwareContext->add_atlas = [&](const TextureAtlas& a) {
+            return AddAtlasThunk(a, ContextType::Software);
+        };
         softwareContext->add_model = [](const char*, const char*) { return 0; };
 
         softwareContext->backendName = "Software";
