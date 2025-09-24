@@ -52,7 +52,6 @@ namespace almondnamespace::atlasmanager
 
     inline SpriteRegistry registry;
     inline std::unordered_map<std::string, TextureAtlas> atlas_map;
-    inline std::unordered_map<std::string, std::unique_ptr<AtlasRegistrar>> registrar_map;
 
     inline std::shared_mutex atlasMutex;
     inline std::shared_mutex registrarMutex;
@@ -69,6 +68,7 @@ namespace almondnamespace::atlasmanager
         explicit AtlasRegistrar(TextureAtlas& atlas_) noexcept
             : atlas(atlas_) {
         }
+
 
 		// Bulk registration from slices (name, x, y, w, h) when loading from a texture atlas file
         bool register_atlas_sprites_by_custom_sizes(const std::vector<std::tuple<std::string, int, int, int, int>>& sliceRects)
@@ -231,6 +231,8 @@ namespace almondnamespace::atlasmanager
             return handle;
         }
     };
+
+    inline std::unordered_map<std::string, std::unique_ptr<AtlasRegistrar>> registrar_map;
 
     inline void update_atlas_vector_locked()
     {
