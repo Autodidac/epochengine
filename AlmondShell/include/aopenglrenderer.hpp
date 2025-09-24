@@ -190,11 +190,12 @@ namespace almondnamespace::openglrenderer
 
         const auto& entry = atlas->entries[localIdx];
 
-        // Flip V coords for OpenGL (bottom-left origin)
         float u0 = entry.region.u1;
         float u1 = entry.region.u2;
-        float v0 = 1.0f - entry.region.v1; 
-        float v1 = 1.0f - entry.region.v2; 
+        // The image loader already flips images vertically, so provide a
+        // reversed V span here to avoid a second inversion on the GPU.
+        float v0 = entry.region.v2;
+        float v1 = entry.region.v1;
 
         float du = u1 - u0;
         float dv = v1 - v0;
