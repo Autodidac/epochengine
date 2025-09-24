@@ -311,7 +311,61 @@ namespace almondnamespace::core {
 
 
     // ─── Init all backends ───────────────────────────────────
+    namespace {
+        inline void copy_atomic_function(AlmondAtomicFunction<uint32_t(TextureAtlas&, std::string, const ImageData&)>& dst,
+            const AlmondAtomicFunction<uint32_t(TextureAtlas&, std::string, const ImageData&)>& src) {
+            dst.ptr.store(src.ptr.load(std::memory_order_acquire), std::memory_order_release);
+        }
+
+        inline void copy_atomic_function(AlmondAtomicFunction<uint32_t(const TextureAtlas&)>& dst,
+            const AlmondAtomicFunction<uint32_t(const TextureAtlas&)>& src) {
+            dst.ptr.store(src.ptr.load(std::memory_order_acquire), std::memory_order_release);
+        }
+    }
+
+    std::shared_ptr<Context> CloneContext(const Context& prototype) {
+        auto clone = std::make_shared<Context>();
+
+        clone->initialize = prototype.initialize;
+        clone->cleanup = prototype.cleanup;
+        clone->process = prototype.process;
+        clone->clear = prototype.clear;
+        clone->present = prototype.present;
+        clone->get_width = prototype.get_width;
+        clone->get_height = prototype.get_height;
+        clone->registry_get = prototype.registry_get;
+        clone->draw_sprite = prototype.draw_sprite;
+        clone->add_model = prototype.add_model;
+
+        clone->is_key_held = prototype.is_key_held;
+        clone->is_key_down = prototype.is_key_down;
+        clone->get_mouse_position = prototype.get_mouse_position;
+        clone->is_mouse_button_held = prototype.is_mouse_button_held;
+        clone->is_mouse_button_down = prototype.is_mouse_button_down;
+
+        copy_atomic_function(clone->add_texture, prototype.add_texture);
+        copy_atomic_function(clone->add_atlas, prototype.add_atlas);
+
+        clone->onResize = prototype.onResize;
+
+        clone->width = prototype.width;
+        clone->height = prototype.height;
+        clone->type = prototype.type;
+        clone->backendName = prototype.backendName;
+
+        // Window specific handles/state must be assigned later by the caller
+        clone->hwnd = nullptr;
+        clone->hdc = nullptr;
+        clone->hglrc = nullptr;
+        clone->windowData = nullptr;
+
+        return clone;
+    }
+
     void InitializeAllContexts() {
+        static bool s_initialized = false;
+        if (s_initialized) return;
+        s_initialized = true;
 
 #if defined(ALMOND_USING_OPENGL)
         auto openglContext = std::make_shared<Context>();

@@ -193,6 +193,7 @@ namespace almondnamespace::core
     extern BackendMap g_backends;
 
     void InitializeAllContexts();
+    std::shared_ptr<Context> CloneContext(const Context& prototype);
     void AddContextForBackend(ContextType type, std::shared_ptr<Context> context);
     bool ProcessAllContexts();
 
