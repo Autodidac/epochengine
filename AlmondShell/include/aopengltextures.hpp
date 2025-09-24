@@ -262,7 +262,7 @@ namespace almondnamespace::opengltextures
     }
 
     inline Handle load_atlas(TextureAtlas& atlas, int atlasIndex = 0) {
-        upload_atlas_to_gpu(atlas);
+        atlasmanager::ensure_uploaded(atlas);
         return make_handle(atlasIndex, 0);
     }
 
@@ -280,7 +280,7 @@ namespace almondnamespace::opengltextures
             throw std::runtime_error("atlas_add_texture: Failed to add texture: " + id);
         }
 
-        upload_atlas_to_gpu(atlas);
+        atlasmanager::ensure_uploaded(atlas);
 
         int localIdx = static_cast<int>(atlas.entries.size() - 1);
         return make_handle(0, localIdx);

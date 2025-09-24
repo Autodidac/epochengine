@@ -73,6 +73,7 @@
 
 #include "aimageloader.hpp"
 #include "aatlastexture.hpp"
+#include "aatlasmanager.hpp"
 
 #include <iostream>
 #include <stdexcept>
@@ -190,7 +191,11 @@ namespace almondnamespace::core {
 #ifdef ALMOND_USING_OPENGL
     inline void opengl_initialize() {}
     inline void opengl_cleanup() {}
-    bool opengl_process(Context& ctx, CommandQueue& queue) { queue.drain(); return true; }
+    bool opengl_process(Context& ctx, CommandQueue& queue) {
+        atlasmanager::process_pending_uploads(ctx.type);
+        queue.drain();
+        return true;
+    }
     inline void opengl_clear() {}
     inline void opengl_present() {}
     inline int  opengl_get_width() { return 1280; }
@@ -200,7 +205,11 @@ namespace almondnamespace::core {
 #ifdef ALMOND_USING_SDL
     inline void sdl_initialize() {}
     inline void sdl_cleanup() {}
-    bool sdl_process(Context& ctx, CommandQueue& queue) { queue.drain(); return true; }
+    bool sdl_process(Context& ctx, CommandQueue& queue) {
+        atlasmanager::process_pending_uploads(ctx.type);
+        queue.drain();
+        return true;
+    }
     inline void sdl_clear() {}
     inline void sdl_present() {}
     inline int  sdl_get_width() { return 1280; }
@@ -210,7 +219,11 @@ namespace almondnamespace::core {
 #ifdef ALMOND_USING_SFML
     inline void sfml_initialize() {}
     inline void sfml_cleanup() {}
-    bool sfml_process(Context& ctx, CommandQueue& queue) { queue.drain(); return true; }
+    bool sfml_process(Context& ctx, CommandQueue& queue) {
+        atlasmanager::process_pending_uploads(ctx.type);
+        queue.drain();
+        return true;
+    }
     inline void sfml_clear() {}
     inline void sfml_present() {}
     inline int  sfml_get_width() { return 1280; }
@@ -220,7 +233,11 @@ namespace almondnamespace::core {
 #ifdef ALMOND_USING_RAYLIB
     inline void raylib_initialize() {}
     inline void raylib_cleanup() {}
-    bool raylib_process(Context& ctx, CommandQueue& queue) { queue.drain(); return true; }
+    bool raylib_process(Context& ctx, CommandQueue& queue) {
+        atlasmanager::process_pending_uploads(ctx.type);
+        queue.drain();
+        return true;
+    }
     inline void raylib_clear() {}
     inline void raylib_present() {}
     inline int  raylib_get_width() { return 1280; }
@@ -230,7 +247,11 @@ namespace almondnamespace::core {
 #ifdef ALMOND_USING_VULKAN
     inline void vulkan_initialize() {}
     inline void vulkan_cleanup() {}
-    bool vulkan_process(Context& ctx, CommandQueue& queue) { queue.drain(); return true; }
+    bool vulkan_process(Context& ctx, CommandQueue& queue) {
+        atlasmanager::process_pending_uploads(ctx.type);
+        queue.drain();
+        return true;
+    }
     inline void vulkan_clear() {}
     inline void vulkan_present() {}
     inline int  vulkan_get_width() { return 1280; }
@@ -240,7 +261,11 @@ namespace almondnamespace::core {
 #ifdef ALMOND_USING_DIRECTX
     inline void directx_initialize() {}
     inline void directx_cleanup() {}
-    bool directx_process(Context& ctx, CommandQueue& queue) { queue.drain(); return true; }
+    bool directx_process(Context& ctx, CommandQueue& queue) {
+        atlasmanager::process_pending_uploads(ctx.type);
+        queue.drain();
+        return true;
+    }
     inline void directx_clear() {}
     inline void directx_present() {}
     inline int  directx_get_width() { return 1280; }
@@ -250,7 +275,11 @@ namespace almondnamespace::core {
 #ifdef ALMOND_USING_CUSTOM
     inline void custom_initialize() {}
     inline void custom_cleanup() {}
-    bool custom_process(Context& ctx, CommandQueue& queue) { queue.drain(); return true; }
+    bool custom_process(Context& ctx, CommandQueue& queue) {
+        atlasmanager::process_pending_uploads(ctx.type);
+        queue.drain();
+        return true;
+    }
     inline void custom_clear() {}
     inline void custom_present() {}
     inline int  custom_get_width() { return 1280; }
@@ -260,7 +289,11 @@ namespace almondnamespace::core {
 #ifdef ALMOND_USING_SOFTWARE_RENDERER
     inline void softrenderer_initialize() {}
     inline void softrenderer_cleanup() {}
-    bool softrenderer_process(Context& ctx, CommandQueue& queue) { queue.drain(); return true; }
+    bool softrenderer_process(Context& ctx, CommandQueue& queue) {
+        atlasmanager::process_pending_uploads(ctx.type);
+        queue.drain();
+        return true;
+    }
     inline void softrenderer_clear() {}
     inline void softrenderer_present() {}
     inline int  softrenderer_get_width() { return 800; }
