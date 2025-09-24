@@ -30,16 +30,18 @@
 #include "aspritehandle.hpp"
 #include "acontexttype.hpp"
 
-#include <unordered_map>
-#include <string>
-#include <vector>
-#include <tuple>
-#include <optional>
-#include <iostream>
 #include <atomic>
 #include <functional>
+#include <iostream>
+#include <memory>
 #include <mutex>
+#include <optional>
 #include <queue>
+#include <shared_mutex>
+#include <string>
+#include <tuple>
+#include <unordered_map>
+#include <vector>
 
 namespace almondnamespace::atlasmanager
 {
@@ -50,6 +52,11 @@ namespace almondnamespace::atlasmanager
 
     inline SpriteRegistry registry;
     inline std::unordered_map<std::string, TextureAtlas> atlas_map;
+    inline std::unordered_map<std::string, std::unique_ptr<AtlasRegistrar>> registrar_map;
+
+    inline std::shared_mutex atlasMutex;
+    inline std::shared_mutex registrarMutex;
+
     inline std::atomic<int> nextAtlasIndex = 0; // unique atlas id allocator
 
     // --- Global atlas vector for direct atlasIndex lookup ---
@@ -225,7 +232,7 @@ namespace almondnamespace::atlasmanager
         }
     };
 
-    inline void update_atlas_vector()
+    inline void update_atlas_vector_locked()
     {
         int maxIndex = -1;
         for (const auto& [name, atlas] : atlas_map) {
@@ -245,8 +252,6 @@ namespace almondnamespace::atlasmanager
             }
         }
     }
-
-    inline std::unordered_map<std::string, AtlasRegistrar> registrar_map; // Registrar map for named atlases
 
     namespace detail
     {
@@ -294,45 +299,58 @@ namespace almondnamespace::atlasmanager
     inline bool create_atlas(const AtlasConfig& config)
     {
         AtlasConfig copy = config;
-        copy.index = nextAtlasIndex++;  // Assign unique incremental index
+        copy.index = nextAtlasIndex.fetch_add(1, std::memory_order_relaxed);  // Assign unique incremental index
         TextureAtlas atlas = TextureAtlas::create(copy);
-        std::cerr << "[create_atlas] Created atlas index = " << atlas.index << "\n"; // MUST NOT BE -1
 
+        if (atlas.index < 0) {
+            std::cerr << "[create_atlas] Failed to initialize atlas '" << config.name << "'\n";
+            return false;
+        }
+
+        std::unique_lock atlasLock(atlasMutex);
         auto [it, inserted] = atlas_map.emplace(config.name, std::move(atlas));
         if (!inserted) {
             std::cerr << "[create_atlas] Atlas already exists: " << config.name << "\n";
             return false;
         }
 
-        registrar_map.emplace(config.name, AtlasRegistrar{ it->second });
+        TextureAtlas& storedAtlas = it->second;
+        update_atlas_vector_locked();
+        atlasLock.unlock();
 
-        update_atlas_vector();
-        notify_backends_of_new_atlas(it->second);
+        {
+            std::unique_lock registrarLock(registrarMutex);
+            registrar_map.emplace(config.name, std::make_unique<AtlasRegistrar>(storedAtlas));
+        }
 
+        notify_backends_of_new_atlas(storedAtlas);
         return true;
     }
 
     inline AtlasRegistrar* get_registrar(const std::string& name)
     {
+        std::shared_lock lock(registrarMutex);
         auto it = registrar_map.find(name);
-        return (it != registrar_map.end()) ? &it->second : nullptr;
+        return (it != registrar_map.end()) ? it->second.get() : nullptr;
     }
 
     inline const std::vector<const TextureAtlas*>& get_atlas_vector()
     {
+        std::shared_lock lock(atlasMutex);
         return atlas_vector;
     }
 
     inline void register_backend_uploader(core::ContextType type,
         std::function<void(const TextureAtlas&)> ensureFn)
     {
-        std::scoped_lock lock(detail::backendMutex);
+        std::unique_lock backendLock(detail::backendMutex);
         auto& state = detail::backendStates[type];
         state.ensureFn = std::move(ensureFn);
         state.pending = {};
         state.pendingVersions.clear();
         state.uploadedVersions.clear();
 
+        std::shared_lock atlasLock(atlasMutex);
         for (auto& [_, atlas] : atlas_map) {
             detail::enqueue_locked(state, atlas);
         }
@@ -445,4 +463,4 @@ namespace almondnamespace::atlasmanager
         }
     }
 
-} // namespace almondnamespace
+} // namespace almondnamespace::atlasmanager
