@@ -1,20 +1,16 @@
 ﻿
 Microsoft Visual Studio Solution File, Format Version 12.00
 # Visual Studio Version 17
-VisualStudioVersion = 17.12.35527.113
+VisualStudioVersion = 17.13.35913.81
 MinimumVisualStudioVersion = 10.0.40219.1
-Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "AEngine", "AlmondShell\AlmondShell.vcxitems", "{B8C3D906-9A02-4C9B-B137-45F6686DAAC8}"
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "Engine", "AlmondShell\Engine.vcxitems", "{B2F62625-ABDC-43C1-9AC0-379C96B52A74}"
 EndProject
-Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "ConsoleApplication2", "AlmondShell\examples\ConsoleApplication2\ConsoleApplication2.vcxproj", "{01B3DE89-D165-4FD6-BEF4-A21E3EB10035}"
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "StaticLib1", "AlmondShell\examples\StaticLib1\StaticLib1.vcxproj", "{BBA639B7-2B54-4E38-90AC-667FC3303475}"
 EndProject
-Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "ConsoleApplication1", "AlmondShell\examples\ConsoleApplication1\ConsoleApplication1.vcxproj", "{BB517C36-7C99-4E39-9583-3E03E487010B}"
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "ConsoleApplication1", "AlmondShell\examples\ConsoleApplication1\ConsoleApplication1.vcxproj", "{A27860EC-F347-4945-ACA3-E0E8CE35F8F2}"
 	ProjectSection(ProjectDependencies) = postProject
-		{E45888B9-FC36-4921-9114-CB9A183A77D1} = {E45888B9-FC36-4921-9114-CB9A183A77D1}
+		{BBA639B7-2B54-4E38-90AC-667FC3303475} = {BBA639B7-2B54-4E38-90AC-667FC3303475}
 	EndProjectSection
-EndProject
-Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "StaticLib1", "AlmondShell\examples\StaticLib1\StaticLib1.vcxproj", "{E45888B9-FC36-4921-9114-CB9A183A77D1}"
-EndProject
-Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "ConsoleApplication4", "AlmondShell\examples\ConsoleApplication4\ConsoleApplication4.vcxproj", "{51495D0A-64F3-4927-961E-E350BA99642D}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -24,45 +20,28 @@ Global
 		Release|x86 = Release|x86
 	EndGlobalSection
 	GlobalSection(ProjectConfigurationPlatforms) = postSolution
-		{01B3DE89-D165-4FD6-BEF4-A21E3EB10035}.Debug|x64.ActiveCfg = Debug|x64
-		{01B3DE89-D165-4FD6-BEF4-A21E3EB10035}.Debug|x64.Build.0 = Debug|x64
-		{01B3DE89-D165-4FD6-BEF4-A21E3EB10035}.Debug|x86.ActiveCfg = Debug|Win32
-		{01B3DE89-D165-4FD6-BEF4-A21E3EB10035}.Debug|x86.Build.0 = Debug|Win32
-		{01B3DE89-D165-4FD6-BEF4-A21E3EB10035}.Release|x64.ActiveCfg = Release|x64
-		{01B3DE89-D165-4FD6-BEF4-A21E3EB10035}.Release|x64.Build.0 = Release|x64
-		{01B3DE89-D165-4FD6-BEF4-A21E3EB10035}.Release|x86.ActiveCfg = Release|Win32
-		{01B3DE89-D165-4FD6-BEF4-A21E3EB10035}.Release|x86.Build.0 = Release|Win32
-		{BB517C36-7C99-4E39-9583-3E03E487010B}.Debug|x64.ActiveCfg = Debug|x64
-		{BB517C36-7C99-4E39-9583-3E03E487010B}.Debug|x64.Build.0 = Debug|x64
-		{BB517C36-7C99-4E39-9583-3E03E487010B}.Debug|x86.ActiveCfg = Debug|Win32
-		{BB517C36-7C99-4E39-9583-3E03E487010B}.Debug|x86.Build.0 = Debug|Win32
-		{BB517C36-7C99-4E39-9583-3E03E487010B}.Release|x64.ActiveCfg = Release|x64
-		{BB517C36-7C99-4E39-9583-3E03E487010B}.Release|x64.Build.0 = Release|x64
-		{BB517C36-7C99-4E39-9583-3E03E487010B}.Release|x86.ActiveCfg = Release|Win32
-		{BB517C36-7C99-4E39-9583-3E03E487010B}.Release|x86.Build.0 = Release|Win32
-		{E45888B9-FC36-4921-9114-CB9A183A77D1}.Debug|x64.ActiveCfg = Debug|x64
-		{E45888B9-FC36-4921-9114-CB9A183A77D1}.Debug|x64.Build.0 = Debug|x64
-		{E45888B9-FC36-4921-9114-CB9A183A77D1}.Debug|x86.ActiveCfg = Debug|Win32
-		{E45888B9-FC36-4921-9114-CB9A183A77D1}.Debug|x86.Build.0 = Debug|Win32
-		{E45888B9-FC36-4921-9114-CB9A183A77D1}.Release|x64.ActiveCfg = Release|x64
-		{E45888B9-FC36-4921-9114-CB9A183A77D1}.Release|x64.Build.0 = Release|x64
-		{E45888B9-FC36-4921-9114-CB9A183A77D1}.Release|x86.ActiveCfg = Release|Win32
-		{E45888B9-FC36-4921-9114-CB9A183A77D1}.Release|x86.Build.0 = Release|Win32
-		{51495D0A-64F3-4927-961E-E350BA99642D}.Debug|x64.ActiveCfg = Debug|x64
-		{51495D0A-64F3-4927-961E-E350BA99642D}.Debug|x64.Build.0 = Debug|x64
-		{51495D0A-64F3-4927-961E-E350BA99642D}.Debug|x86.ActiveCfg = Debug|Win32
-		{51495D0A-64F3-4927-961E-E350BA99642D}.Debug|x86.Build.0 = Debug|Win32
-		{51495D0A-64F3-4927-961E-E350BA99642D}.Release|x64.ActiveCfg = Release|x64
-		{51495D0A-64F3-4927-961E-E350BA99642D}.Release|x64.Build.0 = Release|x64
-		{51495D0A-64F3-4927-961E-E350BA99642D}.Release|x86.ActiveCfg = Release|Win32
-		{51495D0A-64F3-4927-961E-E350BA99642D}.Release|x86.Build.0 = Release|Win32
+		{BBA639B7-2B54-4E38-90AC-667FC3303475}.Debug|x64.ActiveCfg = Debug|x64
+		{BBA639B7-2B54-4E38-90AC-667FC3303475}.Debug|x64.Build.0 = Debug|x64
+		{BBA639B7-2B54-4E38-90AC-667FC3303475}.Debug|x86.ActiveCfg = Debug|Win32
+		{BBA639B7-2B54-4E38-90AC-667FC3303475}.Debug|x86.Build.0 = Debug|Win32
+		{BBA639B7-2B54-4E38-90AC-667FC3303475}.Release|x64.ActiveCfg = Release|x64
+		{BBA639B7-2B54-4E38-90AC-667FC3303475}.Release|x64.Build.0 = Release|x64
+		{BBA639B7-2B54-4E38-90AC-667FC3303475}.Release|x86.ActiveCfg = Release|Win32
+		{BBA639B7-2B54-4E38-90AC-667FC3303475}.Release|x86.Build.0 = Release|Win32
+		{A27860EC-F347-4945-ACA3-E0E8CE35F8F2}.Debug|x64.ActiveCfg = Debug|x64
+		{A27860EC-F347-4945-ACA3-E0E8CE35F8F2}.Debug|x64.Build.0 = Debug|x64
+		{A27860EC-F347-4945-ACA3-E0E8CE35F8F2}.Debug|x86.ActiveCfg = Debug|Win32
+		{A27860EC-F347-4945-ACA3-E0E8CE35F8F2}.Debug|x86.Build.0 = Debug|Win32
+		{A27860EC-F347-4945-ACA3-E0E8CE35F8F2}.Release|x64.ActiveCfg = Release|x64
+		{A27860EC-F347-4945-ACA3-E0E8CE35F8F2}.Release|x64.Build.0 = Release|x64
+		{A27860EC-F347-4945-ACA3-E0E8CE35F8F2}.Release|x86.ActiveCfg = Release|Win32
+		{A27860EC-F347-4945-ACA3-E0E8CE35F8F2}.Release|x86.Build.0 = Release|Win32
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
 	EndGlobalSection
 	GlobalSection(SharedMSBuildProjectFiles) = preSolution
-		AlmondShell\AlmondShell.vcxitems*{b8c3d906-9a02-4c9b-b137-45f6686daac8}*SharedItemsImports = 9
-		AlmondShell\AlmondShell.vcxitems*{bb517c36-7c99-4e39-9583-3e03e487010b}*SharedItemsImports = 4
-		AlmondShell\AlmondShell.vcxitems*{e45888b9-fc36-4921-9114-cb9a183a77d1}*SharedItemsImports = 4
+		AlmondShell\Engine.vcxitems*{b2f62625-abdc-43c1-9ac0-379c96b52a74}*SharedItemsImports = 9
+		AlmondShell\Engine.vcxitems*{bba639b7-2b54-4e38-90ac-667fc3303475}*SharedItemsImports = 4
 	EndGlobalSection
 EndGlobal
