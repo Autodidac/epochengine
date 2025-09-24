@@ -4,6 +4,7 @@
 #include "acontextmultiplexer.hpp"
 
 #include <stdexcept>
+#include <algorithm>
 #include <glad/glad.h>
 
 // -----------------------------------------------------------------
@@ -233,6 +234,8 @@ namespace almondnamespace::core
         RegisterParentClass(hInst, L"AlmondParent");
         RegisterChildClass(hInst, L"AlmondChild");
 
+        InitializeAllContexts();
+
         // ---------------- Parent (dock container) ----------------
         if (parented) {
             int cols = 1, rows = 1;
@@ -329,34 +332,60 @@ namespace almondnamespace::core
             BackendState& state = g_backends[type];
 
             if (!state.master) {
-                state.master = std::make_shared<Context>();
-                for (int i = 1; i < count; ++i)
-                    state.duplicates.push_back(std::make_shared<Context>());
+                std::cerr << "[Init] Missing prototype context for backend type "
+                    << static_cast<int>(type) << "\n";
+                continue;
             }
 
             std::vector<std::shared_ptr<Context>> ctxs;
+            ctxs.reserve(static_cast<size_t>(count));
             ctxs.push_back(state.master);
-            for (auto& d : state.duplicates) ctxs.push_back(d);
+
+            auto ensure_duplicate = [&](size_t index) -> std::shared_ptr<Context> {
+                if (index < state.duplicates.size()) {
+                    auto& candidate = state.duplicates[index];
+                    if (candidate && candidate->initialize) {
+                        return candidate;
+                    }
+                    candidate = CloneContext(*state.master);
+                    return candidate;
+                }
+                auto dup = CloneContext(*state.master);
+                state.duplicates.push_back(dup);
+                return dup;
+            };
+
+            while (ctxs.size() < static_cast<size_t>(count)) {
+                ctxs.push_back(ensure_duplicate(ctxs.size() - 1));
+            }
 
             const size_t n = std::min(created.size(), ctxs.size());
             for (size_t i = 0; i < n; ++i) {
                 HWND hwnd = created[i];
                 auto* w = findWindowByHWND(hwnd);
                 auto& ctx = ctxs[i];
+                if (!ctx) continue;
 
                 ctx->type = type;
                 ctx->hwnd = hwnd;
-                if (w) {
-                    ctx->hdc = w->hdc;
-                    ctx->hglrc = w->glContext;
-                    w->context = ctx;
-                }
-
                 RECT rc{};
                 if (parent) GetClientRect(parent, &rc);
                 else GetClientRect(hwnd, &rc);
-                ctx->width = std::max<LONG>(1, rc.right - rc.left);
-                ctx->height = std::max<LONG>(1, rc.bottom - rc.top);
+                const int width = std::max<LONG>(1, rc.right - rc.left);
+                const int height = std::max<LONG>(1, rc.bottom - rc.top);
+                ctx->width = width;
+                ctx->height = height;
+
+                if (w) {
+                    ctx->hdc = w->hdc;
+                    ctx->hglrc = w->glContext;
+                    ctx->windowData = w;
+                    w->context = ctx;
+                    w->width = width;
+                    w->height = height;
+                    if (!ctx->onResize && w->onResize)
+                        ctx->onResize = w->onResize;
+                }
 
                 // ---------------- Immediate backend initialization ----------------
                 switch (type) {
@@ -468,19 +497,59 @@ namespace almondnamespace::core
         // Make window dockable if a parent is provided
         if (parent) MakeDockable(hwnd, parent);
 
-        // --- Create Context object ---
-        auto ctx = std::make_shared<core::Context>();
+        if (g_backends.empty()) {
+            InitializeAllContexts();
+        }
+
+        auto acquire_context = [&]() -> std::shared_ptr<core::Context> {
+            auto& state = g_backends[type];
+            if (!state.master) {
+                return nullptr;
+            }
+
+            if (!state.master->windowData) {
+                return state.master;
+            }
+
+            for (auto& dup : state.duplicates) {
+                if (dup && !dup->windowData) {
+                    return dup;
+                }
+            }
+
+            auto dup = CloneContext(*state.master);
+            state.duplicates.push_back(dup);
+            return dup;
+        };
+
+        auto ctx = acquire_context();
+        if (!ctx) {
+            ctx = std::make_shared<core::Context>();
+            ctx->type = type;
+            g_backends[type].master = ctx;
+        }
+
         ctx->hwnd = hwnd;
         ctx->hdc = hdc;
         ctx->hglrc = glContext;
         ctx->type = type;
-        //ctx->running = true;
 
         // Prepare WindowData (unique_ptr)
         auto winPtr = std::make_unique<WindowData>(hwnd, hdc, glContext, usesSharedContext, type);
         winPtr->onResize = std::move(onResize);
         winPtr->context = ctx;  // <-- hook it up
         ctx->windowData = winPtr.get(); // set the back-pointer immediately
+
+        RECT rc{};
+        GetClientRect(hwnd, &rc);
+        const int width = std::max<LONG>(1, rc.right - rc.left);
+        const int height = std::max<LONG>(1, rc.bottom - rc.top);
+        ctx->width = width;
+        ctx->height = height;
+        winPtr->width = width;
+        winPtr->height = height;
+        if (!ctx->onResize && winPtr->onResize) ctx->onResize = winPtr->onResize;
+        if (!winPtr->onResize && ctx->onResize) winPtr->onResize = ctx->onResize;
 
         // Keep raw pointer for thread use
         WindowData* rawWinPtr = winPtr.get();
@@ -543,6 +612,18 @@ namespace almondnamespace::core
 
             // Mark the window as no longer running
             (*it)->running = false;
+
+            if ((*it)->context) {
+                auto ctx = (*it)->context;
+                if (ctx->windowData == it->get()) {
+                    ctx->windowData = nullptr;
+                }
+                if (ctx->hwnd == hwnd) {
+                    ctx->hwnd = nullptr;
+                    ctx->hdc = nullptr;
+                    ctx->hglrc = nullptr;
+                }
+            }
 
             // Take ownership of the unique_ptr out of the vector
             removedWindow = std::move(*it);
