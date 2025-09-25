@@ -92,7 +92,7 @@ To build AlmondShell from source you will need the following tools:
 ### vcpkg manifest dependencies
 
 AlmondShell ships with a [vcpkg manifest](AlmondShell/vcpkg.json) so that CMake can automatically fetch all required third-party
-packages when you configure the project in manifest mode (`VCPKG_FEATURE_FLAGS=manifests`). The manifest currently pulls in:
+packages when you configure the project in manifest mode (`VCPKG_FEATURE_FLAGS=manifests`). Visual Studio 2022 picks this up automatically when you open the `AlmondShell` folder, restoring the dependencies during the first configure step (ensure **Tools → Options → CMake → vcpkg** has *Use vcpkg manifest mode* enabled if you have previously customised the setting). The manifest currently pulls in:
 
 - [`asio`](https://think-async.com/) – Asynchronous networking primitives used by the updater and runtime services.
 - [`fmt`](https://fmt.dev/) – Type-safe, fast formatting for logging and diagnostics.
