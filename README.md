@@ -4,9 +4,9 @@
 
 # AlmondShell
 
-
-
-AlmondShell combines a hot-reloadable C++ engine with a self-updating launcher. the engine runtime drives editor scripts from `src/scripts/`.
+AlmondShell is an **active software engine** written in modern **C++20**, serving as the foundation layer for the evolving AlmondEngine project.  
+It provides a hot-reloadable runtime, a self-updating launcher, and the low-level systems that power rendering, scripting, task scheduling, and asset pipelines.  
+The engine runtime drives editor scripts from `src/scripts/`.
 
 - **End users** can download the prebuilt binary, place it in an empty directory, and let it populate the latest AlmondShell files automatically.
 
@@ -14,10 +14,37 @@ AlmondShell combines a hot-reloadable C++ engine with a self-updating launcher. 
 
 ## Key Features
 
-- 🔄 **Self-updating launcher** that fetches the newest release when run.
-- ⚙️ **Modular C++20 engine** with systems for rendering, scripting, tasks, and asset management.
-- 🧪 **Live script reloading** – changes to `*.ascript.cpp` files are detected at runtime and recompiled automatically.
-- 🗂️ **Well-organised codebase** with headers in `include/`, implementation in `src/`, and helper scripts under `unix/` and project-level `.sh` helpers.
+- 🔄 **Self-updating launcher**  
+  Designed to automatically fetch the newest release when run, ensuring users always stay up to date.  
+  Can also be built directly from source for full control.  
+  *(Currently disabled while under active development.)*  
+
+- ⚙️ **Modular C++20 engine**  
+  Built in a **functional, header-only style** with static linkage.  
+  Context-driven architecture with systems for rendering, windowing, input, scripting, tasks, and asset management.  
+
+- 🧪 **Live script reloading**  
+  Changes to `*.ascript.cpp` files are detected at runtime, recompiled with LLVM/Clang, and seamlessly reloaded.  
+
+- 🗂️ **Well-organised codebase**  
+  - Headers in `include/`  
+  - Implementation in `src/`  
+  - Helper scripts under `unix/` plus project-level `.sh` helpers  
+
+- 🖼️ **Sprite & atlas management**  
+  Global registries, unique atlas indexing, and atlas-driven GUI (buttons, highlights, and menus).  
+
+- 🖥️ **Multi-context rendering**  
+  Pluggable backends: OpenGL, Raylib, SFML, and a software renderer — switchable via thunks and lambdas.  
+  **Multithreaded** with a state-of-the-art **hybrid coroutine + threaded design** for maximum scalability and efficiency.  
+
+---
+
+## Status
+
+✅ **Actively Developed**  
+AlmondShell is under **active development** as the software engine base of AlmondEngine.  
+It continues to evolve as the **core foundation layer**, ensuring speed, modularity, and cross-platform compatibility with a **static, header-only functional design**.
 
 ---
 
