@@ -217,11 +217,12 @@ namespace almondnamespace::menu
                 const int rowFromTop = static_cast<int>(idx) / ExpectedColumns;
                 const int colFromLeft = static_cast<int>(idx) % ExpectedColumns;
 
-                // The sprite sheet is authored starting at the bottom-right corner,
-                // so flip both axes when slicing so logical index 0 maps to the
-                // top-left button in the menu grid.
+                // The sprite sheet is authored starting at the bottom edge, so we
+                // flip the row index to keep logical index 0 at the top-left of the
+                // menu grid while preserving the original left-to-right ordering of
+                // columns.
                 const int row = ExpectedRowsPerHalf - 1 - rowFromTop;
-                const int col = ExpectedColumns - 1 - colFromLeft;
+                const int col = colFromLeft;
 
                 const int normalX = col * spriteW;
                 const int normalY = row * spriteH;
