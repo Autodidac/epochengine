@@ -4,16 +4,17 @@
 
 # AlmondShell
 
-Almond Shell is a **Software Engine** written in modern **C++20**, serving as the foundation layer for the evolving AlmondEngine project.
-It substitutes AlmondEngines Vulkan and DirectX with 2D graphics back end contexts, entire game engines like SDL3, SFML, 
-and even Raylib live inside of Almond-Shell. In a Multi-Threaded, Multi-Context environment with finite configuration control,
-down to it's "source-available" source code. Making Almond-Shell not just a Software-Engine, but a full blown multiverse of 2D graphics engine backends,
-it's own internal opengl, software renderer, and noop, as well as headless modes, because yes it also contains state of the art networking using steam servers with asio automatic fallback.
+**AlmondShell** is a modern **C++20 software engine** that forms the foundation layer for the evolving AlmondEngine project.
+It focuses on delivering a flexible runtime that can:
 
-Providing hot-reloadable runtime for scripting, a self-updating launcher that can download and compile directly from source code online, and the low-level systems that power rendering, scripting, task scheduling, and asset pipelines.  
-The engine runtime drives editor scripts from `src/scripts/` currently.
+- Substitute AlmondEngine's Vulkan and DirectX layers with multiple 2D graphics back-end contexts.
+- Host entire engines such as **SDL3**, **SFML**, and **Raylib** inside a multi-threaded, multi-context environment with fine-grained configuration control.
+- Provide its own internal OpenGL, software, and no-op renderers alongside headless execution modes.
+- Offer state-of-the-art networking via Steam servers with automatic ASIO fallback.
 
-- **End users** can download the prebuilt binary, place it in an empty directory, and let it populate the latest AlmondShell files automatically.
+The runtime is designed for rapid iteration with hot-reloadable scripting, a self-updating launcher capable of downloading and building from source, and the low-level systems that power rendering, scripting, task scheduling, and asset pipelines. Editor automation currently lives in `src/scripts/`, which the runtime watches and reloads on demand.
+
+- **End users** can download the prebuilt binary, drop it into an empty directory, and let AlmondShell populate the latest files automatically.
 
 ---
 
@@ -57,14 +58,18 @@ It continues to evolve as the **core foundation layer**, ensuring speed, modular
 
 ```
 .
-├── README.md                # Project overview (this file)
+├── LICENSE                  # LicenseRef-MIT-NoSell terms for AlmondShell
+├── README.md                # Project overview and setup guide (this file)
 ├── AlmondShell/
 │   ├── include/             # Core engine headers
 │   ├── src/                 # Engine, updater entry point, and scripts
 │   ├── docs/                # Supplementary documentation and setup notes
 │   ├── examples/            # Sample projects and templates
 │   └── CMakeLists.txt       # Build script for the updater target
-└── AlmondShell.sln          # Visual Studio solution for Windows developers
+├── AlmondShell.sln          # Visual Studio solution for Windows developers
+└── images/                  # Non-code repository assets (logos, promo art, etc.)
+    ├── 567.jpg
+    └── almondshell.bmp
 ```
 
 Refer to `AlmondShell/docs/file_structure.txt` for a more exhaustive tour of the available modules.
