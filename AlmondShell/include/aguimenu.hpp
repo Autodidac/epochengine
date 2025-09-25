@@ -81,6 +81,9 @@ namespace almondnamespace::menu
         int columns = 1;
         int rows = 0;
 
+        static constexpr int ExpectedColumns = 4;
+        static constexpr int ExpectedRowsPerHalf = 3;
+
         static constexpr float LayoutSpacing = 32.f;
 
         void recompute_layout(std::shared_ptr<core::Context> ctx) {
@@ -114,6 +117,9 @@ namespace almondnamespace::menu
                     computedCols = std::clamp(computedCols, 1, totalItems);
                 }
             }
+            const int targetColumns = std::min(ExpectedColumns, totalItems);
+            if (targetColumns > 0)
+                computedCols = std::clamp(computedCols, targetColumns, totalItems);
             columns = std::max(1, computedCols);
             rows = (totalItems + columns - 1) / columns;
 
@@ -192,13 +198,11 @@ namespace almondnamespace::menu
                 });
             }
 
-            constexpr int expectedColumns = 4;
-            constexpr int expectedRowsPerHalf = 3;
-            const int totalButtons = expectedColumns * expectedRowsPerHalf;
+            constexpr int totalButtons = ExpectedColumns * ExpectedRowsPerHalf;
 
             const int halfHeight = image.height / 2;
-            const int spriteW = image.width / expectedColumns;
-            const int spriteH = halfHeight / expectedRowsPerHalf;
+            const int spriteW = image.width / ExpectedColumns;
+            const int spriteH = halfHeight / ExpectedRowsPerHalf;
 
             const std::array<std::string_view, totalButtons> buttonNames = {
                 "snake", "tetris", "pacman", "sokoban",
@@ -210,8 +214,8 @@ namespace almondnamespace::menu
             slicePairs.reserve(buttonNames.size());
 
             for (size_t idx = 0; idx < buttonNames.size(); ++idx) {
-                const int row = static_cast<int>(idx) / expectedColumns;
-                const int col = static_cast<int>(idx) % expectedColumns;
+                const int row = static_cast<int>(idx) / ExpectedColumns;
+                const int col = static_cast<int>(idx) % ExpectedColumns;
 
                 const int normalX = col * spriteW;
                 const int normalY = row * spriteH;
