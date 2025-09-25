@@ -321,6 +321,57 @@ namespace almondnamespace::core {
             const AlmondAtomicFunction<uint32_t(const TextureAtlas&)>& src) {
             dst.ptr.store(src.ptr.load(std::memory_order_acquire), std::memory_order_release);
         }
+
+#ifdef ALMOND_USING_OPENGL
+        void opengl_clear_adapter() {
+            if (auto ctx = MultiContextManager::GetCurrent()) {
+                almondnamespace::openglcontext::opengl_clear(*ctx);
+            }
+        }
+
+        void opengl_cleanup_adapter() {
+            if (auto ctx = MultiContextManager::GetCurrent()) {
+                auto copy = ctx;
+                almondnamespace::openglcontext::opengl_cleanup(copy);
+            }
+        }
+#endif
+
+#ifdef ALMOND_USING_SOFTWARE_RENDERER
+        void softrenderer_cleanup_adapter() {
+            if (auto ctx = MultiContextManager::GetCurrent()) {
+                auto copy = ctx;
+                almondnamespace::anativecontext::softrenderer_cleanup(copy);
+            }
+        }
+#endif
+
+#ifdef ALMOND_USING_SDL
+        void sdl_cleanup_adapter() {
+            if (auto ctx = MultiContextManager::GetCurrent()) {
+                auto copy = ctx;
+                almondnamespace::sdlcontext::sdl_cleanup(copy);
+            }
+        }
+#endif
+
+#ifdef ALMOND_USING_SFML
+        void sfml_cleanup_adapter() {
+            if (auto ctx = MultiContextManager::GetCurrent()) {
+                auto copy = ctx;
+                almondnamespace::sfmlcontext::sfml_cleanup(copy);
+            }
+        }
+#endif
+
+#ifdef ALMOND_USING_RAYLIB
+        void raylib_cleanup_adapter() {
+            if (auto ctx = MultiContextManager::GetCurrent()) {
+                auto copy = ctx;
+                almondnamespace::raylibcontext::raylib_cleanup(copy);
+            }
+        }
+#endif
     }
 
     std::shared_ptr<Context> CloneContext(const Context& prototype) {
@@ -370,12 +421,12 @@ namespace almondnamespace::core {
 #if defined(ALMOND_USING_OPENGL)
         auto openglContext = std::make_shared<Context>();
         openglContext->initialize = opengl_initialize;
-        openglContext->cleanup = opengl_cleanup;
-        openglContext->process = opengl_process;
-        openglContext->clear = opengl_clear;
-        openglContext->present = opengl_present;
-        openglContext->get_width = opengl_get_width;
-        openglContext->get_height = opengl_get_height;
+        openglContext->cleanup = opengl_cleanup_adapter;
+        openglContext->process = almondnamespace::openglcontext::opengl_process;
+        openglContext->clear = opengl_clear_adapter;
+        openglContext->present = almondnamespace::openglcontext::opengl_present;
+        openglContext->get_width = almondnamespace::openglcontext::opengl_get_width;
+        openglContext->get_height = almondnamespace::openglcontext::opengl_get_height;
 
         openglContext->is_key_held = [](input::Key k) { return input::is_key_held(k); };
         openglContext->is_key_down = [](input::Key k) { return input::is_key_down(k); };
@@ -407,12 +458,12 @@ namespace almondnamespace::core {
 #if defined(ALMOND_USING_SDL)
         auto sdlContext = std::make_shared<Context>();
         sdlContext->initialize = sdl_initialize;
-        sdlContext->cleanup = sdl_cleanup;
-        sdlContext->process = sdl_process;
-        sdlContext->clear = sdl_clear;
-        sdlContext->present = sdl_present;
-        sdlContext->get_width = sdl_get_width;
-        sdlContext->get_height = sdl_get_height;
+        sdlContext->cleanup = sdl_cleanup_adapter;
+        sdlContext->process = almondnamespace::sdlcontext::sdl_process;
+        sdlContext->clear = almondnamespace::sdlcontext::sdl_clear;
+        sdlContext->present = almondnamespace::sdlcontext::sdl_present;
+        sdlContext->get_width = almondnamespace::sdlcontext::sdl_get_width;
+        sdlContext->get_height = almondnamespace::sdlcontext::sdl_get_height;
 
         sdlContext->is_key_held = [](input::Key k) { return input::is_key_held(k); };
         sdlContext->is_key_down = [](input::Key k) { return input::is_key_down(k); };
@@ -443,12 +494,12 @@ namespace almondnamespace::core {
 #if defined(ALMOND_USING_SFML)
         auto sfmlContext = std::make_shared<Context>();
         sfmlContext->initialize = sfml_initialize;
-        sfmlContext->cleanup = sfml_cleanup;
-        sfmlContext->process = sfml_process;
-        sfmlContext->clear = sfml_clear;
-        sfmlContext->present = sfml_present;
-        sfmlContext->get_width = sfml_get_width;
-        sfmlContext->get_height = sfml_get_height;
+        sfmlContext->cleanup = sfml_cleanup_adapter;
+        sfmlContext->process = almondnamespace::sfmlcontext::sfml_process;
+        sfmlContext->clear = almondnamespace::sfmlcontext::sfml_clear;
+        sfmlContext->present = almondnamespace::sfmlcontext::sfml_present;
+        sfmlContext->get_width = almondnamespace::sfmlcontext::sfml_get_width;
+        sfmlContext->get_height = almondnamespace::sfmlcontext::sfml_get_height;
 
         sfmlContext->is_key_held = [](input::Key k) { return input::is_key_held(k); };
         sfmlContext->is_key_down = [](input::Key k) { return input::is_key_down(k); };
@@ -479,12 +530,12 @@ namespace almondnamespace::core {
 #if defined(ALMOND_USING_RAYLIB)
         auto raylibContext = std::make_shared<Context>();
         raylibContext->initialize = raylib_initialize;
-        raylibContext->cleanup = raylib_cleanup;
-        raylibContext->process = raylib_process;
-        raylibContext->clear = raylib_clear;
-        raylibContext->present = raylib_present;
-        raylibContext->get_width = raylib_get_width;
-        raylibContext->get_height = raylib_get_height;
+        raylibContext->cleanup = raylib_cleanup_adapter;
+        raylibContext->process = almondnamespace::raylibcontext::raylib_process;
+        raylibContext->clear = almondnamespace::raylibcontext::raylib_clear;
+        raylibContext->present = almondnamespace::raylibcontext::raylib_present;
+        raylibContext->get_width = almondnamespace::raylibcontext::raylib_get_width;
+        raylibContext->get_height = almondnamespace::raylibcontext::raylib_get_height;
 
         raylibContext->is_key_held = [](input::Key k) { return input::is_key_held(k); };
         raylibContext->is_key_down = [](input::Key k) { return input::is_key_down(k); };
@@ -611,12 +662,12 @@ namespace almondnamespace::core {
 #if defined(ALMOND_USING_SOFTWARE_RENDERER)
         auto softwareContext = std::make_shared<Context>();
         softwareContext->initialize = softrenderer_initialize;
-        softwareContext->cleanup = softrenderer_cleanup;
-        softwareContext->process = softrenderer_process;
-        softwareContext->clear = softrenderer_clear;
-        softwareContext->present = softrenderer_present;
-        softwareContext->get_width = softrenderer_get_width;
-        softwareContext->get_height = softrenderer_get_height;
+        softwareContext->cleanup = softrenderer_cleanup_adapter;
+        softwareContext->process = almondnamespace::anativecontext::softrenderer_process;
+        softwareContext->clear = nullptr;
+        softwareContext->present = nullptr;
+        softwareContext->get_width = almondnamespace::anativecontext::get_width;
+        softwareContext->get_height = almondnamespace::anativecontext::get_height;
 
         softwareContext->is_key_held = [](input::Key k) { return input::is_key_held(k); };
         softwareContext->is_key_down = [](input::Key k) { return input::is_key_down(k); };
@@ -639,6 +690,40 @@ namespace almondnamespace::core {
         softwareContext->type = ContextType::Software;
         AddContextForBackend(ContextType::Software, softwareContext);
 #endif
+    }
+
+    bool ProcessAllContexts() {
+        bool anyRunning = false;
+
+        auto process_context = [&](const std::shared_ptr<Context>& ctx) {
+            if (!ctx) {
+                return false;
+            }
+
+            CommandQueue localQueue;
+            CommandQueue& queue = ctx->windowData ? ctx->windowData->commandQueue : localQueue;
+
+            if (!ctx->process) {
+                queue.drain();
+                return ctx->windowData ? ctx->windowData->running : false;
+            }
+
+            return ctx->process_safe(*ctx, queue);
+        };
+
+        for (auto& [type, state] : g_backends) {
+            (void)type;
+            if (process_context(state.master)) {
+                anyRunning = true;
+            }
+            for (auto& dup : state.duplicates) {
+                if (process_context(dup)) {
+                    anyRunning = true;
+                }
+            }
+        }
+
+        return anyRunning;
     }
 
 } // namespace almondnamespace::core
