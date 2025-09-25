@@ -46,17 +46,13 @@
 #include "asoftrenderer_state.hpp"
 #endif
 
-#include <memory>
-#include <atomic>
-#include <cstdint>
-#include <thread>
-#include <stdexcept>
-#include <utility>
+#include <memory>  
+#include <atomic>  
+#include <cstdint>  
 
 // Forward declarations for subsystems, no ownership illusions
-namespace almondnamespace::contextwindow { struct WindowContext; }
-namespace almondnamespace::input { struct Input; }
-namespace almondnamespace::core { struct Context; struct WindowData; struct CommandQueue; }
+namespace almondnamespace::contextwindow { struct WindowContext; }  
+namespace almondnamespace::input { struct Input; }  
 //namespace almondnamespace::vr { struct VRSystem; }  
 //namespace almondnamespace::renderer { struct Renderer; }  
 //namespace almondnamespace::audio { struct AudioSystem; }  
@@ -96,73 +92,44 @@ namespace almondnamespace::state
 #endif
 
     struct ContextState final // ContextState encapsulates the state of the context
-    {
-        // Subsystems: injected, no ownership illusions.
-        std::shared_ptr<contextwindow::WindowContext> window;
-        std::shared_ptr<input::Input> input;
-        //std::shared_ptr<vr::VRSystem> vr;
-        //std::shared_ptr<renderer::Renderer> renderer;
-        //std::shared_ptr<audio::AudioSystem> audio;
+    {  
+        // Subsystems: injected, no ownership illusions.  
+        std::shared_ptr<contextwindow::WindowContext> window;  
+        std::shared_ptr<input::Input> input;  
+        //std::shared_ptr<vr::VRSystem> vr;  
+        //std::shared_ptr<renderer::Renderer> renderer;  
+        //std::shared_ptr<audio::AudioSystem> audio;  
 
-        // Engine control
-        std::atomic<bool> isRunning{ true };
-        uint64_t frameCount = 0;
+        // Engine control  
+        std::atomic<bool> isRunning{ true };  
+        uint64_t frameCount = 0;  
 
-        std::shared_ptr<core::Context> context;
-        core::WindowData* windowData = nullptr;
-        core::CommandQueue* commandQueue = nullptr;
-        std::thread::id owningThread{};
+        // Constructor  
+        ContextState(  
+            std::shared_ptr<contextwindow::WindowContext> win,  
+            std::shared_ptr<input::Input> in  
+            //std::shared_ptr<vr::VRSystem> vrSystem = nullptr,  
+            //std::shared_ptr<renderer::Renderer> render = nullptr,  
+            //std::shared_ptr<audio::AudioSystem> audioSys = nullptr  
+        )  
+            : window(std::move(win)),  
+            input(std::move(in))  
+            //vr(std::move(vrSystem)),  
+            //renderer(std::move(render)),  
+            //audio(std::move(audioSys))  
+        {  
+        }  
 
-        // Constructor
-        ContextState() = default;
+        //void update()  
+        //{  
+        //    if (window) window->pump_events();  
+        //    if (input) input->poll(*window);  
+        //    if (vr) vr->update();  
+        //    if (audio) audio->update();  
 
-        ContextState(
-            std::shared_ptr<contextwindow::WindowContext> win,
-            std::shared_ptr<input::Input> in
-        )
-            : window(std::move(win)),
-            input(std::move(in))
-        {
-        }
+        //    ++frameCount;  
+        //}  
 
-        //void update()
-        //{
-        //    if (window) window->pump_events();
-        //    if (input) input->poll(*window);
-        //    if (vr) vr->update();
-        //    if (audio) audio->update();
-
-        //    ++frameCount;
-        //}
-
-        void stop() noexcept { isRunning = false; }
-
-        [[nodiscard]] bool is_running() const noexcept { return isRunning.load(std::memory_order_acquire); }
-
-        void attach_runtime(std::shared_ptr<core::Context> ctx,
-            core::WindowData* windowPtr,
-            core::CommandQueue* queuePtr)
-        {
-            context = std::move(ctx);
-            windowData = windowPtr;
-            commandQueue = queuePtr;
-        }
-
-        [[nodiscard]] core::CommandQueue& command_queue() const
-        {
-            if (!commandQueue)
-                throw std::runtime_error("ContextState missing command queue");
-            return *commandQueue;
-        }
-
-        void bind_to_current_thread() noexcept
-        {
-            owningThread = std::this_thread::get_id();
-        }
-
-        [[nodiscard]] bool is_thread_owner() const noexcept
-        {
-            return owningThread == std::this_thread::get_id();
-        }
-    };
+        void stop() noexcept { isRunning = false; }  
+    };  
 }

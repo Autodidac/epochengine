@@ -358,7 +358,6 @@ namespace almondnamespace::core {
         clone->hdc = nullptr;
         clone->hglrc = nullptr;
         clone->windowData = nullptr;
-        clone->state.reset();
 
         return clone;
     }

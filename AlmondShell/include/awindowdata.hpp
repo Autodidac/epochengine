@@ -7,19 +7,10 @@
 #include "acontexttype.hpp"  // for ContextType
 #include "acommandqueue.hpp" // for CommandQueue
 
-namespace almondnamespace::core
+namespace almondnamespace::core 
 {
     struct Context; // forward declaration
     class MultiContextManager; // Forward declare MultiContextManager for ResizeCallback
-}
-
-namespace almondnamespace::state
-{
-    struct ContextState;
-}
-
-namespace almondnamespace::core
-{
 
     struct WindowData
     {
@@ -39,7 +30,6 @@ namespace almondnamespace::core
         ResizeCallback onResize;
 
         CommandQueue commandQueue;
-        std::shared_ptr<state::ContextState> runtimeState;
 
         WindowData() = default;
         WindowData(HWND h, HDC dc, HGLRC ctx, bool shared, almondnamespace::core::ContextType t)
