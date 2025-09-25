@@ -1,5 +1,5 @@
 
-<img align="left" src="AlmondShell/images/567.jpg" width="70px"/>
+<img align="left" src="images/567.jpg" width="70px"/>
 
 
 # AlmondShell
