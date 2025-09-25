@@ -28,6 +28,7 @@
 
 #include <memory>
 #include <stdexcept>
+#include <utility>
 
 namespace almondnamespace::state
 {
@@ -62,11 +63,46 @@ namespace almondnamespace
             return static_cast<bool>(instance());
         }
 
+        static std::shared_ptr<state::ContextState> tryGetContext()
+        {
+            return instance();
+        }
+
+        class ContextScope
+        {
+        public:
+            explicit ContextScope(std::shared_ptr<state::ContextState> ctx)
+                : previous(ContextManager::replaceContext(std::move(ctx)))
+            {
+            }
+
+            ContextScope(const ContextScope&) = delete;
+            ContextScope& operator=(const ContextScope&) = delete;
+
+            ContextScope(ContextScope&&) = delete;
+            ContextScope& operator=(ContextScope&&) = delete;
+
+            ~ContextScope()
+            {
+                ContextManager::replaceContext(std::move(previous));
+            }
+
+        private:
+            std::shared_ptr<state::ContextState> previous;
+        };
+
     private:
         static std::shared_ptr<state::ContextState>& instance()
         {
-            static std::shared_ptr<state::ContextState> s_instance;
+            static thread_local std::shared_ptr<state::ContextState> s_instance;
             return s_instance;
+        }
+
+        static std::shared_ptr<state::ContextState> replaceContext(std::shared_ptr<state::ContextState> ctx)
+        {
+            auto& inst = instance();
+            std::swap(inst, ctx);
+            return ctx;
         }
     };
 }

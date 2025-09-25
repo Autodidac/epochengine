@@ -44,6 +44,11 @@
 #include <mutex>
 #include <queue>
 
+namespace almondnamespace::state
+{
+    struct ContextState;
+}
+
 namespace almondnamespace::core
 {
     struct WindowData; // forward declaration
@@ -107,6 +112,7 @@ namespace almondnamespace::core
         AlmondAtomicFunction<uint32_t(TextureAtlas&, std::string, const ImageData&)> add_texture;
         AlmondAtomicFunction<uint32_t(const TextureAtlas&)> add_atlas;
         std::function<void(int, int)> onResize;
+        std::weak_ptr<state::ContextState> state;
 
         Context() = default;
 
@@ -175,6 +181,14 @@ namespace almondnamespace::core
 
         inline int add_model_safe(const char* name, const char* path) const noexcept {
             return add_model ? add_model(name, path) : -1;
+        }
+
+        inline void attach_state(const std::shared_ptr<state::ContextState>& runtimeState) noexcept {
+            state = runtimeState;
+        }
+
+        inline std::shared_ptr<state::ContextState> get_state() const noexcept {
+            return state.lock();
         }
     };
 
