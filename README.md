@@ -18,11 +18,22 @@ The runtime is designed for rapid iteration with hot-reloadable scripting, a sel
 
 ---
 
+## Architectural Pillars
+
+- 🧱 **Static Linking First**  
+  AlmondShell's runtime is delivered as a fully static target, ensuring deterministic deployment, predictable performance, and portability across distribution channels.
+- 📚 **Header-Only Core**  
+  The primary engine modules live in headers so they can be inlined, composed, and consumed without linker gymnastics, unlocking rapid iteration for integrators.
+- 🧠 **Functional Flow**  
+  Systems are composed in a functional style that favours pure interfaces and immutable data where possible, simplifying reasoning about complex runtime state.
+
+---
+
 ## Key Features
 
-- 🔄 **Self-updating launcher**  
-  Designed to automatically fetch the newest release when run, ensuring users always stay up to date.  
-  Can also be built directly from source for full control.  
+- 🔄 **Self-updating launcher**
+  Designed to automatically fetch the newest release when run, ensuring users always stay up to date.
+  Can also be built directly from source for full control.
   *(Currently disabled while under active development.)*  
 
 - ⚙️ **Modular C++20 engine**  
@@ -40,9 +51,39 @@ The runtime is designed for rapid iteration with hot-reloadable scripting, a sel
 - 🖼️ **Sprite & atlas management**  
   Global registries, unique atlas indexing, and atlas-driven GUI (buttons, highlights, and menus).  
 
-- 🖥️ **Multi-context rendering**  
-  Pluggable backends: OpenGL, Raylib, SFML, and a software renderer — switchable via thunks and lambdas.  
-  **Multithreaded** with a state-of-the-art **hybrid coroutine + threaded design** for maximum scalability and efficiency.  
+- 🖥️ **Multi-context rendering**
+  Pluggable backends: OpenGL, Raylib, SFML, and a software renderer — switchable via thunks and lambdas.
+  **Multithreaded** with a state-of-the-art **hybrid coroutine + threaded design** for maximum scalability and efficiency.
+
+---
+
+## Status
+
+✅ **Actively Developed**
+AlmondShell is under **active development** as the software engine base of AlmondEngine.
+It continues to evolve as the **core foundation layer**, ensuring speed, modularity, and cross-platform compatibility with a **static, header-only functional design**.
+
+---
+
+## Repository Layout
+
+```
+.
+├── LICENSE                  # LicenseRef-MIT-NoSell terms for AlmondShell
+├── README.md                # Project overview and setup guide (this file)
+├── AlmondShell/
+│   ├── include/             # Core engine headers
+│   ├── src/                 # Engine, updater entry point, and scripts
+│   ├── docs/                # Supplementary documentation and setup notes
+│   ├── examples/            # Sample projects and templates
+│   └── CMakeLists.txt       # Build script for the updater target
+├── AlmondShell.sln          # Visual Studio solution for Windows developers
+└── images/                  # Non-code repository assets (logos, promo art, etc.)
+    ├── 567.jpg
+    └── almondshell.bmp
+```
+
+Refer to `AlmondShell/docs/file_structure.txt` for a more exhaustive tour of the available modules.
 
 ---
 
@@ -77,36 +118,6 @@ runtime:
 
 Review and adjust these switches before building to tailor the engine to your
 toolchain and desired runtime footprint.
-
----
-
-## Status
-
-✅ **Actively Developed**  
-AlmondShell is under **active development** as the software engine base of AlmondEngine.  
-It continues to evolve as the **core foundation layer**, ensuring speed, modularity, and cross-platform compatibility with a **static, header-only functional design**.
-
----
-
-## Repository Layout
-
-```
-.
-├── LICENSE                  # LicenseRef-MIT-NoSell terms for AlmondShell
-├── README.md                # Project overview and setup guide (this file)
-├── AlmondShell/
-│   ├── include/             # Core engine headers
-│   ├── src/                 # Engine, updater entry point, and scripts
-│   ├── docs/                # Supplementary documentation and setup notes
-│   ├── examples/            # Sample projects and templates
-│   └── CMakeLists.txt       # Build script for the updater target
-├── AlmondShell.sln          # Visual Studio solution for Windows developers
-└── images/                  # Non-code repository assets (logos, promo art, etc.)
-    ├── 567.jpg
-    └── almondshell.bmp
-```
-
-Refer to `AlmondShell/docs/file_structure.txt` for a more exhaustive tour of the available modules.
 
 ---
 
