@@ -5,7 +5,7 @@
 # AlmondShell
 
 **AlmondShell** is a modern **C++20 software engine** that forms the foundation layer for the evolving AlmondEngine project.
-It focuses on delivering a flexible runtime that can:
+It distils over **4,000 hours** of engineering effort invested into getting a multi-context, multi-threaded, fully featured atlas system working—resulting in a flexible runtime that can:
 
 - Substitute AlmondEngine's Vulkan and DirectX layers with multiple 2D graphics back-end contexts.
 - Host entire engines such as **SDL3**, **SFML**, and **Raylib** inside a multi-threaded, multi-context environment with fine-grained configuration control.
@@ -49,8 +49,8 @@ The runtime is designed for rapid iteration with hot-reloadable scripting, a sel
   - Implementation in `src/`  
   - Helper scripts under `unix/` plus project-level `.sh` helpers  
 
-- 🖼️ **Sprite & atlas management**  
-  Global registries, unique atlas indexing, and atlas-driven GUI (buttons, highlights, and menus).  
+- 🖼️ **Sprite & atlas management**
+  Global registries, unique atlas indexing, and atlas-driven GUI (buttons, highlights, and menus) backed by the multi-context atlas pipeline that has been refined over thousands of development hours.
 
 - 🖥️ **Multi-context rendering**
   Pluggable backends: OpenGL, Raylib, SFML, and a software renderer — switchable via thunks and lambdas.
