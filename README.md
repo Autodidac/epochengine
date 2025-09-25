@@ -46,6 +46,40 @@ The runtime is designed for rapid iteration with hot-reloadable scripting, a sel
 
 ---
 
+## Engine Configuration (`include/aengineconfig.hpp`)
+
+AlmondShell centralises its build-time feature flags inside
+[`include/aengineconfig.hpp`](AlmondShell/include/aengineconfig.hpp). The file
+controls which entry points, contexts, and renderers are compiled into the
+runtime:
+
+- **Entry point selection** – Define `ALMOND_MAIN_HANDLED` if you provide your
+  own `main` function. On Windows the engine automatically switches to
+  `WinMain` (`ALMOND_USING_WINMAIN`) unless you opt into headless mode via
+  `ALMOND_MAIN_HEADLESS`.
+- **Debug toggles** – Commented-out switches such as `DEBUG_INPUT`,
+  `DEBUG_TEXTURE_RENDERING_VERBOSE`, and related macros can be enabled when you
+  need additional logging during development.
+- **Window topology** – `ALMOND_SINGLE_PARENT` (enabled by default) tells the
+  runtime to create child windows beneath a single parent. Set it to `0` to
+  allow multiple top-level windows.
+- **Context backends** – Enable or disable integrations like `ALMOND_USING_SDL`,
+  `ALMOND_USING_SFML`, or `ALMOND_USING_RAYLIB` to embed those engines as
+  AlmondShell contexts.
+- **Rendering backends** – Choose one or more renderers. OpenGL is enabled out
+  of the box via `ALMOND_USING_OPENGL`; additional options include
+  `ALMOND_USING_SOFTWARE_RENDERER`, `ALMOND_USING_VULKAN`, and the placeholder
+  `ALMOND_USING_DIRECTX` flag.
+- **Raylib integration notes** – When `ALMOND_USING_RAYLIB` is enabled the
+  configuration defines `RAYLIB_NO_WINDOW` and remaps select symbols (e.g.
+  `CloseWindow`, `ShowCursor`, `LoadImageW`) before including `raylib.h` to avoid
+  Windows header conflicts.
+
+Review and adjust these switches before building to tailor the engine to your
+toolchain and desired runtime footprint.
+
+---
+
 ## Status
 
 ✅ **Actively Developed**  
