@@ -15,6 +15,7 @@ It focuses on delivering a flexible runtime that can:
 The runtime is designed for rapid iteration with hot-reloadable scripting, a self-updating launcher capable of downloading and building from source, and the low-level systems that power rendering, scripting, task scheduling, and asset pipelines. Editor automation currently lives in `src/scripts/`, which the runtime watches and reloads on demand.
 
 - **End users** can download the prebuilt binary, drop it into an empty directory, and let AlmondShell populate the latest files automatically.
+(Currently disabled while under active development.)
 
 ---
 
