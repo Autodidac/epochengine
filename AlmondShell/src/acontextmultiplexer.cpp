@@ -2,9 +2,12 @@
 #include "pch.h"
 
 #include "acontextmultiplexer.hpp"
+#include "acontextstatemanager.hpp"
 
 #include <stdexcept>
 #include <algorithm>
+#include <atomic>
+#include <chrono>
 #include <glad/glad.h>
 
 // -----------------------------------------------------------------
@@ -539,6 +542,13 @@ namespace almondnamespace::core
         winPtr->onResize = std::move(onResize);
         winPtr->context = ctx;  // <-- hook it up
         ctx->windowData = winPtr.get(); // set the back-pointer immediately
+        if (!winPtr->runtimeState) {
+            winPtr->runtimeState = std::make_shared<state::ContextState>();
+        }
+        winPtr->runtimeState->attach_runtime(ctx, winPtr.get(), &winPtr->commandQueue);
+        winPtr->runtimeState->isRunning.store(true, std::memory_order_release);
+        winPtr->runtimeState->frameCount = 0;
+        ctx->attach_state(winPtr->runtimeState);
 
         RECT rc{};
         GetClientRect(hwnd, &rc);
@@ -612,6 +622,9 @@ namespace almondnamespace::core
 
             // Mark the window as no longer running
             (*it)->running = false;
+            if ((*it)->runtimeState) {
+                (*it)->runtimeState->stop();
+            }
 
             if ((*it)->context) {
                 auto ctx = (*it)->context;
@@ -640,6 +653,9 @@ namespace almondnamespace::core
 
         // Clean up OpenGL / DC (safe now, since thread is joined)
         if (removedWindow) {
+            if (removedWindow->runtimeState) {
+                removedWindow->runtimeState->stop();
+            }
             if (removedWindow->glContext) {
                 wglMakeCurrent(nullptr, nullptr);
                 wglDeleteContext(removedWindow->glContext);
@@ -733,12 +749,17 @@ namespace almondnamespace::core
     }
 
     void MultiContextManager::StopAll() {
-        running = false;
+        running.store(false, std::memory_order_release);
 
-		{ // mutex scope
+        { // mutex scope
             std::scoped_lock lock(windowsMutex);
             for (auto& w : windows) {
-                if (w) w->running = false;
+                if (w) {
+                    w->running = false;
+                    if (w->runtimeState) {
+                        w->runtimeState->stop();
+                    }
+                }
             }
         }
 
@@ -749,153 +770,238 @@ namespace almondnamespace::core
     }
 
     void MultiContextManager::RenderLoop(WindowData& win) {
-        // Make context aware of its owning window
-        if (win.context) {
-            win.context->windowData = &win;
+        auto ctx = win.context;
+        if (ctx) {
+            ctx->windowData = &win;
         }
 
-        // Ensure per-thread initialization flags are outside switch
-        static thread_local bool glInit = false;
-        static thread_local bool swInit = false;
-        static thread_local bool sdlInit = false;
-        static thread_local bool sfmlInit = false;
-        static thread_local bool rayInit = false;
+        auto state = win.runtimeState;
+        if (state) {
+            state->attach_runtime(ctx, &win, &win.commandQueue);
+            state->isRunning.store(true, std::memory_order_release);
+        }
+
+        if (ctx && state) {
+            ctx->attach_state(state);
+        }
+
+        ContextManager::ContextScope contextScope(state);
+
+        if (state) {
+            state->bind_to_current_thread();
+        }
+
+        auto should_continue = [&]() noexcept {
+            if (!running.load(std::memory_order_acquire)) return false;
+            if (!win.running) return false;
+            if (state && !state->is_running()) return false;
+            return true;
+        };
+
+        auto advance_frame = [&]() -> bool {
+            if (ctx) {
+                const bool keepRunning = ctx->process_safe(*ctx, win.commandQueue);
+                if (keepRunning) {
+                    if (state) {
+                        ++state->frameCount;
+                    }
+                }
+                else {
+                    win.running = false;
+                    if (state) {
+                        state->stop();
+                    }
+                }
+                return keepRunning;
+            }
+
+            const bool executed = win.commandQueue.drain();
+            if (executed && state) {
+                ++state->frameCount;
+            }
+            return true;
+        };
+
+        auto idle = []() {
+            std::this_thread::sleep_for(std::chrono::milliseconds(16));
+        };
+
+        auto finalize = [&]() noexcept {
+            win.running = false;
+            if (state) {
+                state->stop();
+            }
+        };
+
+#ifdef ALMOND_USING_OPENGL
+        struct GLContextScope {
+            HDC hdc{};
+            HGLRC glrc{};
+            bool valid{ false };
+
+            explicit GLContextScope(WindowData& window) noexcept
+                : hdc(window.hdc), glrc(window.glContext)
+            {
+                if (hdc && glrc) {
+                    valid = wglMakeCurrent(hdc, glrc) == TRUE;
+                }
+            }
+
+            GLContextScope(const GLContextScope&) = delete;
+            GLContextScope& operator=(const GLContextScope&) = delete;
+
+            ~GLContextScope()
+            {
+                if (valid) {
+                    wglMakeCurrent(nullptr, nullptr);
+                }
+            }
+
+            [[nodiscard]] bool is_valid() const noexcept { return valid; }
+        };
+#endif
+
+        auto run_loop = [&](const auto& setup, const auto& teardown) {
+            setup();
+            while (should_continue()) {
+                if (!advance_frame()) {
+                    break;
+                }
+                idle();
+            }
+            teardown();
+        };
 
         switch (win.type) {
-        case ContextType::OpenGL:
 #ifdef ALMOND_USING_OPENGL
-            if (!wglMakeCurrent(win.hdc, win.glContext)) return;
-
-            if (!glInit && win.context) {
-                std::cerr << "[OpenGL] Initializing VAO/VBO/EBO for hwnd=" << win.hwnd << "\n";
-                almondnamespace::openglcontext::opengl_initialize(
-                    win.context,      // shared_ptr<Context>
-                    win.hwnd,         // HWND
-                    win.width,
-                    win.height,
-                    win.onResize
-                );
-                glInit = true;
+        case ContextType::OpenGL:
+        {
+            GLContextScope glScope(win);
+            if (!glScope.is_valid()) {
+                finalize();
+                return;
             }
 
-            while (running && win.running) {
-                if (win.context) {
-                    if (!almondnamespace::openglcontext::opengl_process(*win.context,
-                        win.commandQueue)) {
-                        std::cerr << "[OpenGL] process returned false\n";
-                        break;
-                    }
-                  //  std::cout << "[OpenGL] Processed context for hwnd=" << win.hwnd << "\n";
+            auto setup = [&]() {
+                if (ctx) {
+                    almondnamespace::openglcontext::opengl_initialize(
+                        ctx, win.hwnd, win.width, win.height, win.onResize);
+                    ctx->initialize_safe();
                 }
-                else {
-                    glClearColor(1.f, 0.f, 1.f, 1.f); // magenta fallback
-                    glClear(GL_COLOR_BUFFER_BIT);
-                    SwapBuffers(win.hdc);
+            };
+
+            auto teardown = [&]() {
+                if (ctx) {
+                    ctx->cleanup_safe();
                 }
-                std::this_thread::sleep_for(std::chrono::milliseconds(16));
-            }
-            wglMakeCurrent(nullptr, nullptr);
-#endif
-            break;
+            };
 
-        case ContextType::Software:
-#ifdef ALMOND_USING_SOFTWARE_RENDERER
-            if (!swInit && win.context) {
-                std::cerr << "[Software] Initializing renderer for hwnd=" << win.hwnd << "\n";
-                almondnamespace::anativecontext::softrenderer_initialize(win.context);
-                swInit = true;
-            }
-
-            while (running && win.running) {
-                if (win.context) {
-                    if (!almondnamespace::anativecontext::softrenderer_process(*win.context,
-                        win.commandQueue)) {
-                        std::cerr << "[Software] process returned false\n";
-                        break;
-                    }
-                   // std::cout << "[Software] Processed context for hwnd=" << win.hwnd << "\n";
-                }
-                else {
-                    std::this_thread::sleep_for(std::chrono::milliseconds(16));
-                }
-            }
-#endif
-            break;
-
-        case ContextType::SDL:
-#ifdef ALMOND_USING_SDL
-            if (!sdlInit && win.context) {
-                std::cerr << "[SDL] Initializing context for hwnd=" << win.hwnd << "\n";
-                almondnamespace::sdlcontext::sdl_initialize(win.context);
-                sdlInit = true;
-            }
-
-            while (running && win.running) {
-                if (win.context) {
-                    if (!almondnamespace::sdlcontext::sdl_process(*win.context,
-                        win.commandQueue)) {
-                        std::cerr << "[SDL] process returned false\n";
-                        break;
-                    }
-                  //  std::cout << "[SDL] Processed context for hwnd=" << win.hwnd << "\n";
-                }
-                std::this_thread::sleep_for(std::chrono::milliseconds(16));
-            }
-#endif
-            break;
-
-        case ContextType::SFML:
-#ifdef ALMOND_USING_SFML
-            if (!sfmlInit && win.context) {
-                std::cerr << "[SFML] Initializing context for hwnd=" << win.hwnd << "\n";
-                almondnamespace::sfmlcontext::sfml_initialize(win.context);
-                sfmlInit = true;
-            }
-
-            while (running && win.running) {
-                if (win.context) {
-                    if (!almondnamespace::sfmlcontext::sfml_process(*win.context,
-                        win.commandQueue)) {
-                        std::cerr << "[SFML] process returned false\n";
-                        break;
-                    }
-                //    std::cout << "[SFML] Processed context for hwnd=" << win.hwnd << "\n";
-                }
-                std::this_thread::sleep_for(std::chrono::milliseconds(16));
-            }
-#endif
-            break;
-
-        case ContextType::RayLib:
-#ifdef ALMOND_USING_RAYLIB
-            if (!rayInit && win.context) {
-                std::cerr << "[RayLib] Initializing context for hwnd=" << win.hwnd << "\n";
-                almondnamespace::raylibcontext::raylib_initialize(win.context);
-                rayInit = true;
-            }
-
-            while (running && win.running) {
-                if (win.context) {
-                    if (!almondnamespace::raylibcontext::raylib_process(*win.context,
-                        win.commandQueue)) {
-                        std::cerr << "[RayLib] process returned false\n";
-                        break;
-                    }
-                 //   std::cout << "[RayLib] Processed context for hwnd=" << win.hwnd << "\n";
-                }
-                std::this_thread::sleep_for(std::chrono::milliseconds(16));
-            }
-#endif
-            break;
-
-        case ContextType::Custom:
-            // TODO: custom backend loop
-            break;
-
-        case ContextType::Noop:
-        default:
+            run_loop(setup, teardown);
             break;
         }
+#endif
+#ifdef ALMOND_USING_SOFTWARE_RENDERER
+        case ContextType::Software:
+        {
+            auto setup = [&]() {
+                if (ctx) {
+                    almondnamespace::anativecontext::softrenderer_initialize(ctx);
+                    ctx->initialize_safe();
+                }
+            };
+
+            auto teardown = [&]() {
+                if (ctx) {
+                    ctx->cleanup_safe();
+                }
+            };
+
+            run_loop(setup, teardown);
+            break;
+        }
+#endif
+#ifdef ALMOND_USING_SDL
+        case ContextType::SDL:
+        {
+            auto setup = [&]() {
+                if (ctx) {
+                    almondnamespace::sdlcontext::sdl_initialize(ctx);
+                    ctx->initialize_safe();
+                }
+            };
+
+            auto teardown = [&]() {
+                if (ctx) {
+                    ctx->cleanup_safe();
+                }
+            };
+
+            run_loop(setup, teardown);
+            break;
+        }
+#endif
+#ifdef ALMOND_USING_SFML
+        case ContextType::SFML:
+        {
+            auto setup = [&]() {
+                if (ctx) {
+                    almondnamespace::sfmlcontext::sfml_initialize(ctx);
+                    ctx->initialize_safe();
+                }
+            };
+
+            auto teardown = [&]() {
+                if (ctx) {
+                    ctx->cleanup_safe();
+                }
+            };
+
+            run_loop(setup, teardown);
+            break;
+        }
+#endif
+#ifdef ALMOND_USING_RAYLIB
+        case ContextType::RayLib:
+        {
+            auto setup = [&]() {
+                if (ctx) {
+                    almondnamespace::raylibcontext::raylib_initialize(ctx);
+                    ctx->initialize_safe();
+                }
+            };
+
+            auto teardown = [&]() {
+                if (ctx) {
+                    ctx->cleanup_safe();
+                }
+            };
+
+            run_loop(setup, teardown);
+            break;
+        }
+#endif
+        case ContextType::Custom:
+        case ContextType::Noop:
+        default:
+        {
+            auto setup = [&]() {
+                if (ctx) {
+                    ctx->initialize_safe();
+                }
+            };
+
+            auto teardown = [&]() {
+                if (ctx) {
+                    ctx->cleanup_safe();
+                }
+            };
+
+            run_loop(setup, teardown);
+            break;
+        }
+        }
+
+        finalize();
     }
 
 
