@@ -309,12 +309,18 @@ namespace almondnamespace::menu
                 if (!is_alive(slice.handle)) continue;
                 const auto& pos = cachedPositions[i];
 
-                win->commandQueue.enqueue([=]() {
-                    almondnamespace::opengltextures::draw_sprite(
-                        slice.handle, atlasSpan,
-                        float(pos.first), float(pos.second),
-                        float(slice.width), float(slice.height)
-                    );
+                win->commandQueue.enqueue([handle = slice.handle,
+                    x = pos.first, y = pos.second,
+                    w = slice.width, h = slice.height]() {
+                        // build span fresh on render thread
+                        auto& atlasVecRT = atlasmanager::get_atlas_vector();
+                        std::span<const TextureAtlas* const> atlasSpanRT(atlasVecRT.data(), atlasVecRT.size());
+
+                        almondnamespace::opengltextures::draw_sprite(
+                            handle, atlasSpanRT,
+                            float(x), float(y),
+                            float(w), float(h)
+                        );
                     });
             }
 
