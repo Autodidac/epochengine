@@ -58,6 +58,7 @@
 #define ALMOND_USING_DOCKING 1  // Enable docking features
 #define ALMOND_SHARED_CONTEXT 1 // Enable shared OpenGL context
 #endif
+
 namespace almondnamespace::core
 {
     // -----------------------------------------------------------------

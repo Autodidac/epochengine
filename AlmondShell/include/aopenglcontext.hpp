@@ -404,8 +404,8 @@ namespace almondnamespace::openglcontext
     inline int  opengl_get_height() { 
         RECT r; GetClientRect(s_openglstate.hwnd, &r); return r.bottom - r.top;
     }
-    inline void opengl_clear(core::Context& ctx) {
-        glViewport(0, 0, ctx.width, ctx.height);
+    inline void opengl_clear(std::shared_ptr<core::Context> ctx) {
+        glViewport(0, 0, ctx->width, ctx->height);
         glClearColor(0.f, 0.f, 1.f, 1.f);
         glClear(GL_COLOR_BUFFER_BIT);
     }
@@ -413,30 +413,30 @@ namespace almondnamespace::openglcontext
     // ------------------------------------------------------
     // Per-frame process: clear, run commands, swap
     // ------------------------------------------------------
-    inline bool opengl_process(core::Context& ctx, core::CommandQueue& queue)
+    inline bool opengl_process(std::shared_ptr<core::Context> ctx, core::CommandQueue& queue)
     {
         auto& backend = opengltextures::get_opengl_backend();
         auto& glState = backend.glState;
 
         atlasmanager::process_pending_uploads(core::ContextType::OpenGL);
 
-        if (!ctx.hdc || !ctx.hglrc) {
-            std::cerr << "[OpenGL] Context not ready (hdc=" << ctx.hdc
-                << ", hglrc=" << ctx.hglrc << ")\n";
+        if (!ctx->hdc || !ctx->hglrc) {
+            std::cerr << "[OpenGL] Context not ready (hdc=" << ctx->hdc
+                << ", hglrc=" << ctx->hglrc << ")\n";
             return false;
         }
 
-        if (!wglMakeCurrent(ctx.hdc, ctx.hglrc)) {
+        if (!wglMakeCurrent(ctx->hdc, ctx->hglrc)) {
             DWORD err = GetLastError();
             std::cerr << "[OpenGL] wglMakeCurrent failed (error " << err
                 << ") — attempting recovery\n";
 
             if (backend.glState.hdc && backend.glState.hglrc) {
-                ctx.hdc = backend.glState.hdc;
-                ctx.hglrc = backend.glState.hglrc;
+                ctx->hdc = backend.glState.hdc;
+                ctx->hglrc = backend.glState.hglrc;
             }
 
-            if (!ctx.hdc || !ctx.hglrc || !wglMakeCurrent(ctx.hdc, ctx.hglrc)) {
+            if (!ctx->hdc || !ctx->hglrc || !wglMakeCurrent(ctx->hdc, ctx->hglrc)) {
                 std::cerr << "[OpenGL] Unable to recover current context — skipping frame\n";
                 return true;
             }
@@ -494,7 +494,7 @@ namespace almondnamespace::openglcontext
         if (glState.vao == 0 || glState.vbo == 0 || glState.ebo == 0) {
             std::cerr << "[OpenGL] VAO/VBO/EBO not initialized!\n";
             queue.drain();
-            SwapBuffers(ctx.hdc);
+            SwapBuffers(ctx->hdc);
             wglMakeCurrent(nullptr, nullptr);
             return true;
         }
@@ -503,28 +503,28 @@ namespace almondnamespace::openglcontext
         almondnamespace::input::poll_input();
 
         // Pipe global input into context functions
-        ctx.is_key_held = [](almondnamespace::input::Key key) -> bool {
+        ctx->is_key_held = [](almondnamespace::input::Key key) -> bool {
             return almondnamespace::input::is_key_held(key);
             };
-        ctx.is_key_down = [](almondnamespace::input::Key key) -> bool {
+        ctx->is_key_down = [](almondnamespace::input::Key key) -> bool {
             return almondnamespace::input::is_key_down(key);
             };
-        ctx.is_mouse_button_held = [](almondnamespace::input::MouseButton btn) -> bool {
+        ctx->is_mouse_button_held = [](almondnamespace::input::MouseButton btn) -> bool {
             return almondnamespace::input::is_mouse_button_held(btn);
             };
-        ctx.is_mouse_button_down = [](almondnamespace::input::MouseButton btn) -> bool {
+        ctx->is_mouse_button_down = [](almondnamespace::input::MouseButton btn) -> bool {
             return almondnamespace::input::is_mouse_button_down(btn);
             };
 
         queue.drain();
-        SwapBuffers(ctx.hdc);
+        SwapBuffers(ctx->hdc);
 
         wglMakeCurrent(nullptr, nullptr);
         return true;
     }
 
 
-    inline void opengl_cleanup(std::shared_ptr<core::Context>& ctx) {
+    inline void opengl_cleanup(std::shared_ptr<core::Context> ctx) {
         if (ctx->hglrc) {
             wglMakeCurrent(nullptr, nullptr);
             wglDeleteContext(ctx->hglrc);
@@ -536,122 +536,6 @@ namespace almondnamespace::openglcontext
         }
     }
 
-    // main context thread
-    //inline bool opengl_process(core::Context& ctx) {
-    //    MSG msg{};
-    //    while (PeekMessage(&msg, nullptr, 0, 0, PM_REMOVE)) {
-    //        if (msg.message == WM_QUIT) return false;
-    //        TranslateMessage(&msg);
-    //        DispatchMessage(&msg);
-    //    }
-
-    //    HDC hdc = s_openglstate.hdc;
-    //    HGLRC hglrc = s_openglstate.hglrc;
-
-    //    if (!hdc || !hglrc) return false;
-
-    //    // Make context current on THIS thread only
-    //    if (!wglMakeCurrent(hdc, hglrc)) {
-    //        DWORD err = GetLastError();
-    //        std::cerr << "[OPENGL] Failed to make context current, GetLastError = " << err << "\n";
-    //        s_openglstate.running = false;
-    //        return false;
-    //    }
-
-    //    glViewport(0, 0, s_openglstate.width, s_openglstate.height);
-    //    glClearColor(0.f, 0.f, 1.f, 1.f);
-    //    glClear(GL_COLOR_BUFFER_BIT);
-
-    //    // Execute queued render commands safely
-    //    {
-    //        std::scoped_lock lock(s_commandMutex);
-    //        while (!s_renderCommands.empty()) {
-    //            auto& cmd = s_renderCommands.front();
-    //            cmd();
-    //            s_renderCommands.pop();
-    //        }
-    //    }
-
-    //    // Swap buffers for this window
-    //    SwapBuffers(hdc);
-
-    //    // Exit condition
-    //    if (!s_openglstate.running || almondnamespace::input::is_key_down(almondnamespace::input::Key::Escape)) {
-    //        s_openglstate.running = false;
-    //        wglMakeCurrent(nullptr, nullptr);
-    //        return false;
-    //    }
-
-    //    wglMakeCurrent(nullptr, nullptr); // always unbind
-    //    return true;
-    
-    
-    //    // ─── Time & events ──────────────────────────────────────────────────────
-    //    static auto lastReal = std::chrono::steady_clock::now();
-    //    auto nowReal = std::chrono::steady_clock::now();
-    //    s_clockSystem.advanceTime(nowReal - lastReal);
-    //    lastReal = nowReal;
-
-    //    platform::pump_events();
-
-    //    // ─── FPS logging ────────────────────────────────────────────────────────
-    //    ++s_frameCount;
-    //    if (s_pollTimer.elapsed() >= 0.3) {
-    //        s_pollTimer.restart();
-    //    }
-    //    if (s_fpsTimer.elapsed() >= 1.0) {
-    //        std::cout << "FPS: " << s_frameCount << "\n";
-    //        s_frameCount = 0;
-    //        s_fpsTimer.restart();
-    //    }
-
-    //    // ─── Clear & viewport ───────────────────────────────────────────────────
-    //    RECT r;
-    //    GetClientRect(s_hwnd, &r);
-    //    glViewport(0, 0, r.right - r.left, r.bottom - r.top);
-    //    glClear(GL_COLOR_BUFFER_BIT);
-
-    //    // ─── Draw “test_sprite” ─────────────────────────────────────────────────
-    //    if (auto opt = s_registry.get("test_sprite")) {
-    //        auto [globalSlot, u0, v0, u1, v1, px, py] = *opt;
-
-    //        // decode atlas index and local slot
-    //        int atlasIdx = globalSlot >> 16;
-    //        int local = globalSlot & 0xFFFF;
-
-    //        // fetch the correct Atlas (heap‐allocated)
-    //        Atlas& A = *s_atlases.at(atlasIdx);
-
-    //        // compute UV region
-    //        float du = u1 - u0;
-    //        float dv = v1 - v0;
-
-    //        // bind shader + texture + draw
-    //        glUseProgram(s_shader);
-    //        glUniform4f(
-    //            glGetUniformLocation(s_shader, "uRegion"),
-    //            u0, v0, du, dv
-    //        );
-    //        glActiveTexture(GL_TEXTURE0);
-    //        glBindTexture(GL_TEXTURE_2D, A.glHandle);
-    //        glBindVertexArray(s_vao);
-    //        glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, nullptr);
-    //    }
-
-    //    // ─── Present ────────────────────────────────────────────────────────────
-    //    SwapBuffers(s_hdc);
-   // }
-
-
-    //inline bool process(Context& ctx) //override
-    //{
-    //    opengl_process(Context & ctx);
-    //    return true;
-    //}
-
-	// Context state getters/setters
-    inline bool OpenGLGetIsRunning(std::shared_ptr<core::Context> ctx) { return s_openglstate.running; }
-    inline bool OpenGLSetIsRunning(std::shared_ptr<core::Context> ctx) { return s_openglstate.running = false; }
 
 } // namespace almond::opengl
 

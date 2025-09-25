@@ -29,6 +29,7 @@
 #include "acontext.hpp"
 #include "acontextwindow.hpp"
 #include "acontextmultiplexer.hpp"
+#include "acontextstatemanager.hpp"
 
 #ifdef ALMOND_USING_OPENGL
 #include "aopenglcontext.hpp"
@@ -123,7 +124,7 @@ namespace almondnamespace::core {
     }
 
     // ─── Context::process_safe ────────────────────────────────
-    bool Context::process_safe(Context& ctx, CommandQueue& queue) {
+    bool Context::process_safe(std::shared_ptr<core::Context> ctx, CommandQueue& queue) {
         if (!process) return false;
         try {
             return process(ctx, queue);
@@ -200,8 +201,8 @@ namespace almondnamespace::core {
 #ifdef ALMOND_USING_OPENGL
     inline void opengl_initialize() {}
     inline void opengl_cleanup() {}
-    bool opengl_process(Context& ctx, CommandQueue& queue) {
-        atlasmanager::process_pending_uploads(ctx.type);
+    bool opengl_process(std::shared_ptr<core::Context> ctx, CommandQueue& queue) {
+        atlasmanager::process_pending_uploads(ctx->type);
         queue.drain();
         return true;
     }
@@ -325,7 +326,7 @@ namespace almondnamespace::core {
 #ifdef ALMOND_USING_OPENGL
         void opengl_clear_adapter() {
             if (auto ctx = MultiContextManager::GetCurrent()) {
-                almondnamespace::openglcontext::opengl_clear(*ctx);
+                almondnamespace::openglcontext::opengl_clear(ctx);
             }
         }
 
@@ -708,7 +709,7 @@ namespace almondnamespace::core {
                 return ctx->windowData ? ctx->windowData->running : false;
             }
 
-            return ctx->process_safe(*ctx, queue);
+            return ctx->process_safe(ctx, queue);
         };
 
         for (auto& [type, state] : g_backends) {

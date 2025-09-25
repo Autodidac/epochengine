@@ -95,11 +95,11 @@ namespace almondnamespace::core
     // ---------------- MultiContextManager (static) ----------------
     //inline std::shared_ptr<core::Context> MultiContextManager::currentContext = nullptr;
 
-    inline void MultiContextManager::SetCurrent(std::shared_ptr<core::Context> ctx) {
+    inline void almondnamespace::core::MultiContextManager::SetCurrent(std::shared_ptr<core::Context> ctx) {
         currentContext = std::move(ctx);
     }
 
-    inline std::shared_ptr<almondnamespace::core::Context> almondnamespace::core::MultiContextManager::GetCurrent() {
+    std::shared_ptr<almondnamespace::core::Context> almondnamespace::core::MultiContextManager::GetCurrent() {
         return currentContext;
     }
 
@@ -786,7 +786,7 @@ namespace almondnamespace::core
             bool keepRunning = true;
 
             if (ctx->process) {
-                keepRunning = ctx->process_safe(*ctx, win.commandQueue);
+                keepRunning = ctx->process_safe(ctx, win.commandQueue);
             }
             else {
                 win.commandQueue.drain();
