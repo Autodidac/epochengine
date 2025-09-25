@@ -6,7 +6,9 @@
 
 Almond Shell is a **Software Engine** written in modern **C++20**, serving as the foundation layer for the evolving AlmondEngine project.
 It substitutes AlmondEngines Vulkan and DirectX with 2D graphics back end contexts, entire game engines like SDL3, SFML, 
-and even Raylib live inside of Almond-Shell. In a Multi-Threaded, Multi-Context environment with finite configuration control down to it's "source-available" source code.
+and even Raylib live inside of Almond-Shell. In a Multi-Threaded, Multi-Context environment with finite configuration control,
+down to it's "source-available" source code. Making Almond-Shell not just a Software-Engine, but a full blown multiverse of 2D graphics engine backends,
+it's own internal opengl, software renderer, and noop, as well as headless modes, because yes it also contains state of the art networking using steam servers with asio automatic fallback.
 
 Providing hot-reloadable runtime for scripting, a self-updating launcher that can download and compile directly from source code online, and the low-level systems that power rendering, scripting, task scheduling, and asset pipelines.  
 The engine runtime drives editor scripts from `src/scripts/` currently.
