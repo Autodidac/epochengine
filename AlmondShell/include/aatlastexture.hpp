@@ -35,6 +35,8 @@
 #include <iostream>
 #include <stdexcept>
 #include <algorithm>
+#include <mutex>
+#include <shared_mutex>
 #include <unordered_map>
 
 namespace almondnamespace 
@@ -91,6 +93,25 @@ namespace almondnamespace
 
         std::vector<AtlasEntry> entries;
 
+        [[nodiscard]] size_t entry_count() const noexcept
+        {
+            std::shared_lock<std::shared_mutex> lock(entriesMutex);
+            return entries.size();
+        }
+
+        [[nodiscard]] bool try_get_entry_info(int index, AtlasRegion& outRegion, std::string* outName = nullptr) const
+        {
+            std::shared_lock<std::shared_mutex> lock(entriesMutex);
+            if (index < 0 || index >= static_cast<int>(entries.size()))
+                return false;
+
+            const auto& entry = entries[static_cast<size_t>(index)];
+            outRegion = entry.region;
+            if (outName)
+                *outName = entry.name;
+            return true;
+        }
+
         static TextureAtlas create(const AtlasConfig& config) 
         {
             TextureAtlas atlas;
@@ -117,6 +138,8 @@ namespace almondnamespace
                 std::cerr << "[Atlas] Rejected empty texture '" << id << "'\n";
                 return std::nullopt;
             }
+
+            std::unique_lock<std::shared_mutex> lock(entriesMutex);
 
             if (lookup.contains(id)) {
                 std::cerr << "[Atlas] Duplicate ID: '" << id << "'\n";
@@ -180,9 +203,11 @@ namespace almondnamespace
             return entry;
         }
 
-		/// Adds a slice entry without new pixel data, just references existing pixels.
+                /// Adds a slice entry without new pixel data, just references existing pixels.
         std::optional<AtlasEntry> add_slice_entry(const std::string& id, int x, int y, int w, int h)
         {
+            std::unique_lock<std::shared_mutex> lock(entriesMutex);
+
             if (w <= 0 || h <= 0) {
                 std::cerr << "[Atlas] Invalid slice size for '" << id << "'\n";
                 return std::nullopt;
@@ -231,11 +256,13 @@ namespace almondnamespace
         }
 
         std::optional<AtlasRegion> get_region(const std::string& id) const {
+            std::shared_lock<std::shared_mutex> lock(entriesMutex);
             auto it = lookup.find(id);
             return (it != lookup.end()) ? std::optional{ it->second } : std::nullopt;
         }
 
         void rebuild_pixels() const {
+            std::shared_lock<std::shared_mutex> lock(entriesMutex);
             const size_t size = static_cast<size_t>(width) * height * 4;
             if (pixel_data.size() != size)
                 pixel_data.resize(size);
@@ -255,6 +282,7 @@ namespace almondnamespace
         }
 
     private:
+        mutable std::shared_mutex entriesMutex;
         std::unordered_map<std::string, AtlasRegion> lookup;
         std::vector<std::vector<bool>> occupancy;
 

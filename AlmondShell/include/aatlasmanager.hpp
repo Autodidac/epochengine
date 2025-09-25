@@ -196,18 +196,7 @@ namespace almondnamespace::atlasmanager
                 return std::nullopt;
             }
             auto& added = *addedOpt;
-
-            int localIndex = -1;
-            for (int i = 0; i < static_cast<int>(sharedAtlas.entries.size()); ++i) {
-                if (sharedAtlas.entries[i].name == name) {
-                    localIndex = i;
-                    break;
-                }
-            }
-            if (localIndex < 0) {
-                std::cerr << "[AtlasRegistrar] Could not find local sprite index for '" << name << "'\n";
-                return std::nullopt;
-            }
+            const int localIndex = added.index;
 
             auto allocated = allocate();
             if (!allocated.is_valid()) {
