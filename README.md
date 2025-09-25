@@ -76,10 +76,32 @@ To build AlmondShell from source you will need the following tools:
 | CMake ≥ 3.10           | Used to generate build files. |
 | Ninja _or_ MSBuild     | Pick the generator that matches your platform. |
 | Git                    | Required for cloning the repository and fetching dependencies. |
-| [vcpkg](https://vcpkg.io/) | Simplifies acquiring third-party libraries such as `asio`. |
+| [vcpkg](https://vcpkg.io/) | Simplifies acquiring third-party libraries listed in `AlmondShell/vcpkg.json`. |
 | Optional: Vulkan SDK   | Needed when working on Vulkan backends listed in `include/avulkan*`. |
 
-> **Note:** The project expects the header-only [`asio`](https://think-async.com/) library. When using vcpkg run `vcpkg install asio` (or add it to your manifest) before configuring the build.
+### vcpkg manifest dependencies
+
+AlmondShell ships with a [vcpkg manifest](AlmondShell/vcpkg.json) so that CMake can automatically fetch all required third-party
+packages when you configure the project in manifest mode (`VCPKG_FEATURE_FLAGS=manifests`). The manifest currently pulls in:
+
+- [`asio`](https://think-async.com/) – Asynchronous networking primitives used by the updater and runtime services.
+- [`fmt`](https://fmt.dev/) – Type-safe, fast formatting for logging and diagnostics.
+- [`glad`](https://glad.dav1d.de/) – OpenGL function loader used by the OpenGL backend.
+- [`glm`](https://github.com/g-truc/glm) – Mathematics library for vector and matrix operations.
+- [`opengl`](https://www.khronos.org/opengl/) – OpenGL utility components supplied by vcpkg.
+- [`raylib`](https://www.raylib.com/) – Optional renderer and tooling integrations.
+- [`sfml`](https://www.sfml-dev.org/) – Additional windowing and multimedia support.
+- [`sdl3`](https://github.com/libsdl-org/SDL) and [`sdl3-image`](https://github.com/libsdl-org/SDL_image) – Cross-platform window,
+  input, and image loading.
+- [`zlib`](https://zlib.net/) – Compression support for packaged assets and downloads.
+
+If you are using a classic (non-manifest) vcpkg workflow, install the same packages manually before configuring CMake, for example:
+
+```bash
+vcpkg install asio fmt glad glm opengl raylib sfml sdl3 sdl3-image zlib
+```
+
+When CMake is configured with vcpkg integration enabled, the dependencies will be restored automatically on subsequent builds.
 
 ---
 
