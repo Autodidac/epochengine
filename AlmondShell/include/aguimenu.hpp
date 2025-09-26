@@ -75,13 +75,11 @@ namespace almondnamespace::menu
         bool initialized = false;
 
         std::vector<std::pair<int, int>> cachedPositions; // x,y per item
-        std::vector<std::pair<int, int>> cachedSizes;      // width,height per item
         std::vector<float> colWidths, rowHeights;
         int cachedWidth = -1;
         int cachedHeight = -1;
         int columns = 1;
         int rows = 0;
-        float cachedScale = 1.0f;
 
         static constexpr int ExpectedColumns = 4;
         static constexpr int ExpectedRowsPerHalf = 3;
@@ -109,13 +107,13 @@ namespace almondnamespace::menu
                 maxItemHeight = std::max(maxItemHeight, float(pair.normal.height));
             }
 
-            const float baseSpacing = LayoutSpacing;
+            const float spacing = LayoutSpacing;
             int computedCols = totalItems;
             if (maxItemWidth > 0.f) {
                 const float availableWidth = static_cast<float>(std::max(1, cachedWidth));
-                const float denom = maxItemWidth + baseSpacing;
+                const float denom = maxItemWidth + spacing;
                 if (denom > 0.f) {
-                    computedCols = static_cast<int>(std::floor((availableWidth + baseSpacing) / denom));
+                    computedCols = static_cast<int>(std::floor((availableWidth + spacing) / denom));
                     computedCols = std::clamp(computedCols, 1, totalItems);
                 }
             }
@@ -135,50 +133,29 @@ namespace almondnamespace::menu
                 rowHeights[row] = std::max(rowHeights[row], float(slice.height));
             }
 
-            float totalWidth = baseSpacing * std::max(0, columns - 1);
+            float totalWidth = spacing * std::max(0, columns - 1);
             for (float w : colWidths) totalWidth += w;
-            float totalHeight = baseSpacing * std::max(0, rows - 1);
+            float totalHeight = spacing * std::max(0, rows - 1);
             for (float h : rowHeights) totalHeight += h;
 
-            const float availW = static_cast<float>(std::max(1, cachedWidth));
-            const float availH = static_cast<float>(std::max(1, cachedHeight));
-            float scaleX = (totalWidth > 0.f) ? (availW / totalWidth) : 1.f;
-            float scaleY = (totalHeight > 0.f) ? (availH / totalHeight) : 1.f;
-            if (!std::isfinite(scaleX)) scaleX = 1.f;
-            if (!std::isfinite(scaleY)) scaleY = 1.f;
-            cachedScale = std::clamp(std::min(scaleX, scaleY), 0.5f, 3.0f);
-
-            const float spacing = baseSpacing * cachedScale;
-            totalWidth = spacing * std::max(0, columns - 1);
-            for (float w : colWidths) totalWidth += w * cachedScale;
-            totalHeight = spacing * std::max(0, rows - 1);
-            for (float h : rowHeights) totalHeight += h * cachedScale;
-
-            const float baseX = std::max(0.f, (availW - totalWidth) * 0.5f);
-            const float baseY = std::max(0.f, (availH - totalHeight) * 0.5f);
+            const float baseX = std::max(0.f, (static_cast<float>(cachedWidth) - totalWidth) * 0.5f);
+            const float baseY = std::max(0.f, (static_cast<float>(cachedHeight) - totalHeight) * 0.5f);
 
             cachedPositions.resize(totalItems);
-            cachedSizes.resize(totalItems);
             float yPos = baseY;
             for (int r = 0; r < rows; ++r) {
                 float xPos = baseX;
                 for (int c = 0; c < columns; ++c) {
                     const int idx = r * columns + c;
                     if (idx < totalItems) {
-                        const float itemW = colWidths[c] * cachedScale;
-                        const float itemH = rowHeights[r] * cachedScale;
                         cachedPositions[idx] = {
                             static_cast<int>(std::round(xPos)),
                             static_cast<int>(std::round(yPos))
                         };
-                        cachedSizes[idx] = {
-                            std::max(1, static_cast<int>(std::lround(itemW))),
-                            std::max(1, static_cast<int>(std::lround(itemH)))
-                        };
                     }
-                    xPos += colWidths[c] * cachedScale + spacing;
+                    xPos += colWidths[c] + spacing;
                 }
-                yPos += rowHeights[r] * cachedScale + spacing;
+                yPos += rowHeights[r] + spacing;
             }
         }
 
@@ -285,10 +262,9 @@ namespace almondnamespace::menu
         }
 
         std::optional<Choice> update_and_draw(std::shared_ptr<core::Context> ctx, core::WindowData* win) {
-            if (!initialized || !win) return std::nullopt;
+            if (!initialized) return std::nullopt;
 
-            if (ctx->get_width_safe() != cachedWidth || ctx->get_height_safe() != cachedHeight ||
-                cachedPositions.size() != slicePairs.size() || cachedSizes.size() != slicePairs.size())
+            if (ctx->get_width_safe() != cachedWidth || ctx->get_height_safe() != cachedHeight)
                 recompute_layout(ctx);
 
             input::poll_input();
@@ -303,18 +279,15 @@ namespace almondnamespace::menu
             bool enterPressed = input::keyPressed.test(input::Key::Enter);
 
             const int totalItems = int(slicePairs.size());
-            if (totalItems == 0 ||
-                cachedPositions.size() != static_cast<size_t>(totalItems) ||
-                cachedSizes.size() != static_cast<size_t>(totalItems))
+            if (totalItems == 0 || cachedPositions.size() != static_cast<size_t>(totalItems))
                 return std::nullopt;
 
             int hover = -1;
             for (int i = 0; i < totalItems; ++i) {
                 const auto& slice = slicePairs[i].normal;
                 const auto& pos = cachedPositions[i];
-                const auto& size = cachedSizes[i];
-                if (mx >= pos.first && mx <= pos.first + size.first &&
-                    my >= pos.second && my <= pos.second + size.second) {
+                if (mx >= pos.first && mx <= pos.first + slice.width &&
+                    my >= pos.second && my <= pos.second + slice.height) {
                     hover = i;
                     break;
                 }
@@ -342,13 +315,20 @@ namespace almondnamespace::menu
                 const auto& slice = isHighlighted ? slicePairs[i].hover : slicePairs[i].normal;
                 if (!is_alive(slice.handle)) continue;
                 const auto& pos = cachedPositions[i];
-                const auto& size = cachedSizes[i];
 
-                ctx->draw_sprite_safe(slice.handle, atlasSpan,
-                    static_cast<float>(pos.first),
-                    static_cast<float>(pos.second),
-                    static_cast<float>(size.first),
-                    static_cast<float>(size.second));
+                win->commandQueue.enqueue([handle = slice.handle,
+                    x = pos.first, y = pos.second,
+                    w = slice.width, h = slice.height]() {
+                        // build span fresh on render thread
+                        auto& atlasVecRT = atlasmanager::get_atlas_vector();
+                        std::span<const TextureAtlas* const> atlasSpanRT(atlasVecRT.data(), atlasVecRT.size());
+
+                        almondnamespace::opengltextures::draw_sprite(
+                            handle, atlasSpanRT,
+                            float(x), float(y),
+                            float(w), float(h)
+                        );
+                    });
             }
 
             const bool triggeredByEnter = enterPressed && !prevEnter;
@@ -375,14 +355,12 @@ namespace almondnamespace::menu
             }
             slicePairs.clear();
             cachedPositions.clear();
-            cachedSizes.clear();
             colWidths.clear();
             rowHeights.clear();
             cachedWidth = -1;
             cachedHeight = -1;
             columns = 1;
             rows = 0;
-            cachedScale = 1.0f;
             initialized = false;
         }
     };
