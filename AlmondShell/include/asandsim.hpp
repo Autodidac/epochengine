@@ -30,11 +30,14 @@
 #include "aplatformpump.hpp"
 #include "arobusttime.hpp"
 #include "aatlasmanager.hpp"
+#include "aspritepool.hpp"
+#include "ascene.hpp"
 #include "aimageloader.hpp" // For a_loadImage
 
 #include <chrono>
 #include <span>
 #include <iostream>
+#include <stdexcept>
 
 namespace almondnamespace::sandsim
 {
@@ -43,144 +46,168 @@ namespace almondnamespace::sandsim
     constexpr int W = 120, H = 80;
     constexpr double STEP_S = 0.016;
 
-    inline bool run_sand(std::shared_ptr<core::Context> ctx)
-    {
-        using namespace almondnamespace;
-
-        // Create the atlas
-        if (!atlasmanager::create_atlas({
-            .name = "sand_atlas",
-            .width = 64,
-            .height = 64,
-            .generate_mipmaps = false }))
+    struct SandSimScene : public scene::Scene {
+        SandSimScene(Logger* L = nullptr, time::Timer* C = nullptr)
+            : Scene(L, C)
         {
-            std::cerr << "[SandSim] Failed to create atlas\n";
-            return false;
         }
 
-        auto* registrar = atlasmanager::get_registrar("sand_atlas");
-        if (!registrar) {
-            std::cerr << "[SandSim] Missing atlas registrar\n";
-            return false;
+        void load() override {
+            Scene::load();
+            setupSprites();
+            grid = gamecore::make_grid<bool>(W, H, false);
+            timer = time::createTimer(0.25);
+            time::setScale(timer, 0.25);
+            acc = 0.0;
         }
 
-        TextureAtlas& atlas = registrar->atlas;
+        bool frame(std::shared_ptr<core::Context> ctx, core::WindowData*) override {
+            if (!ctx)
+                return false;
 
-        // Load sand sprite image
-        auto img = a_loadImage("assets/sand/sand.ppm", false);
-        if (img.pixels.empty()) {
-            std::cerr << "[SandSim] Failed to load sand.ppm\n";
-            return false;
-        }
-
-        // Register sand sprite in atlas and get handle
-        auto handleOpt = registrar->register_atlas_sprites_by_image("sand", img.pixels, img.width, img.height, atlas);
-        if (!handleOpt) {
-            std::cerr << "[SandSim] Failed to register sand sprite\n";
-            return false;
-        }
-        SpriteHandle sandHandle = *handleOpt;
-
-        atlas.rebuild_pixels();
-        atlasmanager::ensure_uploaded(atlas);
-
-        // Correct span construction: from vector of atlas pointers
-        auto& atlasVec = atlasmanager::get_atlas_vector();
-        if (atlasVec.empty()) {
-            std::cerr << "[SandSim] Atlas vector empty\n";
-            return false;
-        }
-        std::span<const TextureAtlas* const> atlasSpan(atlasVec.data(), atlasVec.size());
-
-        auto grid = gamecore::make_grid<bool>(W, H, false);
-
-        time::Timer time = time::createTimer(0.25);
-        time::setScale(time, 0.25);
-
-        double acc = 0;
-        bool game_over = false;
-
-        while (!game_over)
-        {
             platform::pump_events();
-            if (ctx->is_key_down(input::Key::Escape)) break;
+            if (ctx->is_key_down_safe(input::Key::Escape))
+                return false;
 
-            int mx, my;
-            ctx->get_mouse_position(mx, my);
+            int mx = 0, my = 0;
+            ctx->get_mouse_position_safe(mx, my);
             const int w = std::max(1, ctx->get_width_safe());
-            const int h = std::max(1, ctx->get_height_safe());   // was width again
+            const int h = std::max(1, ctx->get_height_safe());
 
-            // scale mouse pixels -> grid coords (W x H)
             const float sx = W / float(w);
             const float sy = H / float(h);
 
             int gx = int(mx * sx);
             int gy = int(my * sy);
-
-            // clamp just in case
             gx = std::clamp(gx, 0, W - 1);
             gy = std::clamp(gy, 0, H - 1);
 
-
-            if (ctx->is_mouse_button_down_safe(input::MouseButton::MouseLeft) && gamecore::in_bounds(W, H, gx, gy)) {
+            if (ctx->is_mouse_button_down_safe(input::MouseButton::MouseLeft) &&
+                gamecore::in_bounds(W, H, gx, gy)) {
                 gamecore::at(grid, W, H, gx, gy) = true;
             }
 
-            advance(time, STEP_S);
-            acc += time::elapsed(time);
-            reset(time);
+            advance(timer, STEP_S);
+            acc += time::elapsed(timer);
+            reset(timer);
 
-            while (acc >= STEP_S)
-            {
+            while (acc >= STEP_S) {
                 acc -= STEP_S;
+                stepSimulation();
+            }
 
-                auto next = grid;
-                for (int y = H - 1; y >= 0; --y) {
-                    for (int x = 0; x < W; ++x) {
-                        if (gamecore::at(grid, W, H, x, y)) {
-                            if (gamecore::is_free(grid, W, H, x, y + 1, false)) {
-                                gamecore::at(next, W, H, x, y + 1) = true;
-                                gamecore::at(next, W, H, x, y) = false;
-                            }
-                            else if (gamecore::is_free(grid, W, H, x - 1, y + 1, false)) {
-                                gamecore::at(next, W, H, x - 1, y + 1) = true;
-                                gamecore::at(next, W, H, x, y) = false;
-                            }
-                            else if (gamecore::is_free(grid, W, H, x + 1, y + 1, false)) {
-                                gamecore::at(next, W, H, x + 1, y + 1) = true;
-                                gamecore::at(next, W, H, x, y) = false;
-                            }
-                        }
+            ctx->clear_safe(ctx);
+            auto& atlasVec = atlasmanager::get_atlas_vector();
+            std::span<const TextureAtlas* const> atlasSpan(atlasVec.data(), atlasVec.size());
+
+            const float cw = float(ctx->get_width_safe()) / W;
+            const float ch = float(ctx->get_height_safe()) / H;
+
+            if (!spritepool::is_alive(sandHandle))
+                return true;
+
+            for (int y = 0; y < H; ++y) {
+                for (int x = 0; x < W; ++x) {
+                    if (gamecore::at(grid, W, H, x, y)) {
+                        ctx->draw_sprite_safe(sandHandle, atlasSpan,
+                            x * cw, y * ch, cw, ch);
                     }
                 }
-                grid = next;
+            }
 
-                ctx->clear_safe(ctx);
+            ctx->present_safe();
+            return true;
+        }
 
-                float cw = float(ctx->get_width()) / W;
-                float ch = float(ctx->get_height()) / H;
+        void unload() override {
+            Scene::unload();
+            grid.clear();
+            acc = 0.0;
+        }
 
-                if (!spritepool::is_alive(sandHandle)) {
-                    ctx->present();
-                    continue;
+    private:
+        void setupSprites() {
+            const bool createdAtlas = atlasmanager::create_atlas({
+                .name = "sand_atlas",
+                .width = 64,
+                .height = 64,
+                .generate_mipmaps = false });
+
+            auto* registrar = atlasmanager::get_registrar("sand_atlas");
+            if (!registrar)
+                throw std::runtime_error("[SandSim] Missing atlas registrar");
+
+            TextureAtlas& atlas = registrar->atlas;
+            bool registered = false;
+
+            if (auto existing = atlasmanager::registry.get("sand")) {
+                auto handle = std::get<0>(*existing);
+                if (spritepool::is_alive(handle)) {
+                    sandHandle = handle;
                 }
+            }
 
-                // No need to draw dummy sprite, draw only what you want visible
-                for (int y = 0; y < H; ++y)
-                {
-                    for (int x = 0; x < W; ++x)
-                    {
-                        if (gamecore::at(grid, W, H, x, y)) {
-                            ctx->draw_sprite(sandHandle, atlasSpan,
-                                x * cw, y * ch, cw, ch);
-                        }
-                    }
-                }
+            if (!spritepool::is_alive(sandHandle)) {
+                auto img = a_loadImage("assets/sand/sand.ppm", false);
+                if (img.pixels.empty())
+                    throw std::runtime_error("[SandSim] Failed to load sand.ppm");
 
-                ctx->present();
+                auto handleOpt = registrar->register_atlas_sprites_by_image(
+                    "sand", img.pixels, img.width, img.height, atlas);
+                if (!handleOpt || !spritepool::is_alive(*handleOpt))
+                    throw std::runtime_error("[SandSim] Failed to register sand sprite");
+
+                sandHandle = *handleOpt;
+                registered = true;
+            }
+
+            if (createdAtlas || registered) {
+                atlas.rebuild_pixels();
+                atlasmanager::ensure_uploaded(atlas);
             }
         }
 
-        return game_over;
+        void stepSimulation() {
+            auto next = grid;
+            for (int y = H - 1; y >= 0; --y) {
+                for (int x = 0; x < W; ++x) {
+                    if (gamecore::at(grid, W, H, x, y)) {
+                        if (gamecore::is_free(grid, W, H, x, y + 1, false)) {
+                            gamecore::at(next, W, H, x, y + 1) = true;
+                            gamecore::at(next, W, H, x, y) = false;
+                        }
+                        else if (gamecore::is_free(grid, W, H, x - 1, y + 1, false)) {
+                            gamecore::at(next, W, H, x - 1, y + 1) = true;
+                            gamecore::at(next, W, H, x, y) = false;
+                        }
+                        else if (gamecore::is_free(grid, W, H, x + 1, y + 1, false)) {
+                            gamecore::at(next, W, H, x + 1, y + 1) = true;
+                            gamecore::at(next, W, H, x, y) = false;
+                        }
+                    }
+                }
+            }
+            grid = std::move(next);
+        }
+
+        gamecore::grid_t<bool> grid{};
+        SpriteHandle sandHandle{};
+        time::Timer timer{};
+        double acc = 0.0;
+    };
+
+    inline bool run_sand(std::shared_ptr<core::Context> ctx)
+    {
+        SandSimScene scene;
+        scene.load();
+
+        auto* window = ctx ? ctx->windowData : nullptr;
+        bool running = true;
+        while (running && ctx)
+            running = scene.frame(ctx, window);
+
+        scene.unload();
+        return running;
     }
-}
+
+} // namespace almondnamespace::sandsim

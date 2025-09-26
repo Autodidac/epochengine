@@ -1966,7 +1966,20 @@ int APIENTRY wWinMain(_In_ HINSTANCE hInstance,
     almondnamespace::core::ShowConsole();
 #endif
 
-    enum class SceneID { Menu, Snake, Tetris, Match3, Sliding, Minesweeper, Exit };
+    enum class SceneID {
+        Menu,
+        Snake,
+        Tetris,
+        Pacman,
+        Sokoban,
+        Match3,
+        Sliding,
+        Minesweeper,
+        Game2048,
+        Sandsim,
+        Cellular,
+        Exit
+    };
 
     SceneID g_sceneID = SceneID::Menu;
     std::unique_ptr<almondnamespace::scene::Scene> g_activeScene;
@@ -2048,6 +2061,18 @@ int APIENTRY wWinMain(_In_ HINSTANCE hInstance,
                                 g_activeScene->load();
                                 g_sceneID = SceneID::Tetris;
                             }
+                            else if (*choice == almondnamespace::menu::Choice::Pacman) {
+                                if (g_activeScene) g_activeScene->unload();
+                                g_activeScene = std::make_unique<almondnamespace::pacman::PacmanScene>();
+                                g_activeScene->load();
+                                g_sceneID = SceneID::Pacman;
+                            }
+                            else if (*choice == almondnamespace::menu::Choice::Sokoban) {
+                                if (g_activeScene) g_activeScene->unload();
+                                g_activeScene = std::make_unique<almondnamespace::sokoban::SokobanScene>();
+                                g_activeScene->load();
+                                g_sceneID = SceneID::Sokoban;
+                            }
                             else if (*choice == almondnamespace::menu::Choice::Bejeweled) {
                                 if (g_activeScene) g_activeScene->unload();
                                 g_activeScene = std::make_unique<almondnamespace::match3::Match3Scene>();
@@ -2066,6 +2091,27 @@ int APIENTRY wWinMain(_In_ HINSTANCE hInstance,
                                 g_activeScene->load();
                                 g_sceneID = SceneID::Minesweeper;
                             }
+                            else if (*choice == almondnamespace::menu::Choice::Fourty) {
+                                if (g_activeScene) g_activeScene->unload();
+                                g_activeScene = std::make_unique<almondnamespace::game2048::Game2048Scene>();
+                                g_activeScene->load();
+                                g_sceneID = SceneID::Game2048;
+                            }
+                            else if (*choice == almondnamespace::menu::Choice::Sandsim) {
+                                if (g_activeScene) g_activeScene->unload();
+                                g_activeScene = std::make_unique<almondnamespace::sandsim::SandSimScene>();
+                                g_activeScene->load();
+                                g_sceneID = SceneID::Sandsim;
+                            }
+                            else if (*choice == almondnamespace::menu::Choice::Cellular) {
+                                if (g_activeScene) g_activeScene->unload();
+                                g_activeScene = std::make_unique<almondnamespace::cellular::CellularScene>();
+                                g_activeScene->load();
+                                g_sceneID = SceneID::Cellular;
+                            }
+                            else if (*choice == almondnamespace::menu::Choice::Settings) {
+                                std::cout << "[Menu] Settings selected.\n";
+                            }
                             else if (*choice == almondnamespace::menu::Choice::Exit) {
                                 g_sceneID = SceneID::Exit;
                                 running = false;
@@ -2075,9 +2121,14 @@ int APIENTRY wWinMain(_In_ HINSTANCE hInstance,
                     }
                     case SceneID::Snake:
                     case SceneID::Tetris:
+                    case SceneID::Pacman:
+                    case SceneID::Sokoban:
                     case SceneID::Match3:
                     case SceneID::Sliding:
                     case SceneID::Minesweeper:
+                    case SceneID::Game2048:
+                    case SceneID::Sandsim:
+                    case SceneID::Cellular:
                         if (g_activeScene) {
                             ctxRunning = g_activeScene->frame(ctx, win);
                             if (!ctxRunning) {

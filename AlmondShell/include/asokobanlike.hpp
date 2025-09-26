@@ -30,19 +30,22 @@
 #include "ainput.hpp"
 #include "agamecore.hpp"
 #include "aatlasmanager.hpp"
+#include "aspritepool.hpp"
+#include "ascene.hpp"
 #include "aimageloader.hpp"
 
+#include <algorithm>
 #include <iostream>
 #include <optional>
+#include <string>
 #include <vector>
 #include <span>
+#include <stdexcept>
 
 namespace almondnamespace::sokoban
 {
     constexpr int GRID_W = 16;
     constexpr int GRID_H = 12;
-    constexpr double STEP_S = 0.16; // 160ms per move
-
     enum Cell { FLOOR, WALL, GOAL };
 
     struct State
@@ -75,101 +78,51 @@ namespace almondnamespace::sokoban
         }
     };
 
-    inline bool run_sokoban(std::shared_ptr<core::Context> ctx)
-    {
-        State s;
-
-        // Load each sprite's image separately
-        auto wallImg = almondnamespace::a_loadImage("assets/atestimage.ppm", false);
-        auto floorImg = almondnamespace::a_loadImage("assets/defaults/default.ppm", false);
-        auto goalImg = almondnamespace::a_loadImage("assets/atestimage.ppm", false);
-        auto boxImg = almondnamespace::a_loadImage("assets/atestimage.ppm", false);
-        auto playerImg = almondnamespace::a_loadImage("assets/defaults/yellow.ppm", false);
-
-        // Verify all loaded
-        if (wallImg.pixels.empty() || floorImg.pixels.empty() || goalImg.pixels.empty() ||
-            boxImg.pixels.empty() || playerImg.pixels.empty())
+    struct SokobanScene : public scene::Scene {
+        SokobanScene(Logger* L = nullptr, time::Timer* C = nullptr)
+            : Scene(L, C)
         {
-            std::cerr << "[Sokoban] Failed to load one or more sprite images\n";
-            return false;
         }
 
-        // Create atlas for all sprites
-        if (!almondnamespace::atlasmanager::create_atlas({
-            .name = "sokoban_atlas",
-            .width = 512,
-            .height = 512,
-            .generate_mipmaps = false }))
-        {
-            std::cerr << "[Sokoban] Failed to create atlas\n";
-            return false;
+        void load() override {
+            Scene::load();
+            setupSprites();
+            state = {};
         }
 
-        auto* registrar = almondnamespace::atlasmanager::get_registrar("sokoban_atlas");
-        if (!registrar) {
-            std::cerr << "[Sokoban] Failed to get atlas registrar\n";
-            return false;
-        }
+        bool frame(std::shared_ptr<core::Context> ctx, core::WindowData*) override {
+            if (!ctx)
+                return false;
 
-        // Register sprites by image pixel data
-        auto wallHandleOpt = registrar->register_atlas_sprites_by_image("wall", wallImg.pixels, wallImg.width, wallImg.height, registrar->atlas);
-        auto floorHandleOpt = registrar->register_atlas_sprites_by_image("floor", floorImg.pixels, floorImg.width, floorImg.height, registrar->atlas);
-        auto goalHandleOpt = registrar->register_atlas_sprites_by_image("goal", goalImg.pixels, goalImg.width, goalImg.height, registrar->atlas);
-        auto boxHandleOpt = registrar->register_atlas_sprites_by_image("box", boxImg.pixels, boxImg.width, boxImg.height, registrar->atlas);
-        auto playerHandleOpt = registrar->register_atlas_sprites_by_image("player", playerImg.pixels, playerImg.width, playerImg.height, registrar->atlas);
-
-        if (!wallHandleOpt || !floorHandleOpt || !goalHandleOpt || !boxHandleOpt || !playerHandleOpt) {
-            std::cerr << "[Sokoban] Failed to register one or more sprites\n";
-            return false;
-        }
-
-        // Upload atlas pixels and GPU upload
-        registrar->atlas.rebuild_pixels();
-        almondnamespace::atlasmanager::ensure_uploaded(registrar->atlas);
-
-        SpriteHandle wallH = *wallHandleOpt;
-        SpriteHandle floorH = *floorHandleOpt;
-        SpriteHandle goalH = *goalHandleOpt;
-        SpriteHandle boxH = *boxHandleOpt;
-        SpriteHandle playerH = *playerHandleOpt;
-
-        auto& atlasVec = almondnamespace::atlasmanager::get_atlas_vector();
-        std::span<const TextureAtlas* const> atlasSpan(atlasVec.data(), atlasVec.size());
-
-        time::Timer timer = time::createTimer(0.25);
-        double acc = 0.0;
-        bool game_over = false;
-
-        while (!game_over)
-        {
             platform::pump_events();
+            if (ctx->is_key_down_safe(input::Key::Escape))
+                return false;
 
-            if (ctx->is_key_down_safe(input::Key::Escape)) break;
-
-            int dx = 0, dy = 0;
+            int dx = 0;
+            int dy = 0;
             if (ctx->is_key_down_safe(input::Key::A) || ctx->is_key_down_safe(input::Key::Left))  dx = -1;
             if (ctx->is_key_down_safe(input::Key::D) || ctx->is_key_down_safe(input::Key::Right)) dx = 1;
             if (ctx->is_key_down_safe(input::Key::W) || ctx->is_key_down_safe(input::Key::Up))    dy = -1;
             if (ctx->is_key_down_safe(input::Key::S) || ctx->is_key_down_safe(input::Key::Down))  dy = 1;
 
-            int nx = s.px + dx;
-            int ny = s.py + dy;
+            int nx = state.px + dx;
+            int ny = state.py + dy;
 
             bool blocked = false;
             if (nx < 0 || nx >= GRID_W || ny < 0 || ny >= GRID_H) blocked = true;
-            else if (s.map[nx + ny * GRID_W] == WALL) blocked = true;
+            else if (state.map[nx + ny * GRID_W] == WALL) blocked = true;
 
-            if (!blocked && s.box[nx + ny * GRID_W]) {
+            if (!blocked && state.box[nx + ny * GRID_W]) {
                 int bx = nx + dx;
                 int by = ny + dy;
 
                 bool boxBlocked = (bx < 0 || bx >= GRID_W || by < 0 || by >= GRID_H) ||
-                    (s.map[bx + by * GRID_W] == WALL) ||
-                    s.box[bx + by * GRID_W];
+                    (state.map[bx + by * GRID_W] == WALL) ||
+                    state.box[bx + by * GRID_W];
 
                 if (!boxBlocked) {
-                    s.box[bx + by * GRID_W] = true;
-                    s.box[nx + ny * GRID_W] = false;
+                    state.box[bx + by * GRID_W] = true;
+                    state.box[nx + ny * GRID_W] = false;
                 }
                 else {
                     blocked = true;
@@ -177,49 +130,116 @@ namespace almondnamespace::sokoban
             }
 
             if (!blocked) {
-                s.px = nx;
-                s.py = ny;
-            }
-
-            advance(timer, 0.016);
-            acc += time::elapsed(timer);
-            reset(timer);
-
-            while (acc >= STEP_S)
-            {
-                acc -= STEP_S;
-                // No extra per-step logic here yet
+                state.px = nx;
+                state.py = ny;
             }
 
             ctx->clear_safe(ctx);
 
-            float cw = float(ctx->get_width_safe()) / GRID_W;
-            float ch = float(ctx->get_height_safe()) / GRID_H;
+            auto& atlasVec = atlasmanager::get_atlas_vector();
+            std::span<const TextureAtlas* const> atlasSpan(atlasVec.data(), atlasVec.size());
 
-            // Draw tiles
+            const float cw = float(std::max(1, ctx->get_width_safe())) / GRID_W;
+            const float ch = float(std::max(1, ctx->get_height_safe())) / GRID_H;
+
             for (int y = 0; y < GRID_H; ++y) {
                 for (int x = 0; x < GRID_W; ++x) {
-                    SpriteHandle h;
-                    switch (s.map[x + y * GRID_W]) {
-                    case FLOOR: h = floorH; break;
-                    case WALL:  h = wallH;  break;
-                    case GOAL:  h = goalH;  break;
-                    default:    h = floorH; break;
+                    SpriteHandle handle = floorHandle;
+                    switch (state.map[x + y * GRID_W]) {
+                    case FLOOR: handle = floorHandle; break;
+                    case WALL:  handle = wallHandle;  break;
+                    case GOAL:  handle = goalHandle;  break;
+                    default:    handle = floorHandle; break;
                     }
-                    ctx->draw_sprite_safe(h, atlasSpan, x * cw, y * ch, cw, ch);
 
-                    if (s.box[x + y * GRID_W]) {
-                        ctx->draw_sprite_safe(boxH, atlasSpan, x * cw, y * ch, cw, ch);
-                    }
+                    if (spritepool::is_alive(handle))
+                        ctx->draw_sprite_safe(handle, atlasSpan, x * cw, y * ch, cw, ch);
+
+                    if (state.box[x + y * GRID_W] && spritepool::is_alive(boxHandle))
+                        ctx->draw_sprite_safe(boxHandle, atlasSpan, x * cw, y * ch, cw, ch);
                 }
             }
 
-            // Draw player
-            ctx->draw_sprite_safe(playerH, atlasSpan, s.px * cw, s.py * ch, cw, ch);
+            if (spritepool::is_alive(playerHandle))
+                ctx->draw_sprite_safe(playerHandle, atlasSpan, state.px * cw, state.py * ch, cw, ch);
 
             ctx->present_safe();
+            return true;
         }
 
-        return game_over;
+        void unload() override {
+            Scene::unload();
+            state = {};
+        }
+
+    private:
+        void setupSprites() {
+            const bool createdAtlas = atlasmanager::create_atlas({
+                .name = "sokoban_atlas",
+                .width = 512,
+                .height = 512,
+                .generate_mipmaps = false });
+
+            auto* registrar = atlasmanager::get_registrar("sokoban_atlas");
+            if (!registrar)
+                throw std::runtime_error("[Sokoban] Failed to get atlas registrar");
+
+            TextureAtlas& atlas = registrar->atlas;
+            bool registeredAny = false;
+
+            auto ensureSprite = [&](const char* name, const char* path, SpriteHandle& out) {
+                if (auto existing = atlasmanager::registry.get(std::string(name))) {
+                    auto handle = std::get<0>(*existing);
+                    if (spritepool::is_alive(handle)) {
+                        out = handle;
+                        return;
+                    }
+                }
+
+                auto img = a_loadImage(std::string(path), false);
+                if (img.pixels.empty())
+                    throw std::runtime_error("[Sokoban] Failed to load sprite asset: " + std::string(path));
+
+                auto handleOpt = registrar->register_atlas_sprites_by_image(
+                    std::string(name), img.pixels, img.width, img.height, atlas);
+                if (!handleOpt || !spritepool::is_alive(*handleOpt))
+                    throw std::runtime_error("[Sokoban] Failed to register sprite: " + std::string(name));
+
+                out = *handleOpt;
+                registeredAny = true;
+            };
+
+            ensureSprite("wall", "assets/atestimage.ppm", wallHandle);
+            ensureSprite("floor", "assets/defaults/default.ppm", floorHandle);
+            ensureSprite("goal", "assets/atestimage.ppm", goalHandle);
+            ensureSprite("box", "assets/atestimage.ppm", boxHandle);
+            ensureSprite("player", "assets/defaults/yellow.ppm", playerHandle);
+
+            if (createdAtlas || registeredAny) {
+                atlas.rebuild_pixels();
+                atlasmanager::ensure_uploaded(atlas);
+            }
+        }
+
+        State state{};
+        SpriteHandle wallHandle{};
+        SpriteHandle floorHandle{};
+        SpriteHandle goalHandle{};
+        SpriteHandle boxHandle{};
+        SpriteHandle playerHandle{};
+    };
+
+    inline bool run_sokoban(std::shared_ptr<core::Context> ctx)
+    {
+        SokobanScene scene;
+        scene.load();
+
+        auto* window = ctx ? ctx->windowData : nullptr;
+        bool running = true;
+        while (running && ctx)
+            running = scene.frame(ctx, window);
+
+        scene.unload();
+        return running;
     }
 } // namespace almondnamespace::sokoban
