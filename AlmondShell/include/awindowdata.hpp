@@ -15,7 +15,6 @@ namespace almondnamespace::core
     struct WindowData
     {
         HWND hwnd{};
-        HWND parent{};
         HDC  hdc{};
         HGLRC glContext{};
         bool running = true;
@@ -36,8 +35,8 @@ namespace almondnamespace::core
         std::atomic<bool> quiesced{ false };
 
         WindowData() = default;
-        WindowData(HWND h, HWND p, HDC dc, HGLRC ctx, bool shared, almondnamespace::core::ContextType t)
-            : hwnd(h), parent(p), hdc(dc), glContext(ctx), usesSharedContext(shared), type(t) {
+        WindowData(HWND h, HDC dc, HGLRC ctx, bool shared, almondnamespace::core::ContextType t)
+            : hwnd(h), hdc(dc), glContext(ctx), usesSharedContext(shared), type(t) {
         }
 
         // Non-copyable, non-movable
