@@ -45,7 +45,6 @@
 
 //#include "araylibcontext_win32.hpp"
 
-#include <algorithm>
 #include <stdexcept>
 #include <iostream>
 
@@ -82,41 +81,7 @@ namespace almondnamespace::raylibcontext
         s_raylibstate.onResize = std::move(onResize);
         s_raylibstate.width = w;
         s_raylibstate.height = h;
-
-        HWND dockingTarget = nullptr;
-        if (ctx) {
-            if (ctx->windowData && ctx->windowData->hwnd) {
-                dockingTarget = ctx->windowData->hwnd;
-            }
-            else if (ctx->hwnd) {
-                dockingTarget = ctx->hwnd;
-            }
-
-            if (ctx->width > 0 && ctx->height > 0) {
-                s_raylibstate.width = static_cast<unsigned int>(ctx->width);
-                s_raylibstate.height = static_cast<unsigned int>(ctx->height);
-            }
-        }
-
-        if (!dockingTarget && parentWnd) {
-            dockingTarget = parentWnd;
-        }
-
-        if (!dockingTarget && s_raylibstate.parent) {
-            dockingTarget = s_raylibstate.parent;
-        }
-
-        if (dockingTarget) {
-            RECT client{};
-            if (GetClientRect(dockingTarget, &client)) {
-                const auto width = std::max<LONG>(1, client.right - client.left);
-                const auto height = std::max<LONG>(1, client.bottom - client.top);
-                s_raylibstate.width = static_cast<unsigned int>(width);
-                s_raylibstate.height = static_cast<unsigned int>(height);
-            }
-        }
-
-        s_raylibstate.parent = dockingTarget;
+        s_raylibstate.parent = parentWnd;
 
 
         static bool initialized = false;
@@ -174,7 +139,7 @@ namespace almondnamespace::raylibcontext
         std::cout << "[Raylib] Context: " << s_raylibstate.glContext << "\n";
 
         if (s_raylibstate.parent) {
-            RECT parentRect{};
+            RECT parentRect;
             GetWindowRect(s_raylibstate.parent, &parentRect);
             SetParent(s_raylibstate.hwnd, s_raylibstate.parent);
             ShowWindow(s_raylibstate.hwnd, SW_SHOW);
@@ -184,21 +149,14 @@ namespace almondnamespace::raylibcontext
             style |= WS_CHILD | WS_VISIBLE;
             SetWindowLongPtr(s_raylibstate.hwnd, GWL_STYLE, style);
 
-            RECT rc{};
-            GetClientRect(s_raylibstate.parent, &rc);
-            const auto targetWidth = std::max<LONG>(1, rc.right - rc.left);
-            const auto targetHeight = std::max<LONG>(1, rc.bottom - rc.top);
-
-            SetWindowPos(s_raylibstate.hwnd, nullptr, 0, 0,
-                targetWidth,
-                targetHeight,
+            SetWindowPos(s_raylibstate.hwnd, nullptr, s_raylibstate.width, 0,
+                s_raylibstate.width,
+                s_raylibstate.height,
                 SWP_NOZORDER | SWP_FRAMECHANGED | SWP_SHOWWINDOW);
 
-            if (s_raylibstate.onResize) {
-                s_raylibstate.onResize(static_cast<int>(targetWidth), static_cast<int>(targetHeight));
-            }
-
-            PostMessage(s_raylibstate.parent, WM_SIZE, 0, MAKELPARAM(targetWidth, targetHeight));
+            RECT rc;
+            GetClientRect(s_raylibstate.parent, &rc);
+            PostMessage(s_raylibstate.parent, WM_SIZE, 0, MAKELPARAM(rc.right - rc.left, rc.bottom - rc.top));
         }
 
         s_raylibstate.running = true;

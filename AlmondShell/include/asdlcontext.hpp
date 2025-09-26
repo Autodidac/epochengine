@@ -44,7 +44,6 @@
 #include "aatlasmanager.hpp"
 #include "asdlstate.hpp"
 
-#include <algorithm>
 #include <stdexcept>
 #include <iostream>
 
@@ -105,39 +104,7 @@ namespace almondnamespace::sdlcontext
         sdlcontext.onResize = std::move(onResize);
         sdlcontext.width = w;
         sdlcontext.height = h;
-
-        HWND dockingTarget = nullptr;
-        if (ctx) {
-            if (ctx->windowData && ctx->windowData->hwnd) {
-                dockingTarget = ctx->windowData->hwnd;
-            }
-            else if (ctx->hwnd) {
-                dockingTarget = ctx->hwnd;
-            }
-
-            if (ctx->width > 0 && ctx->height > 0) {
-                sdlcontext.width = ctx->width;
-                sdlcontext.height = ctx->height;
-            }
-        }
-
-        if (!dockingTarget && parentWnd) {
-            dockingTarget = parentWnd;
-        }
-
-        if (!dockingTarget && sdlcontext.parent) {
-            dockingTarget = sdlcontext.parent;
-        }
-
-        if (dockingTarget) {
-            RECT client{};
-            if (GetClientRect(dockingTarget, &client)) {
-                sdlcontext.width = std::max<LONG>(1, client.right - client.left);
-                sdlcontext.height = std::max<LONG>(1, client.bottom - client.top);
-            }
-        }
-
-        sdlcontext.parent = dockingTarget;
+        sdlcontext.parent = parentWnd;
 
         if (SDL_Init(SDL_INIT_VIDEO) == 0) {
             throw std::runtime_error("[SDL] Failed to initialize SDL: " + std::string(SDL_GetError()));
@@ -202,28 +169,21 @@ namespace almondnamespace::sdlcontext
         }
 
         if (sdlcontext.parent) {
-            std::cout << "[SDL] Setting parent window: " << sdlcontext.parent << "\n";
+            // SDL_SetWindowParent(ctx.window, parentWindow);
+			std::cout << "[SDL] Setting parent window: " << sdlcontext.parent << "\n";
             SetParent(hwnd, sdlcontext.parent);
             LONG_PTR style = GetWindowLongPtr(hwnd, GWL_STYLE);
             style &= ~WS_OVERLAPPEDWINDOW;
             style |= WS_CHILD | WS_VISIBLE;
             SetWindowLongPtr(hwnd, GWL_STYLE, style);
-
-            RECT rc{};
-            GetClientRect(sdlcontext.parent, &rc);
-            const auto targetWidth = std::max<LONG>(1, rc.right - rc.left);
-            const auto targetHeight = std::max<LONG>(1, rc.bottom - rc.top);
-
-            SetWindowPos(sdlcontext.hwnd, nullptr, 0, 0,
-                targetWidth,
-                targetHeight,
+            SetWindowPos(sdlcontext.hwnd, nullptr, 0, sdlcontext.height,
+                sdlcontext.width,
+                sdlcontext.height, 
                 SWP_NOZORDER | SWP_FRAMECHANGED | SWP_SHOWWINDOW);
 
-            if (sdlcontext.onResize) {
-                sdlcontext.onResize(static_cast<int>(targetWidth), static_cast<int>(targetHeight));
-            }
-
-            PostMessage(sdlcontext.parent, WM_SIZE, 0, MAKELPARAM(targetWidth, targetHeight));
+            RECT rc;
+            GetClientRect(sdlcontext.parent, &rc);
+            PostMessage(sdlcontext.parent, WM_SIZE, 0, MAKELPARAM(rc.right - rc.left, rc.bottom - rc.top));
 
         }
         // SDL_SetRenderDrawColor(ctx.renderer, 0, 0, 0, SDL_ALPHA_OPAQUE);
