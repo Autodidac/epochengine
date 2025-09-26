@@ -41,9 +41,11 @@
 #endif
 
 //STL
-#include <iostream> 
+#include <iostream>
 #include <cstdint>
 #include <bitset>
+#include <atomic>
+#include <thread>
 
 namespace almondnamespace::input // Input namespace
 {
@@ -89,6 +91,9 @@ namespace almondnamespace::input // Input namespace
     };
 
     // --- State Storage ---
+    inline std::thread::id g_pollingThread{};
+    inline std::atomic<bool> g_pollingThreadLocked{ false };
+
     inline std::bitset<Key::Count> keyDown{};
     inline std::bitset<Key::Count> keyPressed{};
 
@@ -98,6 +103,27 @@ namespace almondnamespace::input // Input namespace
     inline int mouseX = 0;
     inline int mouseY = 0;
     inline int mouseWheel = 0;
+
+    inline void designate_polling_thread(std::thread::id id) {
+        g_pollingThread = id;
+        g_pollingThreadLocked.store(true, std::memory_order_release);
+    }
+
+    inline void designate_polling_thread_to_current() {
+        designate_polling_thread(std::this_thread::get_id());
+    }
+
+    inline void clear_polling_thread_designation() {
+        g_pollingThread = std::thread::id{};
+        g_pollingThreadLocked.store(false, std::memory_order_release);
+    }
+
+    inline bool can_poll_on_this_thread() {
+        if (!g_pollingThreadLocked.load(std::memory_order_acquire)) {
+            return true;
+        }
+        return std::this_thread::get_id() == g_pollingThread;
+    }
 
     // --- Platform-specific helpers ---
 #if defined(_WIN32)
@@ -367,6 +393,10 @@ inline constexpr uint16_t map_key_to_linux(Key k) {
 // Poll and update input states on Win32
 inline void poll_input()
 {
+    if (!can_poll_on_this_thread()) {
+        return;
+    }
+
     // Reset pressed states; pressed is "went down this frame"
     keyPressed.reset();
     mousePressed.reset();
@@ -422,6 +452,10 @@ inline void poll_input()
 // update bitsets accordingly.
 inline void poll_input() // macOS input polling
 {
+    if (!can_poll_on_this_thread()) {
+        return;
+    }
+
     previous_keys = current_keys;
     previous_mouse = current_mouse;
 
@@ -461,6 +495,10 @@ inline void poll_input() // macOS input polling
 // update bitsets accordingly.
 inline void poll_input(Display * display, Window window) // Linux input polling via X11/XInput2
 {
+    if (!can_poll_on_this_thread()) {
+        return;
+    }
+
     previous_keys = current_keys;
     previous_mouse = current_mouse;
 
