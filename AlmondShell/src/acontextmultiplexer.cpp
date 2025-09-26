@@ -64,6 +64,31 @@ void MakeDockable(HWND hwnd, HWND parent) {
 #endif
 }
 
+namespace
+{
+    void EnsureChildWindow(HWND hwnd, HWND parent)
+    {
+        if (!hwnd || !parent) return;
+
+        HWND currentParent = GetParent(hwnd);
+        if (currentParent != parent) {
+            LONG_PTR style = GetWindowLongPtr(hwnd, GWL_STYLE);
+            style &= ~(WS_POPUP | WS_OVERLAPPEDWINDOW);
+            style |= WS_CHILD | WS_VISIBLE | WS_CLIPSIBLINGS | WS_CLIPCHILDREN;
+            SetWindowLongPtr(hwnd, GWL_STYLE, style);
+            SetParent(hwnd, parent);
+        }
+
+        RECT rc{};
+        GetClientRect(parent, &rc);
+        const int width = std::max<LONG>(1, rc.right - rc.left);
+        const int height = std::max<LONG>(1, rc.bottom - rc.top);
+
+        SetWindowPos(hwnd, nullptr, 0, 0, width, height,
+            SWP_NOZORDER | SWP_NOACTIVATE | SWP_FRAMECHANGED | SWP_SHOWWINDOW);
+    }
+}
+
 namespace almondnamespace::core
 {
 
@@ -333,7 +358,7 @@ namespace almondnamespace::core
                 }
 #endif
 
-                auto winPtr = std::make_unique<WindowData>(hwnd, hdc, glrc, true, type);
+                auto winPtr = std::make_unique<WindowData>(hwnd, parent, hdc, glrc, true, type);
                 if (parent) MakeDockable(hwnd, parent);
                 {
                     std::scoped_lock lock(windowsMutex);
@@ -427,7 +452,8 @@ namespace almondnamespace::core
 #ifdef ALMOND_USING_SDL
                 case ContextType::SDL:
                     std::cerr << "[Init] Initializing SDL context for hwnd=" << hwnd << "\n";
-                    almondnamespace::sdlcontext::sdl_initialize(ctx);
+                    almondnamespace::sdlcontext::sdl_initialize(
+                        ctx, parent, ctx->width, ctx->height, w ? w->onResize : nullptr);
                     break;
 #endif
 #ifdef ALMOND_USING_SFML
@@ -439,11 +465,45 @@ namespace almondnamespace::core
 #ifdef ALMOND_USING_RAYLIB
                 case ContextType::RayLib:
                     std::cerr << "[Init] Initializing RayLib context for hwnd=" << hwnd << "\n";
-                    almondnamespace::raylibcontext::raylib_initialize(ctx);
+                    almondnamespace::raylibcontext::raylib_initialize(
+                        ctx, parent, ctx->width, ctx->height, w ? w->onResize : nullptr);
                     break;
 #endif
                 default:
                     break;
+                }
+
+                if (w) {
+                    w->parent = parent;
+                    HWND actualHwnd = ctx->hwnd;
+                    if (actualHwnd && actualHwnd != hwnd) {
+                        HWND oldHost = hwnd;
+                        HDC oldDC = w->hdc;
+                        if (w->hwnd == hwnd) {
+                            w->hwnd = actualHwnd;
+                        }
+                        if (w->context && w->context->windowData == w.get()) {
+                            w->context->hwnd = actualHwnd;
+                        }
+                        if (ctx->hdc) {
+                            w->hdc = ctx->hdc;
+                        }
+                        if (ctx->hglrc) {
+                            w->glContext = ctx->hglrc;
+                        }
+                        w->width = ctx->width;
+                        w->height = ctx->height;
+                        if (oldHost && oldDC && oldHost != actualHwnd) {
+                            ReleaseDC(oldHost, oldDC);
+                        }
+                        if (oldHost && oldHost != actualHwnd) {
+                            DestroyWindow(oldHost);
+                        }
+                    }
+
+                    if (parent && w->hwnd) {
+                        EnsureChildWindow(w->hwnd, parent);
+                    }
                 }
             }
             };
@@ -509,7 +569,10 @@ namespace almondnamespace::core
         }
 
         // Make window dockable if a parent is provided
-        if (parent) MakeDockable(hwnd, parent);
+        if (parent) {
+            MakeDockable(hwnd, parent);
+            EnsureChildWindow(hwnd, parent);
+        }
 
         if (g_backends.empty()) {
             InitializeAllContexts();
@@ -549,10 +612,11 @@ namespace almondnamespace::core
         ctx->type = type;
 
         // Prepare WindowData (unique_ptr)
-        auto winPtr = std::make_unique<WindowData>(hwnd, hdc, glContext, usesSharedContext, type);
+        auto winPtr = std::make_unique<WindowData>(hwnd, parent, hdc, glContext, usesSharedContext, type);
         winPtr->onResize = std::move(onResize);
         winPtr->context = ctx;  // <-- hook it up
         ctx->windowData = winPtr.get(); // set the back-pointer immediately
+        winPtr->parent = parent;
 
         RECT rc{};
         GetClientRect(hwnd, &rc);
@@ -564,6 +628,12 @@ namespace almondnamespace::core
         winPtr->height = height;
         if (!ctx->onResize && winPtr->onResize) ctx->onResize = winPtr->onResize;
         if (!winPtr->onResize && ctx->onResize) winPtr->onResize = ctx->onResize;
+        ctx->hwnd = hwnd;
+        ctx->hdc = hdc;
+        ctx->hglrc = glContext;
+        if (parent) {
+            EnsureChildWindow(hwnd, parent);
+        }
 
         // Keep raw pointer for thread use
         WindowData* rawWinPtr = winPtr.get();
@@ -790,6 +860,10 @@ namespace almondnamespace::core
         // Main per-window loop
         while (running && win.running) {
             bool keepRunning = true;
+
+            if (win.parent && win.hwnd) {
+                EnsureChildWindow(win.hwnd, win.parent);
+            }
 
             if (ctx->process) {
                 // If the backend has its own process callback (e.g. OpenGL),
