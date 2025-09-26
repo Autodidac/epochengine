@@ -32,6 +32,7 @@
 #include "aatlasmanager.hpp"
 #include "aspritepool.hpp"
 #include "aimageloader.hpp"
+#include "ascene.hpp"
 
 #include <algorithm>
 #include <chrono>
@@ -41,6 +42,8 @@
 #include <iostream>
 #include <random>
 #include <unordered_map>
+#include <span>
+#include <stdexcept>
 
 namespace almondnamespace::sliding
 {
@@ -48,143 +51,59 @@ namespace almondnamespace::sliding
     constexpr int GRID_H = 4;
     constexpr double MOVE_S = 0.15; // 150 ms per move
 
-    inline bool run_sliding(std::shared_ptr<core::Context> ctx)
-    {
-        using namespace almondnamespace;
-
-        struct State {
-            gamecore::grid_t<int> grid;
-            State()
-                : grid(gamecore::make_grid<int>(GRID_W, GRID_H, 0))
-            {
-                std::vector<int> tiles(GRID_W * GRID_H);
-                for (int i = 0; i < (int)tiles.size(); ++i)
-                    tiles[i] = i;
-
-                std::mt19937 rng(std::random_device{}());
-                std::shuffle(tiles.begin(), tiles.end(), rng);
-
-                for (int y = 0; y < GRID_H; ++y)
-                    for (int x = 0; x < GRID_W; ++x)
-                        grid[y * GRID_W + x] = tiles[y * GRID_W + x];
-            }
-        } s;
-
-        auto tileImg = a_loadImage("assets/atestimage.ppm", false);
-        if (tileImg.pixels.empty())
+    struct SlidingScene : public scene::Scene {
+        SlidingScene(Logger* L = nullptr, time::Timer* C = nullptr)
+            : Scene(L, C)
         {
-            std::cerr << "[Sliding] Failed to load tile image\n";
-            return false;
         }
 
-        if (!atlasmanager::create_atlas({
-            .name = "sliding_atlas",
-            .width = 512,
-            .height = 512,
-            .generate_mipmaps = false }))
-        {
-            std::cerr << "[Sliding] Failed to create atlas\n";
-            return false;
+        void load() override {
+            Scene::load();
+            setupSprites();
+            state = {};
+            timer = time::createTimer(0.25);
+            time::setScale(timer, 0.25);
+            acc = 0.0;
+            movedThisFrame = false;
         }
 
-        auto* registrar = atlasmanager::get_registrar("sliding_atlas");
-        if (!registrar)
-        {
-            std::cerr << "[Sliding] Missing atlas registrar\n";
-            return false;
-        }
-
-        TextureAtlas& atlas = registrar->atlas;
-
-        int tileWidth = tileImg.width / GRID_W;
-        int tileHeight = tileImg.height / GRID_H;
-
-        std::unordered_map<int, SpriteHandle> tiles;
-
-        for (int tileId = 1; tileId < GRID_W * GRID_H; ++tileId)
-        {
-            int tx = tileId % GRID_W;
-            int ty = tileId / GRID_W;
-
-            std::vector<unsigned char> tilePixels(tileWidth * tileHeight * 4);
-
-            for (int y = 0; y < tileHeight; ++y)
-            {
-                int srcY = ty * tileHeight + y;
-                for (int x = 0; x < tileWidth; ++x)
-                {
-                    int srcX = tx * tileWidth + x;
-                    int srcIdx = (srcY * tileImg.width + srcX) * 4;
-                    int dstIdx = (y * tileWidth + x) * 4;
-                    for (int c = 0; c < 4; ++c)
-                        tilePixels[dstIdx + c] = tileImg.pixels[srcIdx + c];
-                }
-            }
-
-            auto handleOpt = registrar->register_atlas_sprites_by_image(
-                "tile" + std::to_string(tileId),
-                tilePixels,
-                tileWidth,
-                tileHeight,
-                atlas);
-
-            if (!handleOpt)
-            {
-                std::cerr << "[Sliding] Failed to register tile " << tileId << "\n";
+        bool frame(std::shared_ptr<core::Context> ctx, core::WindowData*) override {
+            if (!ctx)
                 return false;
-            }
 
-            tiles[tileId] = *handleOpt;
-        }
-
-        atlas.rebuild_pixels();
-        atlasmanager::ensure_uploaded(atlas);
-
-        auto& atlasVec = atlasmanager::get_atlas_vector();
-        std::span<const TextureAtlas* const> atlasSpan(atlasVec.data(), atlasVec.size());
-
-        time::Timer timer = time::createTimer(0.25);
-        time::setScale(timer, 0.25);
-        double acc = 0.0;
-        bool movedThisFrame = false;
-        bool game_over = false;
-
-        while (!game_over)
-        {
             platform::pump_events();
 
-            if (ctx->is_key_down(input::Key::Escape))
-                break;
+            if (ctx->is_key_down_safe(input::Key::Escape))
+                return false;
 
-            int dx = 0, dy = 0;
-            if (ctx->is_key_down(input::Key::Left))  dx = -1;
-            else if (ctx->is_key_down(input::Key::Right)) dx = 1;
-            else if (ctx->is_key_down(input::Key::Up))    dy = -1;
-            else if (ctx->is_key_down(input::Key::Down))  dy = 1;
+            int dx = 0;
+            int dy = 0;
+            if (ctx->is_key_down_safe(input::Key::Left))       dx = -1;
+            else if (ctx->is_key_down_safe(input::Key::Right)) dx = 1;
+            else if (ctx->is_key_down_safe(input::Key::Up))    dy = -1;
+            else if (ctx->is_key_down_safe(input::Key::Down))  dy = 1;
 
-            if (!movedThisFrame && (dx != 0 || dy != 0))
-            {
-                int emptyX = -1, emptyY = -1;
-                for (int y = 0; y < GRID_H; ++y)
-                {
-                    for (int x = 0; x < GRID_W; ++x)
-                    {
-                        if (s.grid[y * GRID_W + x] == 0)
-                        {
+            if (!movedThisFrame && (dx != 0 || dy != 0)) {
+                int emptyX = -1;
+                int emptyY = -1;
+                for (int y = 0; y < GRID_H; ++y) {
+                    for (int x = 0; x < GRID_W; ++x) {
+                        if (state.grid[y * GRID_W + x] == 0) {
                             emptyX = x;
                             emptyY = y;
                             break;
                         }
                     }
-                    if (emptyX != -1) break;
+                    if (emptyX != -1)
+                        break;
                 }
 
                 int fromX = emptyX + dx;
                 int fromY = emptyY + dy;
 
-                if (fromX >= 0 && fromX < GRID_W && fromY >= 0 && fromY < GRID_H)
-                {
-                    std::swap(s.grid[emptyY * GRID_W + emptyX], s.grid[fromY * GRID_W + fromX]);
+                if (fromX >= 0 && fromX < GRID_W && fromY >= 0 && fromY < GRID_H) {
+                    std::swap(state.grid[emptyY * GRID_W + emptyX],
+                        state.grid[fromY * GRID_W + fromX]);
                     movedThisFrame = true;
                 }
             }
@@ -193,34 +112,156 @@ namespace almondnamespace::sliding
             acc += time::elapsed(timer);
             reset(timer);
 
-            if (acc >= MOVE_S)
-            {
+            if (acc >= MOVE_S) {
                 acc -= MOVE_S;
                 movedThisFrame = false;
             }
 
-            ctx->clear();
+            ctx->clear_safe(ctx);
 
-            float cw = float(ctx->get_width()) / GRID_W;
-            float ch = float(ctx->get_height()) / GRID_H;
+            const float cellW = float(ctx->get_width_safe()) / GRID_W;
+            const float cellH = float(ctx->get_height_safe()) / GRID_H;
 
-            for (int y = 0; y < GRID_H; ++y)
-                for (int x = 0; x < GRID_W; ++x)
-                {
-                    int tileId = s.grid[y * GRID_W + x];
-                    if (tileId == 0) continue;
+            auto& atlasVec = atlasmanager::get_atlas_vector();
+            std::span<const TextureAtlas* const> atlasSpan(atlasVec.data(), atlasVec.size());
+
+            for (int y = 0; y < GRID_H; ++y) {
+                for (int x = 0; x < GRID_W; ++x) {
+                    const int tileId = state.grid[y * GRID_W + x];
+                    if (tileId == 0)
+                        continue;
 
                     auto it = tiles.find(tileId);
-                    if (it != tiles.end())
-                    {
-                        ctx->draw_sprite(it->second, atlasSpan,
-                            x * cw, y * ch, cw, ch);
+                    if (it != tiles.end() && spritepool::is_alive(it->second)) {
+                        ctx->draw_sprite_safe(it->second, atlasSpan,
+                            x * cellW, y * cellH, cellW, cellH);
+                    }
+                }
+            }
+
+            ctx->present_safe();
+            return true;
+        }
+
+        void unload() override {
+            Scene::unload();
+            tiles.clear();
+            acc = 0.0;
+            movedThisFrame = false;
+        }
+
+    private:
+        struct State {
+            gamecore::grid_t<int> grid;
+
+            State()
+                : grid(gamecore::make_grid<int>(GRID_W, GRID_H, 0))
+            {
+                std::vector<int> values(GRID_W * GRID_H);
+                for (int i = 0; i < static_cast<int>(values.size()); ++i)
+                    values[i] = i;
+
+                std::mt19937 rng(std::random_device{}());
+                std::shuffle(values.begin(), values.end(), rng);
+
+                for (int y = 0; y < GRID_H; ++y)
+                    for (int x = 0; x < GRID_W; ++x)
+                        grid[y * GRID_W + x] = values[y * GRID_W + x];
+            }
+        };
+
+        void setupSprites() {
+            tiles.clear();
+
+            auto tileImg = a_loadImage("assets/atestimage.ppm", false);
+            if (tileImg.pixels.empty())
+                throw std::runtime_error("[Sliding] Failed to load tile image");
+
+            if (tileImg.width % GRID_W != 0 || tileImg.height % GRID_H != 0)
+                throw std::runtime_error("[Sliding] Tile image dimensions must be divisible by grid size");
+
+            const int tileWidth = tileImg.width / GRID_W;
+            const int tileHeight = tileImg.height / GRID_H;
+
+            const bool createdAtlas = atlasmanager::create_atlas({
+                .name = "sliding_atlas",
+                .width = 512,
+                .height = 512,
+                .generate_mipmaps = false });
+
+            auto* registrar = atlasmanager::get_registrar("sliding_atlas");
+            if (!registrar)
+                throw std::runtime_error("[Sliding] Missing atlas registrar");
+
+            TextureAtlas& atlas = registrar->atlas;
+            bool registeredTile = false;
+
+            for (int tileId = 1; tileId < GRID_W * GRID_H; ++tileId) {
+                const std::string spriteName = "tile" + std::to_string(tileId);
+
+                if (auto existing = atlasmanager::registry.get(spriteName)) {
+                    auto handle = std::get<0>(*existing);
+                    if (spritepool::is_alive(handle)) {
+                        tiles[tileId] = handle;
+                        continue;
                     }
                 }
 
-            ctx->present();
+                std::vector<unsigned char> tilePixels(tileWidth * tileHeight * 4);
+
+                const int tx = tileId % GRID_W;
+                const int ty = tileId / GRID_W;
+
+                for (int y = 0; y < tileHeight; ++y) {
+                    const int srcY = ty * tileHeight + y;
+                    for (int x = 0; x < tileWidth; ++x) {
+                        const int srcX = tx * tileWidth + x;
+                        const int srcIdx = (srcY * tileImg.width + srcX) * 4;
+                        const int dstIdx = (y * tileWidth + x) * 4;
+                        for (int c = 0; c < 4; ++c)
+                            tilePixels[dstIdx + c] = tileImg.pixels[srcIdx + c];
+                    }
+                }
+
+                auto handleOpt = registrar->register_atlas_sprites_by_image(
+                    spriteName,
+                    tilePixels,
+                    tileWidth,
+                    tileHeight,
+                    atlas);
+
+                if (!handleOpt || !spritepool::is_alive(*handleOpt))
+                    throw std::runtime_error("[Sliding] Failed to register tile sprite: " + spriteName);
+
+                tiles[tileId] = *handleOpt;
+                registeredTile = true;
+            }
+
+            if (createdAtlas || registeredTile) {
+                atlas.rebuild_pixels();
+                atlasmanager::ensure_uploaded(atlas);
+            }
         }
 
-        return game_over;
+        State state{};
+        std::unordered_map<int, SpriteHandle> tiles{};
+        time::Timer timer{};
+        double acc = 0.0;
+        bool movedThisFrame = false;
+    };
+
+    inline bool run_sliding(std::shared_ptr<core::Context> ctx)
+    {
+        SlidingScene scene;
+        scene.load();
+
+        auto* window = ctx ? ctx->windowData : nullptr;
+        bool running = true;
+
+        while (running && ctx)
+            running = scene.frame(ctx, window);
+
+        scene.unload();
+        return running;
     }
 } // namespace almondnamespace::sliding

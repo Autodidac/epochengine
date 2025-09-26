@@ -31,6 +31,8 @@
 #include "agamecore.hpp"
 #include "aatlasmanager.hpp"
 #include "aimageloader.hpp"
+#include "ascene.hpp"
+#include "aspritepool.hpp"
 
 #include <vector>
 #include <chrono>
@@ -39,6 +41,8 @@
 #include <string>
 #include <random>
 #include <iostream>
+#include <span>
+#include <stdexcept>
 
 namespace almondnamespace::minesweeper
 {
@@ -86,136 +90,175 @@ namespace almondnamespace::minesweeper
         }
     };
 
-    inline bool run_minesweeper(std::shared_ptr<core::Context> ctx)
-    {
-        using namespace almondnamespace;
-
-        // === Setup Atlas ===
-        if (!atlasmanager::create_atlas({
-            .name = "minesweeper_atlas",
-            .width = 512,
-            .height = 512,
-            .generate_mipmaps = false }))
+    struct MinesweeperScene : public scene::Scene {
+        MinesweeperScene(Logger* L = nullptr, time::Timer* C = nullptr)
+            : Scene(L, C)
         {
-            std::cerr << "[Minesweeper] Failed to create atlas\n";
-            return false;
         }
 
-        auto* registrar = atlasmanager::get_registrar("minesweeper_atlas");
-        if (!registrar)
-        {
-            std::cerr << "[Minesweeper] Missing atlas registrar\n";
-            return false;
+        void load() override {
+            Scene::load();
+            setupSprites();
+            state = {};
+            gameOver = false;
+            mouseWasDown = false;
         }
 
-        TextureAtlas& atlas = registrar->atlas;
-
-        // === Load Sprites into Atlas ===
-        for (int i = 0; i <= 8; ++i) {
-            auto id = std::to_string(i);
-            auto img = a_loadImage("assets/" + id + ".ppm", false);
-            if (img.pixels.empty()) {
-                std::cerr << "[Minesweeper] Missing image " << id << "\n";
+        bool frame(std::shared_ptr<core::Context> ctx, core::WindowData*) override {
+            if (!ctx)
                 return false;
-            }
-            if (!registrar->register_atlas_sprites_by_image(id, img.pixels, img.width, img.height, atlas))
-                return false;
-        }
 
-        for (auto id : { "covered", "mine" }) {
-            auto img = a_loadImage("assets/" + std::string(id) + ".ppm", false);
-            if (img.pixels.empty()) {
-                std::cerr << "[Minesweeper] Missing image " << id << "\n";
-                return false;
-            }
-            if (!registrar->register_atlas_sprites_by_image(id, img.pixels, img.width, img.height, atlas))
-                return false;
-        }
-
-        atlas.rebuild_pixels();
-        atlasmanager::ensure_uploaded(atlas);
-
-        auto& atlasVec = atlasmanager::get_atlas_vector();
-        std::span<const TextureAtlas* const> atlasSpan(atlasVec.data(), atlasVec.size());
-
-        // === Fetch from Registry ===
-        std::unordered_map<std::string, SpriteHandle> sprites;
-        for (int i = 0; i <= 8; ++i) {
-            auto id = std::to_string(i);
-            auto opt = atlasmanager::registry.get(id);
-            if (!opt) return false;
-            sprites[id] = std::get<0>(*opt);
-        }
-        for (auto id : { "covered", "mine" }) {
-            auto opt = atlasmanager::registry.get(id);
-            if (!opt) return false;
-            sprites[id] = std::get<0>(*opt);
-        }
-
-        GameState s;
-        bool game_over = false;
-
-        while (!game_over)
-        {
             platform::pump_events();
-            if (ctx->is_key_down_safe(input::Key::Escape)) break;
 
-            int mx = 0, my = 0;
+            if (ctx->is_key_down_safe(input::Key::Escape))
+                return false;
+
+            int mx = 0;
+            int my = 0;
             ctx->get_mouse_position_safe(mx, my);
+            const bool mouseDown = ctx->is_mouse_button_down_safe(input::MouseButton::MouseLeft);
 
-            if (ctx->is_mouse_button_down_safe(input::MouseButton::MouseLeft))
-            {
-                int x = int(mx / (float(ctx->get_width_safe()) / GRID_W));
-                int y = int(my / (float(ctx->get_height_safe()) / GRID_H));
-                if (gamecore::in_bounds(GRID_W, GRID_H, x, y))
-                {
-                    auto idx = gamecore::idx(GRID_W, x, y);
-                    if (!s.revealed[idx])
-                    {
-                        s.revealed[idx] = true;
-                        if (s.mine[idx]) { game_over = true; }
-                        else if (s.count[idx] == 0)
-                        {
+            if (mouseDown && !mouseWasDown) {
+                const int gx = int(mx / (float(ctx->get_width_safe()) / GRID_W));
+                const int gy = int(my / (float(ctx->get_height_safe()) / GRID_H));
+
+                if (gamecore::in_bounds(GRID_W, GRID_H, gx, gy)) {
+                    const auto idx = gamecore::idx(GRID_W, gx, gy);
+                    if (!state.revealed[idx]) {
+                        state.revealed[idx] = true;
+                        if (state.mine[idx]) {
+                            gameOver = true;
+                        }
+                        else if (state.count[idx] == 0) {
                             auto flood = [&](auto&& self, int fx, int fy) -> void {
-                                if (!gamecore::in_bounds(GRID_W, GRID_H, fx, fy)) return;
-                                auto i = gamecore::idx(GRID_W, fx, fy);
-                                if (s.revealed[i]) return;
-                                s.revealed[i] = true;
-                                if (s.count[i] == 0)
+                                if (!gamecore::in_bounds(GRID_W, GRID_H, fx, fy))
+                                    return;
+                                const auto i = gamecore::idx(GRID_W, fx, fy);
+                                if (state.revealed[i])
+                                    return;
+                                state.revealed[i] = true;
+                                if (state.count[i] == 0)
                                     for (auto [nx, ny] : gamecore::neighbors(GRID_W, GRID_H, fx, fy))
-                                        self(self, (int)nx, (int)ny);
-                                };
-                            flood(flood, x, y);
+                                        self(self, int(nx), int(ny));
+                            };
+                            flood(flood, gx, gy);
                         }
                     }
                 }
             }
 
-            if (s.all_clear()) break;
+            mouseWasDown = mouseDown;
 
             ctx->clear_safe(ctx);
 
-            const float cw = float(ctx->get_width_safe()) / GRID_W;
-            const float ch = float(ctx->get_height_safe()) / GRID_H;
+            const float cellW = float(ctx->get_width_safe()) / GRID_W;
+            const float cellH = float(ctx->get_height_safe()) / GRID_H;
 
-            for (int y = 0; y < GRID_H; ++y)
-                for (int x = 0; x < GRID_W; ++x)
-                {
-                    size_t idx = gamecore::idx(GRID_W, x, y);
-                    std::string key = !s.revealed[idx] ? "covered" :
-                        (s.mine[idx] ? "mine" : std::to_string(s.count[idx]));
+            auto& atlasVec = atlasmanager::get_atlas_vector();
+            std::span<const TextureAtlas* const> atlasSpan(atlasVec.data(), atlasVec.size());
+
+            for (int y = 0; y < GRID_H; ++y) {
+                for (int x = 0; x < GRID_W; ++x) {
+                    const size_t idx = gamecore::idx(GRID_W, x, y);
+                    const std::string key = !state.revealed[idx]
+                        ? "covered"
+                        : (state.mine[idx] ? "mine" : std::to_string(state.count[idx]));
 
                     auto it = sprites.find(key);
-                    if (it != sprites.end() && spritepool::is_alive(it->second))
-                    {
+                    if (it != sprites.end() && spritepool::is_alive(it->second)) {
                         ctx->draw_sprite_safe(it->second, atlasSpan,
-                            x * cw, y * ch, cw, ch);
+                            x * cellW, y * cellH, cellW, cellH);
+                    }
+                }
+            }
+
+            ctx->present_safe();
+
+            if (gameOver)
+                return false;
+            if (state.all_clear())
+                return false;
+
+            return true;
+        }
+
+        void unload() override {
+            Scene::unload();
+            sprites.clear();
+            gameOver = false;
+            mouseWasDown = false;
+        }
+
+    private:
+        void setupSprites() {
+            sprites.clear();
+
+            const bool createdAtlas = atlasmanager::create_atlas({
+                .name = "minesweeper_atlas",
+                .width = 512,
+                .height = 512,
+                .generate_mipmaps = false });
+
+            auto* registrar = atlasmanager::get_registrar("minesweeper_atlas");
+            if (!registrar)
+                throw std::runtime_error("[Minesweeper] Missing atlas registrar");
+
+            TextureAtlas& atlas = registrar->atlas;
+            bool registeredSprite = false;
+
+            auto ensureSprite = [&](std::string_view id) {
+                std::string name(id);
+                if (auto existing = atlasmanager::registry.get(name)) {
+                    auto handle = std::get<0>(*existing);
+                    if (spritepool::is_alive(handle)) {
+                        sprites[name] = handle;
+                        return;
                     }
                 }
 
-            ctx->present_safe();
+                auto img = a_loadImage("assets/" + name + ".ppm", false);
+                if (img.pixels.empty())
+                    throw std::runtime_error("[Minesweeper] Missing image " + name);
+
+                auto handleOpt = registrar->register_atlas_sprites_by_image(
+                    name, img.pixels, img.width, img.height, atlas);
+                if (!handleOpt || !spritepool::is_alive(*handleOpt))
+                    throw std::runtime_error("[Minesweeper] Failed to register sprite " + name);
+
+                sprites[name] = *handleOpt;
+                registeredSprite = true;
+            };
+
+            for (int i = 0; i <= 8; ++i)
+                ensureSprite(std::to_string(i));
+
+            ensureSprite("covered");
+            ensureSprite("mine");
+
+            if (createdAtlas || registeredSprite) {
+                atlas.rebuild_pixels();
+                atlasmanager::ensure_uploaded(atlas);
+            }
         }
 
-        return game_over;
+        GameState state{};
+        std::unordered_map<std::string, SpriteHandle> sprites{};
+        bool gameOver = false;
+        bool mouseWasDown = false;
+    };
+
+    inline bool run_minesweeper(std::shared_ptr<core::Context> ctx)
+    {
+        MinesweeperScene scene;
+        scene.load();
+
+        auto* window = ctx ? ctx->windowData : nullptr;
+        bool running = true;
+
+        while (running && ctx)
+            running = scene.frame(ctx, window);
+
+        scene.unload();
+        return running;
     }
 } // namespace almondnamespace::minesweeper
