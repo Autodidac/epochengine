@@ -421,25 +421,29 @@ namespace almondnamespace::core
 #ifdef ALMOND_USING_SOFTWARE_RENDERER
                 case ContextType::Software:
                     std::cerr << "[Init] Initializing Software renderer for hwnd=" << hwnd << "\n";
-                    almondnamespace::anativecontext::softrenderer_initialize(ctx);
+                    almondnamespace::anativecontext::softrenderer_initialize(
+                        ctx, hwnd, ctx->width, ctx->height, w->onResize);
                     break;
 #endif
 #ifdef ALMOND_USING_SDL
                 case ContextType::SDL:
                     std::cerr << "[Init] Initializing SDL context for hwnd=" << hwnd << "\n";
-                    almondnamespace::sdlcontext::sdl_initialize(ctx);
+                    almondnamespace::sdlcontext::sdl_initialize(
+                        ctx, hwnd);
                     break;
 #endif
 #ifdef ALMOND_USING_SFML
                 case ContextType::SFML:
                     std::cerr << "[Init] Initializing SFML context for hwnd=" << hwnd << "\n";
-                    almondnamespace::sfmlcontext::sfml_initialize(ctx);
+                    almondnamespace::sfmlcontext::sfml_initialize(
+                        ctx, hwnd, ctx->width, ctx->height, w->onResize);
                     break;
 #endif
 #ifdef ALMOND_USING_RAYLIB
                 case ContextType::RayLib:
                     std::cerr << "[Init] Initializing RayLib context for hwnd=" << hwnd << "\n";
-                    almondnamespace::raylibcontext::raylib_initialize(ctx);
+                    almondnamespace::raylibcontext::raylib_initialize(
+                        ctx, hwnd);
                     break;
 #endif
                 default:
