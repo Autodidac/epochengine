@@ -122,7 +122,7 @@ namespace almondnamespace::match3
                     }
                 }
 
-                auto img = a_loadImage("assets/" + name + ".ppm", false);
+                auto img = a_loadImage("assets/match3/" + name + ".ppm", false);
                 if (img.pixels.empty())
                     throw std::runtime_error("[Match3] Failed to load sprite: " + name);
 
