@@ -406,7 +406,7 @@ namespace almondnamespace::openglcontext
     }
     inline void opengl_clear(std::shared_ptr<core::Context> ctx) {
         glViewport(0, 0, ctx->width, ctx->height);
-        glClearColor(0.f, 0.f, 1.f, 1.f);
+        glClearColor(0.235f, 0.235f, 0.235f, 1.0f);
         glClear(GL_COLOR_BUFFER_BIT);
     }
 
@@ -429,7 +429,7 @@ namespace almondnamespace::openglcontext
         if (!wglMakeCurrent(ctx->hdc, ctx->hglrc)) {
             DWORD err = GetLastError();
             std::cerr << "[OpenGL] wglMakeCurrent failed (error " << err
-                << ") — attempting recovery\n";
+                << ") attempting recovery\n";
 
             if (backend.glState.hdc && backend.glState.hglrc) {
                 ctx->hdc = backend.glState.hdc;
@@ -437,7 +437,7 @@ namespace almondnamespace::openglcontext
             }
 
             if (!ctx->hdc || !ctx->hglrc || !wglMakeCurrent(ctx->hdc, ctx->hglrc)) {
-                std::cerr << "[OpenGL] Unable to recover current context — skipping frame\n";
+                std::cerr << "[OpenGL] Unable to recover current context, skipping frame\n";
                 return true;
             }
         }

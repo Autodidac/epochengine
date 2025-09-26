@@ -37,7 +37,8 @@
 #include <vector>
 #include <cassert>
 
-namespace almondnamespace::ecs {
+namespace almondnamespace::ecs 
+{
 
     using Entity = EntityID;  // alias for your EntityID
 

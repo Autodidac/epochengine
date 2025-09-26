@@ -37,6 +37,8 @@
 #include "aenduserapplication.hpp"
 #include "acommandline.hpp"
 #include "awindowdata.hpp"
+#include "ascene.hpp"
+  
 
 // Code Analysis
 #include "acodeinspector.hpp"
@@ -1964,15 +1966,17 @@ int APIENTRY wWinMain(_In_ HINSTANCE hInstance,
     almondnamespace::core::ShowConsole();
 #endif
 
-    try {
-        // ---- Setup ----
-        int argc = __argc;
-        char** argv = __argv;
+    enum class SceneID { Menu, Snake, Tetris, Exit };
 
+    SceneID g_sceneID = SceneID::Menu;
+    std::unique_ptr<almondnamespace::scene::Scene> g_activeScene;
+    almondnamespace::menu::MenuOverlay menu;
+
+    try {
+        // ---- Setup command line ----
         int32_t numCmdLineArgs = 0;
         LPWSTR* pCommandLineArgvArray =
             CommandLineToArgvW(GetCommandLineW(), &numCmdLineArgs);
-
         if (!pCommandLineArgvArray) {
             MessageBoxW(NULL, L"Command line parsing failed!",
                 L"Error", MB_ICONERROR | MB_OK);
@@ -1980,10 +1984,7 @@ int APIENTRY wWinMain(_In_ HINSTANCE hInstance,
         }
         LocalFree(pCommandLineArgvArray);
 
-        // Initialize contexts globally (fills g_backends)
-      //  almondnamespace::core::InitializeAllContexts();
-
-        // Initialize multi-context manager
+        // ---- Initialize multi-context manager ----
         almondnamespace::core::MultiContextManager mgr;
         HINSTANCE hi = GetModuleHandle(nullptr);
         bool multiOk = mgr.Initialize(hi,
@@ -2003,12 +2004,14 @@ int APIENTRY wWinMain(_In_ HINSTANCE hInstance,
         mgr.StartRenderThreads();
         mgr.ArrangeDockedWindowsGrid();
 
-        // ---- Menu overlay ----
-        almondnamespace::menu::MenuOverlay menu;
-        for (auto& [type, state] : almondnamespace::core::g_backends) {
-            if (state.master) menu.initialize(state.master);
-            for (auto& dup : state.duplicates) menu.initialize(dup);
-        }
+        // Initialize menu overlay on all contexts
+        auto init_menu = [&]() {
+            for (auto& [type, state] : almondnamespace::core::g_backends) {
+                if (state.master) menu.initialize(state.master);
+                for (auto& dup : state.duplicates) menu.initialize(dup);
+            }
+            };
+        init_menu();
 
         bool running = true;
 
@@ -2016,104 +2019,68 @@ int APIENTRY wWinMain(_In_ HINSTANCE hInstance,
         while (running) {
             MSG msg{};
             while (PeekMessage(&msg, nullptr, 0, 0, PM_REMOVE)) {
-                if (msg.message == WM_QUIT) {
-                    running = false;
-                }
-                else {
-                    TranslateMessage(&msg);
-                    DispatchMessage(&msg);
-                }
+                if (msg.message == WM_QUIT) running = false;
+                else { TranslateMessage(&msg); DispatchMessage(&msg); }
             }
 
             // Update all backends
             for (auto& [type, state] : almondnamespace::core::g_backends) {
                 auto update_on_ctx = [&](std::shared_ptr<almondnamespace::core::Context> ctx) -> bool {
-                    if (!ctx) return true; // skip dead ctx
-
-                    // Lookup matching WindowData
+                    if (!ctx) return true;
                     auto* win = mgr.findWindowByHWND(ctx->hwnd);
                     if (!win) return false;
 
-                    bool ctxRunning = true;
+                    bool ctxRunning = win->running;
 
-                    // Backend-specific processing
-                    switch (type) {
-#ifdef ALMOND_USING_OPENGL
-                    case almondnamespace::core::ContextType::OpenGL:
-                        //ctxRunning = almondnamespace::openglcontext::opengl_process(
-                        //    *ctx,
-                        //    win->commandQueue);
-                       // std::cout << "[DEBUG] opengl_process returned " << ctxRunning << "\n";
-                        ctxRunning = win->running;
-                        break;
-#endif
-#ifdef ALMOND_USING_SOFTWARE_RENDERER
-                    case almondnamespace::core::ContextType::Software:
-                        //ctxRunning = almondnamespace::anativecontext::softrenderer_process(
-                        //    *ctx,
-                        //    win->commandQueue);
-                        break;
-#endif
-#ifdef ALMOND_USING_SDL
-                    case almondnamespace::core::ContextType::SDL:
-                        //ctxRunning = almondnamespace::sdlcontext::sdl_process(
-                        //    *ctx,
-                        //    win->commandQueue);
-                        break;
-#endif
-#ifdef ALMOND_USING_SFML
-                    case almondnamespace::core::ContextType::SFML:
-                        //ctxRunning = almondnamespace::sfmlcontext::sfml_process(
-                        //    *ctx,
-                        //    win->commandQueue);
-                        break;
-#endif
-#ifdef ALMOND_USING_RAYLIB
-                    case almondnamespace::core::ContextType::RayLib:
-                        //ctxRunning = almondnamespace::raylibcontext::raylib_process(
-                        //    *ctx,
-                        //    win->commandQueue);
-                        break;
-#endif
-                    default:
-                        break;
-                    }
-
-                    // Menu logic
-                    if (auto choice = menu.update_and_draw(ctx, win)) {
-                        switch (*choice) {
-                        case almondnamespace::menu::Choice::Snake:     ctxRunning |= almondnamespace::snake::run_snake_ecs(ctx); break;
-                        case almondnamespace::menu::Choice::Tetris:    ctxRunning |= almondnamespace::tetris::run_tetris(ctx); break;
-                        case almondnamespace::menu::Choice::Pacman:    ctxRunning |= almondnamespace::pacman::run_pacman(ctx); break;
-                        case almondnamespace::menu::Choice::Sokoban:   ctxRunning |= almondnamespace::sokoban::run_sokoban(ctx); break;
-                        case almondnamespace::menu::Choice::Minesweep: ctxRunning |= almondnamespace::minesweeper::run_minesweeper(ctx); break;
-                        case almondnamespace::menu::Choice::Puzzle:    ctxRunning |= almondnamespace::sliding::run_sliding(ctx); break;
-                        case almondnamespace::menu::Choice::Bejeweled: ctxRunning |= almondnamespace::match3::run_match3(ctx); break;
-                        case almondnamespace::menu::Choice::Fourty:    ctxRunning |= almondnamespace::game2048::run_2048(ctx); break;
-                        case almondnamespace::menu::Choice::Sandsim:   ctxRunning |= almondnamespace::sandsim::run_sand(ctx); break;
-                        case almondnamespace::menu::Choice::Cellular:  ctxRunning |= almondnamespace::cellular::run_cellular(ctx); break;
-                        case almondnamespace::menu::Choice::Settings:
-                            std::cout << "[Menu] Settings selected\n"; break;
-                        case almondnamespace::menu::Choice::Exit:
-                            std::cout << "[Menu] Exit requested\n";
-                            running = false; // handled in outer loop
-                            break;
+                    // --- Scene dispatch ---
+                    switch (g_sceneID) {
+                    case SceneID::Menu: {
+                        if (auto choice = menu.update_and_draw(ctx, win)) {
+                            if (*choice == almondnamespace::menu::Choice::Snake) {
+                                if (g_activeScene) g_activeScene->unload();
+                                g_activeScene = std::make_unique<almondnamespace::snake::SnakeScene>();
+                                g_activeScene->load();
+                                g_sceneID = SceneID::Snake;
+                            }
+                            else if (*choice == almondnamespace::menu::Choice::Tetris) {
+                                if (g_activeScene) g_activeScene->unload();
+                                g_activeScene = std::make_unique<almondnamespace::tetris::TetrisScene>();
+                                g_activeScene->load();
+                                g_sceneID = SceneID::Tetris;
+                            }
+                            else if (*choice == almondnamespace::menu::Choice::Exit) {
+                                g_sceneID = SceneID::Exit;
+                                running = false;
+                            }
                         }
+                        break;
                     }
+                    case SceneID::Snake:
+                    case SceneID::Tetris:
+                        if (g_activeScene) {
+                            ctxRunning = g_activeScene->frame(ctx, win);
+                            if (!ctxRunning) {
+                                g_activeScene->unload();
+                                g_activeScene.reset();
+                                g_sceneID = SceneID::Menu;
+                                init_menu(); // reinitialize menu overlay
+                            }
+                        }
+                        break;
+                    case SceneID::Exit:
+                        running = false;
+                        break;
+                    }
+
                     return ctxRunning;
                     };
 
 #if defined(ALMOND_SINGLE_PARENT)
-                // All contexts tied to parent lifetime
-                if (state.master && !update_on_ctx(state.master)) {
-                    running = false;
-                    break;
-                }
+                if (state.master && !update_on_ctx(state.master)) { running = false; break; }
                 for (auto& dup : state.duplicates) {
                     if (!update_on_ctx(dup)) running = false;
                 }
 #else
-                // Each context independent
                 bool anyAlive = false;
                 if (state.master) anyAlive |= update_on_ctx(state.master);
                 for (auto& dup : state.duplicates) {
@@ -2131,6 +2098,10 @@ int APIENTRY wWinMain(_In_ HINSTANCE hInstance,
         }
 
         // ---- Cleanup ----
+        if (g_activeScene) {
+            g_activeScene->unload();
+            g_activeScene.reset();
+        }
         menu.cleanup();
         mgr.StopAll();
 
@@ -2139,19 +2110,29 @@ int APIENTRY wWinMain(_In_ HINSTANCE hInstance,
                 if (!ctx) return;
                 switch (type) {
 #ifdef ALMOND_USING_OPENGL
-                case almondnamespace::core::ContextType::OpenGL: almondnamespace::openglcontext::opengl_cleanup(ctx); break;
+                case almondnamespace::core::ContextType::OpenGL:
+                    almondnamespace::openglcontext::opengl_cleanup(ctx);
+                    break;
 #endif
 #ifdef ALMOND_USING_SOFTWARE_RENDERER
-                case almondnamespace::core::ContextType::Software: almondnamespace::anativecontext::softrenderer_cleanup(ctx); break;
+                case almondnamespace::core::ContextType::Software:
+                    almondnamespace::anativecontext::softrenderer_cleanup(ctx);
+                    break;
 #endif
 #ifdef ALMOND_USING_SDL
-                case almondnamespace::core::ContextType::SDL: almondnamespace::sdlcontext::sdl_cleanup(ctx); break;
+                case almondnamespace::core::ContextType::SDL:
+                    almondnamespace::sdlcontext::sdl_cleanup(ctx);
+                    break;
 #endif
 #ifdef ALMOND_USING_SFML
-                case almondnamespace::core::ContextType::SFML: almondnamespace::sfmlcontext::sfml_cleanup(ctx); break;
+                case almondnamespace::core::ContextType::SFML:
+                    almondnamespace::sfmlcontext::sfml_cleanup(ctx);
+                    break;
 #endif
 #ifdef ALMOND_USING_RAYLIB
-                case almondnamespace::core::ContextType::RayLib: almondnamespace::raylibcontext::raylib_cleanup(ctx); break;
+                case almondnamespace::core::ContextType::RayLib:
+                    almondnamespace::raylibcontext::raylib_cleanup(ctx);
+                    break;
 #endif
                 default: break;
                 }
@@ -2169,7 +2150,6 @@ int APIENTRY wWinMain(_In_ HINSTANCE hInstance,
     return 0;
 }
 #endif
-
 
 // -----------------------------------------------------------------------------
 // Cross-platform Automatic Entry Point

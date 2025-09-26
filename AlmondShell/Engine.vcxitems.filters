@@ -456,6 +456,9 @@
     <ClInclude Include="$(MSBuildThisFileDirectory)include\acontextcontrol.hpp">
       <Filter>Header Files\core\backbone\external\context</Filter>
     </ClInclude>
+    <ClInclude Include="$(MSBuildThisFileDirectory)include\asceneserializer.hpp">
+      <Filter>Header Files\scene</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <Image Include="$(MSBuildThisFileDirectory)src\icon.ico">

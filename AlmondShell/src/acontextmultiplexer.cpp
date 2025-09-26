@@ -770,25 +770,34 @@ namespace almondnamespace::core
         }
 
         ctx->windowData = &win;
+       // win->commandQueue = &win.commandQueue;
         SetCurrent(ctx);
-        [[maybe_unused]] const auto resetCurrent = std::unique_ptr<void, void(*)(void*)>{
-            nullptr,
-            [](void*) { MultiContextManager::SetCurrent(nullptr); }
-        };
 
-        // backend-specific initialization is triggered during AddWindow, but
-        // if an explicit initialize callback exists we invoke it once.
+        // RAII guard: reset current context when this loop exits
+        struct ResetGuard {
+            ~ResetGuard() { MultiContextManager::SetCurrent(nullptr); }
+        } resetGuard;
+
+        // Backend-specific initialize
         if (ctx->initialize) {
             ctx->initialize_safe();
         }
+        else {
+            win.running = false;
+            return;
+        }
 
+        // Main per-window loop
         while (running && win.running) {
             bool keepRunning = true;
 
             if (ctx->process) {
+                // If the backend has its own process callback (e.g. OpenGL),
+                // let it run and decide if this window stays alive.
                 keepRunning = ctx->process_safe(ctx, win.commandQueue);
             }
             else {
+                // Generic path — just drain the command queue
                 win.commandQueue.drain();
             }
 
@@ -797,9 +806,10 @@ namespace almondnamespace::core
                 break;
             }
 
-            std::this_thread::sleep_for(std::chrono::milliseconds(16));
+            std::this_thread::sleep_for(std::chrono::milliseconds(16)); // ~60 FPS
         }
 
+        // Cleanup
         if (ctx->cleanup) {
             ctx->cleanup_safe();
         }

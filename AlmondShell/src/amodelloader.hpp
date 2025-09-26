@@ -21,22 +21,24 @@
  *   See LICENSE file for full terms.                         *
  *                                                            *
  **************************************************************/
-
+// amodelloader.hpp - simple CPU-side OBJ loader with caching
 #pragma once
 
 #include "acontext.hpp"
+
 #include <vector>
 #include <string>
 #include <memory>
-#include <unordered_map>
 #include <fstream> // Add this include to resolve incomplete type "std::ifstream" error  
 #include <sstream> // Add this include for std::istringstream  
 #include <algorithm> // Add this include for std::replace  
+#include <unordered_map>
 
 namespace almondnamespace {
 
     // Pure CPU-side mesh data (no GL types)
-    struct MeshData {
+    struct MeshData 
+    {
         std::vector<float> positions;  // x,y,z triples
         std::vector<float> normals;    // x,y,z triples
         std::vector<float> uvs;        // u,v pairs
@@ -65,7 +67,8 @@ namespace almondnamespace {
     private:
         std::unordered_map<std::string, std::unique_ptr<ModelData>> m_cache;
 
-        void loadOBJ(const std::string& filepath, ModelData& model) {
+        void loadOBJ(const std::string& filepath, ModelData& model) 
+        {
             // Simple CPU-only OBJ parse: fill MeshData.positions, normals, uvs, indices
             std::ifstream file(filepath);
             if (!file) throw std::runtime_error("Cannot open OBJ: " + filepath);
@@ -134,8 +137,8 @@ namespace almondnamespace {
     }
 
     // Register model API on Context (CPU-only signatures)
-    inline void register_model_api(Context& ctx) {
-        ctx.add_model = &add_model_thunk;
+    inline void register_model_api(std::shared_ptr<almondnamespace::core::Context> ctx) {
+        ctx->add_model = &add_model_thunk;
         // drawing and GL integration lives in aopenglcontext.hpp
     }
 
