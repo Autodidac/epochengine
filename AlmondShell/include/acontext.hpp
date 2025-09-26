@@ -31,7 +31,7 @@
 #include "aspritehandle.hpp"    // SpriteHandle type
 #include "aatomicfunction.hpp"  // AlmondAtomicFunction
 #include "acommandqueue.hpp"    // CommandQueue
-//#include "awindowdata.hpp"      // WindowData
+#include "awindowdata.hpp"      // WindowData
 #include "acontexttype.hpp"     // ContextType enum
 
 #include <map>
@@ -129,8 +129,22 @@ namespace almondnamespace::core
         inline void cleanup_safe()   const noexcept { if (cleanup) cleanup(); }
         bool process_safe(std::shared_ptr<core::Context> ctx, CommandQueue& queue);
 
-        inline void clear_safe(std::shared_ptr<Context>) const noexcept { if (clear) clear(); }
-        inline void present_safe() const noexcept { if (present) present(); }
+        inline void clear_safe(std::shared_ptr<Context>) const noexcept {
+            if (!clear) return;
+            if (windowData) {
+                auto clearFn = clear;
+                windowData->commandQueue.enqueue([clearFn]() { clearFn(); });
+            }
+            else {
+                clear();
+            }
+        }
+        inline void present_safe() const noexcept {
+            if (!present) return;
+            if (!windowData) {
+                present();
+            }
+        }
 
         inline int  get_width_safe()  const noexcept { return get_width ? get_width() : width; }
         inline int  get_height_safe() const noexcept { return get_height ? get_height() : height; }
@@ -158,7 +172,18 @@ namespace almondnamespace::core
         inline void draw_sprite_safe(SpriteHandle h,
             std::span<const TextureAtlas* const> atlases,
             float x, float y, float w, float hgt) const noexcept {
-            if (draw_sprite) draw_sprite(h, atlases, x, y, w, hgt);
+            if (!draw_sprite) return;
+            if (windowData) {
+                auto drawFn = draw_sprite;
+                std::vector<const TextureAtlas*> atlasCopy(atlases.begin(), atlases.end());
+                windowData->commandQueue.enqueue([drawFn, h, atlasCopy = std::move(atlasCopy), x, y, w, hgt]() mutable {
+                    std::span<const TextureAtlas* const> span(atlasCopy.data(), atlasCopy.size());
+                    drawFn(h, span, x, y, w, hgt);
+                });
+            }
+            else {
+                draw_sprite(h, atlases, x, y, w, hgt);
+            }
         }
 
         inline uint32_t add_texture_safe(TextureAtlas& atlas,

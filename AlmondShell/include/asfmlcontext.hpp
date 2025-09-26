@@ -334,6 +334,8 @@ namespace almondnamespace::sfmlcontext
 
         sfmlcontext.window->clear(sf::Color(r, g, b));
 
+        queue.drain();
+
         //sfmlcontext.window->clear(sf::Color::Green);
         sfmlcontext.window->display();
         return true;
