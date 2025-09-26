@@ -500,7 +500,7 @@ namespace almondnamespace::openglcontext
         }
 
         // --- Update input each frame ---
-        almondnamespace::input::poll_input();
+      //  almondnamespace::input::poll_input();
 
         // Pipe global input into context functions
         ctx->is_key_held = [](almondnamespace::input::Key key) -> bool {

@@ -267,7 +267,7 @@ namespace almondnamespace::menu
             if (ctx->get_width_safe() != cachedWidth || ctx->get_height_safe() != cachedHeight)
                 recompute_layout(ctx);
 
-            input::poll_input();
+            //input::poll_input();
 
             int mx = 0, my = 0;
             ctx->get_mouse_position_safe(mx, my);

@@ -57,7 +57,7 @@ namespace almondnamespace::platform
         }
 
         // 🔑 After dispatching, update global input states
-        almondnamespace::input::poll_input();
+     //   almondnamespace::input::poll_input();
 
         return true;
 

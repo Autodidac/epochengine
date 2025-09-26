@@ -72,7 +72,7 @@ namespace almondnamespace::match3
         bool frame(std::shared_ptr<core::Context> ctx, core::WindowData*) override {
             if (!ctx) return false;
 
-            input::poll_input();
+           // input::poll_input();
             events::pump();
 
             if (ctx->is_key_held(input::Key::Escape))
