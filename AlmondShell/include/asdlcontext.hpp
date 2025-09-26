@@ -266,19 +266,14 @@ namespace almondnamespace::sdlcontext
         SDL_Event e;
         static int i = 0;
         while (SDL_PollEvent(&e)) {
-            if (e.type == SDL_EVENT_QUIT) 
-            {
+            if (e.type == SDL_EVENT_QUIT) {
                 sdlcontext.running = false;
-                std::cout << "SDL Quit Event: " 
-                    << e.type 
-                    << "\n";
-
+                std::cout << "SDL Quit Event: " << e.type << "\n";
             }
             if (keys[SDL_SCANCODE_ESCAPE]) {
                 sdlcontext.running = false; // Exit on Escape key
                 std::cout << "Escape Key Event Count: " << ++i << '\n';
-		    }
-			return true; // Continue processing
+            }
         }
 
         static auto* bgTimer = almondnamespace::time::getTimer("menu", "bg_color");
@@ -294,9 +289,8 @@ namespace almondnamespace::sdlcontext
 
         SDL_SetRenderDrawColor(sdlcontext.renderer, r, g, b, 255);
 
-//        std::cout << "yellow: " << ++i << '\n';
-       // SDL_SetRenderDrawColor(sdlcontext.renderer, 255, 255, 0, 255); //yellow
         SDL_RenderClear(sdlcontext.renderer);
+        queue.drain();
         SDL_RenderPresent(sdlcontext.renderer);
         //while (SDL_PollEvent(&s_sdlstate.sdl_event))
         //{

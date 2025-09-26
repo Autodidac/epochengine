@@ -271,6 +271,8 @@ namespace almondnamespace::raylibcontext
         BeginDrawing();
        // ClearBackground(RED);
         ClearBackground(Color{ r, g, b, 255 });
+
+        queue.drain();
         //DRAWTEXT(TextFormat("Raylib Rendering OK"), 200, 160, 40, BLUE);
 
         EndDrawing();
@@ -288,7 +290,6 @@ namespace almondnamespace::raylibcontext
     // ──────────────────────────────────────────────
     inline void raylib_clear()
     {
-        BeginDrawing();
         ClearBackground(DARKPURPLE);
     }
 
