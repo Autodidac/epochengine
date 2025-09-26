@@ -1966,7 +1966,7 @@ int APIENTRY wWinMain(_In_ HINSTANCE hInstance,
     almondnamespace::core::ShowConsole();
 #endif
 
-    enum class SceneID { Menu, Snake, Tetris, Match3, Exit };
+    enum class SceneID { Menu, Snake, Tetris, Match3, Sliding, Minesweeper, Exit };
 
     SceneID g_sceneID = SceneID::Menu;
     std::unique_ptr<almondnamespace::scene::Scene> g_activeScene;
@@ -2054,6 +2054,18 @@ int APIENTRY wWinMain(_In_ HINSTANCE hInstance,
                                 g_activeScene->load();
                                 g_sceneID = SceneID::Match3;
                             }
+                            else if (*choice == almondnamespace::menu::Choice::Puzzle) {
+                                if (g_activeScene) g_activeScene->unload();
+                                g_activeScene = std::make_unique<almondnamespace::sliding::SlidingScene>();
+                                g_activeScene->load();
+                                g_sceneID = SceneID::Sliding;
+                            }
+                            else if (*choice == almondnamespace::menu::Choice::Minesweep) {
+                                if (g_activeScene) g_activeScene->unload();
+                                g_activeScene = std::make_unique<almondnamespace::minesweeper::MinesweeperScene>();
+                                g_activeScene->load();
+                                g_sceneID = SceneID::Minesweeper;
+                            }
                             else if (*choice == almondnamespace::menu::Choice::Exit) {
                                 g_sceneID = SceneID::Exit;
                                 running = false;
@@ -2064,6 +2076,8 @@ int APIENTRY wWinMain(_In_ HINSTANCE hInstance,
                     case SceneID::Snake:
                     case SceneID::Tetris:
                     case SceneID::Match3:
+                    case SceneID::Sliding:
+                    case SceneID::Minesweeper:
                         if (g_activeScene) {
                             ctxRunning = g_activeScene->frame(ctx, win);
                             if (!ctxRunning) {
