@@ -1966,7 +1966,7 @@ int APIENTRY wWinMain(_In_ HINSTANCE hInstance,
     almondnamespace::core::ShowConsole();
 #endif
 
-    enum class SceneID { Menu, Snake, Tetris, Exit };
+    enum class SceneID { Menu, Snake, Tetris, Match3, Exit };
 
     SceneID g_sceneID = SceneID::Menu;
     std::unique_ptr<almondnamespace::scene::Scene> g_activeScene;
@@ -2048,6 +2048,12 @@ int APIENTRY wWinMain(_In_ HINSTANCE hInstance,
                                 g_activeScene->load();
                                 g_sceneID = SceneID::Tetris;
                             }
+                            else if (*choice == almondnamespace::menu::Choice::Bejeweled) {
+                                if (g_activeScene) g_activeScene->unload();
+                                g_activeScene = std::make_unique<almondnamespace::match3::Match3Scene>();
+                                g_activeScene->load();
+                                g_sceneID = SceneID::Match3;
+                            }
                             else if (*choice == almondnamespace::menu::Choice::Exit) {
                                 g_sceneID = SceneID::Exit;
                                 running = false;
@@ -2057,6 +2063,7 @@ int APIENTRY wWinMain(_In_ HINSTANCE hInstance,
                     }
                     case SceneID::Snake:
                     case SceneID::Tetris:
+                    case SceneID::Match3:
                         if (g_activeScene) {
                             ctxRunning = g_activeScene->frame(ctx, win);
                             if (!ctxRunning) {
