@@ -137,7 +137,7 @@ namespace almondnamespace::anativecontext
     }
 
     // Main process loop
-    inline bool softrenderer_process(core::Context& ctx, core::CommandQueue& queue) {
+    inline bool softrenderer_process(std::shared_ptr<core::Context> ctx, core::CommandQueue& queue) {
         auto& sr = s_softrendererstate;
 
         atlasmanager::process_pending_uploads(core::ContextType::Software);
@@ -153,7 +153,7 @@ namespace almondnamespace::anativecontext
 
 #ifdef _WIN32
         // Present framebuffer to window
-        HDC hdc = ctx.hdc;
+        HDC hdc = ctx->hdc;
         if (hdc) {
             BITMAPINFO bmi{};
             bmi.bmiHeader.biSize = sizeof(BITMAPINFOHEADER);
@@ -173,7 +173,7 @@ namespace almondnamespace::anativecontext
         return true;
     }
 
-    inline void softrenderer_cleanup(std::shared_ptr<almondnamespace::core::Context>& ctx)
+    inline void softrenderer_cleanup(std::shared_ptr<core::Context> ctx)
     {
         auto& sr = s_softrendererstate;
 

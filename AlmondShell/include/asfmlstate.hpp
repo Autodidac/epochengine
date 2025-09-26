@@ -53,7 +53,7 @@ namespace almondnamespace::sfmlcontext::state
 
         almondnamespace::contextwindow::WindowData window{};
 
-        sf::Event event{};
+       // sf::Event event{};
 
         bool shouldClose{ false };
         int screenWidth{ DEFAULT_WINDOW_WIDTH };

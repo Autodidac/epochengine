@@ -39,7 +39,6 @@
 #include "awindowdata.hpp"
 #include "ascene.hpp"
   
-
 // Code Analysis
 #include "acodeinspector.hpp"
 
@@ -59,6 +58,7 @@
 #include "araylibcontext.hpp"
 #include "asdlcontext.hpp"
 #include "asfmlcontext.hpp"
+#include "asoftrenderer_context.hpp"
 
 // STL
 #include <filesystem>

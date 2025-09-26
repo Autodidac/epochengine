@@ -241,7 +241,7 @@ namespace almondnamespace::raylibcontext
     // ──────────────────────────────────────────────
     // Per-frame event processing
     // ──────────────────────────────────────────────
-    inline bool raylib_process(core::Context& ctx, core::CommandQueue& queue) {
+    inline bool raylib_process(std::shared_ptr<core::Context> ctx, core::CommandQueue& queue) {
         if (!s_raylibstate.running || WindowShouldClose()) {
             s_raylibstate.running = false;
             return true;

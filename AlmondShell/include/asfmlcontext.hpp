@@ -284,7 +284,7 @@ namespace almondnamespace::sfmlcontext
     inline void sfml_clear() { sfml_begin_frame(); }
     inline void sfml_present() { sfml_end_frame(); }
 
-    inline bool sfml_process(core::Context& ctx, core::CommandQueue& queue)
+    inline bool sfml_process(std::shared_ptr<core::Context> ctx, core::CommandQueue& queue)
     {
         //if (!s_sfmlstate.window.sfml_window)
         //    throw std::runtime_error("[SFML] Window not initialized.");

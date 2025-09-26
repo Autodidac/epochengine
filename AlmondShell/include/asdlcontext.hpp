@@ -256,7 +256,7 @@ namespace almondnamespace::sdlcontext
         //return true;
     }
 
-    inline bool sdl_process(core::Context& ctx, core::CommandQueue& queue) {
+    inline bool sdl_process(std::shared_ptr<core::Context> ctx, core::CommandQueue& queue) {
         if (!sdlcontext.running || !sdlcontext.renderer) return false;
 
         atlasmanager::process_pending_uploads(core::ContextType::SDL);
