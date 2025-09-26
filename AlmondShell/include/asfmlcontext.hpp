@@ -313,13 +313,23 @@ namespace almondnamespace::sfmlcontext
             return false;
         }
 
-        bool isActiveSFMLcontextwindow = sfmlcontext.window->setActive(); // Activates SFML's render context wrapper
+        if (!sfmlcontext.window->setActive(true)) {
+            std::cerr << "[SFMLRender] Failed to activate SFML window\n";
+            sfmlcontext.running = false;
+            wglMakeCurrent(nullptr, nullptr);
+            return false;
+        }
 
-        if (auto event = sfmlcontext.window->pollEvent()) {
+        while (auto event = sfmlcontext.window->pollEvent()) {
             if (event->is<sf::Event::Closed>()) {
                 sfmlcontext.window->close();
                 sfmlcontext.running = false;
             }
+        }
+        if (!sfmlcontext.running) {
+            sfmlcontext.window->setActive(false);
+            wglMakeCurrent(nullptr, nullptr);
+            return false;
         }
         static auto* bgTimer = almondnamespace::time::getTimer("menu", "bg_color");
         if (!bgTimer)
@@ -336,7 +346,9 @@ namespace almondnamespace::sfmlcontext
 
         //sfmlcontext.window->clear(sf::Color::Green);
         sfmlcontext.window->display();
-        return true;
+        sfmlcontext.window->setActive(false);
+        wglMakeCurrent(nullptr, nullptr);
+        return sfmlcontext.running;
     }
 
     inline std::pair<int, int> get_window_size_wh() noexcept

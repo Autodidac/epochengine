@@ -38,6 +38,7 @@
 #include "acommandline.hpp"
 #include "awindowdata.hpp"
 #include "ascene.hpp"
+#include "ainput.hpp"
   
 // Code Analysis
 #include "acodeinspector.hpp"
@@ -2013,6 +2014,8 @@ int APIENTRY wWinMain(_In_ HINSTANCE hInstance,
                 L"Error", MB_ICONERROR | MB_OK);
             return -1;
         }
+
+        almondnamespace::input::designate_polling_thread_to_current();
 
         mgr.StartRenderThreads();
         mgr.ArrangeDockedWindowsGrid();
