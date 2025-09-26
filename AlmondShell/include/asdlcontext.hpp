@@ -46,7 +46,6 @@
 
 #include <stdexcept>
 #include <iostream>
-#include <algorithm>
 
 namespace almondnamespace::sdlcontext
 {
@@ -92,7 +91,6 @@ namespace almondnamespace::sdlcontext
 
         HWND parent = nullptr;
         HWND hwnd = nullptr;
-        HDC hdc = nullptr;
         bool running = false;
         int width = 400;
         int height = 300;
@@ -108,7 +106,7 @@ namespace almondnamespace::sdlcontext
         sdlcontext.height = h;
         sdlcontext.parent = parentWnd;
 
-        if (SDL_Init(SDL_INIT_VIDEO) != 0) {
+        if (SDL_Init(SDL_INIT_VIDEO) == 0) {
             throw std::runtime_error("[SDL] Failed to initialize SDL: " + std::string(SDL_GetError()));
         }
 
@@ -160,7 +158,6 @@ namespace almondnamespace::sdlcontext
             SDL_Quit();
             return false;
         }
-        sdlcontext.hdc = GetDC(sdlcontext.hwnd);
 
         // Create renderer
         sdlcontext.renderer = SDL_CreateRenderer(sdlcontext.window, nullptr);
@@ -172,51 +169,22 @@ namespace almondnamespace::sdlcontext
         }
 
         if (sdlcontext.parent) {
-            std::cout << "[SDL] Setting parent window: " << sdlcontext.parent << "\n";
-            SetParent(sdlcontext.hwnd, sdlcontext.parent);
-            LONG_PTR style = GetWindowLongPtr(sdlcontext.hwnd, GWL_STYLE);
+            // SDL_SetWindowParent(ctx.window, parentWindow);
+			std::cout << "[SDL] Setting parent window: " << sdlcontext.parent << "\n";
+            SetParent(hwnd, sdlcontext.parent);
+            LONG_PTR style = GetWindowLongPtr(hwnd, GWL_STYLE);
             style &= ~WS_OVERLAPPEDWINDOW;
-            style |= WS_CHILD | WS_VISIBLE | WS_CLIPSIBLINGS | WS_CLIPCHILDREN;
-            SetWindowLongPtr(sdlcontext.hwnd, GWL_STYLE, style);
+            style |= WS_CHILD | WS_VISIBLE;
+            SetWindowLongPtr(hwnd, GWL_STYLE, style);
+            SetWindowPos(sdlcontext.hwnd, nullptr, 0, sdlcontext.height,
+                sdlcontext.width,
+                sdlcontext.height, 
+                SWP_NOZORDER | SWP_FRAMECHANGED | SWP_SHOWWINDOW);
 
-            RECT rc{};
+            RECT rc;
             GetClientRect(sdlcontext.parent, &rc);
-            SetWindowPos(sdlcontext.hwnd, nullptr, 0, 0,
-                std::max<LONG>(1, rc.right - rc.left),
-                std::max<LONG>(1, rc.bottom - rc.top),
-                SWP_NOZORDER | SWP_FRAMECHANGED | SWP_SHOWWINDOW | SWP_NOACTIVATE);
+            PostMessage(sdlcontext.parent, WM_SIZE, 0, MAKELPARAM(rc.right - rc.left, rc.bottom - rc.top));
 
-            PostMessage(sdlcontext.parent, WM_SIZE, 0,
-                MAKELPARAM(rc.right - rc.left, rc.bottom - rc.top));
-        }
-
-        if (ctx) {
-            ctx->hwnd = sdlcontext.hwnd;
-            ctx->hdc = sdlcontext.hdc;
-            ctx->hglrc = nullptr;
-            ctx->width = sdlcontext.width;
-            ctx->height = sdlcontext.height;
-
-            if (auto* winData = ctx->windowData) {
-                HWND oldHost = winData->hwnd;
-                HDC oldDC = winData->hdc;
-                if (oldHost && oldHost != sdlcontext.hwnd) {
-                    if (oldDC) {
-                        ReleaseDC(oldHost, oldDC);
-                    }
-                    DestroyWindow(oldHost);
-                }
-                winData->hwnd = sdlcontext.hwnd;
-                winData->parent = sdlcontext.parent;
-                winData->hdc = sdlcontext.hdc;
-                winData->glContext = nullptr;
-                winData->width = sdlcontext.width;
-                winData->height = sdlcontext.height;
-            }
-
-            if (ctx->onResize) {
-                ctx->onResize(sdlcontext.width, sdlcontext.height);
-            }
         }
         // SDL_SetRenderDrawColor(ctx.renderer, 0, 0, 0, SDL_ALPHA_OPAQUE);
         SDL_ShowWindow(sdlcontext.window);
@@ -298,15 +266,19 @@ namespace almondnamespace::sdlcontext
         SDL_Event e;
         static int i = 0;
         while (SDL_PollEvent(&e)) {
-            if (e.type == SDL_EVENT_QUIT) {
+            if (e.type == SDL_EVENT_QUIT) 
+            {
                 sdlcontext.running = false;
-                std::cout << "SDL Quit Event: " << e.type << "\n";
-            }
+                std::cout << "SDL Quit Event: " 
+                    << e.type 
+                    << "\n";
 
+            }
             if (keys[SDL_SCANCODE_ESCAPE]) {
                 sdlcontext.running = false; // Exit on Escape key
                 std::cout << "Escape Key Event Count: " << ++i << '\n';
-            }
+		    }
+			return true; // Continue processing
         }
 
         static auto* bgTimer = almondnamespace::time::getTimer("menu", "bg_color");

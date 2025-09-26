@@ -47,7 +47,6 @@
 
 #include <stdexcept>
 #include <iostream>
-#include <algorithm>
 
 // FOR EXAMPLE
 //#include <windows.h>
@@ -147,48 +146,17 @@ namespace almondnamespace::raylibcontext
 
             LONG_PTR style = GetWindowLongPtr(s_raylibstate.hwnd, GWL_STYLE);
             style &= ~WS_OVERLAPPEDWINDOW;
-            style |= WS_CHILD | WS_VISIBLE | WS_CLIPSIBLINGS | WS_CLIPCHILDREN;
+            style |= WS_CHILD | WS_VISIBLE;
             SetWindowLongPtr(s_raylibstate.hwnd, GWL_STYLE, style);
 
-            RECT rc{};
+            SetWindowPos(s_raylibstate.hwnd, nullptr, s_raylibstate.width, 0,
+                s_raylibstate.width,
+                s_raylibstate.height,
+                SWP_NOZORDER | SWP_FRAMECHANGED | SWP_SHOWWINDOW);
+
+            RECT rc;
             GetClientRect(s_raylibstate.parent, &rc);
-            const int width = std::max<LONG>(1, rc.right - rc.left);
-            const int height = std::max<LONG>(1, rc.bottom - rc.top);
-            SetWindowPos(s_raylibstate.hwnd, nullptr, 0, 0,
-                width,
-                height,
-                SWP_NOZORDER | SWP_FRAMECHANGED | SWP_SHOWWINDOW | SWP_NOACTIVATE);
-
-            PostMessage(s_raylibstate.parent, WM_SIZE, 0, MAKELPARAM(width, height));
-        }
-
-        if (ctx) {
-            ctx->hwnd = s_raylibstate.hwnd;
-            ctx->hdc = s_raylibstate.hdc;
-            ctx->hglrc = s_raylibstate.glContext;
-            ctx->width = s_raylibstate.width;
-            ctx->height = s_raylibstate.height;
-
-            if (auto* winData = ctx->windowData) {
-                HWND oldHost = winData->hwnd;
-                HDC oldDC = winData->hdc;
-                if (oldHost && oldHost != s_raylibstate.hwnd) {
-                    if (oldDC) {
-                        ReleaseDC(oldHost, oldDC);
-                    }
-                    DestroyWindow(oldHost);
-                }
-                winData->hwnd = s_raylibstate.hwnd;
-                winData->parent = s_raylibstate.parent;
-                winData->hdc = s_raylibstate.hdc;
-                winData->glContext = s_raylibstate.glContext;
-                winData->width = s_raylibstate.width;
-                winData->height = s_raylibstate.height;
-            }
-
-            if (ctx->onResize) {
-                ctx->onResize(s_raylibstate.width, s_raylibstate.height);
-            }
+            PostMessage(s_raylibstate.parent, WM_SIZE, 0, MAKELPARAM(rc.right - rc.left, rc.bottom - rc.top));
         }
 
         s_raylibstate.running = true;
