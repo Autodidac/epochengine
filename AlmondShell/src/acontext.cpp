@@ -215,8 +215,9 @@ namespace almondnamespace::core {
 #ifdef ALMOND_USING_SDL
     inline void sdl_initialize() {}
     inline void sdl_cleanup() {}
-    bool sdl_process(Context& ctx, CommandQueue& queue) {
-        atlasmanager::process_pending_uploads(ctx.type);
+    bool sdl_process(std::shared_ptr<core::Context> ctx, CommandQueue& queue) {
+        if (!ctx) return false;
+        atlasmanager::process_pending_uploads(ctx->type);
         queue.drain();
         return true;
     }
@@ -229,8 +230,9 @@ namespace almondnamespace::core {
 #ifdef ALMOND_USING_SFML
     inline void sfml_initialize() {}
     inline void sfml_cleanup() {}
-    bool sfml_process(Context& ctx, CommandQueue& queue) {
-        atlasmanager::process_pending_uploads(ctx.type);
+    bool sfml_process(std::shared_ptr<core::Context> ctx, CommandQueue& queue) {
+        if (!ctx) return false;
+        atlasmanager::process_pending_uploads(ctx->type);
         queue.drain();
         return true;
     }
@@ -243,8 +245,9 @@ namespace almondnamespace::core {
 #ifdef ALMOND_USING_RAYLIB
     inline void raylib_initialize() {}
     inline void raylib_cleanup() {}
-    bool raylib_process(Context& ctx, CommandQueue& queue) {
-        atlasmanager::process_pending_uploads(ctx.type);
+    bool raylib_process(std::shared_ptr<core::Context> ctx, CommandQueue& queue) {
+        if (!ctx) return false;
+        atlasmanager::process_pending_uploads(ctx->type);
         queue.drain();
         return true;
     }
@@ -257,8 +260,9 @@ namespace almondnamespace::core {
 #ifdef ALMOND_USING_VULKAN
     inline void vulkan_initialize() {}
     inline void vulkan_cleanup() {}
-    bool vulkan_process(Context& ctx, CommandQueue& queue) {
-        atlasmanager::process_pending_uploads(ctx.type);
+    bool vulkan_process(std::shared_ptr<core::Context> ctx, CommandQueue& queue) {
+        if (!ctx) return false;
+        atlasmanager::process_pending_uploads(ctx->type);
         queue.drain();
         return true;
     }
@@ -271,8 +275,9 @@ namespace almondnamespace::core {
 #ifdef ALMOND_USING_DIRECTX
     inline void directx_initialize() {}
     inline void directx_cleanup() {}
-    bool directx_process(Context& ctx, CommandQueue& queue) {
-        atlasmanager::process_pending_uploads(ctx.type);
+    bool directx_process(std::shared_ptr<core::Context> ctx, CommandQueue& queue) {
+        if (!ctx) return false;
+        atlasmanager::process_pending_uploads(ctx->type);
         queue.drain();
         return true;
     }
@@ -285,8 +290,9 @@ namespace almondnamespace::core {
 #ifdef ALMOND_USING_CUSTOM
     inline void custom_initialize() {}
     inline void custom_cleanup() {}
-    bool custom_process(Context& ctx, CommandQueue& queue) {
-        atlasmanager::process_pending_uploads(ctx.type);
+    bool custom_process(std::shared_ptr<core::Context> ctx, CommandQueue& queue) {
+        if (!ctx) return false;
+        atlasmanager::process_pending_uploads(ctx->type);
         queue.drain();
         return true;
     }
@@ -299,8 +305,9 @@ namespace almondnamespace::core {
 #ifdef ALMOND_USING_SOFTWARE_RENDERER
     inline void softrenderer_initialize() {}
     inline void softrenderer_cleanup() {}
-    bool softrenderer_process(Context& ctx, CommandQueue& queue) {
-        atlasmanager::process_pending_uploads(ctx.type);
+    bool softrenderer_process(std::shared_ptr<core::Context> ctx, CommandQueue& queue) {
+        if (!ctx) return false;
+        atlasmanager::process_pending_uploads(ctx->type);
         queue.drain();
         return true;
     }
