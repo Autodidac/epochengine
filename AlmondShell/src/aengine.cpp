@@ -2039,6 +2039,12 @@ int APIENTRY wWinMain(_In_ HINSTANCE hInstance,
                 else { TranslateMessage(&msg); DispatchMessage(&msg); }
             }
 
+            // Ensure input state is refreshed from the main thread before any
+            // context-specific processing happens.  Rendering threads are now
+            // gated from polling directly, so the designated polling thread
+            // (WinMain) must keep the shared state up to date.
+            almondnamespace::input::poll_input();
+
             // Update all backends
             for (auto& [type, state] : almondnamespace::core::g_backends) {
                 auto update_on_ctx = [&](std::shared_ptr<almondnamespace::core::Context> ctx) -> bool {
