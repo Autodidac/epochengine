@@ -44,6 +44,7 @@
 #include "aatlasmanager.hpp"
 #include "asdlstate.hpp"
 
+#include <algorithm>
 #include <stdexcept>
 #include <iostream>
 
@@ -105,6 +106,10 @@ namespace almondnamespace::sdlcontext
         sdlcontext.width = w;
         sdlcontext.height = h;
         sdlcontext.parent = parentWnd;
+
+        if (ctx) {
+            ctx->onResize = sdlcontext.onResize;
+        }
 
         if (SDL_Init(SDL_INIT_VIDEO) == 0) {
             throw std::runtime_error("[SDL] Failed to initialize SDL: " + std::string(SDL_GetError()));
@@ -169,22 +174,31 @@ namespace almondnamespace::sdlcontext
         }
 
         if (sdlcontext.parent) {
-            // SDL_SetWindowParent(ctx.window, parentWindow);
-			std::cout << "[SDL] Setting parent window: " << sdlcontext.parent << "\n";
+            std::cout << "[SDL] Setting parent window: " << sdlcontext.parent << "\n";
             SetParent(hwnd, sdlcontext.parent);
+
             LONG_PTR style = GetWindowLongPtr(hwnd, GWL_STYLE);
             style &= ~WS_OVERLAPPEDWINDOW;
             style |= WS_CHILD | WS_VISIBLE;
             SetWindowLongPtr(hwnd, GWL_STYLE, style);
-            SetWindowPos(sdlcontext.hwnd, nullptr, 0, sdlcontext.height,
-                sdlcontext.width,
-                sdlcontext.height, 
+
+            RECT client{};
+            GetClientRect(sdlcontext.parent, &client);
+            const int width = std::max<LONG>(1, client.right - client.left);
+            const int height = std::max<LONG>(1, client.bottom - client.top);
+
+            sdlcontext.width = width;
+            sdlcontext.height = height;
+
+            SetWindowPos(sdlcontext.hwnd, nullptr, 0, 0,
+                width, height,
                 SWP_NOZORDER | SWP_FRAMECHANGED | SWP_SHOWWINDOW);
 
-            RECT rc;
-            GetClientRect(sdlcontext.parent, &rc);
-            PostMessage(sdlcontext.parent, WM_SIZE, 0, MAKELPARAM(rc.right - rc.left, rc.bottom - rc.top));
+            if (sdlcontext.onResize) {
+                sdlcontext.onResize(width, height);
+            }
 
+            PostMessage(sdlcontext.parent, WM_SIZE, 0, MAKELPARAM(width, height));
         }
         // SDL_SetRenderDrawColor(ctx.renderer, 0, 0, 0, SDL_ALPHA_OPAQUE);
         SDL_ShowWindow(sdlcontext.window);

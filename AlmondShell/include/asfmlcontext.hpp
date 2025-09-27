@@ -37,6 +37,7 @@
 #include "asfmltextures.hpp"
 #include "aatlasmanager.hpp"
 
+#include <algorithm>
 #include <iostream>
 #include <string>
 #include <utility>
@@ -238,8 +239,21 @@ namespace almondnamespace::sfmlcontext
             style |= WS_CHILD | WS_VISIBLE;
             SetWindowLongPtr(sfmlcontext.hwnd, GWL_STYLE, style);
 
-            SetWindowPos(sfmlcontext.hwnd, nullptr, 0, 0, sfmlcontext.width, sfmlcontext.height,
+            RECT client{};
+            GetClientRect(sfmlcontext.parent, &client);
+            const int width = std::max<LONG>(1, client.right - client.left);
+            const int height = std::max<LONG>(1, client.bottom - client.top);
+
+            sfmlcontext.width = width;
+            sfmlcontext.height = height;
+
+            SetWindowPos(sfmlcontext.hwnd, nullptr, 0, 0,
+                width, height,
                 SWP_NOZORDER | SWP_FRAMECHANGED | SWP_SHOWWINDOW);
+
+            if (sfmlcontext.onResize) {
+                sfmlcontext.onResize(width, height);
+            }
         }
         std::cout << "[SFML] HWND: " << sfmlcontext.hwnd << "\n";
         std::cout << "[SFML] HDC: " << sfmlcontext.hdc << "\n";

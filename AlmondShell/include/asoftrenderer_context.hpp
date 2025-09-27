@@ -37,7 +37,10 @@
 
 #include <memory>
 #include <chrono>
+#include <cmath>
+#include <cstdint>
 #include <iostream>
+#include <span>
 #include <vector>
 #include <algorithm>
 #undef max
@@ -132,6 +135,91 @@ namespace almondnamespace::anativecontext
                     uint32_t color = atlas->pixel_data[idx];
                     softstate.framebuffer[size_t(y) * size_t(softstate.width) + size_t(x)] = color;
                 }
+            }
+        }
+    }
+
+    inline void draw_sprite(SpriteHandle handle,
+        std::span<const TextureAtlas* const> atlases,
+        float x, float y, float width, float height) noexcept
+    {
+        if (!handle.is_valid()) {
+            std::cerr << "[Software_DrawSprite] Invalid sprite handle.\n";
+            return;
+        }
+
+        const int atlasIdx = static_cast<int>(handle.atlasIndex);
+        const int localIdx = static_cast<int>(handle.localIndex);
+
+        if (atlasIdx < 0 || atlasIdx >= static_cast<int>(atlases.size())) {
+            std::cerr << "[Software_DrawSprite] Atlas index out of range: " << atlasIdx << "\n";
+            return;
+        }
+
+        const TextureAtlas* atlas = atlases[atlasIdx];
+        if (!atlas) {
+            std::cerr << "[Software_DrawSprite] Null atlas pointer for index " << atlasIdx << "\n";
+            return;
+        }
+
+        AtlasRegion region{};
+        if (!atlas->try_get_entry_info(localIdx, region)) {
+            std::cerr << "[Software_DrawSprite] Sprite index out of range: " << localIdx << "\n";
+            return;
+        }
+
+        if (atlas->pixel_data.empty()) {
+            const_cast<TextureAtlas*>(atlas)->rebuild_pixels();
+        }
+
+        auto& sr = s_softrendererstate;
+        if (sr.framebuffer.empty() || sr.width <= 0 || sr.height <= 0) {
+            return;
+        }
+
+        const int destX = static_cast<int>(std::floor(x));
+        const int destY = static_cast<int>(std::floor(y));
+        const int destW = width > 0.f
+            ? std::max(1, static_cast<int>(std::lround(width)))
+            : static_cast<int>(std::max<uint32_t>(1u, region.width));
+        const int destH = height > 0.f
+            ? std::max(1, static_cast<int>(std::lround(height)))
+            : static_cast<int>(std::max<uint32_t>(1u, region.height));
+
+        const int clipX0 = std::max(0, destX);
+        const int clipY0 = std::max(0, destY);
+        const int clipX1 = std::min(sr.width, destX + destW);
+        const int clipY1 = std::min(sr.height, destY + destH);
+        if (clipX0 >= clipX1 || clipY0 >= clipY1) {
+            return;
+        }
+
+        const int srcW = static_cast<int>(std::max<uint32_t>(1u, region.width));
+        const int srcH = static_cast<int>(std::max<uint32_t>(1u, region.height));
+        const float invDestW = 1.0f / static_cast<float>(destW);
+        const float invDestH = 1.0f / static_cast<float>(destH);
+
+        for (int py = clipY0; py < clipY1; ++py) {
+            const float v = (py - destY) * invDestH;
+            const int sampleY = std::clamp(static_cast<int>(std::floor(v * srcH)), 0, srcH - 1);
+            for (int px = clipX0; px < clipX1; ++px) {
+                const float u = (px - destX) * invDestW;
+                const int sampleX = std::clamp(static_cast<int>(std::floor(u * srcW)), 0, srcW - 1);
+
+                const int atlasX = static_cast<int>(region.x) + sampleX;
+                const int atlasY = static_cast<int>(region.y) + sampleY;
+                const size_t srcIndex = (static_cast<size_t>(atlasY) * atlas->width + static_cast<size_t>(atlasX)) * 4;
+                if (srcIndex + 3 >= atlas->pixel_data.size()) {
+                    continue;
+                }
+
+                const uint8_t* src = atlas->pixel_data.data() + srcIndex;
+                const uint32_t color = (uint32_t(src[3]) << 24)
+                    | (uint32_t(src[0]) << 16)
+                    | (uint32_t(src[1]) << 8)
+                    | uint32_t(src[2]);
+
+                sr.framebuffer[static_cast<size_t>(py) * static_cast<size_t>(sr.width) + static_cast<size_t>(px)] = color;
             }
         }
     }

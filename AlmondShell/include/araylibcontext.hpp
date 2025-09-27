@@ -45,6 +45,7 @@
 
 //#include "araylibcontext_win32.hpp"
 
+#include <algorithm>
 #include <stdexcept>
 #include <iostream>
 
@@ -82,6 +83,10 @@ namespace almondnamespace::raylibcontext
         s_raylibstate.width = w;
         s_raylibstate.height = h;
         s_raylibstate.parent = parentWnd;
+
+        if (ctx) {
+            ctx->onResize = s_raylibstate.onResize;
+        }
 
 
         static bool initialized = false;
@@ -149,14 +154,23 @@ namespace almondnamespace::raylibcontext
             style |= WS_CHILD | WS_VISIBLE;
             SetWindowLongPtr(s_raylibstate.hwnd, GWL_STYLE, style);
 
-            SetWindowPos(s_raylibstate.hwnd, nullptr, s_raylibstate.width, 0,
-                s_raylibstate.width,
-                s_raylibstate.height,
+            RECT client{};
+            GetClientRect(s_raylibstate.parent, &client);
+            const int width = std::max<LONG>(1, client.right - client.left);
+            const int height = std::max<LONG>(1, client.bottom - client.top);
+
+            s_raylibstate.width = width;
+            s_raylibstate.height = height;
+
+            SetWindowPos(s_raylibstate.hwnd, nullptr, 0, 0,
+                width, height,
                 SWP_NOZORDER | SWP_FRAMECHANGED | SWP_SHOWWINDOW);
 
-            RECT rc;
-            GetClientRect(s_raylibstate.parent, &rc);
-            PostMessage(s_raylibstate.parent, WM_SIZE, 0, MAKELPARAM(rc.right - rc.left, rc.bottom - rc.top));
+            if (s_raylibstate.onResize) {
+                s_raylibstate.onResize(width, height);
+            }
+
+            PostMessage(s_raylibstate.parent, WM_SIZE, 0, MAKELPARAM(width, height));
         }
 
         s_raylibstate.running = true;
