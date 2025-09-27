@@ -234,7 +234,7 @@ namespace almondnamespace::anativecontext
         std::fill(sr.framebuffer.begin(), sr.framebuffer.end(), 0xFF000000);
 
         // Draw quad
-//        softrenderer_draw_quad(sr);
+        softrenderer_draw_quad(sr);
 
         // Drain queued commands
         queue.drain();

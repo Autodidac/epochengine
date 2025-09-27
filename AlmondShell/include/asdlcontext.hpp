@@ -279,7 +279,7 @@ namespace almondnamespace::sdlcontext
         const bool* keys = SDL_GetKeyboardState(NULL);
         SDL_Event e;
         static int i = 0;
-        while (SDL_PollEvent(&e)) {
+        if (SDL_PollEvent(&e)) {
             if (e.type == SDL_EVENT_QUIT) 
             {
                 sdlcontext.running = false;
