@@ -429,7 +429,7 @@ namespace almondnamespace::core
                 case ContextType::SDL:
                     std::cerr << "[Init] Initializing SDL context for hwnd=" << hwnd << "\n";
                     almondnamespace::sdlcontext::sdl_initialize(
-                        ctx, hwnd);
+                        ctx, hwnd, ctx->width, ctx->height, w ? w->onResize : nullptr);
                     break;
 #endif
 #ifdef ALMOND_USING_SFML
@@ -443,7 +443,7 @@ namespace almondnamespace::core
                 case ContextType::RayLib:
                     std::cerr << "[Init] Initializing RayLib context for hwnd=" << hwnd << "\n";
                     almondnamespace::raylibcontext::raylib_initialize(
-                        ctx, hwnd);
+                        ctx, hwnd, ctx->width, ctx->height, w ? w->onResize : nullptr);
                     break;
 #endif
                 default:

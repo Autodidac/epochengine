@@ -480,7 +480,7 @@ namespace almondnamespace::core {
         sdlContext->is_mouse_button_down = [](input::MouseButton b) { return input::is_mouse_button_down(b); };
 
         sdlContext->registry_get = [](const char*) { return 0; };
-        sdlContext->draw_sprite = [](SpriteHandle, std::span<const TextureAtlas* const>, float, float, float, float) {};
+        sdlContext->draw_sprite = sdlcontext::draw_sprite;
 
         sdlContext->add_texture = [&](TextureAtlas& a, const std::string& n, const ImageData& i) {
             return AddTextureThunk(a, n, i, ContextType::SDL);
@@ -516,7 +516,7 @@ namespace almondnamespace::core {
         sfmlContext->is_mouse_button_down = [](input::MouseButton b) { return input::is_mouse_button_down(b); };
 
         sfmlContext->registry_get = [](const char*) { return 0; };
-        sfmlContext->draw_sprite = [](SpriteHandle, std::span<const TextureAtlas* const>, float, float, float, float) {};
+        sfmlContext->draw_sprite = sfmlcontext::draw_sprite;
 
         sfmlContext->add_texture = [&](TextureAtlas& a, const std::string& n, const ImageData& i) {
             return AddTextureThunk(a, n, i, ContextType::SFML);
@@ -552,7 +552,7 @@ namespace almondnamespace::core {
         raylibContext->is_mouse_button_down = [](input::MouseButton b) { return input::is_mouse_button_down(b); };
 
         raylibContext->registry_get = [](const char*) { return 0; };
-        raylibContext->draw_sprite = [](SpriteHandle, std::span<const TextureAtlas* const>, float, float, float, float) {};
+        raylibContext->draw_sprite = raylibcontext::draw_sprite;
 
         raylibContext->add_texture = [&](TextureAtlas& a, const std::string& n, const ImageData& i) {
             return AddTextureThunk(a, n, i, ContextType::RayLib);
@@ -684,7 +684,7 @@ namespace almondnamespace::core {
         softwareContext->is_mouse_button_down = [](input::MouseButton b) { return input::is_mouse_button_down(b); };
 
         softwareContext->registry_get = [](const char*) { return 0; };
-        softwareContext->draw_sprite = [](SpriteHandle, std::span<const TextureAtlas* const>, float, float, float, float) {};
+        softwareContext->draw_sprite = anativecontext::draw_sprite;
 
         softwareContext->add_texture = [&](TextureAtlas& a, const std::string& n, const ImageData& i) {
             return AddTextureThunk(a, n, i, ContextType::Software);

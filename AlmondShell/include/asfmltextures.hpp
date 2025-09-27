@@ -198,7 +198,7 @@ namespace almondnamespace::sfmlcontext
 // Draw a sprite from an atlas
 // ──────────────────────────────────────────────
     inline void draw_sprite(SpriteHandle handle, std::span<const TextureAtlas* const> atlases,
-        float x, float y, int width, int height) noexcept
+        float x, float y, float width, float height) noexcept
     {
         if (!handle.is_valid())
         {
@@ -254,8 +254,8 @@ namespace almondnamespace::sfmlcontext
 
         if (width > 0.f && height > 0.f)
         {
-            float scaleX = width / float(region.width);
-            float scaleY = height / float(region.height);
+            const float scaleX = width / float(region.width);
+            const float scaleY = height / float(region.height);
             sprite.setScale(sf::Vector2f(scaleX, scaleY));
         }
 
