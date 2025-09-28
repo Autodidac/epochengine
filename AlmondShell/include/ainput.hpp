@@ -46,6 +46,7 @@
 #include <bitset>
 #include <atomic>
 #include <thread>
+#include <array>
 
 namespace almondnamespace::input // Input namespace
 {
@@ -421,10 +422,11 @@ inline void poll_input()
     }
 
     // Mouse buttons (Left=VK_LBUTTON=0x01, Right=VK_RBUTTON=0x02, Middle=VK_MBUTTON=0x04)
-    constexpr int mouseVK[] = { VK_LBUTTON, VK_RBUTTON, VK_MBUTTON, 0x04, 0x05, 0x06, 0x07, 0x08 };
+    constexpr int mouseVK[] = { VK_LBUTTON, VK_RBUTTON, VK_MBUTTON, VK_XBUTTON1, VK_XBUTTON2 };
     for (uint8_t btn = 0; btn < MouseButton::MouseCount; ++btn) {
-        SHORT state = GetAsyncKeyState(mouseVK[btn]);
-        bool isDown = (state & 0x8000) != 0;
+        const int vk = (btn < std::size(mouseVK)) ? mouseVK[btn] : 0;
+        const SHORT state = vk ? GetAsyncKeyState(vk) : 0;
+        const bool isDown = (state & 0x8000) != 0;
 
         if (isDown && !mouseDown.test(btn)) {
             mousePressed.set(btn);
