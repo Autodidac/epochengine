@@ -120,21 +120,26 @@ namespace almondnamespace::anativecontext
 
         for (int y = 0; y < softstate.height; ++y) {
             for (int x = 0; x < softstate.width; ++x) {
-                float u = float(x) / float(std::max(1, softstate.width));
-                float v = float(y) / float(std::max(1, softstate.height));
+                const float u = float(x) / float(std::max(1, softstate.width));
+                const float v = float(y) / float(std::max(1, softstate.height));
 
-                int texX = static_cast<int>(u * (w - 1));
-                int texY = static_cast<int>(v * (h - 1));
+                const int texX = static_cast<int>(u * float(w - 1));
+                const int texY = static_cast<int>(v * float(h - 1));
 
-                size_t idx = size_t(texY) * size_t(w) + size_t(texX);
-                if (idx >= atlas->pixel_data.size()) {
+                const size_t byteIndex = (static_cast<size_t>(texY) * static_cast<size_t>(w)
+                    + static_cast<size_t>(texX))
+                    * 4;
+                if (byteIndex + 3 >= atlas->pixel_data.size()) {
                     throw std::runtime_error("[Software] Pixel idx out of range");
                 }
 
-                if (idx < atlas->pixel_data.size()) {
-                    uint32_t color = atlas->pixel_data[idx];
-                    softstate.framebuffer[size_t(y) * size_t(softstate.width) + size_t(x)] = color;
-                }
+                const uint8_t* src = atlas->pixel_data.data() + byteIndex;
+                const uint32_t color = (uint32_t(src[3]) << 24)
+                    | (uint32_t(src[0]) << 16)
+                    | (uint32_t(src[1]) << 8)
+                    | uint32_t(src[2]);
+
+                softstate.framebuffer[size_t(y) * size_t(softstate.width) + size_t(x)] = color;
             }
         }
     }
