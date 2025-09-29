@@ -69,7 +69,6 @@ namespace almondnamespace::anativecontext
         s_softrendererstate.height = static_cast<int>(h);
         s_softrendererstate.running = true;
         s_softrendererstate.parent = parentWnd ? parentWnd : ctx->hwnd;
-        s_softrendererstate.onResize = std::move(onResize);
         s_softrendererstate.hwnd = ctx->hwnd;
 
         // Allocate framebuffer inside state
@@ -96,6 +95,55 @@ namespace almondnamespace::anativecontext
 #endif
 
         std::cout << "[SoftRenderer] Initialized on HWND=" << ctx->hwnd << "\n";
+
+        auto weakCtx = std::weak_ptr<core::Context>(ctx);
+        auto resizeImpl = [weakCtx](int newW, int newH)
+        {
+            if (newW <= 0 || newH <= 0)
+                return;
+
+            auto clampedW = std::max(1, newW);
+            auto clampedH = std::max(1, newH);
+
+            s_softrendererstate.width = clampedW;
+            s_softrendererstate.height = clampedH;
+
+            const size_t newSize = static_cast<size_t>(clampedW) * static_cast<size_t>(clampedH);
+            s_softrendererstate.framebuffer.assign(newSize, 0xFF000000);
+
+#ifdef _WIN32
+            s_softrendererstate.bmi.bmiHeader.biWidth = clampedW;
+            s_softrendererstate.bmi.bmiHeader.biHeight = -clampedH;
+#endif
+
+            if (auto locked = weakCtx.lock())
+            {
+                locked->width = clampedW;
+                locked->height = clampedH;
+                if (locked->windowData)
+                {
+                    locked->windowData->width = clampedW;
+                    locked->windowData->height = clampedH;
+                }
+            }
+        };
+
+        auto combinedResize = resizeImpl;
+        if (onResize)
+        {
+            combinedResize = [resizeImpl, external = std::move(onResize)](int newW, int newH)
+            {
+                resizeImpl(newW, newH);
+                external(newW, newH);
+            };
+        }
+
+        s_softrendererstate.onResize = combinedResize;
+        ctx->onResize = combinedResize;
+        if (ctx->windowData)
+        {
+            ctx->windowData->onResize = combinedResize;
+        }
 
         atlasmanager::register_backend_uploader(core::ContextType::Software,
             [](const TextureAtlas& atlas) {
