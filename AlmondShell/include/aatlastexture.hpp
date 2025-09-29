@@ -320,10 +320,24 @@ namespace almondnamespace
             const size_t stride = static_cast<size_t>(width) * 4;
 
             for (const auto& entry : entries) {
+                if (entry.pixels.empty())
+                    continue; // Slice-only entries reference existing pixels
+
+                const size_t requiredBytes = static_cast<size_t>(entry.texWidth)
+                    * static_cast<size_t>(entry.texHeight) * 4;
+                if (entry.pixels.size() < requiredBytes) {
+                    std::cerr << "[Atlas] Skipping rebuild for entry '" << entry.name
+                        << "' due to insufficient pixel data (have "
+                        << entry.pixels.size() << ", need " << requiredBytes << ")\n";
+                    continue;
+                }
+
                 for (u32 row = 0; row < entry.texHeight; ++row) {
-                    auto dst = pixel_data.data() + ((entry.region.y + row) * stride) + (entry.region.x * 4);
-                    auto src = entry.pixels.data() + (row * entry.texWidth * 4);
-                    std::copy_n(src, entry.texWidth * 4, dst);
+                    auto dst = pixel_data.data()
+                        + ((entry.region.y + row) * stride)
+                        + (entry.region.x * 4);
+                    auto src = entry.pixels.data() + (static_cast<size_t>(row) * entry.texWidth * 4);
+                    std::copy_n(src, static_cast<size_t>(entry.texWidth) * 4, dst);
                 }
             }
 
