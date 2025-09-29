@@ -109,6 +109,8 @@ namespace almondnamespace::core
         void ArrangeDockedWindowsGrid();
         void StartRenderThreads();
 
+        void HandleResize(HWND hwnd, int width, int height);
+
         HWND GetParentWindow() const { return parent; }
         const std::vector<std::unique_ptr<WindowData>>& GetWindows() const { return windows; }
 
@@ -150,6 +152,7 @@ namespace almondnamespace::core
 
         // ---- Static Shared ----
         inline static thread_local std::shared_ptr<core::Context> currentContext;
+        inline static MultiContextManager* s_activeInstance = nullptr;
     };
 
     // ======================================================

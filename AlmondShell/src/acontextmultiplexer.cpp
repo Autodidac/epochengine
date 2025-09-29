@@ -245,6 +245,8 @@ namespace almondnamespace::core
             RayLibWinCount + SDLWinCount + SFMLWinCount + OpenGLWinCount + SoftwareWinCount;
         if (totalRequested <= 0) return false;
 
+        s_activeInstance = this;
+
         RegisterParentClass(hInst, L"AlmondParent");
         RegisterChildClass(hInst, L"AlmondChild");
 
@@ -493,6 +495,8 @@ namespace almondnamespace::core
     {
         if (!hwnd) return;
 
+        s_activeInstance = this;
+
         if (!hdc) hdc = GetDC(hwnd);
 
         // Only create GL context if this window is OpenGL
@@ -585,6 +589,53 @@ namespace almondnamespace::core
         }
 
         ArrangeDockedWindowsGrid();
+    }
+
+
+    void MultiContextManager::HandleResize(HWND hwnd, int width, int height)
+    {
+        if (!hwnd) return;
+
+        const int clampedWidth = std::max(1, width);
+        const int clampedHeight = std::max(1, height);
+
+        std::function<void(int, int)> resizeCallback;
+        WindowData* window = nullptr;
+
+        {
+            std::scoped_lock lock(windowsMutex);
+            auto it = std::find_if(windows.begin(), windows.end(),
+                [hwnd](const std::unique_ptr<WindowData>& w) { return w && w->hwnd == hwnd; });
+            if (it == windows.end()) {
+                return;
+            }
+
+            window = it->get();
+            window->width = clampedWidth;
+            window->height = clampedHeight;
+
+            if (window->context) {
+                window->context->width = clampedWidth;
+                window->context->height = clampedHeight;
+                if (window->context->onResize) {
+                    resizeCallback = window->context->onResize;
+                }
+            }
+
+            if (!resizeCallback && window->onResize) {
+                resizeCallback = window->onResize;
+            }
+        }
+
+        if (resizeCallback && window) {
+            window->commandQueue.enqueue([
+                cb = std::move(resizeCallback),
+                clampedWidth,
+                clampedHeight
+            ]() mutable {
+                if (cb) cb(clampedWidth, clampedHeight);
+            });
+        }
     }
 
 
@@ -744,9 +795,7 @@ namespace almondnamespace::core
             SetWindowPos(win.hwnd, nullptr, c * cw, r * ch, cw, ch,
                 SWP_NOZORDER | SWP_NOACTIVATE | SWP_SHOWWINDOW);
 
-            //win.width = cw;
-            //win.height = ch;
-            if (win.onResize) win.onResize(cw, ch);
+            HandleResize(win.hwnd, cw, ch);
         }
     }
 
@@ -764,6 +813,10 @@ namespace almondnamespace::core
             if (th.joinable()) th.join();
         }
         gThreads.clear();
+
+        if (s_activeInstance == this) {
+            s_activeInstance = nullptr;
+        }
     }
 
     void MultiContextManager::RenderLoop(WindowData& win) {
@@ -951,6 +1004,19 @@ namespace almondnamespace::core
                 SetWindowPos(hwnd, nullptr, newX, newY,
                     0, 0, SWP_NOZORDER | SWP_NOSIZE | SWP_NOACTIVATE);
             }
+            return 0;
+        }
+        case WM_SIZE: {
+            if (wParam == SIZE_MINIMIZED) {
+                return 0;
+            }
+            auto* mgr = s_activeInstance;
+            if (!mgr) {
+                break;
+            }
+            int width = std::max(1, static_cast<int>(LOWORD(lParam)));
+            int height = std::max(1, static_cast<int>(HIWORD(lParam)));
+            mgr->HandleResize(hwnd, width, height);
             return 0;
         }
         case WM_LBUTTONUP: {

@@ -438,7 +438,10 @@ namespace almondnamespace::core {
 
         openglContext->is_key_held = [](input::Key k) { return input::is_key_held(k); };
         openglContext->is_key_down = [](input::Key k) { return input::is_key_down(k); };
-        openglContext->get_mouse_position = [](int& x, int& y) { x = input::mouseX; y = input::mouseY; };
+        openglContext->get_mouse_position = [](int& x, int& y) {
+            x = input::mouseX.load(std::memory_order_relaxed);
+            y = input::mouseY.load(std::memory_order_relaxed);
+        };
         openglContext->is_mouse_button_held = [](input::MouseButton b) { return input::is_mouse_button_held(b); };
         openglContext->is_mouse_button_down = [](input::MouseButton b) { return input::is_mouse_button_down(b); };
 
@@ -475,7 +478,10 @@ namespace almondnamespace::core {
 
         sdlContext->is_key_held = [](input::Key k) { return input::is_key_held(k); };
         sdlContext->is_key_down = [](input::Key k) { return input::is_key_down(k); };
-        sdlContext->get_mouse_position = [](int& x, int& y) { x = input::mouseX; y = input::mouseY; };
+        sdlContext->get_mouse_position = [](int& x, int& y) {
+            x = input::mouseX.load(std::memory_order_relaxed);
+            y = input::mouseY.load(std::memory_order_relaxed);
+        };
         sdlContext->is_mouse_button_held = [](input::MouseButton b) { return input::is_mouse_button_held(b); };
         sdlContext->is_mouse_button_down = [](input::MouseButton b) { return input::is_mouse_button_down(b); };
 
@@ -511,7 +517,10 @@ namespace almondnamespace::core {
 
         sfmlContext->is_key_held = [](input::Key k) { return input::is_key_held(k); };
         sfmlContext->is_key_down = [](input::Key k) { return input::is_key_down(k); };
-        sfmlContext->get_mouse_position = [](int& x, int& y) { x = input::mouseX; y = input::mouseY; };
+        sfmlContext->get_mouse_position = [](int& x, int& y) {
+            x = input::mouseX.load(std::memory_order_relaxed);
+            y = input::mouseY.load(std::memory_order_relaxed);
+        };
         sfmlContext->is_mouse_button_held = [](input::MouseButton b) { return input::is_mouse_button_held(b); };
         sfmlContext->is_mouse_button_down = [](input::MouseButton b) { return input::is_mouse_button_down(b); };
 
@@ -547,7 +556,10 @@ namespace almondnamespace::core {
 
         raylibContext->is_key_held = [](input::Key k) { return input::is_key_held(k); };
         raylibContext->is_key_down = [](input::Key k) { return input::is_key_down(k); };
-        raylibContext->get_mouse_position = [](int& x, int& y) { x = input::mouseX; y = input::mouseY; };
+        raylibContext->get_mouse_position = [](int& x, int& y) {
+            x = input::mouseX.load(std::memory_order_relaxed);
+            y = input::mouseY.load(std::memory_order_relaxed);
+        };
         raylibContext->is_mouse_button_held = [](input::MouseButton b) { return input::is_mouse_button_held(b); };
         raylibContext->is_mouse_button_down = [](input::MouseButton b) { return input::is_mouse_button_down(b); };
 
@@ -583,7 +595,10 @@ namespace almondnamespace::core {
 
         vulkanContext->is_key_held = [](input::Key k) { return input::is_key_held(k); };
         vulkanContext->is_key_down = [](input::Key k) { return input::is_key_down(k); };
-        vulkanContext->get_mouse_position = [](int& x, int& y) { x = input::mouseX; y = input::mouseY; };
+        vulkanContext->get_mouse_position = [](int& x, int& y) {
+            x = input::mouseX.load(std::memory_order_relaxed);
+            y = input::mouseY.load(std::memory_order_relaxed);
+        };
         vulkanContext->is_mouse_button_held = [](input::MouseButton b) { return input::is_mouse_button_held(b); };
         vulkanContext->is_mouse_button_down = [](input::MouseButton b) { return input::is_mouse_button_down(b); };
 
@@ -615,7 +630,10 @@ namespace almondnamespace::core {
 
         directxContext->is_key_held = [](input::Key k) { return input::is_key_held(k); };
         directxContext->is_key_down = [](input::Key k) { return input::is_key_down(k); };
-        directxContext->get_mouse_position = [](int& x, int& y) { x = input::mouseX; y = input::mouseY; };
+        directxContext->get_mouse_position = [](int& x, int& y) {
+            x = input::mouseX.load(std::memory_order_relaxed);
+            y = input::mouseY.load(std::memory_order_relaxed);
+        };
         directxContext->is_mouse_button_held = [](input::MouseButton b) { return input::is_mouse_button_held(b); };
         directxContext->is_mouse_button_down = [](input::MouseButton b) { return input::is_mouse_button_down(b); };
 
@@ -647,7 +665,10 @@ namespace almondnamespace::core {
 
         customContext->is_key_held = [](input::Key k) { return input::is_key_held(k); };
         customContext->is_key_down = [](input::Key k) { return input::is_key_down(k); };
-        customContext->get_mouse_position = [](int& x, int& y) { x = input::mouseX; y = input::mouseY; };
+        customContext->get_mouse_position = [](int& x, int& y) {
+            x = input::mouseX.load(std::memory_order_relaxed);
+            y = input::mouseY.load(std::memory_order_relaxed);
+        };
         customContext->is_mouse_button_held = [](input::MouseButton b) { return input::is_mouse_button_held(b); };
         customContext->is_mouse_button_down = [](input::MouseButton b) { return input::is_mouse_button_down(b); };
 
@@ -679,7 +700,10 @@ namespace almondnamespace::core {
 
         softwareContext->is_key_held = [](input::Key k) { return input::is_key_held(k); };
         softwareContext->is_key_down = [](input::Key k) { return input::is_key_down(k); };
-        softwareContext->get_mouse_position = [](int& x, int& y) { x = input::mouseX; y = input::mouseY; };
+        softwareContext->get_mouse_position = [](int& x, int& y) {
+            x = input::mouseX.load(std::memory_order_relaxed);
+            y = input::mouseY.load(std::memory_order_relaxed);
+        };
         softwareContext->is_mouse_button_held = [](input::MouseButton b) { return input::is_mouse_button_held(b); };
         softwareContext->is_mouse_button_down = [](input::MouseButton b) { return input::is_mouse_button_down(b); };
 

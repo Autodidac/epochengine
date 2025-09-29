@@ -34,10 +34,12 @@ namespace almondnamespace::raylibcontext {
     {
         using namespace almondnamespace::input;
 
+        std::unique_lock<std::shared_mutex> lock(g_inputMutex);
+
         // Reset pressed states
         keyPressed.reset();
         mousePressed.reset();
-        mouseWheel = 0;
+        mouseWheel.store(0, std::memory_order_relaxed);
 
         // --- Keyboard ---
         for (int k = 0; k < Key::Count; ++k)
@@ -121,11 +123,11 @@ namespace almondnamespace::raylibcontext {
         }
 
         // Mouse position
-        mouseX = GetMouseX();
-        mouseY = GetMouseY();
+        mouseX.store(GetMouseX(), std::memory_order_relaxed);
+        mouseY.store(GetMouseY(), std::memory_order_relaxed);
 
         // Mouse wheel (Raylib returns float, use int for your API)
-        mouseWheel = static_cast<int>(GetMouseWheelMove());
+        mouseWheel.store(static_cast<int>(GetMouseWheelMove()), std::memory_order_relaxed);
     }
 
 } // namespace almondnamespace::raylibcontext

@@ -47,6 +47,8 @@
 #include <atomic>
 #include <thread>
 #include <array>
+#include <mutex>
+#include <shared_mutex>
 
 namespace almondnamespace::input // Input namespace
 {
@@ -95,15 +97,17 @@ namespace almondnamespace::input // Input namespace
     inline std::thread::id g_pollingThread{};
     inline std::atomic<bool> g_pollingThreadLocked{ false };
 
+    inline std::shared_mutex g_inputMutex{};
+
     inline std::bitset<Key::Count> keyDown{};
     inline std::bitset<Key::Count> keyPressed{};
 
     inline std::bitset<MouseButton::MouseCount> mouseDown{};
     inline std::bitset<MouseButton::MouseCount> mousePressed{};
 
-    inline int mouseX = 0;
-    inline int mouseY = 0;
-    inline int mouseWheel = 0;
+    inline std::atomic<int> mouseX{ 0 };
+    inline std::atomic<int> mouseY{ 0 };
+    inline std::atomic<int> mouseWheel{ 0 };
 
     inline void designate_polling_thread(std::thread::id id) {
         g_pollingThread = id;
@@ -258,6 +262,8 @@ namespace almondnamespace::input // Input namespace
 
     inline void update_input()  // Update input states - must be called each frame
     {
+        std::unique_lock<std::shared_mutex> lock(g_inputMutex);
+
         // Reset pressed states
         keyPressed.reset();
         mousePressed.reset();
@@ -294,14 +300,14 @@ namespace almondnamespace::input // Input namespace
         // Get cursor position relative to the active window (assumes HWND is active window)
         POINT p;
         if (GetCursorPos(&p)) {
-            mouseX = p.x;
-            mouseY = p.y;
+            mouseX.store(p.x, std::memory_order_relaxed);
+            mouseY.store(p.y, std::memory_order_relaxed);
         }
 #endif // ALMOND_USING_RAYLIB
 
 #endif // ALMOND_MAIN_HEADLESS
         // Mouse wheel: Requires Windows message handling, leave zero here
-        mouseWheel = 0;
+        mouseWheel.store(0, std::memory_order_relaxed);
     }
 
 #elif defined(__APPLE__)
@@ -398,10 +404,12 @@ inline void poll_input()
         return;
     }
 
+    std::unique_lock<std::shared_mutex> lock(g_inputMutex);
+
     // Reset pressed states; pressed is "went down this frame"
     keyPressed.reset();
     mousePressed.reset();
-    mouseWheel = 0;
+    mouseWheel.store(0, std::memory_order_relaxed);
 
 #ifndef ALMOND_MAIN_HEADLESS
 #ifndef ALMOND_USING_RAYLIB
@@ -437,8 +445,8 @@ inline void poll_input()
     // Update mouse position (screen coordinates)
     POINT pt;
     if (GetCursorPos(&pt)) {
-        mouseX = pt.x;
-        mouseY = pt.y;
+        mouseX.store(pt.x, std::memory_order_relaxed);
+        mouseY.store(pt.y, std::memory_order_relaxed);
     }
 
     // Mouse wheel: typically requires processing WM_MOUSEWHEEL in window proc,
@@ -458,12 +466,14 @@ inline void poll_input() // macOS input polling
         return;
     }
 
+    std::unique_lock<std::shared_mutex> lock(g_inputMutex);
+
     previous_keys = current_keys;
     previous_mouse = current_mouse;
 
     keyPressed.reset();
     mousePressed.reset();
-    mouseWheel = 0;
+    mouseWheel.store(0, std::memory_order_relaxed);
 
     // Fetch current keyboard state using Quartz API
     // Here we fake it with CGEventSourceKeyState; ideally, you'd hook event taps
@@ -487,8 +497,8 @@ inline void poll_input() // macOS input polling
     // Get mouse position (in global screen coords)
     CGEventRef event = CGEventCreate(NULL);
     CGPoint loc = CGEventGetLocation(event);
-    mouseX = static_cast<int>(loc.x);
-    mouseY = static_cast<int>(loc.y);
+    mouseX.store(static_cast<int>(loc.x), std::memory_order_relaxed);
+    mouseY.store(static_cast<int>(loc.y), std::memory_order_relaxed);
     CFRelease(event);
 }
 
@@ -501,14 +511,15 @@ inline void poll_input(Display * display, Window window) // Linux input polling 
         return;
     }
 
+    std::unique_lock<std::shared_mutex> lock(g_inputMutex);
+
     previous_keys = current_keys;
     previous_mouse = current_mouse;
 
     keyPressed.reset();
     mousePressed.reset();
-    mouseWheel = 0;
+    mouseWheel.store(0, std::memory_order_relaxed);
 
-    // Process all pending events
     while (XPending(display)) {
         XEvent event;
         XNextEvent(display, &event);
@@ -546,8 +557,8 @@ inline void poll_input(Display * display, Window window) // Linux input polling 
                     if (!mouseDown[mb]) mousePressed[mb] = true;
                     mouseDown[mb] = true;
                 }
-                if (button == 4) mouseWheel++;      // scroll up
-                else if (button == 5) mouseWheel--; // scroll down
+                if (button == 4) mouseWheel.fetch_add(1, std::memory_order_relaxed);      // scroll up
+                else if (button == 5) mouseWheel.fetch_sub(1, std::memory_order_relaxed); // scroll down
                 break;
             }
             case ButtonRelease:
@@ -563,8 +574,8 @@ inline void poll_input(Display * display, Window window) // Linux input polling 
             }
             case MotionNotify:
             {
-                mouseX = event.xmotion.x;
-                mouseY = event.xmotion.y;
+                mouseX.store(event.xmotion.x, std::memory_order_relaxed);
+                mouseY.store(event.xmotion.y, std::memory_order_relaxed);
                 break;
             }
         }
@@ -573,18 +584,22 @@ inline void poll_input(Display * display, Window window) // Linux input polling 
 #endif
 
 inline bool is_key_held(Key k) {
+    std::shared_lock<std::shared_mutex> lock(g_inputMutex);
     return keyDown.test(static_cast<size_t>(k));
 }
 
 inline bool is_key_down(Key k) {
+    std::shared_lock<std::shared_mutex> lock(g_inputMutex);
     return keyPressed.test(static_cast<size_t>(k));
 }
 
 inline bool is_mouse_button_held(MouseButton btn) {
+    std::shared_lock<std::shared_mutex> lock(g_inputMutex);
     return mouseDown.test(static_cast<size_t>(btn));
 }
 
 inline bool is_mouse_button_down(MouseButton btn) {
+    std::shared_lock<std::shared_mutex> lock(g_inputMutex);
     return mousePressed.test(static_cast<size_t>(btn));
 }
 
