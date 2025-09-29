@@ -56,7 +56,7 @@
 
 // Contexts - External Engine Backends
 #define ALMOND_USING_SDL
-#define ALMOND_USING_SFML
+//#define ALMOND_USING_SFML // perminently disabled - issues with sfml 3 until they update
 #define ALMOND_USING_RAYLIB
 
 // Rendering Only backends

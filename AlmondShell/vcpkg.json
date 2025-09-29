@@ -7,7 +7,6 @@
     "glm",
     "opengl",
     "raylib",
-    "sfml",
     "sdl3",
     "sdl3-image",
     "zlib"
