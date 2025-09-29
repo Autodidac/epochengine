@@ -266,7 +266,13 @@ namespace almondnamespace::sfmlcontext
             std::cerr << "[SFML_DrawSprite] Render window is not open.\n";
             return;
         }
-        s_sfmlstate.window.sfml_window->draw(sprite);
+        // Explicitly pass a default-constructed RenderStates instance instead of relying on
+        // sf::RenderStates::Default. The latter is defined in the SFML graphics library and can
+        // trigger unresolved external symbol errors when the linker fails to pull in the
+        // necessary static definition. Constructing the states locally avoids that dependency
+        // while preserving the default rendering behaviour.
+        sf::RenderStates renderStates{};
+        s_sfmlstate.window.sfml_window->draw(sprite, renderStates);
         //draw test rectangle for debugging
 //sf::RectangleShape test(sf::Vector2f(50, 50));
 //test.setFillColor(sf::Color::Red);
