@@ -31,8 +31,8 @@ namespace almondnamespace {
 
     // Version information as constexpr for compile-time evaluation
     constexpr int major = 0;
-    constexpr int minor = 1;
-    constexpr int revision = 5;
+    constexpr int minor = 57;
+    constexpr int revision = 7;
 
     static char version_string[32] = "";
     static char name_string[16] = "Almond Shell";
