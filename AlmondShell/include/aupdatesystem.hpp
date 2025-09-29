@@ -50,6 +50,7 @@ namespace almondnamespace
             }
 
             batchFile << "@echo off\n"
+                << ":retry\n"
                 << "timeout /t 2 >nul\n"
                 << "taskkill /IM updater.exe /F >nul 2>&1\n"
                 << "timeout /t 1 >nul\n"
@@ -62,7 +63,7 @@ namespace almondnamespace
                 << "rename \"" << new_binary << "\" \"updater.exe\"\n"
                 << "if exist updater.exe (\n"
                 << "    echo [INFO] Update successful! Restarting updater...\n"
-                << "    timeout / t 4 > nul\n"
+                << "    timeout /t 4 > nul\n"
                 << "    start updater.exe\n"
                 << "    exit\n"
                 << ") else (\n"
