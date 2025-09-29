@@ -88,9 +88,11 @@ namespace almondnamespace::core {
 
     // ─── Global backends ──────────────────────────────────────
     std::map<ContextType, BackendState> g_backends{};
+    std::shared_mutex g_backendsMutex{};
 
     // ─── AddContextForBackend ─────────────────────────────────
     void AddContextForBackend(ContextType type, std::shared_ptr<Context> context) {
+        std::unique_lock lock(g_backendsMutex);
         auto& backendState = g_backends[type];
 
         if (!backendState.master)
@@ -727,6 +729,18 @@ namespace almondnamespace::core {
     bool ProcessAllContexts() {
         bool anyRunning = false;
 
+        std::vector<std::shared_ptr<Context>> contexts;
+        {
+            std::shared_lock lock(g_backendsMutex);
+            contexts.reserve(g_backends.size());
+            for (auto& [_, state] : g_backends) {
+                if (state.master)
+                    contexts.push_back(state.master);
+                for (auto& dup : state.duplicates)
+                    contexts.push_back(dup);
+            }
+        }
+
         auto process_context = [&](const std::shared_ptr<Context>& ctx) {
             if (!ctx) {
                 return false;
@@ -743,15 +757,9 @@ namespace almondnamespace::core {
             return ctx->process_safe(ctx, queue);
         };
 
-        for (auto& [type, state] : g_backends) {
-            (void)type;
-            if (process_context(state.master)) {
+        for (auto& ctx : contexts) {
+            if (process_context(ctx)) {
                 anyRunning = true;
-            }
-            for (auto& dup : state.duplicates) {
-                if (process_context(dup)) {
-                    anyRunning = true;
-                }
             }
         }
 

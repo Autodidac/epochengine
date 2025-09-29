@@ -74,6 +74,7 @@
 #include <memory>
 #include <unordered_map>
 #include <map>
+#include <shared_mutex>
 
 //#if !defined(ALMOND_SINGLE_PARENT) || (ALMOND_SINGLE_PARENT == 0)
 //#undef ALMOND_SHARED_CONTEXT
@@ -2020,13 +2021,36 @@ int APIENTRY wWinMain(_In_ HINSTANCE hInstance,
         mgr.StartRenderThreads();
         mgr.ArrangeDockedWindowsGrid();
 
+        auto collect_backend_contexts = []()
+        {
+            using ContextGroup = std::pair<almondnamespace::core::ContextType,
+                std::vector<std::shared_ptr<almondnamespace::core::Context>>>;
+            std::vector<ContextGroup> snapshot;
+            {
+                std::shared_lock lock(almondnamespace::core::g_backendsMutex);
+                snapshot.reserve(almondnamespace::core::g_backends.size());
+                for (auto& [type, state] : almondnamespace::core::g_backends) {
+                    std::vector<std::shared_ptr<almondnamespace::core::Context>> contexts;
+                    contexts.reserve(1 + state.duplicates.size());
+                    if (state.master)
+                        contexts.push_back(state.master);
+                    for (auto& dup : state.duplicates)
+                        contexts.push_back(dup);
+                    snapshot.emplace_back(type, std::move(contexts));
+                }
+            }
+            return snapshot;
+        };
+
         // Initialize menu overlay on all contexts
         auto init_menu = [&]() {
-            for (auto& [type, state] : almondnamespace::core::g_backends) {
-                if (state.master) menu.initialize(state.master);
-                for (auto& dup : state.duplicates) menu.initialize(dup);
+            auto backendContexts = collect_backend_contexts();
+            for (auto& [_, contexts] : backendContexts) {
+                for (auto& ctx : contexts) {
+                    if (ctx) menu.initialize(ctx);
+                }
             }
-            };
+        };
         init_menu();
 
         bool running = true;
@@ -2046,7 +2070,8 @@ int APIENTRY wWinMain(_In_ HINSTANCE hInstance,
             almondnamespace::input::poll_input();
 
             // Update all backends
-            for (auto& [type, state] : almondnamespace::core::g_backends) {
+            auto backendContexts = collect_backend_contexts();
+            for (auto& [type, contexts] : backendContexts) {
                 auto update_on_ctx = [&](std::shared_ptr<almondnamespace::core::Context> ctx) -> bool {
                     if (!ctx) return true;
                     auto* win = mgr.findWindowByHWND(ctx->hwnd);
@@ -2061,11 +2086,10 @@ int APIENTRY wWinMain(_In_ HINSTANCE hInstance,
                             }
                         };
 
-                        for (auto& backendEntry : almondnamespace::core::g_backends) {
-                            auto& backendState = backendEntry.second;
-                            clear_commands(backendState.master);
-                            for (auto& dup : backendState.duplicates) {
-                                clear_commands(dup);
+                        auto snapshot = collect_backend_contexts();
+                        for (auto& [_, group] : snapshot) {
+                            for (auto& contextPtr : group) {
+                                clear_commands(contextPtr);
                             }
                         }
 
@@ -2151,16 +2175,25 @@ int APIENTRY wWinMain(_In_ HINSTANCE hInstance,
                     };
 
 #if defined(ALMOND_SINGLE_PARENT)
-                if (state.master && !update_on_ctx(state.master)) { running = false; break; }
-                for (auto& dup : state.duplicates) {
-                    if (!update_on_ctx(dup)) running = false;
+                if (!contexts.empty()) {
+                    auto masterCtx = contexts.front();
+                    if (masterCtx && !update_on_ctx(masterCtx)) { running = false; break; }
+                    for (size_t i = 1; i < contexts.size(); ++i) {
+                        if (!update_on_ctx(contexts[i])) running = false;
+                    }
                 }
 #else
                 bool anyAlive = false;
-                if (state.master) anyAlive |= update_on_ctx(state.master);
-                for (auto& dup : state.duplicates) {
-                    if (update_on_ctx(dup)) anyAlive = true;
-                    else dup->running = false;
+                for (size_t i = 0; i < contexts.size(); ++i) {
+                    auto& ctx = contexts[i];
+                    if (!ctx) continue;
+                    bool alive = update_on_ctx(ctx);
+                    if (alive) {
+                        anyAlive = true;
+                    }
+                    else if (i > 0) {
+                        ctx->running = false;
+                    }
                 }
                 if (!anyAlive) {
                     std::cout << "[Engine] All contexts for backend "
@@ -2180,7 +2213,8 @@ int APIENTRY wWinMain(_In_ HINSTANCE hInstance,
         menu.cleanup();
         mgr.StopAll();
 
-        for (auto& [type, state] : almondnamespace::core::g_backends) {
+        auto backendContexts = collect_backend_contexts();
+        for (auto& [type, contexts] : backendContexts) {
             auto cleanup_backend = [&](std::shared_ptr<almondnamespace::core::Context> ctx) {
                 if (!ctx) return;
                 switch (type) {
@@ -2213,8 +2247,9 @@ int APIENTRY wWinMain(_In_ HINSTANCE hInstance,
                 }
                 };
 
-            if (state.master) cleanup_backend(state.master);
-            for (auto& dup : state.duplicates) cleanup_backend(dup);
+            for (auto& ctx : contexts) {
+                cleanup_backend(ctx);
+            }
         }
     }
     catch (const std::exception& ex) {

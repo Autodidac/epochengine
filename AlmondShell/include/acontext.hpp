@@ -43,6 +43,7 @@
 #include <cstdint>
 #include <mutex>
 #include <queue>
+#include <shared_mutex>
 
 namespace almondnamespace::core
 {
@@ -226,6 +227,7 @@ namespace almondnamespace::core
 
     using BackendMap = std::map<ContextType, BackendState>;
     extern BackendMap g_backends;
+    extern std::shared_mutex g_backendsMutex;
 
     void InitializeAllContexts();
     std::shared_ptr<Context> CloneContext(const Context& prototype);

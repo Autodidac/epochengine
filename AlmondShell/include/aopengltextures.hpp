@@ -47,6 +47,7 @@
 #include <iostream>
 #include <filesystem>
 #include <unordered_map>
+#include <mutex>
 
 namespace almondnamespace::opengltextures
 {
@@ -77,18 +78,24 @@ namespace almondnamespace::opengltextures
     struct BackendData {
         std::unordered_map<const TextureAtlas*, AtlasGPU,
             TextureAtlasPtrHash, TextureAtlasPtrEqual> gpu_atlases;
+        std::mutex gpuMutex;
         almondnamespace::openglcontext::OpenGL4State glState{};
     };
 
     inline BackendData& get_opengl_backend() {
-        auto& backend = almondnamespace::core::g_backends[almondnamespace::core::ContextType::OpenGL];
-        if (!backend.data) {
-            backend.data = {
-                new BackendData(),
-                [](void* p) { delete static_cast<BackendData*>(p); }
-            };
+        BackendData* data = nullptr;
+        {
+            std::unique_lock lock(almondnamespace::core::g_backendsMutex);
+            auto& backend = almondnamespace::core::g_backends[almondnamespace::core::ContextType::OpenGL];
+            if (!backend.data) {
+                backend.data = {
+                    new BackendData(),
+                    [](void* p) { delete static_cast<BackendData*>(p); }
+                };
+            }
+            data = static_cast<BackendData*>(backend.data.get());
         }
-        return *static_cast<BackendData*>(backend.data.get());
+        return *data;
     }
 
    // using almondnamespace::openglcontext::s_openglstate;
@@ -152,8 +159,14 @@ namespace almondnamespace::opengltextures
 
     inline void upload_atlas_to_gpu(const TextureAtlas& atlas)
     {
-        auto& backend = core::g_backends[core::ContextType::OpenGL];
-        auto* oglData = static_cast<BackendData*>(backend.data.get());
+        BackendData* oglData = nullptr;
+        {
+            std::shared_lock lock(core::g_backendsMutex);
+            auto it = core::g_backends.find(core::ContextType::OpenGL);
+            if (it != core::g_backends.end()) {
+                oglData = static_cast<BackendData*>(it->second.data.get());
+            }
+        }
         if (!oglData) {
             std::cerr << "[UploadAtlas] OpenGL backendData not initialized!\n";
             return;
@@ -179,6 +192,7 @@ namespace almondnamespace::opengltextures
             }
         }
 
+        std::lock_guard<std::mutex> gpuLock(oglData->gpuMutex);
         auto& gpu = oglData->gpu_atlases[&atlas];
 
         if (!gpu.textureHandle) {
@@ -234,17 +248,26 @@ namespace almondnamespace::opengltextures
 
     inline void ensure_uploaded(const TextureAtlas& atlas)
     {
-        auto& backend = core::g_backends[core::ContextType::OpenGL];
-        auto* oglData = static_cast<BackendData*>(backend.data.get());
+        BackendData* oglData = nullptr;
+        {
+            std::shared_lock lock(core::g_backendsMutex);
+            auto it = core::g_backends.find(core::ContextType::OpenGL);
+            if (it != core::g_backends.end()) {
+                oglData = static_cast<BackendData*>(it->second.data.get());
+            }
+        }
         if (!oglData) {
             std::cerr << "[EnsureUploaded] OpenGL backendData not initialized!\n";
             return;
         }
 
-        auto it = oglData->gpu_atlases.find(&atlas);
-        if (it != oglData->gpu_atlases.end()) {
-            if (it->second.version == atlas.version && it->second.textureHandle != 0)
-                return;
+        {
+            std::lock_guard<std::mutex> gpuLock(oglData->gpuMutex);
+            auto it = oglData->gpu_atlases.find(&atlas);
+            if (it != oglData->gpu_atlases.end()) {
+                if (it->second.version == atlas.version && it->second.textureHandle != 0)
+                    return;
+            }
         }
         upload_atlas_to_gpu(atlas);
     }
@@ -358,15 +381,19 @@ namespace almondnamespace::opengltextures
 
         // 🔑 FIX: use backend.gpu_atlases, not global opengl_gpu_atlases
         auto& backend = get_opengl_backend();
-        auto it = backend.gpu_atlases.find(atlas);
-        if (it == backend.gpu_atlases.end()) {
-            std::cerr << "[DrawSprite] GPU texture not found for atlas '"
-                << atlas->name << "'\n";
-            return;
+        GLuint tex = 0;
+        {
+            std::lock_guard<std::mutex> gpuLock(backend.gpuMutex);
+            auto it = backend.gpu_atlases.find(atlas);
+            if (it == backend.gpu_atlases.end()) {
+                std::cerr << "[DrawSprite] GPU texture not found for atlas '"
+                    << atlas->name << "'\n";
+                return;
+            }
+            tex = it->second.textureHandle;
         }
-        GLuint tex = it->second.textureHandle;
         if (!tex) {
-            std::cerr << "[DrawSprite] GPU texture handle is 0 for atlas '"
+            std::cerr << "[DrawSprite] GPU texture not found for atlas '"
                 << atlas->name << "'\n";
             return;
         }

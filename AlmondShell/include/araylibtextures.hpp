@@ -43,6 +43,7 @@
 #include <vector>
 #include <unordered_map>
 #include <iostream>
+#include <mutex>
 
 #include <raylib.h>
 
@@ -77,18 +78,24 @@ namespace almondnamespace::raylibtextures
     struct BackendData {
         std::unordered_map<const TextureAtlas*, AtlasGPU,
             TextureAtlasPtrHash, TextureAtlasPtrEqual> gpu_atlases;
+        std::mutex gpuMutex;
         almondnamespace::raylibcontext::RaylibState rlState{};
     };
 
     inline BackendData& get_raylib_backend() {
-        auto& backend = almondnamespace::core::g_backends[almondnamespace::core::ContextType::RayLib];
-        if (!backend.data) {
-            backend.data = {
-                new BackendData(),
-                [](void* p) { delete static_cast<BackendData*>(p); }
-            };
+        BackendData* data = nullptr;
+        {
+            std::unique_lock lock(almondnamespace::core::g_backendsMutex);
+            auto& backend = almondnamespace::core::g_backends[almondnamespace::core::ContextType::RayLib];
+            if (!backend.data) {
+                backend.data = {
+                    new BackendData(),
+                    [](void* p) { delete static_cast<BackendData*>(p); }
+                };
+            }
+            data = static_cast<BackendData*>(backend.data.get());
         }
-        return *static_cast<BackendData*>(backend.data.get());
+        return *data;
     }
 
     inline std::atomic_uint8_t s_generation{ 0 };
