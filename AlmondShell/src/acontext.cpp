@@ -29,7 +29,6 @@
 #include "acontext.hpp"
 #include "acontextwindow.hpp"
 #include "acontextmultiplexer.hpp"
-#include "acontextstatemanager.hpp"
 
 #ifdef ALMOND_USING_OPENGL
 #include "aopenglcontext.hpp"

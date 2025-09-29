@@ -477,12 +477,12 @@ namespace almondnamespace::opengltextures
             << "' Sprite '" << spriteName
             << "' AtlasIdx=" << atlasIdx
             << " SpriteIdx=" << localIdx << '\n';
-#endif
 
         std::cerr << "[DrawSprite] Final quad NDC: X=" << ndc_x
             << " Y=" << ndc_y
             << " W=" << ndc_w
             << " H=" << ndc_h << "\n";
+#endif
     }
 
 

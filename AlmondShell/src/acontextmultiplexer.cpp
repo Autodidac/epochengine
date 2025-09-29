@@ -886,7 +886,6 @@ namespace almondnamespace::core
         }
     }
 
-
     void MultiContextManager::HandleDropFiles(HWND hwnd, HDROP hDrop) {
         UINT count = DragQueryFile(hDrop, 0xFFFFFFFF, nullptr, 0);
         for (UINT i = 0; i < count; ++i) {
@@ -896,167 +895,194 @@ namespace almondnamespace::core
         }
     }
 
-    LRESULT CALLBACK almondnamespace::core::MultiContextManager::ParentProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam) {
-        if (msg == WM_NCCREATE) {
+    LRESULT CALLBACK almondnamespace::core::MultiContextManager::ParentProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam) 
+    {
+        if (msg == WM_NCCREATE) 
+        {
             auto* cs = reinterpret_cast<CREATESTRUCT*>(lParam);
             SetWindowLongPtr(hwnd, GWLP_USERDATA,
                 reinterpret_cast<LONG_PTR>(cs->lpCreateParams));
             return TRUE;
         }
-        auto* mgr = reinterpret_cast<MultiContextManager*>(
-            GetWindowLongPtr(hwnd, GWLP_USERDATA));
+        auto* mgr = reinterpret_cast<MultiContextManager*>(GetWindowLongPtr(hwnd, GWLP_USERDATA));
         if (!mgr) return DefWindowProc(hwnd, msg, wParam, lParam);
 
-        switch (msg) {
+        switch (msg) 
+        {
             //case WM_SIZE: mgr->ArrangeDockedWindowsGrid(); return 0;
-        case WM_PAINT: {
-            PAINTSTRUCT ps; HDC hdc = BeginPaint(hwnd, &ps);
-            FillRect(hdc, &ps.rcPaint, (HBRUSH)(COLOR_WINDOW + 1));
-            EndPaint(hwnd, &ps); return 0;
-        }
-        case WM_DROPFILES:
-            mgr->HandleDropFiles(hwnd, reinterpret_cast<HDROP>(wParam));
-            DragFinish(reinterpret_cast<HDROP>(wParam));
-            return 0;
-        case WM_CLOSE: DestroyWindow(hwnd); return 0;
-        case WM_DESTROY:
-            if (hwnd == mgr->GetParentWindow()) {
-                PostQuitMessage(0);
+            case WM_PAINT: 
+            {
+                PAINTSTRUCT ps; HDC hdc = BeginPaint(hwnd, &ps);
+                FillRect(hdc, &ps.rcPaint, (HBRUSH)(COLOR_WINDOW + 1));
+                EndPaint(hwnd, &ps); return 0;
             }
-            return 0;
+            case WM_DROPFILES:
+            {
+                mgr->HandleDropFiles(hwnd, reinterpret_cast<HDROP>(wParam));
+                DragFinish(reinterpret_cast<HDROP>(wParam));
+                return 0;
+            }
+            case WM_CLOSE:
+            {
+                DestroyWindow(hwnd); return 0;
+            }
+            case WM_DESTROY:
+            {
+                if (hwnd == mgr->GetParentWindow()) {
+                    PostQuitMessage(0);
+                }
+                return 0;
+            }
 
-        default: return DefWindowProc(hwnd, msg, wParam, lParam);
+            default: 
+            {
+                return DefWindowProc(hwnd, msg, wParam, lParam);
+            }
         }
     }
 
-    LRESULT CALLBACK MultiContextManager::ChildProc(HWND hwnd, UINT msg,
-        WPARAM wParam, LPARAM lParam) {
+    LRESULT CALLBACK MultiContextManager::ChildProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam) 
+    {
         static DragState& drag = gDragState;
-        if (msg == WM_NCCREATE) {
+        if (msg == WM_NCCREATE) 
+        {
             auto* cs = reinterpret_cast<CREATESTRUCT*>(lParam);
             SetWindowLongPtr(hwnd, GWLP_USERDATA, reinterpret_cast<LONG_PTR>(cs->lpCreateParams));
             return TRUE;
         }
 
-        switch (msg) {
-        case WM_LBUTTONDOWN: {
-            SetCapture(hwnd);
-            drag.dragging = true;
-            drag.draggedWindow = hwnd;
-            drag.originalParent = GetParent(hwnd);
-            POINT pt{ GET_X_LPARAM(lParam), GET_Y_LPARAM(lParam) };
-            ClientToScreen(hwnd, &pt);
-            drag.lastMousePos = pt;
-            return 0;
-        }
-        case WM_MOUSEMOVE: {
-            if (!drag.dragging || drag.draggedWindow != hwnd)
-                return DefWindowProc(hwnd, msg, wParam, lParam);
+        switch (msg) 
+        {
+            case WM_LBUTTONDOWN: 
+            {
+                SetCapture(hwnd);
+                drag.dragging = true;
+                drag.draggedWindow = hwnd;
+                drag.originalParent = GetParent(hwnd);
+                POINT pt{ GET_X_LPARAM(lParam), GET_Y_LPARAM(lParam) };
+                ClientToScreen(hwnd, &pt);
+                drag.lastMousePos = pt;
+                return 0;
+            }
+            case WM_MOUSEMOVE: 
+            {
+                if (!drag.dragging || drag.draggedWindow != hwnd)
+                    return DefWindowProc(hwnd, msg, wParam, lParam);
 
-            POINT pt{ GET_X_LPARAM(lParam), GET_Y_LPARAM(lParam) };
-            ClientToScreen(hwnd, &pt);
-            int dx = pt.x - drag.lastMousePos.x;
-            int dy = pt.y - drag.lastMousePos.y;
-            drag.lastMousePos = pt;
+                POINT pt{ GET_X_LPARAM(lParam), GET_Y_LPARAM(lParam) };
+                ClientToScreen(hwnd, &pt);
+                int dx = pt.x - drag.lastMousePos.x;
+                int dy = pt.y - drag.lastMousePos.y;
+                drag.lastMousePos = pt;
 
-            RECT wndRect; GetWindowRect(hwnd, &wndRect);
-            int newX = wndRect.left + dx;
-            int newY = wndRect.top + dy;
+                RECT wndRect; GetWindowRect(hwnd, &wndRect);
+                int newX = wndRect.left + dx;
+                int newY = wndRect.top + dy;
 
-            if (drag.originalParent) {
-                RECT prc; GetClientRect(drag.originalParent, &prc);
-                POINT tl{ 0, 0 }; ClientToScreen(drag.originalParent, &tl);
-                OffsetRect(&prc, tl.x, tl.y);
+                if (drag.originalParent) {
+                    RECT prc; GetClientRect(drag.originalParent, &prc);
+                    POINT tl{ 0, 0 }; ClientToScreen(drag.originalParent, &tl);
+                    OffsetRect(&prc, tl.x, tl.y);
 
-                bool inside =
-                    newX >= prc.left && newY >= prc.top &&
-                    (newX + (wndRect.right - wndRect.left)) <= prc.right &&
-                    (newY + (wndRect.bottom - wndRect.top)) <= prc.bottom;
+                    bool inside =
+                        newX >= prc.left && newY >= prc.top &&
+                        (newX + (wndRect.right - wndRect.left)) <= prc.right &&
+                        (newY + (wndRect.bottom - wndRect.top)) <= prc.bottom;
 
-                if (inside) {
-                    if (GetParent(hwnd) != drag.originalParent) {
-                        LONG_PTR style = GetWindowLongPtr(hwnd, GWL_STYLE);
-                        style &= ~(WS_POPUP | WS_OVERLAPPEDWINDOW);
-                        style |= WS_CHILD;
-                        SetWindowLongPtr(hwnd, GWL_STYLE, style);
-                        SetParent(hwnd, drag.originalParent);
+                    if (inside) {
+                        if (GetParent(hwnd) != drag.originalParent) {
+                            LONG_PTR style = GetWindowLongPtr(hwnd, GWL_STYLE);
+                            style &= ~(WS_POPUP | WS_OVERLAPPEDWINDOW);
+                            style |= WS_CHILD;
+                            SetWindowLongPtr(hwnd, GWL_STYLE, style);
+                            SetParent(hwnd, drag.originalParent);
 
-                        POINT cp{ newX, newY };
-                        ScreenToClient(drag.originalParent, &cp);
-                        SetWindowPos(hwnd, nullptr, cp.x, cp.y,
-                            wndRect.right - wndRect.left,
-                            wndRect.bottom - wndRect.top,
-                            SWP_NOZORDER | SWP_NOACTIVATE | SWP_FRAMECHANGED | SWP_SHOWWINDOW);
+                            POINT cp{ newX, newY };
+                            ScreenToClient(drag.originalParent, &cp);
+                            SetWindowPos(hwnd, nullptr, cp.x, cp.y,
+                                wndRect.right - wndRect.left,
+                                wndRect.bottom - wndRect.top,
+                                SWP_NOZORDER | SWP_NOACTIVATE | SWP_FRAMECHANGED | SWP_SHOWWINDOW);
+                        }
+                        else {
+                            POINT cp{ newX, newY };
+                            ScreenToClient(drag.originalParent, &cp);
+                            SetWindowPos(hwnd, nullptr, cp.x, cp.y,
+                                0, 0, SWP_NOZORDER | SWP_NOSIZE |
+                                SWP_NOACTIVATE);
+                        }
                     }
-                    else {
-                        POINT cp{ newX, newY };
-                        ScreenToClient(drag.originalParent, &cp);
-                        SetWindowPos(hwnd, nullptr, cp.x, cp.y,
-                            0, 0, SWP_NOZORDER | SWP_NOSIZE |
-                            SWP_NOACTIVATE);
+                    else 
+                    {
+                        if (GetParent(hwnd) == drag.originalParent) {
+                            LONG_PTR style = GetWindowLongPtr(hwnd, GWL_STYLE);
+                            style &= ~WS_CHILD;
+                            style |= WS_OVERLAPPEDWINDOW | WS_VISIBLE;
+                            SetWindowLongPtr(hwnd, GWL_STYLE, style);
+                            SetParent(hwnd, nullptr);
+                            SetWindowPos(hwnd, nullptr, newX, newY,
+                                wndRect.right - wndRect.left,
+                                wndRect.bottom - wndRect.top,
+                                SWP_NOZORDER | SWP_FRAMECHANGED | SWP_SHOWWINDOW);
+                        }
+                        else {
+                            SetWindowPos(hwnd, nullptr, newX, newY,
+                                0, 0, SWP_NOZORDER | SWP_NOSIZE | SWP_NOACTIVATE);
+                        }
                     }
                 }
                 else {
-                    if (GetParent(hwnd) == drag.originalParent) {
-                        LONG_PTR style = GetWindowLongPtr(hwnd, GWL_STYLE);
-                        style &= ~WS_CHILD;
-                        style |= WS_OVERLAPPEDWINDOW | WS_VISIBLE;
-                        SetWindowLongPtr(hwnd, GWL_STYLE, style);
-                        SetParent(hwnd, nullptr);
-                        SetWindowPos(hwnd, nullptr, newX, newY,
-                            wndRect.right - wndRect.left,
-                            wndRect.bottom - wndRect.top,
-                            SWP_NOZORDER | SWP_FRAMECHANGED | SWP_SHOWWINDOW);
-                    }
-                    else {
-                        SetWindowPos(hwnd, nullptr, newX, newY,
-                            0, 0, SWP_NOZORDER | SWP_NOSIZE | SWP_NOACTIVATE);
-                    }
+                    SetWindowPos(hwnd, nullptr, newX, newY,
+                        0, 0, SWP_NOZORDER | SWP_NOSIZE | SWP_NOACTIVATE);
                 }
-            }
-            else {
-                SetWindowPos(hwnd, nullptr, newX, newY,
-                    0, 0, SWP_NOZORDER | SWP_NOSIZE | SWP_NOACTIVATE);
-            }
-            return 0;
-        }
-        case WM_SIZE: {
-            if (wParam == SIZE_MINIMIZED) {
                 return 0;
             }
-            auto* mgr = s_activeInstance;
-            if (!mgr) {
-                break;
+            case WM_SIZE: 
+            {
+                if (wParam == SIZE_MINIMIZED) 
+                {
+                    return 0;
+                }
+                auto* mgr = s_activeInstance;
+                if (!mgr) {
+                    break;
+                }
+                int width = std::max(1, static_cast<int>(LOWORD(lParam)));
+                int height = std::max(1, static_cast<int>(HIWORD(lParam)));
+                mgr->HandleResize(hwnd, width, height);
+                return 0;
             }
-            int width = std::max(1, static_cast<int>(LOWORD(lParam)));
-            int height = std::max(1, static_cast<int>(HIWORD(lParam)));
-            mgr->HandleResize(hwnd, width, height);
-            return 0;
-        }
-        case WM_LBUTTONUP: {
-            if (drag.dragging && drag.draggedWindow == hwnd) {
-                ReleaseCapture();
-                drag.dragging = false;
-                drag.draggedWindow = nullptr;
-                drag.originalParent = nullptr;
+            case WM_LBUTTONUP: 
+            {
+                if (drag.dragging && drag.draggedWindow == hwnd) {
+                    ReleaseCapture();
+                    drag.dragging = false;
+                    drag.draggedWindow = nullptr;
+                    drag.originalParent = nullptr;
+                }
+                return 0;
             }
-            return 0;
+            case WM_DROPFILES: 
+            {
+                if (HWND p = GetParent(hwnd))
+                    SendMessage(p, WM_DROPFILES, wParam, lParam);
+                DragFinish(reinterpret_cast<HDROP>(wParam));
+                return 0;
+            }
+            case WM_PAINT: 
+            {
+                PAINTSTRUCT ps; HDC hdc = BeginPaint(hwnd, &ps);
+                FillRect(hdc, &ps.rcPaint, (HBRUSH)(COLOR_WINDOW + 1));
+                EndPaint(hwnd, &ps);
+                return 0;
+            }
+            default:
+            {
+                return DefWindowProc(hwnd, msg, wParam, lParam);
+            }
         }
-        case WM_DROPFILES: {
-            if (HWND p = GetParent(hwnd))
-                SendMessage(p, WM_DROPFILES, wParam, lParam);
-            DragFinish(reinterpret_cast<HDROP>(wParam));
-            return 0;
-        }
-        case WM_PAINT: {
-            PAINTSTRUCT ps; HDC hdc = BeginPaint(hwnd, &ps);
-            FillRect(hdc, &ps.rcPaint, (HBRUSH)(COLOR_WINDOW + 1));
-            EndPaint(hwnd, &ps);
-            return 0;
-        }
-        default:
-            return DefWindowProc(hwnd, msg, wParam, lParam);
-        }
+
+	    return 0;
     }
 } // namespace almondnamespace::core
 
