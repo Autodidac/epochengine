@@ -146,8 +146,8 @@ namespace almondnamespace::core
                 get_mouse_position(x, y);
             }
             else {
-                x = 0;
-                y = 0;
+                x = input::mouseX.load(std::memory_order_acquire);
+                y = input::mouseY.load(std::memory_order_acquire);
             }
 
 #if defined(_WIN32)
@@ -174,10 +174,16 @@ namespace almondnamespace::core
 #endif
         }
         inline bool is_mouse_button_held_safe(input::MouseButton b) const noexcept {
-            return is_mouse_button_held ? is_mouse_button_held(b) : false;
+            if (is_mouse_button_held) {
+                return is_mouse_button_held(b);
+            }
+            return input::is_mouse_button_held(b);
         }
         inline bool is_mouse_button_down_safe(input::MouseButton b) const noexcept {
-            return is_mouse_button_down ? is_mouse_button_down(b) : false;
+            if (is_mouse_button_down) {
+                return is_mouse_button_down(b);
+            }
+            return input::is_mouse_button_down(b);
         }
 
         inline int registry_get_safe(const char* key) const noexcept {
