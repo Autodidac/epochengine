@@ -255,6 +255,7 @@ namespace almondnamespace::raylibcontext
     // Per-frame event processing
     // ──────────────────────────────────────────────
     inline bool raylib_process(std::shared_ptr<core::Context> ctx, core::CommandQueue& queue) {
+        (void)ctx;
         if (!s_raylibstate.running || WindowShouldClose()) {
             s_raylibstate.running = false;
             return true;
@@ -282,9 +283,9 @@ namespace almondnamespace::raylibcontext
 
 
         BeginDrawing();
-       // ClearBackground(RED);
         ClearBackground(Color{ r, g, b, 255 });
-        //DRAWTEXT(TextFormat("Raylib Rendering OK"), 200, 160, 40, BLUE);
+
+        queue.drain();
 
         EndDrawing();
 

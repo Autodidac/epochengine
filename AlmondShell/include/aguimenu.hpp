@@ -46,6 +46,7 @@
 #include <array>
 #include <cmath>
 #include <iostream>
+#include <memory>
 
 namespace almondnamespace::menu
 {
@@ -309,6 +310,7 @@ namespace almondnamespace::menu
             std::span<const TextureAtlas* const> atlasSpan(atlasVec.data(), atlasVec.size());
 
             const int hoveredIndex = hover;
+            const std::weak_ptr<core::Context> ctxWeak = ctx;
 
             for (int i = 0; i < totalItems; ++i) {
                 const bool isHighlighted = (i == selection) || (i == hoveredIndex);
@@ -317,17 +319,20 @@ namespace almondnamespace::menu
                 const auto& pos = cachedPositions[i];
 
                 win->commandQueue.enqueue([handle = slice.handle,
+                    ctxWeak,
                     x = pos.first, y = pos.second,
                     w = slice.width, h = slice.height]() {
                         // build span fresh on render thread
                         auto& atlasVecRT = atlasmanager::get_atlas_vector();
                         std::span<const TextureAtlas* const> atlasSpanRT(atlasVecRT.data(), atlasVecRT.size());
 
-                        almondnamespace::opengltextures::draw_sprite(
-                            handle, atlasSpanRT,
-                            float(x), float(y),
-                            float(w), float(h)
-                        );
+                        if (auto ctxLocked = ctxWeak.lock()) {
+                            ctxLocked->draw_sprite_safe(
+                                handle, atlasSpanRT,
+                                float(x), float(y),
+                                float(w), float(h)
+                            );
+                        }
                     });
             }
 
