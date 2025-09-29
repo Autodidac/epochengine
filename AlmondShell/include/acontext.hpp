@@ -142,7 +142,36 @@ namespace almondnamespace::core
             return is_key_down ? is_key_down(k) : false;
         }
         inline void get_mouse_position_safe(int& x, int& y) const noexcept {
-            if (get_mouse_position) get_mouse_position(x, y); else { x = y = 0; }
+            if (get_mouse_position) {
+                get_mouse_position(x, y);
+            }
+            else {
+                x = 0;
+                y = 0;
+            }
+
+#if defined(_WIN32)
+            if (hwnd && input::are_mouse_coords_global()) {
+                POINT pt{ x, y };
+                if (ScreenToClient(hwnd, &pt)) {
+                    RECT rc{};
+                    if (GetClientRect(hwnd, &rc) &&
+                        (pt.x < rc.left || pt.x >= rc.right ||
+                         pt.y < rc.top || pt.y >= rc.bottom)) {
+                        x = -1;
+                        y = -1;
+                    }
+                    else {
+                        x = pt.x;
+                        y = pt.y;
+                    }
+                }
+                else {
+                    x = -1;
+                    y = -1;
+                }
+            }
+#endif
         }
         inline bool is_mouse_button_held_safe(input::MouseButton b) const noexcept {
             return is_mouse_button_held ? is_mouse_button_held(b) : false;
