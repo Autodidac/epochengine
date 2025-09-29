@@ -111,7 +111,7 @@ namespace almondnamespace::sdlcontext
             ctx->onResize = sdlcontext.onResize;
         }
 
-        if (SDL_Init(SDL_INIT_VIDEO) == 0) {
+        if (SDL_Init(SDL_INIT_VIDEO) != 0) {
             throw std::runtime_error("[SDL] Failed to initialize SDL: " + std::string(SDL_GetError()));
         }
 
@@ -172,6 +172,9 @@ namespace almondnamespace::sdlcontext
             SDL_Quit();
             return false;
         }
+
+        init_renderer(sdlcontext.renderer);
+        sdltextures::s_renderer = sdlcontext.renderer;
 
         if (sdlcontext.parent) {
             std::cout << "[SDL] Setting parent window: " << sdlcontext.parent << "\n";
@@ -271,28 +274,28 @@ namespace almondnamespace::sdlcontext
     }
 
     inline bool sdl_process(std::shared_ptr<core::Context> ctx, core::CommandQueue& queue) {
-        if (!sdlcontext.running || !sdlcontext.renderer) return false;
+        (void)ctx;
+        if (!sdlcontext.running || !sdlcontext.renderer) {
+            return false;
+        }
 
         atlasmanager::process_pending_uploads(core::ContextType::SDL);
 
-        // SDL_PumpEvents(); // Update SDL's internal state
-        const bool* keys = SDL_GetKeyboardState(NULL);
         SDL_Event e;
-        static int i = 0;
-        if (SDL_PollEvent(&e)) {
-            if (e.type == SDL_EVENT_QUIT) 
-            {
+        const Uint8* keys = SDL_GetKeyboardState(nullptr);
+        static int escapeCount = 0;
+        while (SDL_PollEvent(&e)) {
+            if (e.type == SDL_EVENT_QUIT) {
                 sdlcontext.running = false;
-                std::cout << "SDL Quit Event: " 
-                    << e.type 
-                    << "\n";
-
             }
-            if (keys[SDL_SCANCODE_ESCAPE]) {
-                sdlcontext.running = false; // Exit on Escape key
-                std::cout << "Escape Key Event Count: " << ++i << '\n';
-		    }
-			return true; // Continue processing
+            if (keys && keys[SDL_SCANCODE_ESCAPE]) {
+                sdlcontext.running = false;
+                std::cout << "Escape Key Event Count: " << ++escapeCount << '\n';
+            }
+        }
+
+        if (!sdlcontext.running) {
+            return false;
         }
 
         static auto* bgTimer = almondnamespace::time::getTimer("menu", "bg_color");
@@ -306,18 +309,12 @@ namespace almondnamespace::sdlcontext
         Uint8 g = static_cast<Uint8>((0.5 + 0.5 * std::sin(t * 0.7 + 2.0)) * 255);
         Uint8 b = static_cast<Uint8>((0.5 + 0.5 * std::sin(t * 1.3 + 4.0)) * 255);
 
-        SDL_SetRenderDrawColor(sdlcontext.renderer, r, g, b, 255);
+        SDL_SetRenderDrawColor(sdl_renderer.renderer, r, g, b, 255);
+        SDL_RenderClear(sdl_renderer.renderer);
 
-//        std::cout << "yellow: " << ++i << '\n';
-       // SDL_SetRenderDrawColor(sdlcontext.renderer, 255, 255, 0, 255); //yellow
-        SDL_RenderClear(sdlcontext.renderer);
-        SDL_RenderPresent(sdlcontext.renderer);
-        //while (SDL_PollEvent(&s_sdlstate.sdl_event))
-        //{
-        //    if (s_sdlstate.sdl_event.type == SDL_EVENT_QUIT)
-        //        return false;
-        //    // Translate input...
-        //}
+        queue.drain();
+
+        SDL_RenderPresent(sdl_renderer.renderer);
         return true;
     }
 
