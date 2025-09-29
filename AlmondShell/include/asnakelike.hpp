@@ -42,6 +42,8 @@
 #include <vector>
 #include <iostream>
 #include <span>
+#include <string>
+#include <string_view>
 
 namespace almondnamespace::snake {
 
@@ -169,33 +171,50 @@ namespace almondnamespace::snake {
                 throw std::runtime_error("Failed to load snake textures");
             }
 
-            if (!atlasmanager::create_atlas({
+            const bool createdAtlas = atlasmanager::create_atlas({
                 .name = "snakeatlas",
                 .width = 1024,
                 .height = 1024,
-                .generate_mipmaps = false })) {
-                throw std::runtime_error("Failed to create snake atlas");
+                .generate_mipmaps = false });
+
+            auto* registrarPtr = atlasmanager::get_registrar("snakeatlas");
+            if (!registrarPtr) {
+                throw std::runtime_error("Failed to get snake atlas registrar");
             }
 
-            auto& registrar = *atlasmanager::get_registrar("snakeatlas");
-            TextureAtlas& atlas = registrar.atlas;
+            TextureAtlas& atlas = registrarPtr->atlas;
+            bool registeredAny = false;
 
-            auto regSprite = [&](const char* name, const ImageData& img) -> SpriteHandle {
-                auto h = registrar.register_atlas_sprites_by_image(name, img.pixels, img.width, img.height, atlas);
-                if (!h || !spritepool::is_alive(*h)) throw std::runtime_error("Invalid sprite handle");
-                return *h;
-                };
+            auto ensureSprite = [&](std::string_view name, const ImageData& img, SpriteHandle& handle) {
+                if (auto existing = atlasmanager::registry.get(std::string(name))) {
+                    auto candidate = std::get<0>(*existing);
+                    if (spritepool::is_alive(candidate)) {
+                        handle = candidate;
+                        return;
+                    }
+                }
 
-            headHandle = regSprite("snake_head", headImg);
-            bodyHandle = regSprite("snake_body", bodyImg);
-            foodHandle = regSprite("snake_food", foodImg);
-            tongueUpHandle = regSprite("snake_tongue_up", tongueUp);
-            tongueDownHandle = regSprite("snake_tongue_down", tongueDn);
-            tongueLeftHandle = regSprite("snake_tongue_left", tongueLt);
-            tongueRightHandle = regSprite("snake_tongue_right", tongueRt);
+                auto h = registrarPtr->register_atlas_sprites_by_image(std::string(name), img.pixels, img.width, img.height, atlas);
+                if (!h || !spritepool::is_alive(*h)) {
+                    throw std::runtime_error("Invalid sprite handle for '" + std::string(name) + "'");
+                }
 
-            atlas.rebuild_pixels();
-            atlasmanager::ensure_uploaded(atlas);
+                handle = *h;
+                registeredAny = true;
+            };
+
+            ensureSprite("snake_head", headImg, headHandle);
+            ensureSprite("snake_body", bodyImg, bodyHandle);
+            ensureSprite("snake_food", foodImg, foodHandle);
+            ensureSprite("snake_tongue_up", tongueUp, tongueUpHandle);
+            ensureSprite("snake_tongue_down", tongueDn, tongueDownHandle);
+            ensureSprite("snake_tongue_left", tongueLt, tongueLeftHandle);
+            ensureSprite("snake_tongue_right", tongueRt, tongueRightHandle);
+
+            if (createdAtlas || registeredAny) {
+                atlas.rebuild_pixels();
+                atlasmanager::ensure_uploaded(atlas);
+            }
         }
 
         inline void initGame() {
