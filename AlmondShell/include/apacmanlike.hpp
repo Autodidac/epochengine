@@ -183,7 +183,7 @@ namespace almondnamespace::pacman
                     }
                 }
 
-                auto img = a_loadImage("assets/" + std::string(name) + ".ppm", false);
+                auto img = a_loadImage("assets/pacman/" + std::string(name) + ".ppm", false);
                 if (img.pixels.empty())
                     throw std::runtime_error("[Pacman] Failed to load image '" + std::string(name) + "'");
 
