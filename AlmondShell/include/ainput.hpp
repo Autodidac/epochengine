@@ -108,6 +108,15 @@ namespace almondnamespace::input // Input namespace
     inline std::atomic<int> mouseX{ 0 };
     inline std::atomic<int> mouseY{ 0 };
     inline std::atomic<int> mouseWheel{ 0 };
+    inline std::atomic<bool> mouseCoordsAreGlobal{ true };
+
+    inline void set_mouse_coords_are_global(bool value) {
+        mouseCoordsAreGlobal.store(value, std::memory_order_release);
+    }
+
+    inline bool are_mouse_coords_global() {
+        return mouseCoordsAreGlobal.load(std::memory_order_acquire);
+    }
 
     inline void designate_polling_thread(std::thread::id id) {
         g_pollingThread = id;
@@ -303,6 +312,7 @@ namespace almondnamespace::input // Input namespace
             mouseX.store(p.x, std::memory_order_relaxed);
             mouseY.store(p.y, std::memory_order_relaxed);
         }
+        set_mouse_coords_are_global(true);
 #endif // ALMOND_USING_RAYLIB
 
 #endif // ALMOND_MAIN_HEADLESS
@@ -448,6 +458,7 @@ inline void poll_input()
         mouseX.store(pt.x, std::memory_order_relaxed);
         mouseY.store(pt.y, std::memory_order_relaxed);
     }
+    set_mouse_coords_are_global(true);
 
     // Mouse wheel: typically requires processing WM_MOUSEWHEEL in window proc,
     // but here you might want to reset or accumulate wheel delta externally.
@@ -499,6 +510,7 @@ inline void poll_input() // macOS input polling
     CGPoint loc = CGEventGetLocation(event);
     mouseX.store(static_cast<int>(loc.x), std::memory_order_relaxed);
     mouseY.store(static_cast<int>(loc.y), std::memory_order_relaxed);
+    set_mouse_coords_are_global(true);
     CFRelease(event);
 }
 
@@ -576,6 +588,7 @@ inline void poll_input(Display * display, Window window) // Linux input polling 
             {
                 mouseX.store(event.xmotion.x, std::memory_order_relaxed);
                 mouseY.store(event.xmotion.y, std::memory_order_relaxed);
+                set_mouse_coords_are_global(false);
                 break;
             }
         }

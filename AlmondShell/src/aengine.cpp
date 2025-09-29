@@ -2054,69 +2054,63 @@ int APIENTRY wWinMain(_In_ HINSTANCE hInstance,
 
                     bool ctxRunning = win->running;
 
+                    auto begin_scene = [&](auto makeScene, SceneID id) {
+                        auto clear_commands = [](const std::shared_ptr<almondnamespace::core::Context>& context) {
+                            if (context && context->windowData) {
+                                context->windowData->commandQueue.clear();
+                            }
+                        };
+
+                        for (auto& backendEntry : almondnamespace::core::g_backends) {
+                            auto& backendState = backendEntry.second;
+                            clear_commands(backendState.master);
+                            for (auto& dup : backendState.duplicates) {
+                                clear_commands(dup);
+                            }
+                        }
+
+                        menu.cleanup();
+                        if (g_activeScene) {
+                            g_activeScene->unload();
+                        }
+                        g_activeScene = makeScene();
+                        g_activeScene->load();
+                        g_sceneID = id;
+                    };
+
                     // --- Scene dispatch ---
                     switch (g_sceneID) {
                     case SceneID::Menu: {
                         if (auto choice = menu.update_and_draw(ctx, win)) {
                             if (*choice == almondnamespace::menu::Choice::Snake) {
-                                if (g_activeScene) g_activeScene->unload();
-                                g_activeScene = std::make_unique<almondnamespace::snake::SnakeScene>();
-                                g_activeScene->load();
-                                g_sceneID = SceneID::Snake;
+                                begin_scene([] { return std::make_unique<almondnamespace::snake::SnakeScene>(); }, SceneID::Snake);
                             }
                             else if (*choice == almondnamespace::menu::Choice::Tetris) {
-                                if (g_activeScene) g_activeScene->unload();
-                                g_activeScene = std::make_unique<almondnamespace::tetris::TetrisScene>();
-                                g_activeScene->load();
-                                g_sceneID = SceneID::Tetris;
+                                begin_scene([] { return std::make_unique<almondnamespace::tetris::TetrisScene>(); }, SceneID::Tetris);
                             }
                             else if (*choice == almondnamespace::menu::Choice::Pacman) {
-                                if (g_activeScene) g_activeScene->unload();
-                                g_activeScene = std::make_unique<almondnamespace::pacman::PacmanScene>();
-                                g_activeScene->load();
-                                g_sceneID = SceneID::Pacman;
+                                begin_scene([] { return std::make_unique<almondnamespace::pacman::PacmanScene>(); }, SceneID::Pacman);
                             }
                             else if (*choice == almondnamespace::menu::Choice::Sokoban) {
-                                if (g_activeScene) g_activeScene->unload();
-                                g_activeScene = std::make_unique<almondnamespace::sokoban::SokobanScene>();
-                                g_activeScene->load();
-                                g_sceneID = SceneID::Sokoban;
+                                begin_scene([] { return std::make_unique<almondnamespace::sokoban::SokobanScene>(); }, SceneID::Sokoban);
                             }
                             else if (*choice == almondnamespace::menu::Choice::Bejeweled) {
-                                if (g_activeScene) g_activeScene->unload();
-                                g_activeScene = std::make_unique<almondnamespace::match3::Match3Scene>();
-                                g_activeScene->load();
-                                g_sceneID = SceneID::Match3;
+                                begin_scene([] { return std::make_unique<almondnamespace::match3::Match3Scene>(); }, SceneID::Match3);
                             }
                             else if (*choice == almondnamespace::menu::Choice::Puzzle) {
-                                if (g_activeScene) g_activeScene->unload();
-                                g_activeScene = std::make_unique<almondnamespace::sliding::SlidingScene>();
-                                g_activeScene->load();
-                                g_sceneID = SceneID::Sliding;
+                                begin_scene([] { return std::make_unique<almondnamespace::sliding::SlidingScene>(); }, SceneID::Sliding);
                             }
                             else if (*choice == almondnamespace::menu::Choice::Minesweep) {
-                                if (g_activeScene) g_activeScene->unload();
-                                g_activeScene = std::make_unique<almondnamespace::minesweeper::MinesweeperScene>();
-                                g_activeScene->load();
-                                g_sceneID = SceneID::Minesweeper;
+                                begin_scene([] { return std::make_unique<almondnamespace::minesweeper::MinesweeperScene>(); }, SceneID::Minesweeper);
                             }
                             else if (*choice == almondnamespace::menu::Choice::Fourty) {
-                                if (g_activeScene) g_activeScene->unload();
-                                g_activeScene = std::make_unique<almondnamespace::game2048::Game2048Scene>();
-                                g_activeScene->load();
-                                g_sceneID = SceneID::Game2048;
+                                begin_scene([] { return std::make_unique<almondnamespace::game2048::Game2048Scene>(); }, SceneID::Game2048);
                             }
                             else if (*choice == almondnamespace::menu::Choice::Sandsim) {
-                                if (g_activeScene) g_activeScene->unload();
-                                g_activeScene = std::make_unique<almondnamespace::sandsim::SandSimScene>();
-                                g_activeScene->load();
-                                g_sceneID = SceneID::Sandsim;
+                                begin_scene([] { return std::make_unique<almondnamespace::sandsim::SandSimScene>(); }, SceneID::Sandsim);
                             }
                             else if (*choice == almondnamespace::menu::Choice::Cellular) {
-                                if (g_activeScene) g_activeScene->unload();
-                                g_activeScene = std::make_unique<almondnamespace::cellular::CellularScene>();
-                                g_activeScene->load();
-                                g_sceneID = SceneID::Cellular;
+                                begin_scene([] { return std::make_unique<almondnamespace::cellular::CellularScene>(); }, SceneID::Cellular);
                             }
                             else if (*choice == almondnamespace::menu::Choice::Settings) {
                                 std::cout << "[Menu] Settings selected.\n";

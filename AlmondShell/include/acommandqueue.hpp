@@ -18,6 +18,12 @@ namespace almondnamespace::core {
             commands.push(std::move(cmd));
         }
 
+        void clear() {
+            std::scoped_lock lock(mutex);
+            std::queue<RenderCommand> empty;
+            commands.swap(empty);
+        }
+
         bool drain() {
             std::queue<RenderCommand> localCommands;
             {

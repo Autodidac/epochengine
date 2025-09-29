@@ -125,6 +125,7 @@ namespace almondnamespace::raylibcontext {
         // Mouse position
         mouseX.store(GetMouseX(), std::memory_order_relaxed);
         mouseY.store(GetMouseY(), std::memory_order_relaxed);
+        set_mouse_coords_are_global(false);
 
         // Mouse wheel (Raylib returns float, use int for your API)
         mouseWheel.store(static_cast<int>(GetMouseWheelMove()), std::memory_order_relaxed);
