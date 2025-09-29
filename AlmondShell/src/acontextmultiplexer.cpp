@@ -13,6 +13,7 @@
 #include <algorithm>
 #include <glad/glad.h>
 #include <memory>
+#include <shared_mutex>
 
 // -----------------------------------------------------------------
 // Helper definitions that must be visible to the linker
@@ -344,35 +345,37 @@ namespace almondnamespace::core
                 created.push_back(hwnd);
             }
 
-            // Wire contexts to the windows in order: master first, then duplicates
-            BackendState& state = g_backends[type];
-
-            if (!state.master) {
-                std::cerr << "[Init] Missing prototype context for backend type "
-                    << static_cast<int>(type) << "\n";
-                return;
-            }
-
             std::vector<std::shared_ptr<Context>> ctxs;
-            ctxs.reserve(static_cast<size_t>(count));
-            ctxs.push_back(state.master);
+            {
+                std::unique_lock lock(g_backendsMutex);
+                auto it = g_backends.find(type);
+                if (it == g_backends.end() || !it->second.master) {
+                    std::cerr << "[Init] Missing prototype context for backend type "
+                        << static_cast<int>(type) << "\n";
+                    return;
+                }
 
-            auto ensure_duplicate = [&](size_t index) -> std::shared_ptr<Context> {
-                if (index < state.duplicates.size()) {
-                    auto& candidate = state.duplicates[index];
-                    if (candidate && candidate->initialize) {
+                BackendState& state = it->second;
+                ctxs.reserve(static_cast<size_t>(count));
+                ctxs.push_back(state.master);
+
+                auto ensure_duplicate = [&](size_t index) -> std::shared_ptr<Context> {
+                    if (index < state.duplicates.size()) {
+                        auto& candidate = state.duplicates[index];
+                        if (candidate && candidate->initialize) {
+                            return candidate;
+                        }
+                        candidate = CloneContext(*state.master);
                         return candidate;
                     }
-                    candidate = CloneContext(*state.master);
-                    return candidate;
-                }
-                auto dup = CloneContext(*state.master);
-                state.duplicates.push_back(dup);
-                return dup;
-            };
+                    auto dup = CloneContext(*state.master);
+                    state.duplicates.push_back(dup);
+                    return dup;
+                };
 
-            while (ctxs.size() < static_cast<size_t>(count)) {
-                ctxs.push_back(ensure_duplicate(ctxs.size() - 1));
+                while (ctxs.size() < static_cast<size_t>(count)) {
+                    ctxs.push_back(ensure_duplicate(ctxs.size() - 1));
+                }
             }
 
             const size_t n = std::min(created.size(), ctxs.size());
@@ -471,7 +474,10 @@ namespace almondnamespace::core
 #endif
 
         ArrangeDockedWindowsGrid();
-        return !g_backends.empty();
+        {
+            std::shared_lock lock(g_backendsMutex);
+            return !g_backends.empty();
+        }
     }
 
     //void almondnamespace::core::MultiContextManager::AddWindow(HWND hwnd, HDC hdc, HGLRC glContext,
@@ -519,37 +525,45 @@ namespace almondnamespace::core
         // Make window dockable if a parent is provided
         if (parent) MakeDockable(hwnd, parent);
 
-        if (g_backends.empty()) {
+        bool needInit = false;
+        {
+            std::shared_lock lock(g_backendsMutex);
+            needInit = g_backends.empty();
+        }
+        if (needInit) {
             InitializeAllContexts();
         }
 
-        auto acquire_context = [&]() -> std::shared_ptr<core::Context> {
+        std::shared_ptr<core::Context> ctx;
+        {
+            std::unique_lock lock(g_backendsMutex);
             auto& state = g_backends[type];
             if (!state.master) {
-                return nullptr;
+                ctx = std::make_shared<core::Context>();
+                ctx->type = type;
+                state.master = ctx;
             }
-
-            if (!state.master->windowData) {
-                return state.master;
+            else if (!state.master->windowData) {
+                ctx = state.master;
             }
-
-            for (auto& dup : state.duplicates) {
-                if (dup && !dup->windowData) {
-                    return dup;
+            else {
+                auto it = std::find_if(state.duplicates.begin(), state.duplicates.end(),
+                    [](const std::shared_ptr<core::Context>& dup) {
+                        return dup && !dup->windowData;
+                    });
+                if (it != state.duplicates.end()) {
+                    ctx = *it;
+                }
+                else {
+                    auto dup = CloneContext(*state.master);
+                    state.duplicates.push_back(dup);
+                    ctx = dup;
                 }
             }
-
-            auto dup = CloneContext(*state.master);
-            state.duplicates.push_back(dup);
-            return dup;
-        };
-
-        auto ctx = acquire_context();
-        if (!ctx) {
-            ctx = std::make_shared<core::Context>();
-            ctx->type = type;
-            g_backends[type].master = ctx;
         }
+
+        if (ctx)
+            ctx->type = type;
 
         ctx->hwnd = hwnd;
         ctx->hdc = hdc;
