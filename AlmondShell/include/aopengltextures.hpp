@@ -47,7 +47,6 @@
 #include <iostream>
 #include <filesystem>
 #include <unordered_map>
-#include <algorithm>
 
 namespace almondnamespace::opengltextures
 {
@@ -315,14 +314,9 @@ namespace almondnamespace::opengltextures
             return;
         }
 
-        auto& backend = get_opengl_backend();
-        int w = static_cast<int>(backend.glState.width);
-        int h = static_cast<int>(backend.glState.height);
-        if (w <= 0 || h <= 0) {
-            w = std::max(1, core::cli::window_width);
-            h = std::max(1, core::cli::window_height);
-        }
-        if (w <= 0 || h <= 0) {
+        const int w = core::cli::window_width;
+        const int h = core::cli::window_height;
+        if (w == 0 || h == 0) {
             std::cerr << "[DrawSprite] ERROR: Window dimensions are zero.\n";
             return;
         }
@@ -363,6 +357,7 @@ namespace almondnamespace::opengltextures
         ensure_uploaded(*atlas);
 
         // 🔑 FIX: use backend.gpu_atlases, not global opengl_gpu_atlases
+        auto& backend = get_opengl_backend();
         auto it = backend.gpu_atlases.find(atlas);
         if (it == backend.gpu_atlases.end()) {
             std::cerr << "[DrawSprite] GPU texture not found for atlas '"

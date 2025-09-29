@@ -58,8 +58,6 @@
 #include <stdexcept>
 #include <functional>
 #include <mutex>
-#include <algorithm>
-#include <memory>
 #include <queue>
 #include <vector>
 
@@ -310,69 +308,7 @@ namespace almondnamespace::openglcontext
         // -----------------------------------------------------------------
         ctx->width = static_cast<int>(w);
         ctx->height = static_cast<int>(h);
-
-        glState.width = static_cast<unsigned int>(std::max<unsigned int>(1u, w));
-        glState.height = static_cast<unsigned int>(std::max<unsigned int>(1u, h));
-
-        auto weakCtx = std::weak_ptr<core::Context>(ctx);
-        auto* statePtr = &glState;
-        auto resizeImpl = [weakCtx, statePtr](int newW, int newH)
-        {
-            if (newW <= 0 || newH <= 0)
-                return;
-
-            const int clampedW = std::max(1, newW);
-            const int clampedH = std::max(1, newH);
-
-            statePtr->width = static_cast<unsigned int>(clampedW);
-            statePtr->height = static_cast<unsigned int>(clampedH);
-
-            HGLRC previousCtx = wglGetCurrentContext();
-            HDC previousDC = wglGetCurrentDC();
-            bool madeCurrent = false;
-            if (statePtr->hdc && statePtr->hglrc && previousCtx != statePtr->hglrc)
-            {
-                if (wglMakeCurrent(statePtr->hdc, statePtr->hglrc))
-                {
-                    madeCurrent = true;
-                }
-            }
-
-            glViewport(0, 0, clampedW, clampedH);
-
-            if (madeCurrent)
-            {
-                wglMakeCurrent(previousDC, previousCtx);
-            }
-
-            if (auto locked = weakCtx.lock())
-            {
-                locked->width = clampedW;
-                locked->height = clampedH;
-                if (locked->windowData)
-                {
-                    locked->windowData->width = clampedW;
-                    locked->windowData->height = clampedH;
-                }
-            }
-        };
-
-        auto combinedResize = resizeImpl;
-        if (onResize)
-        {
-            combinedResize = [resizeImpl, external = std::move(onResize)](int newW, int newH)
-            {
-                resizeImpl(newW, newH);
-                external(newW, newH);
-            };
-        }
-
-        glState.onResize = combinedResize;
-        ctx->onResize = combinedResize;
-        if (ctx->windowData)
-        {
-            ctx->windowData->onResize = combinedResize;
-        }
+        ctx->onResize = std::move(onResize);
 
 
         if (!glState.hwnd) {
