@@ -408,9 +408,6 @@
     <ClInclude Include="$(MSBuildThisFileDirectory)include\acontextwindow.hpp">
       <Filter>Header Files\core\backbone\external\context</Filter>
     </ClInclude>
-    <ClInclude Include="$(MSBuildThisFileDirectory)include\acontextstatemanager.hpp">
-      <Filter>Header Files\core\backbone\external\context</Filter>
-    </ClInclude>
     <ClInclude Include="$(MSBuildThisFileDirectory)include\acontextrenderer.hpp">
       <Filter>Header Files\core\backbone\external\context</Filter>
     </ClInclude>

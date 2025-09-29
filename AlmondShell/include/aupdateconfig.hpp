@@ -36,7 +36,7 @@ namespace almondnamespace
         inline std::string OWNER = "Autodidac";
         inline std::string REPO = "Cpp20_Ultimate_Project_Updater";
         inline std::string BRANCH = "main";
-        inline std::string PROJECT_VERSION = "0.57.7"; // Change to match the current version
+		inline std::string PROJECT_VERSION = "0.57.10"; // Change to match the current version, match the version in aversion.hpp, changing this will trigger an update above this version from the repo
 
         // 🔨 **Build Settings**
         // NOT ACTUALLY CONFIGURABLE this gets renamed at the end 
