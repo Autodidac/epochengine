@@ -27,10 +27,12 @@
 #include "aupdateconfig.hpp"
 
 #include <cstdlib>
+#include <filesystem>
 #include <fstream>
 #include <iostream>
 #include <regex>
 #include <string>
+#include <system_error>
 
 namespace almondnamespace
 {
@@ -110,6 +112,62 @@ namespace almondnamespace
             system("chmod +x replace_and_restart.sh && nohup ./replace_and_restart.sh &");
             exit(0);
 #endif
+        }
+
+        inline bool move_directory_contents(const std::filesystem::path& source,
+                                            const std::filesystem::path& destination)
+        {
+            namespace fs = std::filesystem;
+
+            if (!fs::exists(source)) {
+                std::cerr << "[ERROR] Source directory does not exist: " << source << '\n';
+                return false;
+            }
+
+            std::error_code ec;
+            if (!fs::exists(destination)) {
+                fs::create_directories(destination, ec);
+                if (ec) {
+                    std::cerr << "[ERROR] Failed to create destination directory: "
+                              << destination << " (" << ec.message() << ")\n";
+                    return false;
+                }
+            }
+
+            for (const auto& entry : fs::directory_iterator(source)) {
+                const auto target = destination / entry.path().filename();
+
+                std::error_code remove_ec;
+                fs::remove_all(target, remove_ec);
+                if (remove_ec && remove_ec != std::errc::no_such_file_or_directory) {
+                    std::cerr << "[ERROR] Failed to remove existing path: " << target
+                              << " (" << remove_ec.message() << ")\n";
+                    return false;
+                }
+
+                std::error_code rename_ec;
+                fs::rename(entry.path(), target, rename_ec);
+                if (rename_ec) {
+                    std::error_code copy_ec;
+                    fs::copy(entry.path(), target,
+                             fs::copy_options::recursive | fs::copy_options::overwrite_existing,
+                             copy_ec);
+                    if (copy_ec) {
+                        std::cerr << "[ERROR] Failed to copy " << entry.path() << " → "
+                                  << target << " (" << copy_ec.message() << ")\n";
+                        return false;
+                    }
+
+                    std::error_code cleanup_ec;
+                    fs::remove_all(entry.path(), cleanup_ec);
+                    if (cleanup_ec && cleanup_ec != std::errc::no_such_file_or_directory) {
+                        std::cerr << "[WARNING] Failed to clean up temporary path: "
+                                  << entry.path() << " (" << cleanup_ec.message() << ")\n";
+                    }
+                }
+            }
+
+            return true;
         }
 
         // 🔄 **Replace the Current Binary**
@@ -222,27 +280,19 @@ namespace almondnamespace
             system(("ls -l " + extracted_folder).c_str());
 #endif
 
-#if defined(_WIN32)
-            // ✅ Use `xcopy` instead of `robocopy`
-            std::string move_command = "xcopy /E /Y /Q " + extracted_folder + "\\* .";
-#else
-            // ✅ Use `mv -T` to move the entire directory correctly
-            std::string move_command = "mv -T " + extracted_folder + " ./";
-#endif
+            const std::filesystem::path extracted_path{ extracted_folder };
+            const auto destination = std::filesystem::current_path();
 
-            if (system(move_command.c_str()) != 0) {
-                std::cerr << "[ERROR] Failed to move extracted files.\n";
+            if (!move_directory_contents(extracted_path, destination)) {
+                std::cerr << "[ERROR] Failed to move extracted files." << std::endl;
                 return;
             }
 
-#if defined(_WIN32)
-            std::string remove_command = "cmd.exe /C \"rmdir /s /q " + extracted_folder + "\"";
-#else
-            std::string remove_command = "rm -rf " + extracted_folder;
-#endif
-
-            if (system(remove_command.c_str()) != 0) {
-                std::cerr << "[WARNING] Failed to delete extracted folder: " << extracted_folder << std::endl;
+            std::error_code cleanup_ec;
+            std::filesystem::remove_all(extracted_path, cleanup_ec);
+            if (cleanup_ec && cleanup_ec != std::errc::no_such_file_or_directory) {
+                std::cerr << "[WARNING] Failed to delete extracted folder: "
+                          << extracted_folder << " (" << cleanup_ec.message() << ")" << std::endl;
             }
 
             if (!setup_llvm_clang() || !setup_ninja()) {
