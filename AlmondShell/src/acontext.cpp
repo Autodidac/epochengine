@@ -171,22 +171,22 @@ namespace almondnamespace::core {
         uint32_t handle = 0;
         switch (type) {
 #ifdef ALMOND_USING_OPENGL
-        case ContextType::OpenGL: handle = opengltextures::load_atlas(atlas, 0); break;
+        case ContextType::OpenGL: handle = opengltextures::load_atlas(atlas, atlas.get_index()); break;
 #endif
 #ifdef ALMOND_USING_SDL
-        case ContextType::SDL:  handle = sdltextures::load_atlas(atlas, 0); break;
+        case ContextType::SDL:  handle = sdltextures::load_atlas(atlas, atlas.get_index()); break;
 #endif
 #ifdef ALMOND_USING_SFML
-        case ContextType::SFML: handle = sfmltextures::load_atlas(atlas, 0); break;
+        case ContextType::SFML: handle = sfmltextures::load_atlas(atlas, atlas.get_index()); break;
 #endif
 #ifdef ALMOND_USING_RAYLIB
-        case ContextType::RayLib: handle = raylibtextures::load_atlas(atlas, 0); break;
+        case ContextType::RayLib: handle = raylibtextures::load_atlas(atlas, atlas.get_index()); break;
 #endif
 #ifdef ALMOND_USING_VULKAN
-        case ContextType::Vulkan: handle = vulkantextures::load_atlas(atlas, 0); break;
+        case ContextType::Vulkan: handle = vulkantextures::load_atlas(atlas, atlas.get_index()); break;
 #endif
 #ifdef ALMOND_USING_DIRECTX
-        case ContextType::DirectX: handle = directxtextures::load_atlas(atlas, 0); break;
+        case ContextType::DirectX: handle = directxtextures::load_atlas(atlas, atlas.get_index()); break;
 #endif
         default:
             std::cerr << "[AddAtlasThunk] Unsupported context type\n";

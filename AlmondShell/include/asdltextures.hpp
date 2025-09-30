@@ -196,12 +196,13 @@ namespace almondnamespace::sdltextures
         upload_atlas_to_gpu(atlas);
     }
 
-    inline Handle load_atlas(const TextureAtlas& atlas, int atlasIndex = 0) {
+    inline Handle load_atlas(const TextureAtlas& atlas, int atlasIndex = -1) {
         atlasmanager::ensure_uploaded(atlas);
-        return make_handle(atlasIndex, 0);
+        const int resolvedIndex = (atlasIndex >= 0) ? atlasIndex : atlas.get_index();
+        return make_handle(resolvedIndex, 0);
     }
 
-    inline Handle atlas_add_texture(TextureAtlas& atlas, const std::string& id, const ImageData& img) 
+    inline Handle atlas_add_texture(TextureAtlas& atlas, const std::string& id, const ImageData& img)
     {
         auto rgba = ensure_rgba(img);
 
@@ -218,7 +219,7 @@ namespace almondnamespace::sdltextures
 
         atlasmanager::ensure_uploaded(atlas);
 
-        return make_handle(0, addedOpt->index);
+        return make_handle(atlas.get_index(), addedOpt->index);
     }
 
     inline void clear_gpu_atlases() noexcept 

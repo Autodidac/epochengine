@@ -285,12 +285,13 @@ namespace almondnamespace::opengltextures
         s_generation.fetch_add(1, std::memory_order_relaxed);
     }
 
-    inline Handle load_atlas(const TextureAtlas& atlas, int atlasIndex = 0) {
+    inline Handle load_atlas(const TextureAtlas& atlas, int atlasIndex = -1) {
         atlasmanager::ensure_uploaded(atlas);
-        return make_handle(atlasIndex, 0);
+        const int resolvedIndex = (atlasIndex >= 0) ? atlasIndex : atlas.get_index();
+        return make_handle(resolvedIndex, 0);
     }
 
-    inline Handle atlas_add_texture(TextureAtlas& atlas, const std::string& id, const ImageData& img) 
+    inline Handle atlas_add_texture(TextureAtlas& atlas, const std::string& id, const ImageData& img)
     {
         auto rgba = ensure_rgba(img);
 
@@ -307,7 +308,7 @@ namespace almondnamespace::opengltextures
 
         atlasmanager::ensure_uploaded(atlas);
 
-        return make_handle(0, addedOpt->index);
+        return make_handle(atlas.get_index(), addedOpt->index);
     }
 
     inline uint32_t upload_texture(const uint8_t* pixels, int width, int height) 
