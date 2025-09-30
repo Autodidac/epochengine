@@ -290,7 +290,7 @@ namespace almondnamespace::sdltextures
         int outputW = w;
         int outputH = h;
         if (sdl_renderer) {
-            SDL_GetRendererOutputSize(sdl_renderer, &outputW, &outputH);
+            SDL_GetCurrentRenderOutputSize(sdl_renderer, &outputW, &outputH);
         }
 
         float drawX = static_cast<float>(x);

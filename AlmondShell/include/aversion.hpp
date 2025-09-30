@@ -21,18 +21,18 @@
  *   See LICENSE file for full terms.                         *
  *                                                            *
  **************************************************************/
-
+ // aversion.hpp
 #pragma once
 
 #include <iostream>
 #include <cstdio>
 
-namespace almondnamespace {
-
+namespace almondnamespace 
+{
     // Version information as constexpr for compile-time evaluation
     constexpr int major = 0;
     constexpr int minor = 57;
-    constexpr int revision = 11;
+    constexpr int revision = 12;
 
     static char version_string[32] = "";
     static char name_string[16] = "Almond Shell";
