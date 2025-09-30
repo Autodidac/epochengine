@@ -909,7 +909,11 @@ namespace almondnamespace::core
 
         switch (msg) 
         {
-            //case WM_SIZE: mgr->ArrangeDockedWindowsGrid(); return 0;
+            case WM_SIZE: 
+            {
+                mgr->ArrangeDockedWindowsGrid(); 
+                return 0;
+            }
             case WM_PAINT: 
             {
                 PAINTSTRUCT ps; HDC hdc = BeginPaint(hwnd, &ps);
