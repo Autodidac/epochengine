@@ -89,6 +89,26 @@ namespace almondnamespace::core
         return (it != windows.end()) ? it->get() : nullptr;
     }
 
+    WindowData* MultiContextManager::findWindowByContext(const std::shared_ptr<core::Context>& ctx) {
+        if (!ctx) return nullptr;
+        std::scoped_lock lock(windowsMutex);
+        auto it = std::find_if(windows.begin(), windows.end(),
+            [&](const std::unique_ptr<WindowData>& w) {
+                return w && w->context && w->context.get() == ctx.get();
+            });
+        return (it != windows.end()) ? it->get() : nullptr;
+    }
+
+    const WindowData* MultiContextManager::findWindowByContext(const std::shared_ptr<core::Context>& ctx) const {
+        if (!ctx) return nullptr;
+        std::scoped_lock lock(windowsMutex);
+        auto it = std::find_if(windows.begin(), windows.end(),
+            [&](const std::unique_ptr<WindowData>& w) {
+                return w && w->context && w->context.get() == ctx.get();
+            });
+        return (it != windows.end()) ? it->get() : nullptr;
+    }
+
     // ======================================================
     // Inline Implementations
     // ======================================================

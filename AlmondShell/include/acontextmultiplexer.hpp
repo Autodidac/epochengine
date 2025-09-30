@@ -133,6 +133,8 @@ namespace almondnamespace::core
 
         WindowData* findWindowByHWND(HWND hwnd);
         const WindowData* findWindowByHWND(HWND hwnd) const;
+        WindowData* findWindowByContext(const std::shared_ptr<core::Context>& ctx);
+        const WindowData* findWindowByContext(const std::shared_ptr<core::Context>& ctx) const;
     private:
         // ---- Internal State ----
         std::vector<std::unique_ptr<WindowData>> windows;
