@@ -2075,7 +2075,10 @@ int APIENTRY wWinMain(_In_ HINSTANCE hInstance,
                 auto update_on_ctx = [&](std::shared_ptr<almondnamespace::core::Context> ctx) -> bool {
                     if (!ctx) return true;
                     auto* win = mgr.findWindowByHWND(ctx->hwnd);
-                    if (!win) return false;
+                    if (!win)
+                        win = mgr.findWindowByContext(ctx);
+                    if (!win)
+                        return true; // window not ready yet
 
                     bool ctxRunning = win->running;
 
