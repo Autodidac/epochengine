@@ -54,6 +54,29 @@ namespace almondnamespace::anativecontext
     inline TexturePtr cubeTexture;
     inline SoftwareRenderer renderer;
 
+    inline void resize_framebuffer(int width, int height)
+    {
+        auto& sr = s_softrendererstate;
+
+        const int clampedWidth = std::max(1, width);
+        const int clampedHeight = std::max(1, height);
+        const size_t requiredSize = static_cast<size_t>(clampedWidth) * static_cast<size_t>(clampedHeight);
+
+        if (sr.width == clampedWidth && sr.height == clampedHeight && sr.framebuffer.size() == requiredSize)
+        {
+            return;
+        }
+
+        sr.width = clampedWidth;
+        sr.height = clampedHeight;
+        sr.framebuffer.assign(requiredSize, 0xFF000000);
+
+#ifdef _WIN32
+        sr.bmi.bmiHeader.biWidth = clampedWidth;
+        sr.bmi.bmiHeader.biHeight = -clampedHeight; // top-down
+#endif
+    }
+
     // Initialize the software renderer
     inline bool softrenderer_initialize(std::shared_ptr<core::Context> ctx,
         HWND parentWnd = nullptr,
@@ -65,15 +88,25 @@ namespace almondnamespace::anativecontext
             return false;
         }
 
-        s_softrendererstate.width = static_cast<int>(w);
-        s_softrendererstate.height = static_cast<int>(h);
+        resize_framebuffer(static_cast<int>(w), static_cast<int>(h));
         s_softrendererstate.running = true;
         s_softrendererstate.parent = parentWnd ? parentWnd : ctx->hwnd;
         s_softrendererstate.onResize = std::move(onResize);
         s_softrendererstate.hwnd = ctx->hwnd;
+        s_softrendererstate.hdc = ctx->hdc;
 
-        // Allocate framebuffer inside state
-        s_softrendererstate.framebuffer.resize(size_t(w) * size_t(h), 0xFF000000);
+        if (ctx)
+        {
+            ctx->onResize = [](int newWidth, int newHeight)
+            {
+                resize_framebuffer(newWidth, newHeight);
+
+                if (s_softrendererstate.onResize)
+                {
+                    s_softrendererstate.onResize(newWidth, newHeight);
+                }
+            };
+        }
 
         if (!cubeTexture) {
             cubeTexture = std::make_shared<Texture>(64, 64);
@@ -254,6 +287,11 @@ namespace almondnamespace::anativecontext
         auto& sr = s_softrendererstate;
 
         atlasmanager::process_pending_uploads(core::ContextType::Software);
+
+        const size_t expectedSize = static_cast<size_t>(std::max(1, sr.width)) * static_cast<size_t>(std::max(1, sr.height));
+        if (sr.framebuffer.size() != expectedSize) {
+            resize_framebuffer(sr.width, sr.height);
+        }
 
         // Clear framebuffer
         std::fill(sr.framebuffer.begin(), sr.framebuffer.end(), 0xFF000000);
