@@ -32,5 +32,12 @@ BUILD_DIR="Bin/${COMPILER_NAME}-${BUILD_TYPE}"
 mkdir -p "$BUILD_DIR"
 mkdir -p "$INSTALL_PREFIX"
 
+# Configure the project to ensure the build directory has generated files
+cmake -S . -B "$BUILD_DIR" \
+  -DCMAKE_BUILD_TYPE="$BUILD_TYPE" \
+  -DCMAKE_C_COMPILER="$COMPILER_C" \
+  -DCMAKE_CXX_COMPILER="$COMPILER_CXX" \
+  -DCMAKE_INSTALL_PREFIX="$INSTALL_PREFIX"
+
 # Build the project (verbose output)
 cmake --build "$BUILD_DIR" --verbose

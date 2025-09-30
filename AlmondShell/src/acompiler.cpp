@@ -31,7 +31,7 @@
 #include <cstdlib>
 #include <iostream>
 
-namespace almond::compiler {
+namespace almondnamespace::compiler {
 
 bool compile_script_to_dll(const std::filesystem::path& input, const std::filesystem::path& output) {
     std::vector<std::string> clangArgs = {
