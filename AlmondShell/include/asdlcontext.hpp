@@ -111,7 +111,7 @@ namespace almondnamespace::sdlcontext
             ctx->onResize = sdlcontext.onResize;
         }
 
-        if (SDL_Init(SDL_INIT_VIDEO) != 0) {
+        if (SDL_Init(SDL_INIT_VIDEO) == 0) {
             throw std::runtime_error("[SDL] Failed to initialize SDL: " + std::string(SDL_GetError()));
         }
 
@@ -174,7 +174,7 @@ namespace almondnamespace::sdlcontext
         }
 
         init_renderer(sdlcontext.renderer);
-        sdltextures::s_renderer = sdlcontext.renderer;
+        sdltextures::sdl_renderer = sdlcontext.renderer;
 
         if (sdlcontext.parent) {
             std::cout << "[SDL] Setting parent window: " << sdlcontext.parent << "\n";
@@ -209,7 +209,7 @@ namespace almondnamespace::sdlcontext
 
         atlasmanager::register_backend_uploader(core::ContextType::SDL,
             [](const TextureAtlas& atlas) {
-                sdlcontext::ensure_uploaded(atlas);
+                sdltextures::ensure_uploaded(atlas);
             });
 
 
@@ -282,7 +282,7 @@ namespace almondnamespace::sdlcontext
         atlasmanager::process_pending_uploads(core::ContextType::SDL);
 
         SDL_Event e;
-        const Uint8* keys = SDL_GetKeyboardState(nullptr);
+        const bool* keys = SDL_GetKeyboardState(nullptr);
         static int escapeCount = 0;
         while (SDL_PollEvent(&e)) {
             if (e.type == SDL_EVENT_QUIT) {

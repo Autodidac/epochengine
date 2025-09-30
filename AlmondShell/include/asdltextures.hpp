@@ -42,7 +42,7 @@
 #include <unordered_map>
 #include <iostream>
 
-namespace almondnamespace::sdlcontext
+namespace almondnamespace::sdltextures
 {
     using Handle = uint32_t;
 
@@ -56,7 +56,7 @@ namespace almondnamespace::sdlcontext
     inline std::atomic_uint8_t s_generation{ 0 };
     inline std::atomic_uint32_t s_dumpSerial{ 0 };
 
-    inline SDL_Renderer* s_renderer = nullptr; // Must be set by your engine
+    inline SDL_Renderer* sdl_renderer = nullptr; // Must be set by your engine
 
     struct TextureAtlasPtrHash 
     {
@@ -139,7 +139,7 @@ namespace almondnamespace::sdlcontext
 
     inline void upload_atlas_to_gpu(const TextureAtlas& atlas) 
     {
-        if (!sdl_renderer.renderer)
+        if (!sdl_renderer)
             throw std::runtime_error("[SDL] Renderer not set!");
 
 
@@ -169,7 +169,7 @@ namespace almondnamespace::sdlcontext
 
         if (!surface) throw std::runtime_error("[SDL] Failed: SDL_CreateSurfaceFrom");
 
-        gpu.textureHandle = SDL_CreateTextureFromSurface(sdl_renderer.renderer, surface);
+        gpu.textureHandle = SDL_CreateTextureFromSurface(sdl_renderer, surface);
 
         SDL_DestroySurface(surface);
 
@@ -310,7 +310,7 @@ namespace almondnamespace::sdlcontext
         //std::cout << "Dest: x=" << dstRect.x << " y=" << dstRect.y
         //    << " w=" << dstRect.w << " h=" << dstRect.h << "\n";
 
-        SDL_RenderTexture(sdl_renderer.renderer, texture, &srcRect, &dstRect);
+        SDL_RenderTexture(sdl_renderer, texture, &srcRect, &dstRect);
 
         sdlcontext::check_sdl_error("SDL_RenderTexture");
     }

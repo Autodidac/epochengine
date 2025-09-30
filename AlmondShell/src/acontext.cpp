@@ -147,19 +147,19 @@ namespace almondnamespace::core {
         case ContextType::OpenGL: return opengltextures::atlas_add_texture(atlas, name, img);
 #endif
 #ifdef ALMOND_USING_SDL
-        case ContextType::SDL:  return sdlcontext::atlas_add_texture(atlas, name, img);
+        case ContextType::SDL:  return sdltextures::atlas_add_texture(atlas, name, img);
 #endif
 #ifdef ALMOND_USING_SFML
-        case ContextType::SFML:  return sfmlcontext::atlas_add_texture(atlas, name, img);
+        case ContextType::SFML:  return sfmltextures::atlas_add_texture(atlas, name, img);
 #endif
 #ifdef ALMOND_USING_RAYLIB
         case ContextType::RayLib: return raylibtextures::atlas_add_texture(atlas, name, img);
 #endif
 #ifdef ALMOND_USING_VULKAN
-        case ContextType::Vulkan: return vulkancontext::atlas_add_texture(atlas, name, img);
+        case ContextType::Vulkan: return vulkantextures::atlas_add_texture(atlas, name, img);
 #endif
 #ifdef ALMOND_USING_DIRECTX
-        case ContextType::DirectX: return directxcontext::atlas_add_texture(atlas, name, img);
+        case ContextType::DirectX: return directxtextures::atlas_add_texture(atlas, name, img);
 #endif
         default: (void)atlas; (void)name; (void)img; return 0;
         }
@@ -174,19 +174,19 @@ namespace almondnamespace::core {
         case ContextType::OpenGL: handle = opengltextures::load_atlas(atlas, 0); break;
 #endif
 #ifdef ALMOND_USING_SDL
-        case ContextType::SDL:  handle = sdlcontext::load_atlas(atlas, 0); break;
+        case ContextType::SDL:  handle = sdltextures::load_atlas(atlas, 0); break;
 #endif
 #ifdef ALMOND_USING_SFML
-        case ContextType::SFML: handle = sfmlcontext::load_atlas(atlas, 0); break;
+        case ContextType::SFML: handle = sfmltextures::load_atlas(atlas, 0); break;
 #endif
 #ifdef ALMOND_USING_RAYLIB
         case ContextType::RayLib: handle = raylibtextures::load_atlas(atlas, 0); break;
 #endif
 #ifdef ALMOND_USING_VULKAN
-        case ContextType::Vulkan: handle = vulkancontext::load_atlas(atlas, 0); break;
+        case ContextType::Vulkan: handle = vulkantextures::load_atlas(atlas, 0); break;
 #endif
 #ifdef ALMOND_USING_DIRECTX
-        case ContextType::DirectX: handle = directxcontext::load_atlas(atlas, 0); break;
+        case ContextType::DirectX: handle = directxtextures::load_atlas(atlas, 0); break;
 #endif
         default:
             std::cerr << "[AddAtlasThunk] Unsupported context type\n";
@@ -487,7 +487,7 @@ namespace almondnamespace::core {
         sdlContext->is_mouse_button_down = [](input::MouseButton b) { return input::is_mouse_button_down(b); };
 
         sdlContext->registry_get = [](const char*) { return 0; };
-        sdlContext->draw_sprite = sdlcontext::draw_sprite;
+        sdlContext->draw_sprite = sdltextures::draw_sprite;
 
         sdlContext->add_texture = [&](TextureAtlas& a, const std::string& n, const ImageData& i) {
             return AddTextureThunk(a, n, i, ContextType::SDL);
@@ -502,7 +502,7 @@ namespace almondnamespace::core {
         AddContextForBackend(ContextType::SDL, sdlContext);
         atlasmanager::register_backend_uploader(ContextType::SDL,
             [](const TextureAtlas& atlas) {
-                sdlcontext::ensure_uploaded(atlas);
+                sdltextures::ensure_uploaded(atlas);
             });
 #endif
 
