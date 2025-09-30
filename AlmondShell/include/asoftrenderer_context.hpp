@@ -182,14 +182,34 @@ namespace almondnamespace::anativecontext
             return;
         }
 
-        const int destX = static_cast<int>(std::floor(x));
-        const int destY = static_cast<int>(std::floor(y));
-        const int destW = width > 0.f
-            ? std::max(1, static_cast<int>(std::lround(width)))
-            : static_cast<int>(std::max<uint32_t>(1u, region.width));
-        const int destH = height > 0.f
-            ? std::max(1, static_cast<int>(std::lround(height)))
-            : static_cast<int>(std::max<uint32_t>(1u, region.height));
+        float drawX = x;
+        float drawY = y;
+        float drawWidth = width;
+        float drawHeight = height;
+
+        const bool widthNormalized = drawWidth > 0.f && drawWidth <= 1.f;
+        const bool heightNormalized = drawHeight > 0.f && drawHeight <= 1.f;
+
+        if (widthNormalized) {
+            if (drawX >= 0.f && drawX <= 1.f)
+                drawX *= static_cast<float>(sr.width);
+            drawWidth = std::max(drawWidth * static_cast<float>(sr.width), 1.0f);
+        }
+        if (heightNormalized) {
+            if (drawY >= 0.f && drawY <= 1.f)
+                drawY *= static_cast<float>(sr.height);
+            drawHeight = std::max(drawHeight * static_cast<float>(sr.height), 1.0f);
+        }
+
+        if (drawWidth <= 0.f)
+            drawWidth = static_cast<float>(region.width);
+        if (drawHeight <= 0.f)
+            drawHeight = static_cast<float>(region.height);
+
+        const int destX = static_cast<int>(std::floor(drawX));
+        const int destY = static_cast<int>(std::floor(drawY));
+        const int destW = std::max(1, static_cast<int>(std::lround(drawWidth)));
+        const int destH = std::max(1, static_cast<int>(std::lround(drawHeight)));
 
         const int clipX0 = std::max(0, destX);
         const int clipY0 = std::max(0, destY);
@@ -237,9 +257,6 @@ namespace almondnamespace::anativecontext
 
         // Clear framebuffer
         std::fill(sr.framebuffer.begin(), sr.framebuffer.end(), 0xFF000000);
-
-        // Draw quad
-        softrenderer_draw_quad(sr);
 
         // Drain queued commands
         queue.drain();

@@ -48,6 +48,7 @@
 #include <filesystem>
 #include <unordered_map>
 #include <mutex>
+#include <algorithm>
 
 namespace almondnamespace::opengltextures
 {
@@ -369,14 +370,6 @@ namespace almondnamespace::opengltextures
             return;
         }
 
-        std::cerr << "[DrawSprite] Using atlas index = " << atlasIdx
-            << ", atlas name = '" << atlas->name << "'"
-            << ", local sprite index = " << localIdx
-            << ", sprite name = '" << spriteName << "'\n";
-
-        std::cerr << "[DrawSprite] Pointer key: " << atlas
-            << ", Atlas name: " << atlas->name << "\n";
-
         ensure_uploaded(*atlas);
 
         // 🔑 FIX: use backend.gpu_atlases, not global opengl_gpu_atlases
@@ -415,31 +408,35 @@ namespace almondnamespace::opengltextures
         glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
         glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
 
-        std::cerr << "[DrawSprite] RAW region: "
-            << "u1=" << region.u1 << ", v1=" << region.v1
-            << ", u2=" << region.u2 << ", v2=" << region.v2 << '\n';
+        const bool widthNormalized = width > 0.f && width <= 1.f;
+        const bool heightNormalized = height > 0.f && height <= 1.f;
+
+        float drawWidth = widthNormalized ? std::max(width * float(w), 1.0f) : width;
+        float drawHeight = heightNormalized ? std::max(height * float(h), 1.0f) : height;
+
+        float drawX = (widthNormalized && x >= 0.f && x <= 1.f)
+            ? x * float(w)
+            : x;
+        float drawY = (heightNormalized && y >= 0.f && y <= 1.f)
+            ? y * float(h)
+            : y;
 
         const float u0 = region.u1;
         const float du = region.u2 - region.u1;
-        // Image loader already provides vertically flipped data, so feed the
-        // shader a reversed V span to avoid a second flip on the GPU side.
-        const float v0 = region.v2;
-        const float dv = region.v1 - region.v2;
-
-        std::cerr << "[DrawSprite] UVs: u0=" << u0 << ", du=" << du << "\n";
-        std::cerr << "[DrawSprite] UVs: v0=" << v0 << ", dv=" << dv << "\n";
+        const float v0 = region.v1;
+        const float dv = region.v2 - region.v1;
 
         if (backend.glState.uUVRegionLoc >= 0)
             glUniform4f(backend.glState.uUVRegionLoc, u0, v0, du, dv);
 
         // Flip Y pixel coordinate *before* normalization
-        float flippedY = h - (y + height * 0.5f);
+        float flippedY = h - (drawY + drawHeight * 0.5f);
 
         // Convert to NDC [-1, 1], center coords
-        float ndc_x = ((x + width * 0.5f) / float(w)) * 2.f - 1.f;
+        float ndc_x = ((drawX + drawWidth * 0.5f) / float(w)) * 2.f - 1.f;
         float ndc_y = (flippedY / float(h)) * 2.f - 1.f;
-        float ndc_w = (width / float(w)) * 2.f;
-        float ndc_h = (height / float(h)) * 2.f;
+        float ndc_w = (drawWidth / float(w)) * 2.f;
+        float ndc_h = (drawHeight / float(h)) * 2.f;
 
 #if defined(DEBUG_TEXTURE_RENDERING_VERY_VERBOSE)
         std::cerr << "[DrawSprite] Atlas entries count: " << atlas->entry_count() << "\n";
@@ -455,9 +452,6 @@ namespace almondnamespace::opengltextures
             << ", x=" << region.x << ", y=" << region.y
             << ", w=" << region.width << ", h=" << region.height << '\n';
 #endif
-
-        std::cerr << "uUVRegionLoc=" << backend.glState.uUVRegionLoc << '\n';
-        std::cerr << "uTransformLoc=" << backend.glState.uTransformLoc << '\n';
 
         if (backend.glState.uTransformLoc >= 0)
             glUniform4f(backend.glState.uTransformLoc, ndc_x, ndc_y, ndc_w, ndc_h);

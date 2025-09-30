@@ -34,6 +34,7 @@
 
 #include <iostream>
 //#undef Rectangle // Avoid conflict with raylib Rectangle
+#include <algorithm>
 
 #include <raylib.h> // Ensure this is included after platform-specific headers
 namespace almondnamespace::raylibcontext
@@ -115,13 +116,36 @@ namespace almondnamespace::raylibcontext
             static_cast<float>(region.height)
         };
 
-        // If width/height <= 0, use native sprite size
-        float drawWidth = (width > 0.f) ? width : static_cast<float>(region.width);
-        float drawHeight = (height > 0.f) ? height : static_cast<float>(region.height);
+        int screenW = GetRenderWidth();
+        int screenH = GetRenderHeight();
+
+        float drawX = x;
+        float drawY = y;
+        float drawWidth = width;
+        float drawHeight = height;
+
+        const bool widthNormalized = drawWidth > 0.f && drawWidth <= 1.f;
+        const bool heightNormalized = drawHeight > 0.f && drawHeight <= 1.f;
+
+        if (widthNormalized) {
+            if (drawX >= 0.f && drawX <= 1.f)
+                drawX *= static_cast<float>(screenW);
+            drawWidth = std::max(drawWidth * static_cast<float>(screenW), 1.0f);
+        }
+        if (heightNormalized) {
+            if (drawY >= 0.f && drawY <= 1.f)
+                drawY *= static_cast<float>(screenH);
+            drawHeight = std::max(drawHeight * static_cast<float>(screenH), 1.0f);
+        }
+
+        if (drawWidth <= 0.f)
+            drawWidth = static_cast<float>(region.width);
+        if (drawHeight <= 0.f)
+            drawHeight = static_cast<float>(region.height);
 
         Rect destRect{
-            x,
-            y,
+            drawX,
+            drawY,
             drawWidth,
             drawHeight
         };

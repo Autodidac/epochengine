@@ -41,6 +41,7 @@
 #include <vector>
 #include <unordered_map>
 #include <iostream>
+#include <algorithm>
 
 namespace almondnamespace::sdltextures
 {
@@ -285,11 +286,41 @@ namespace almondnamespace::sdltextures
             return;
         }
 
+        int outputW = w;
+        int outputH = h;
+        if (sdl_renderer) {
+            SDL_GetRendererOutputSize(sdl_renderer, &outputW, &outputH);
+        }
+
+        float drawX = static_cast<float>(x);
+        float drawY = static_cast<float>(y);
+        float drawWidth = static_cast<float>(width);
+        float drawHeight = static_cast<float>(height);
+
+        const bool widthNormalized = drawWidth > 0.f && drawWidth <= 1.f;
+        const bool heightNormalized = drawHeight > 0.f && drawHeight <= 1.f;
+
+        if (widthNormalized) {
+            if (drawX >= 0.f && drawX <= 1.f)
+                drawX *= static_cast<float>(outputW);
+            drawWidth = std::max(drawWidth * static_cast<float>(outputW), 1.0f);
+        }
+        if (heightNormalized) {
+            if (drawY >= 0.f && drawY <= 1.f)
+                drawY *= static_cast<float>(outputH);
+            drawHeight = std::max(drawHeight * static_cast<float>(outputH), 1.0f);
+        }
+
+        if (drawWidth <= 0.f)
+            drawWidth = static_cast<float>(region.width);
+        if (drawHeight <= 0.f)
+            drawHeight = static_cast<float>(region.height);
+
         SDL_FRect dstRect{
-            static_cast<float>(x),
-            static_cast<float>(y),
-            static_cast<float>(width),
-            static_cast<float>(height)
+            drawX,
+            drawY,
+            drawWidth,
+            drawHeight
         };
 
         SDL_FRect srcRect{
