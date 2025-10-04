@@ -1,13 +1,21 @@
 # Changelog
 
-## [Unreleased]
-- Harden script hot-reload by validating source and output artefacts before loading.
-- Added an engine analysis brief and roadmap checklists to guide completion planning.
-- Fix menu rendering on SDL, Raylib, and OpenGL backends.
+## [v0.58.0]
+- Added `ScriptLoadReport` diagnostics so script reload failures surface actionable messaging and status flags.
+- Made script reload scheduling synchronous via `WaitAll()` with finished-node pruning to avoid dangling coroutines.
+- Cleaned up coroutine handles after execution to prevent leaked frames in the task graph worker pool.
+- Updated roadmap and engine analysis documentation to reflect the hardened hot-reload workflow.
 
 ## [v0.57.16]
 - Prevented `ProcessAllContexts` from re-entering contexts already driven by render threads, eliminating a crash-prone race in the multi-context manager.
 - Marked the roadmap milestone for hardened multi-context management with notes on the concurrency fix.
+
+## [v0.57.15]
+- Harden script hot-reload by validating source and output artefacts before loading.
+- Added an engine analysis brief and roadmap checklists to guide completion planning.
+
+## [v0.57.14]
+- Fix menu rendering on SDL, Raylib, and OpenGL backends.
 
 ## [v0.57.13]
 - Adjusted size metadata.

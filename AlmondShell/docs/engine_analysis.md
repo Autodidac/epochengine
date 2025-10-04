@@ -11,6 +11,11 @@
 - **Roadmap Traceability** – The existing `roadmap.txt` lacked granular prompts or acceptance checks per phase, making automation hand-offs hard to script.
 - **Testing Surface** – No automated smoke tests or CI hooks are defined for the critical updater and renderer paths, leaving regression risk high during phase transitions.
 
+## Recent Progress (v0.58.0)
+- Added `ScriptLoadReport` to expose per-stage reload diagnostics, capture failure reasons, and emit success flags for automation to consume.
+- Task graph workers now destroy coroutine frames after execution and prune completed nodes, preventing latent reload handles from accumulating between runs.
+- Script reload orchestration awaits completion synchronously, guaranteeing that editors and tooling observe a consistent state before proceeding.
+
 ## Recommended Focus Areas
 1. **Build & CI Hardening** – Introduce cross-platform CMake presets and GitHub Actions to execute `updater` builds plus smoke runs with each PR.
 2. **Renderer Regression Harness** – Build headless validation scenes that render deterministic atlas frames for OpenGL, Raylib, SDL, and the software backend.

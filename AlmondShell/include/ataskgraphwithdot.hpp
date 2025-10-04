@@ -37,6 +37,7 @@
 #include <thread>
 #include <vector>
 #include <semaphore>
+#include <algorithm>
 
 namespace almondnamespace 
 {
@@ -103,6 +104,13 @@ namespace almondnamespace
                 }
             }
 
+            void PruneFinished() {
+                auto end = std::remove_if(Nodes_.begin(), Nodes_.end(), [](const NodePtr& node) {
+                    return node->PrereqCount.load(std::memory_order_acquire) < 0;
+                    });
+                Nodes_.erase(end, Nodes_.end());
+            }
+
             void DumpDot(const std::string& path = "graph.dot") {
                 std::ofstream out(path);
                 out << "digraph G{";
@@ -136,6 +144,10 @@ namespace almondnamespace
                     }
 
                     n->Task_.h.resume();
+                    if (n->Task_.h && n->Task_.h.done()) {
+                        n->Task_.h.destroy();
+                        n->Task_.h = nullptr;
+                    }
                     for (auto* d : n->Dependents) {
                         if (d->PrereqCount.fetch_sub(1, std::memory_order_acq_rel) == 1) {
                             Queue_.enqueue(d);
@@ -148,6 +160,10 @@ namespace almondnamespace
                 while (Queue_.dequeue(n)) {
                     if (!n || !n->Task_.h) continue;
                     n->Task_.h.resume();
+                    if (n->Task_.h && n->Task_.h.done()) {
+                        n->Task_.h.destroy();
+                        n->Task_.h = nullptr;
+                    }
                     for (auto d : n->Dependents) {
                         if (d->PrereqCount.fetch_sub(1, std::memory_order_acq_rel) == 1) {
                             Queue_.enqueue(d);

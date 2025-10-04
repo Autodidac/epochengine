@@ -38,14 +38,14 @@
 #ifdef _WIN32
 #ifndef ALMOND_MAIN_HEADLESS
 //    #include <Windows.h>
-    static HMODULE lastLib = nullptr;
+static HMODULE lastLib = nullptr;
 #else
-	// windows no main fallback, used for raylib or other contexts that require their own main
-    static void* lastLib = nullptr;
+    // windows no main fallback, used for raylib or other contexts that require their own main
+static void* lastLib = nullptr;
 #endif
 #else
-    #include <dlfcn.h>
-    static void* lastLib = nullptr;
+#include <dlfcn.h>
+static void* lastLib = nullptr;
 #endif
 
 using namespace almondnamespace;
@@ -58,13 +58,18 @@ using run_script_fn = void(*)(ScriptScheduler&);
 // —————————————————————————————————————————————————————————————————
 // Coroutine Task: Compile and Load Script DLL
 // —————————————————————————————————————————————————————————————————
-static almondnamespace::Task do_load_script(const std::string& scriptName, ScriptScheduler& scheduler) {
+static almondnamespace::Task do_load_script(const std::string& scriptName, ScriptScheduler& scheduler, ScriptLoadReport& report) {
     try {
         const fs::path sourcePath = fs::path("src/scripts") / (scriptName + ".ascript.cpp");
         const fs::path dllPath = fs::path("src/scripts") / (scriptName + ".dll");
 
+        report.scheduled.store(true, std::memory_order_relaxed);
+        report.log_info("Scheduling script reload for '" + scriptName + "'.");
+
         if (!fs::exists(sourcePath)) {
-            std::cerr << "[script] Source file missing: " << sourcePath << "\n";
+            const std::string message = "[script] Source file missing: " + sourcePath.string();
+            std::cerr << message << "\n";
+            report.log_error(message);
             co_return;
         }
 
@@ -72,7 +77,7 @@ static almondnamespace::Task do_load_script(const std::string& scriptName, Scrip
 #ifdef _WIN32
 #ifndef ALMOND_MAIN_HEADLESS
             FreeLibrary(lastLib);
-#endif  
+#endif
 #else
             dlclose(lastLib);
 #endif
@@ -80,12 +85,19 @@ static almondnamespace::Task do_load_script(const std::string& scriptName, Scrip
         }
 
         if (!compiler::compile_script_to_dll(sourcePath, dllPath)) {
-            std::cerr << "[script] Compilation failed: " << sourcePath << "\n";
+            const std::string message = "[script] Compilation failed: " + sourcePath.string();
+            std::cerr << message << "\n";
+            report.log_error(message);
             co_return;
         }
 
+        report.compiled.store(true, std::memory_order_relaxed);
+        report.log_info("Compiled script '" + scriptName + "' to DLL.");
+
         if (!fs::exists(dllPath)) {
-            std::cerr << "[script] Expected output missing after compilation: " << dllPath << "\n";
+            const std::string message = "[script] Expected output missing after compilation: " + dllPath.string();
+            std::cerr << message << "\n";
+            report.log_error(message);
             co_return;
         }
 
@@ -93,35 +105,50 @@ static almondnamespace::Task do_load_script(const std::string& scriptName, Scrip
 #ifndef ALMOND_MAIN_HEADLESS
         lastLib = LoadLibraryA(dllPath.string().c_str());
         if (!lastLib) {
-            std::cerr << "[script] LoadLibrary failed: " << dllPath << "\n";
+            const std::string message = "[script] LoadLibrary failed: " + dllPath.string();
+            std::cerr << message << "\n";
+            report.log_error(message);
             co_return;
         }
         auto entry = reinterpret_cast<run_script_fn>(GetProcAddress(lastLib, "run_script"));
 #else
-      //  auto entry = reinterpret_cast<run_script_fn>("somethingel", "run_script");
+        //  auto entry = reinterpret_cast<run_script_fn>("somethingel", "run_script");
 #endif
 #else
         lastLib = dlopen(dllPath.string().c_str(), RTLD_NOW);
         if (!lastLib) {
-            std::cerr << "[script] dlopen failed: " << dllPath << "\n";
+            const std::string message = "[script] dlopen failed: " + dllPath.string();
+            std::cerr << message << "\n";
+            report.log_error(message);
             co_return;
         }
         auto entry = reinterpret_cast<run_script_fn>(dlsym(lastLib, "run_script"));
 #endif
+
+        report.dllLoaded.store(true, std::memory_order_relaxed);
+
 #ifndef ALMOND_MAIN_HEADLESS
         if (!entry) {
-            std::cerr << "[script] Missing run_script symbol in: " << dllPath << "\n";
+            const std::string message = "[script] Missing run_script symbol in: " + dllPath.string();
+            std::cerr << message << "\n";
+            report.log_error(message);
             co_return;
         }
 
+        report.log_info("Executing run_script for '" + scriptName + "'.");
         entry(scheduler);
+        report.executed.store(true, std::memory_order_relaxed);
 #endif
     }
     catch (const std::exception& e) {
-        std::cerr << "[script] Exception during script load: " << e.what() << "\n";
+        const std::string message = std::string("[script] Exception during script load: ") + e.what();
+        std::cerr << message << "\n";
+        report.log_error(message);
     }
     catch (...) {
-        std::cerr << "[script] Unknown exception during script load\n";
+        const std::string message = "[script] Unknown exception during script load";
+        std::cerr << message << "\n";
+        report.log_error(message);
     }
     co_return;
 }
@@ -129,15 +156,25 @@ static almondnamespace::Task do_load_script(const std::string& scriptName, Scrip
 // —————————————————————————————————————————————————————————————————
 // External entry point (engine-facing)
 // —————————————————————————————————————————————————————————————————
-bool almondnamespace::scripting::load_or_reload_script(const std::string& scriptName, ScriptScheduler& scheduler) {
+bool almondnamespace::scripting::load_or_reload_script(const std::string& scriptName, ScriptScheduler& scheduler, ScriptLoadReport* reportPtr) {
+    ScriptLoadReport fallbackReport;
+    ScriptLoadReport& report = reportPtr ? *reportPtr : fallbackReport;
+    report.reset();
+
     try {
-        almondnamespace::Task t = do_load_script(scriptName, scheduler);
+        almondnamespace::Task t = do_load_script(scriptName, scheduler, report);
         auto node = std::make_unique<taskgraph::Node>(std::move(t));
+        node->Label = "script:" + scriptName;
         scheduler.AddNode(std::move(node));
         scheduler.Execute();
-        return true;
-    } catch (const std::exception& e) {
-        std::cerr << "[script] Scheduling exception: " << e.what() << "\n";
+        scheduler.WaitAll();
+        scheduler.PruneFinished();
+        return report.succeeded();
+    }
+    catch (const std::exception& e) {
+        const std::string message = std::string("[script] Scheduling exception: ") + e.what();
+        std::cerr << message << "\n";
+        report.log_error(message);
         return false;
     }
 }

@@ -153,7 +153,7 @@ namespace almondnamespace
                              fs::copy_options::recursive | fs::copy_options::overwrite_existing,
                              copy_ec);
                     if (copy_ec) {
-                        std::cerr << "[ERROR] Failed to copy " << entry.path() << " → "
+                        std::cerr << "[ERROR] Failed to copy " << entry.path() << " -> "
                                   << target << " (" << copy_ec.message() << ")\n";
                         return false;
                     }

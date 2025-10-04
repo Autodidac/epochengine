@@ -31,7 +31,8 @@ Phase 2 – Core Runtime Stabilisation
 - [ ] Implement regression tests for each renderer backend (OpenGL, Raylib, SDL software) using headless validation scenes.
 - [x] Harden multi-context window management with assertions, telemetry counters, and leak detection hooks in `acontextmultiplexer`. *(v0.57.16 prevents the main thread from re-entering active render threads, removing a long-standing race in `ProcessAllContexts`.)*
 - [ ] Finalise task scheduler/coroutine orchestration; stress-test script reload storms and fix deadlocks.
-- [ ] Optimise hot-reload pipeline to recompile scripts incrementally with clear diagnostics (see `src/ascriptingsystem.cpp`).
+- [x] Optimise hot-reload pipeline to recompile scripts incrementally with clear diagnostics (see `src/ascriptingsystem.cpp`). *(v0.58.0 introduces `ScriptLoadReport`, synchronous reload waits, and task pruning to surface failures deterministically.)*
+- [ ] Integrate automated smoke coverage for the script reload flow using the new diagnostics surface.
 
 Phase 3 – Feature Completion
 ----------------------------
