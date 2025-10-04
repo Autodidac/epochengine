@@ -1,0 +1,62 @@
+AlmondShell Completion Roadmap Prompt
+====================================
+
+Objective
+---------
+Create a production-ready release of the AlmondShell runtime that can bootstrap AlmondEngine end-to-end across supported platforms.
+
+Guiding Principles
+------------------
+1. Preserve the engine's static, header-first architecture.
+2. Prioritise developer ergonomics: fast iteration, self-diagnosing tooling, and rich documentation.
+3. Maintain deterministic builds with reproducible dependency management via vcpkg and CMake.
+
+Execution Plan
+--------------
+Use the following phases as a step-by-step prompt for future automation or assistant runs:
+
+Phase 1 – Repository Audit & Build Health
+1. Clone repo, install prerequisites (CMake, Ninja/MSVC, vcpkg).
+2. Configure CI-compatible build presets for Windows, Linux, macOS.
+3. Ensure `AlmondShell/vcpkg.json` dependencies resolve; add lockfiles if missing.
+4. Build `updater` target in Debug and Release on all platforms; capture build logs.
+5. Run existing unit/integration tests (if absent, create smoke test harness covering startup, script reload, renderer swap).
+
+Phase 2 – Core Runtime Stabilisation
+1. Review `include/aengineconfig.hpp` flags; document supported combinations.
+2. Implement regression tests for each renderer backend (OpenGL, Raylib, SFML, Software) using headless validation where possible.
+3. Harden multi-context window management: add assertions, telemetry, and leak detection.
+4. Finalise task scheduler and coroutine orchestration; ensure no deadlocks under scripted reload stress tests.
+5. Optimise hot-reload pipeline to recompile scripts incrementally with clear diagnostics.
+
+Phase 3 – Feature Completion
+1. Re-enable self-updating launcher with configurable channels and checksum validation.
+2. Integrate asset pipeline tooling for atlases, shaders, and script packaging.
+3. Flesh out networking layer: Steam backend primary, ASIO fallback with comprehensive reconnect logic.
+4. Implement cross-backend input abstraction with remapping profiles and virtual device support.
+5. Provide metrics overlay (frame time, job queue depth, memory usage) toggled via scripting API.
+
+Phase 4 – Tooling & Automation
+1. Add `scripts/` commands for one-click build, test, package, and release flows.
+2. Create editor automation templates under `src/scripts/` demonstrating UI bootstrapping.
+3. Set up GitHub Actions/CI pipelines for build + test + artifact upload.
+4. Generate API documentation from headers (Doxygen/Sphinx) and publish via GitHub Pages.
+5. Implement crash reporting with symbol upload and minidump collection.
+
+Phase 5 – Documentation & Release Readiness
+1. Update README with latest setup steps, feature matrix, and platform support table.
+2. Write migration guide for integrators upgrading from prior snapshots.
+3. Produce quickstart tutorials (text + video) using example projects.
+4. Draft release notes summarising new features, known issues, and roadmap alignment.
+5. Tag `v1.0.0` release, attach binaries, and announce availability across channels.
+
+Acceptance Criteria
+-------------------
+- All build targets succeed on supported platforms with automated verification.
+- Regression test suite covers rendering, scripting, networking, and updater flows.
+- Documentation enables new contributors to build, extend, and deploy the engine within one working day.
+- Release artifacts are reproducible, signed, and accompanied by validated checksums.
+
+Next Steps Prompt
+-----------------
+"You are assisting with finalising the AlmondShell engine. Follow the roadmap phases sequentially. For the current phase, enumerate actionable subtasks, execute them, and report progress with references to code changes, tests, and documentation updates."
