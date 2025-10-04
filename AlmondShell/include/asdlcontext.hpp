@@ -129,7 +129,7 @@ namespace almondnamespace::sdlcontext
             ctx->height = clampedHeight;
         }
 
-        if (SDL_Init(SDL_INIT_VIDEO) < 0) {
+        if (SDL_Init(SDL_INIT_VIDEO) == 0) {
             throw std::runtime_error("[SDL] Failed to initialize SDL: " + std::string(SDL_GetError()));
         }
 
