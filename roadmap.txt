@@ -18,7 +18,7 @@ Use the following phases as a step-by-step prompt for future automation or assis
 Phase 1 – Repository Audit & Build Health
 1. Clone repo, install prerequisites (CMake, Ninja/MSVC, vcpkg).
 2. Configure CI-compatible build presets for Windows, Linux, macOS.
-3. Ensure `AlmondShell/vcpkg.json` dependencies resolve; add lockfiles if missing.
+[redacted] - Completed
 4. Build `updater` target in Debug and Release on all platforms; capture build logs.
 5. Run existing unit/integration tests (if absent, create smoke test harness covering startup, script reload, renderer swap).
 
@@ -30,7 +30,7 @@ Phase 2 – Core Runtime Stabilisation
 5. Optimise hot-reload pipeline to recompile scripts incrementally with clear diagnostics.
 
 Phase 3 – Feature Completion
-1. Re-enable self-updating launcher with configurable channels and checksum validation.
+[redacted]
 2. Integrate asset pipeline tooling for atlases, shaders, and script packaging.
 3. Flesh out networking layer: Steam backend primary, ASIO fallback with comprehensive reconnect logic.
 4. Implement cross-backend input abstraction with remapping profiles and virtual device support.
@@ -48,7 +48,7 @@ Phase 5 – Documentation & Release Readiness
 2. Write migration guide for integrators upgrading from prior snapshots.
 3. Produce quickstart tutorials (text + video) using example projects.
 4. Draft release notes summarising new features, known issues, and roadmap alignment.
-5. Tag `v1.0.0` release, attach binaries, and announce availability across channels.
+[redacted]
 
 Acceptance Criteria
 -------------------
