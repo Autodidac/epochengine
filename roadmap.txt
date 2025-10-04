@@ -13,42 +13,52 @@ Guiding Principles
 
 Execution Plan
 --------------
-Use the following phases as a step-by-step prompt for future automation or assistant runs:
+Use the following phases as a step-by-step prompt for future automation or assistant runs. Each phase is framed as a checklist that an assistant can execute sequentially.
 
 Phase 1 – Repository Audit & Build Health
-1. Clone repo, install prerequisites (CMake, Ninja/MSVC, vcpkg).
-2. Configure CI-compatible build presets for Windows, Linux, macOS.
-[redacted] - Completed
-4. Build `updater` target in Debug and Release on all platforms; capture build logs.
-5. Run existing unit/integration tests (if absent, create smoke test harness covering startup, script reload, renderer swap).
+----------------------------------------
+**Goal:** establish deterministic builds across platforms.
+- [ ] Clone repo, install prerequisites (CMake, Ninja/MSVC, vcpkg).
+- [ ] Configure CI-compatible build presets for Windows, Linux, macOS (`CMakePresets.json`).
+- [ ] Restore vcpkg dependencies in manifest mode and cache the install tree.
+- [ ] Build `updater` target in Debug and Release on all platforms; capture build logs.
+- [ ] Create a smoke test harness that launches the updater, exercises script reload, and swaps renderers headlessly.
 
 Phase 2 – Core Runtime Stabilisation
-1. Review `include/aengineconfig.hpp` flags; document supported combinations.
-2. Implement regression tests for each renderer backend (OpenGL, Raylib, SFML, Software) using headless validation where possible.
-3. Harden multi-context window management: add assertions, telemetry, and leak detection.
-4. Finalise task scheduler and coroutine orchestration; ensure no deadlocks under scripted reload stress tests.
-5. Optimise hot-reload pipeline to recompile scripts incrementally with clear diagnostics.
+------------------------------------
+**Goal:** make the runtime resilient to reload, resize, and multi-context stress.
+- [ ] Review `include/aengineconfig.hpp` flags; document supported combinations in `/AlmondShell/docs`.
+- [ ] Implement regression tests for each renderer backend (OpenGL, Raylib, SDL software) using headless validation scenes.
+- [ ] Harden multi-context window management with assertions, telemetry counters, and leak detection hooks in `acontextmultiplexer`.
+- [ ] Finalise task scheduler/coroutine orchestration; stress-test script reload storms and fix deadlocks.
+- [ ] Optimise hot-reload pipeline to recompile scripts incrementally with clear diagnostics (see `src/ascriptingsystem.cpp`).
 
 Phase 3 – Feature Completion
-[redacted]
-2. Integrate asset pipeline tooling for atlases, shaders, and script packaging.
-3. Flesh out networking layer: Steam backend primary, ASIO fallback with comprehensive reconnect logic.
-4. Implement cross-backend input abstraction with remapping profiles and virtual device support.
-5. Provide metrics overlay (frame time, job queue depth, memory usage) toggled via scripting API.
+----------------------------
+**Goal:** ship feature parity with the planned AlmondEngine hand-off.
+- [ ] Ship the asset pipeline tooling for atlases, shaders, and script packaging with CLI entry points.
+- [ ] Flesh out networking: Steam backend primary, ASIO fallback with reconnect/backoff logic surfaced in telemetry.
+- [ ] Implement cross-backend input abstraction with remapping profiles and virtual device support.
+- [ ] Provide a metrics overlay (frame time, job queue depth, memory usage) toggled via scripting API.
+- [ ] Integrate save/load checkpoints into the scene framework for each bundled mini-game.
 
 Phase 4 – Tooling & Automation
-1. Add `scripts/` commands for one-click build, test, package, and release flows.
-2. Create editor automation templates under `src/scripts/` demonstrating UI bootstrapping.
-3. Set up GitHub Actions/CI pipelines for build + test + artifact upload.
-4. Generate API documentation from headers (Doxygen/Sphinx) and publish via GitHub Pages.
-5. Implement crash reporting with symbol upload and minidump collection.
+------------------------------
+**Goal:** enable one-click workflows and CI coverage.
+- [ ] Add `scripts/` commands for build, test, package, and release flows (POSIX + PowerShell).
+- [ ] Create editor automation templates under `src/scripts/` demonstrating UI bootstrapping for future editor work.
+- [ ] Set up GitHub Actions/CI pipelines for build + test + artifact upload (matrix across supported OS/toolchains).
+- [ ] Generate API documentation from headers (Doxygen/Sphinx) and publish via GitHub Pages.
+- [ ] Implement crash reporting with symbol upload and minidump collection.
 
 Phase 5 – Documentation & Release Readiness
-1. Update README with latest setup steps, feature matrix, and platform support table.
-2. Write migration guide for integrators upgrading from prior snapshots.
-3. Produce quickstart tutorials (text + video) using example projects.
-4. Draft release notes summarising new features, known issues, and roadmap alignment.
-[redacted]
+-------------------------------------------
+**Goal:** prepare the release and onboarding collateral.
+- [ ] Update README with latest setup steps, feature matrix, and platform support table.
+- [ ] Write migration guide for integrators upgrading from prior snapshots.
+- [ ] Produce quickstart tutorials (text + video) using example projects.
+- [ ] Draft release notes summarising new features, known issues, and roadmap alignment.
+- [ ] Run a final release candidate dry run: build, package, sign, and verify checksums.
 
 Acceptance Criteria
 -------------------
@@ -59,4 +69,4 @@ Acceptance Criteria
 
 Next Steps Prompt
 -----------------
-"You are assisting with finalising the AlmondShell engine. Follow the roadmap phases sequentially. For the current phase, enumerate actionable subtasks, execute them, and report progress with references to code changes, tests, and documentation updates."
+"You are assisting with finalising the AlmondShell engine. Determine the active roadmap phase, enumerate actionable subtasks using the checklists above, execute them, and report progress with references to code changes, tests, and documentation updates."

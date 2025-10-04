@@ -1,6 +1,8 @@
 # Changelog
 
 ## [Unreleased]
+- Harden script hot-reload by validating source and output artefacts before loading.
+- Added an engine analysis brief and roadmap checklists to guide completion planning.
 - Fix menu rendering on SDL, Raylib, and OpenGL backends.
 
 ## [v0.57.13]
