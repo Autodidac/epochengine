@@ -29,7 +29,7 @@ Phase 2 – Core Runtime Stabilisation
 **Goal:** make the runtime resilient to reload, resize, and multi-context stress.
 - [ ] Review `include/aengineconfig.hpp` flags; document supported combinations in `/AlmondShell/docs`.
 - [ ] Implement regression tests for each renderer backend (OpenGL, Raylib, SDL software) using headless validation scenes.
-- [ ] Harden multi-context window management with assertions, telemetry counters, and leak detection hooks in `acontextmultiplexer`.
+- [x] Harden multi-context window management with assertions, telemetry counters, and leak detection hooks in `acontextmultiplexer`. *(v0.57.16 prevents the main thread from re-entering active render threads, removing a long-standing race in `ProcessAllContexts`.)*
 - [ ] Finalise task scheduler/coroutine orchestration; stress-test script reload storms and fix deadlocks.
 - [ ] Optimise hot-reload pipeline to recompile scripts incrementally with clear diagnostics (see `src/ascriptingsystem.cpp`).
 

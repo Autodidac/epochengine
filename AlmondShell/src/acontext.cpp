@@ -745,15 +745,25 @@ namespace almondnamespace::core {
                 return false;
             }
 
-            CommandQueue localQueue;
-            CommandQueue& queue = ctx->windowData ? ctx->windowData->commandQueue : localQueue;
+            if (auto* window = ctx->windowData) {
+                if (window->running) {
+                    // A dedicated render thread is already driving this context.
+                    // Avoid re-entering backend process callbacks from the main thread.
+                    return true;
+                }
 
-            if (!ctx->process) {
-                queue.drain();
-                return ctx->windowData ? ctx->windowData->running : false;
+                // The render thread has stopped; drain any residual commands but
+                // do not invoke the backend again from this thread.
+                return window->commandQueue.drain();
             }
 
-            return ctx->process_safe(ctx, queue);
+            CommandQueue localQueue;
+
+            if (!ctx->process) {
+                return localQueue.drain();
+            }
+
+            return ctx->process_safe(ctx, localQueue);
         };
 
         for (auto& ctx : contexts) {
