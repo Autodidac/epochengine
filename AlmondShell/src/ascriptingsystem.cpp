@@ -63,6 +63,11 @@ static almondnamespace::Task do_load_script(const std::string& scriptName, Scrip
         const fs::path sourcePath = fs::path("src/scripts") / (scriptName + ".ascript.cpp");
         const fs::path dllPath = fs::path("src/scripts") / (scriptName + ".dll");
 
+        if (!fs::exists(sourcePath)) {
+            std::cerr << "[script] Source file missing: " << sourcePath << "\n";
+            co_return;
+        }
+
         if (lastLib) {
 #ifdef _WIN32
 #ifndef ALMOND_MAIN_HEADLESS
@@ -76,6 +81,11 @@ static almondnamespace::Task do_load_script(const std::string& scriptName, Scrip
 
         if (!compiler::compile_script_to_dll(sourcePath, dllPath)) {
             std::cerr << "[script] Compilation failed: " << sourcePath << "\n";
+            co_return;
+        }
+
+        if (!fs::exists(dllPath)) {
+            std::cerr << "[script] Expected output missing after compilation: " << dllPath << "\n";
             co_return;
         }
 
