@@ -76,15 +76,33 @@ namespace almondnamespace::raylibcontext
     // ──────────────────────────────────────────────
     inline bool raylib_initialize(std::shared_ptr<core::Context> ctx, HWND parentWnd = nullptr, unsigned int w = 800, unsigned int h = 600, std::function<void(int, int)> onResize = nullptr)
     {
-       // if (ctx) ctx->windowData = core::WindowData::get_global_instance();
+        const int clampedWidth = std::max(1u, w);
+        const int clampedHeight = std::max(1u, h);
 
-        s_raylibstate.onResize = std::move(onResize);
-        s_raylibstate.width = w;
-        s_raylibstate.height = h;
+        auto userResize = std::move(onResize);
+        s_raylibstate.onResize = [userResize = std::move(userResize)](int width, int height) mutable {
+            const int safeWidth = std::max(1, width);
+            const int safeHeight = std::max(1, height);
+            s_raylibstate.width = static_cast<unsigned int>(safeWidth);
+            s_raylibstate.height = static_cast<unsigned int>(safeHeight);
+#if !defined(RAYLIB_NO_WINDOW)
+            if (IsWindowReady()) {
+                SetWindowSize(safeWidth, safeHeight);
+            }
+#endif
+            if (userResize) {
+                userResize(safeWidth, safeHeight);
+            }
+        };
+
+        s_raylibstate.width = clampedWidth;
+        s_raylibstate.height = clampedHeight;
         s_raylibstate.parent = parentWnd;
 
         if (ctx) {
             ctx->onResize = s_raylibstate.onResize;
+            ctx->width = clampedWidth;
+            ctx->height = clampedHeight;
         }
 
 
@@ -164,6 +182,12 @@ namespace almondnamespace::raylibcontext
             SetWindowPos(s_raylibstate.hwnd, nullptr, 0, 0,
                 width, height,
                 SWP_NOZORDER | SWP_FRAMECHANGED | SWP_SHOWWINDOW);
+
+#if !defined(RAYLIB_NO_WINDOW)
+            if (IsWindowReady()) {
+                SetWindowSize(width, height);
+            }
+#endif
 
             if (s_raylibstate.onResize) {
                 s_raylibstate.onResize(width, height);
@@ -263,6 +287,15 @@ namespace almondnamespace::raylibcontext
 
         atlasmanager::process_pending_uploads(core::ContextType::RayLib);
 
+        const int currentWidth = GetScreenWidth();
+        const int currentHeight = GetScreenHeight();
+        if (currentWidth > 0) {
+            s_raylibstate.width = static_cast<unsigned int>(currentWidth);
+        }
+        if (currentHeight > 0) {
+            s_raylibstate.height = static_cast<unsigned int>(currentHeight);
+        }
+
         if (!wglMakeCurrent(s_raylibstate.hdc, s_raylibstate.glContext)) {
             s_raylibstate.running = false;
             std::cerr << "[Raylib] Failed to make Raylib GL context current\n";
@@ -327,8 +360,8 @@ namespace almondnamespace::raylibcontext
     // ──────────────────────────────────────────────
     // Extra helpers if you like consistency
     // ──────────────────────────────────────────────
-    inline int raylib_get_width()  noexcept { return GetScreenWidth(); }
-    inline int raylib_get_height() noexcept { return GetScreenHeight(); }
+    inline int raylib_get_width()  noexcept { return static_cast<int>(s_raylibstate.width); }
+    inline int raylib_get_height() noexcept { return static_cast<int>(s_raylibstate.height); }
     inline void raylib_set_window_title(const std::string& title)
     {
         SetWindowTitle(title.c_str());

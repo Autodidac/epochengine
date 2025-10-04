@@ -102,16 +102,34 @@ namespace almondnamespace::sdlcontext
 
     inline bool sdl_initialize(std::shared_ptr<core::Context> ctx, HWND parentWnd = nullptr, int w = 400, int h = 300, std::function<void(int, int)> onResize = nullptr)
     {
-        sdlcontext.onResize = std::move(onResize);
-        sdlcontext.width = w;
-        sdlcontext.height = h;
+        const int clampedWidth = std::max(1, w);
+        const int clampedHeight = std::max(1, h);
+
+        auto userResize = std::move(onResize);
+        sdlcontext.onResize = [userResize = std::move(userResize)](int width, int height) mutable {
+            const int safeWidth = std::max(1, width);
+            const int safeHeight = std::max(1, height);
+            sdlcontext.width = safeWidth;
+            sdlcontext.height = safeHeight;
+            if (sdlcontext.window) {
+                SDL_SetWindowSize(sdlcontext.window, safeWidth, safeHeight);
+            }
+            if (userResize) {
+                userResize(safeWidth, safeHeight);
+            }
+        };
+
+        sdlcontext.width = clampedWidth;
+        sdlcontext.height = clampedHeight;
         sdlcontext.parent = parentWnd;
 
         if (ctx) {
             ctx->onResize = sdlcontext.onResize;
+            ctx->width = clampedWidth;
+            ctx->height = clampedHeight;
         }
 
-        if (SDL_Init(SDL_INIT_VIDEO) == 0) {
+        if (SDL_Init(SDL_INIT_VIDEO) < 0) {
             throw std::runtime_error("[SDL] Failed to initialize SDL: " + std::string(SDL_GetError()));
         }
 
@@ -309,6 +327,17 @@ namespace almondnamespace::sdlcontext
         Uint8 g = static_cast<Uint8>((0.5 + 0.5 * std::sin(t * 0.7 + 2.0)) * 255);
         Uint8 b = static_cast<Uint8>((0.5 + 0.5 * std::sin(t * 1.3 + 4.0)) * 255);
 
+        if (sdlcontext.renderer) {
+            int renderW = 0;
+            int renderH = 0;
+            if (SDL_GetCurrentRenderOutputSize(sdlcontext.renderer, &renderW, &renderH) == 0) {
+                if (renderW > 0 && renderH > 0) {
+                    sdlcontext.width = renderW;
+                    sdlcontext.height = renderH;
+                }
+            }
+        }
+
         SDL_SetRenderDrawColor(sdl_renderer.renderer, r, g, b, 255);
         SDL_RenderClear(sdl_renderer.renderer);
 
@@ -418,11 +447,23 @@ namespace almondnamespace::sdlcontext
 
     inline std::pair<int,int> get_size() noexcept
     {
-        int w = 0, h = 0;
-        if (sdl_renderer.renderer)
-            SDL_GetCurrentRenderOutputSize(sdl_renderer.renderer, &w, &h);
-        else if (s_sdlstate.window.sdl_window)
+        int w = 0;
+        int h = 0;
+        if (sdl_renderer.renderer) {
+            if (SDL_GetCurrentRenderOutputSize(sdl_renderer.renderer, &w, &h) != 0) {
+                w = 0;
+                h = 0;
+            }
+        }
+        else if (s_sdlstate.window.sdl_window) {
             SDL_GetWindowSize(s_sdlstate.window.sdl_window, &w, &h);
+        }
+
+        if (w <= 0 || h <= 0) {
+            w = sdlcontext.width;
+            h = sdlcontext.height;
+        }
+
         return {w, h};
     }
 
