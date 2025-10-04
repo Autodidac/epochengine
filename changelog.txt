@@ -5,6 +5,10 @@
 - Added an engine analysis brief and roadmap checklists to guide completion planning.
 - Fix menu rendering on SDL, Raylib, and OpenGL backends.
 
+## [v0.57.16]
+- Prevented `ProcessAllContexts` from re-entering contexts already driven by render threads, eliminating a crash-prone race in the multi-context manager.
+- Marked the roadmap milestone for hardened multi-context management with notes on the concurrency fix.
+
 ## [v0.57.13]
 - Adjusted size metadata.
 - Made the Unix README responsive.
