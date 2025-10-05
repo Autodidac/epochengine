@@ -218,11 +218,11 @@ namespace almondnamespace::menu
                 const int rowFromTop = static_cast<int>(idx) / ExpectedColumns;
                 const int colFromLeft = static_cast<int>(idx) % ExpectedColumns;
 
-                // The sprite sheet is authored starting at the bottom edge, so we
-                // flip the row index to keep logical index 0 at the top-left of the
-                // menu grid while preserving the original left-to-right ordering of
-                // columns.
-                const int row = ExpectedRowsPerHalf - 1 - rowFromTop;
+                // The atlas is authored in row-major order from the top-left corner,
+                // matching the logical button ordering.  Preserve that layout so
+                // "Snake" appears in the top-left slot and "Quit" in the
+                // bottom-right slot across every backend.
+                const int row = rowFromTop;
                 const int col = colFromLeft;
 
                 const int normalX = col * spriteW;

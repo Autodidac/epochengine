@@ -424,8 +424,11 @@ namespace almondnamespace::opengltextures
 
         const float u0 = region.u1;
         const float du = region.u2 - region.u1;
-        const float v0 = region.v1;
-        const float dv = region.v2 - region.v1;
+        // OpenGL expects the texture origin in the bottom-left corner, while the
+        // atlas data is stored with a top-left origin.  Flip the V span so the
+        // sprite appears upright without modifying shared atlas data.
+        const float v0 = region.v2;
+        const float dv = region.v1 - region.v2;
 
         if (backend.glState.uUVRegionLoc >= 0)
             glUniform4f(backend.glState.uUVRegionLoc, u0, v0, du, dv);
