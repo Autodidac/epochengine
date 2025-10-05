@@ -53,6 +53,7 @@
 //#include <mutex>
 //#include <queue>
 //#include <functional>
+#include <algorithm>
 #include <format>
 #include <iostream>
 #include <stdexcept>
@@ -308,6 +309,8 @@ namespace almondnamespace::openglcontext
         // -----------------------------------------------------------------
         ctx->width = static_cast<int>(w);
         ctx->height = static_cast<int>(h);
+        glState.width = w;
+        glState.height = h;
         ctx->onResize = std::move(onResize);
 
 
@@ -398,11 +401,29 @@ namespace almondnamespace::openglcontext
     }
 
     //   inline void opengl_pump() { almondnamespace::platform::pump_events(); }
-    inline int  opengl_get_width() { 
-        RECT r; GetClientRect(s_openglstate.hwnd, &r); return r.right - r.left; 
+    inline int  opengl_get_width() {
+        auto& backend = opengltextures::get_opengl_backend();
+        RECT r{ 0, 0, 0, 0 };
+        if (backend.glState.hwnd && GetClientRect(backend.glState.hwnd, &r)) {
+            backend.glState.width = static_cast<unsigned int>(std::max<LONG>(1, r.right - r.left));
+            return static_cast<int>(backend.glState.width);
+        }
+        if (backend.glState.width > 0) {
+            return static_cast<int>(backend.glState.width);
+        }
+        return std::max(1, core::cli::window_width);
     }
-    inline int  opengl_get_height() { 
-        RECT r; GetClientRect(s_openglstate.hwnd, &r); return r.bottom - r.top;
+    inline int  opengl_get_height() {
+        auto& backend = opengltextures::get_opengl_backend();
+        RECT r{ 0, 0, 0, 0 };
+        if (backend.glState.hwnd && GetClientRect(backend.glState.hwnd, &r)) {
+            backend.glState.height = static_cast<unsigned int>(std::max<LONG>(1, r.bottom - r.top));
+            return static_cast<int>(backend.glState.height);
+        }
+        if (backend.glState.height > 0) {
+            return static_cast<int>(backend.glState.height);
+        }
+        return std::max(1, core::cli::window_height);
     }
     inline void opengl_clear(std::shared_ptr<core::Context> ctx) {
         glViewport(0, 0, ctx->width, ctx->height);
@@ -417,6 +438,9 @@ namespace almondnamespace::openglcontext
     {
         auto& backend = opengltextures::get_opengl_backend();
         auto& glState = backend.glState;
+
+        glState.width = static_cast<unsigned int>(std::max(1, ctx ? ctx->width : 0));
+        glState.height = static_cast<unsigned int>(std::max(1, ctx ? ctx->height : 0));
 
         atlasmanager::process_pending_uploads(core::ContextType::OpenGL);
 

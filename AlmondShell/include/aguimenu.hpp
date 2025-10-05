@@ -283,10 +283,57 @@ namespace almondnamespace::menu
             if (totalItems == 0 || cachedPositions.size() != static_cast<size_t>(totalItems))
                 return std::nullopt;
 
+            const bool flipVertical = ctx && ctx->type == core::ContextType::OpenGL;
+            std::vector<int> rowBaseY;
+            std::vector<int> colBaseX;
+
+            if (flipVertical) {
+                rowBaseY.resize(std::max(1, rows));
+                for (int r = 0; r < rows; ++r) {
+                    const int idx = r * columns;
+                    if (idx < totalItems) {
+                        rowBaseY[r] = cachedPositions[idx].second;
+                    }
+                    else if (r > 0) {
+                        rowBaseY[r] = rowBaseY[r - 1];
+                    }
+                    else {
+                        rowBaseY[r] = 0;
+                    }
+                }
+
+                colBaseX.resize(std::max(1, columns));
+                for (int c = 0; c < columns; ++c) {
+                    if (c < totalItems) {
+                        colBaseX[c] = cachedPositions[c].first;
+                    }
+                    else if (!cachedPositions.empty()) {
+                        colBaseX[c] = cachedPositions.back().first;
+                    }
+                    else {
+                        colBaseX[c] = 0;
+                    }
+                }
+            }
+
+            auto position_for_index = [&](int idx) -> std::pair<int, int> {
+                if (idx < 0 || idx >= totalItems) {
+                    return { 0, 0 };
+                }
+                if (!flipVertical || rowBaseY.empty() || colBaseX.empty()) {
+                    return cachedPositions[idx];
+                }
+                const int row = idx / columns;
+                const int col = idx % columns;
+                const int flippedRow = std::clamp(rows - 1 - row, 0, rows - 1);
+                const int clampedCol = std::clamp(col, 0, columns - 1);
+                return { colBaseX[clampedCol], rowBaseY[flippedRow] };
+            };
+
             int hover = -1;
             for (int i = 0; i < totalItems; ++i) {
                 const auto& slice = slicePairs[i].normal;
-                const auto& pos = cachedPositions[i];
+                const auto pos = position_for_index(i);
                 if (mx >= pos.first && mx <= pos.first + slice.width &&
                     my >= pos.second && my <= pos.second + slice.height) {
                     hover = i;
@@ -316,7 +363,7 @@ namespace almondnamespace::menu
                 const bool isHighlighted = (i == selection) || (i == hoveredIndex);
                 const auto& slice = isHighlighted ? slicePairs[i].hover : slicePairs[i].normal;
                 if (!is_alive(slice.handle)) continue;
-                const auto& pos = cachedPositions[i];
+                const auto pos = position_for_index(i);
 
                 win->commandQueue.enqueue([handle = slice.handle,
                     ctxWeak,
