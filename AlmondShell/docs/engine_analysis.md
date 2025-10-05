@@ -11,6 +11,11 @@
 - **Roadmap Traceability** – The existing `roadmap.txt` lacked granular prompts or acceptance checks per phase, making automation hand-offs hard to script.
 - **Testing Surface** – No automated smoke tests or CI hooks are defined for the critical updater and renderer paths, leaving regression risk high during phase transitions.
 
+## Recent Progress (v0.58.2)
+- Version helpers now use thread-local buffers and expose string views, making it safe to query build metadata from concurrent tools.
+- Updater configuration derives its semantic version directly from the version helpers, eliminating manual sync errors.
+- Added `docs/aengineconfig_flags.md` to catalogue supported engine configuration switches for multi-backend builds.
+
 ## Recent Progress (v0.58.0)
 - Added `ScriptLoadReport` to expose per-stage reload diagnostics, capture failure reasons, and emit success flags for automation to consume.
 - Task graph workers now destroy coroutine frames after execution and prune completed nodes, preventing latent reload handles from accumulating between runs.

@@ -24,6 +24,9 @@
 #pragma once
 
 #include <string>
+#include <string_view>
+
+#include "aversion.hpp"
 
 namespace almondnamespace
 {
@@ -36,7 +39,7 @@ namespace almondnamespace
         inline std::string OWNER = "Autodidac";
         inline std::string REPO = "Cpp20_Ultimate_Project_Updater";
         inline std::string BRANCH = "main";
-        inline std::string PROJECT_VERSION = "0.58.1"; // Change to match aversion.hpp. Updating triggers clients to fetch newer builds.
+        inline std::string PROJECT_VERSION = GetEngineVersionString(); // Auto-synced with aversion.hpp.
 
         // 🔨 **Build Settings**
         // NOT ACTUALLY CONFIGURABLE this gets renamed at the end 
@@ -58,6 +61,16 @@ namespace almondnamespace
 
         // 🔧 **Project URLs**
         inline std::string PROJECT_VERSION_URL() { return GITHUB_RAW_BASE() + OWNER + "/" + REPO + "/" + BRANCH + "/include/config.hpp"; }
+        inline std::string PROJECT_VERSION_HEADER_URL()
+        {
+            auto url = PROJECT_VERSION_URL();
+            constexpr std::string_view needle = "/config.hpp";
+            if (const auto pos = url.rfind(std::string{ needle }); pos != std::string::npos)
+            {
+                url.replace(pos, needle.size(), "/aversion.hpp");
+            }
+            return url;
+        }
         inline std::string PROJECT_SOURCE_URL() { return GITHUB_BASE() + OWNER + "/" + REPO + "/archive/refs/heads/" + BRANCH + ".zip"; }
         inline std::string PROJECT_BINARY_URL() { return GITHUB_BASE() + OWNER + "/" + REPO + "/releases/latest/download/update.exe"; }
 

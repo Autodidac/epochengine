@@ -1,5 +1,10 @@
 # Changelog
 
+## [v0.58.2]
+- Made `GetEngineVersion()` thread-safe by switching to a `thread_local` buffer and exposing helper views for tooling.
+- Sourced updater configuration version strings from the engine's version helpers and taught the updater to fall back to `aversion.hpp` when parsing remote releases.
+- Documented supported `aengineconfig.hpp` flag combinations for multi-backend builds.
+
 ## [v0.58.0]
 - Added `ScriptLoadReport` diagnostics so script reload failures surface actionable messaging and status flags.
 - Made script reload scheduling synchronous via `WaitAll()` with finished-node pruning to avoid dangling coroutines.
