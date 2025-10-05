@@ -339,12 +339,28 @@ namespace almondnamespace::opengltextures
             return;
         }
 
-        const int w = core::cli::window_width;
-        const int h = core::cli::window_height;
-        if (w == 0 || h == 0) {
-            std::cerr << "[DrawSprite] ERROR: Window dimensions are zero.\n";
+        auto& backend = get_opengl_backend();
+
+        GLint viewport[4] = { 0, 0, 0, 0 };
+        glGetIntegerv(GL_VIEWPORT, viewport);
+        int w = viewport[2];
+        int h = viewport[3];
+
+        if (w <= 0 || h <= 0) {
+            w = static_cast<int>(backend.glState.width);
+            h = static_cast<int>(backend.glState.height);
+        }
+        if (w <= 0 || h <= 0) {
+            w = std::max(1, core::cli::window_width);
+            h = std::max(1, core::cli::window_height);
+        }
+        if (w <= 0 || h <= 0) {
+            std::cerr << "[DrawSprite] ERROR: Unable to resolve window dimensions.\n";
             return;
         }
+
+        backend.glState.width = static_cast<unsigned int>(w);
+        backend.glState.height = static_cast<unsigned int>(h);
 
 #if defined(DEBUG_TEXTURE_RENDERING)
         std::cerr << "[DrawSprite] Inputs: x=" << x
@@ -374,7 +390,6 @@ namespace almondnamespace::opengltextures
         ensure_uploaded(*atlas);
 
         // 🔑 FIX: use backend.gpu_atlases, not global opengl_gpu_atlases
-        auto& backend = get_opengl_backend();
         GLuint tex = 0;
         {
             std::lock_guard<std::mutex> gpuLock(backend.gpuMutex);
