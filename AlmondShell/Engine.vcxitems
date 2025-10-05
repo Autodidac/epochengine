@@ -27,6 +27,7 @@
     <ClInclude Include="$(MSBuildThisFileDirectory)include\acommandqueue.hpp" />
     <ClInclude Include="$(MSBuildThisFileDirectory)include\acontexttype.hpp" />
     <ClInclude Include="$(MSBuildThisFileDirectory)include\acontextcontrol.hpp" />
+    <ClInclude Include="$(MSBuildThisFileDirectory)include\adiagnostics.hpp" />
     <ClInclude Include="$(MSBuildThisFileDirectory)include\aimageatlaswriter.hpp" />
     <ClInclude Include="$(MSBuildThisFileDirectory)include\abuildsystem.hpp" />
     <ClInclude Include="$(MSBuildThisFileDirectory)include\acellularsim.hpp" />

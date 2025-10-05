@@ -853,7 +853,8 @@ namespace almondnamespace::core
         }
     }
 
-    void MultiContextManager::RenderLoop(WindowData& win) {
+    void MultiContextManager::RenderLoop(WindowData& win) 
+    {
         auto ctx = win.context;
         if (!ctx) {
             win.running = false;
@@ -865,7 +866,8 @@ namespace almondnamespace::core
         SetCurrent(ctx);
 
         // RAII guard: reset current context when this loop exits
-        struct ResetGuard {
+        struct ResetGuard 
+        {
             ~ResetGuard() { MultiContextManager::SetCurrent(nullptr); }
         } resetGuard;
 
@@ -908,7 +910,8 @@ namespace almondnamespace::core
 
     void MultiContextManager::HandleDropFiles(HWND hwnd, HDROP hDrop) {
         UINT count = DragQueryFile(hDrop, 0xFFFFFFFF, nullptr, 0);
-        for (UINT i = 0; i < count; ++i) {
+        for (UINT i = 0; i < count; ++i) 
+        {
             wchar_t path[MAX_PATH]{};
             DragQueryFile(hDrop, i, path, MAX_PATH);
             std::wcout << L"[Drop] " << path << L"\n";
