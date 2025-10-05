@@ -24,19 +24,20 @@
  // aversion.hpp
 #pragma once
 
-#include <iostream>
+#include <array>
 #include <cstdio>
+#include <string>
+#include <string_view>
 
 namespace almondnamespace 
 {
     // Version information as constexpr for compile-time evaluation
     constexpr int major = 0;
     constexpr int minor = 58;
-    constexpr int revision = 1;
+    constexpr int revision = 2;
 
-    static char version_string[32] = "";
-    static char name_string[16] = "Almond Shell";
-    
+    inline constexpr std::string_view kEngineName = "Almond Shell";
+
     // Use inline to ensure that each definition is treated uniquely in different translation units
     inline int GetMajor() { return major; }
     inline int GetMinor() { return minor; }
@@ -44,13 +45,24 @@ namespace almondnamespace
 
     inline const char* GetEngineName()
     {
-        return name_string;
+        return kEngineName.data();
+    }
+
+    inline std::string_view GetEngineNameView()
+    {
+        return kEngineName;
     }
 
     inline const char* GetEngineVersion()
     {
-        std::snprintf(version_string, sizeof(version_string), "%d.%d.%d", major, minor, revision);
-        return version_string;
+        thread_local std::array<char, 32> version_string{};
+        std::snprintf(version_string.data(), version_string.size(), "%d.%d.%d", major, minor, revision);
+        return version_string.data();
     }
 
-} // namespace almond
+    inline std::string GetEngineVersionString()
+    {
+        return std::string{ GetEngineVersion() };
+    }
+
+} // namespace almondnamespace

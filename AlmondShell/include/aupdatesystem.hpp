@@ -26,6 +26,7 @@
 #include "abuildsystem.hpp"
 #include "aupdateconfig.hpp"
 
+#include <array>
 #include <cstdlib>
 #include <filesystem>
 #include <fstream>
@@ -230,7 +231,73 @@ namespace almondnamespace
 #endif
 
             if (latest_version.empty()) {
-                std::cerr << "[ERROR] Failed to extract version from config.hpp!\n";
+                std::cout << "[WARN] Falling back to aversion.hpp for version discovery...\n";
+
+                const std::string temp_header_path = temp_config_path + "_aversion";
+                const std::array<std::string, 2> header_urls{
+                    PROJECT_VERSION_HEADER_URL(),
+                    GITHUB_RAW_BASE() + OWNER + "/" + REPO + "/" + BRANCH + "/AlmondShell/include/aversion.hpp"
+                };
+
+                for (const auto& header_url : header_urls) {
+                    if (header_url.empty()) {
+                        continue;
+                    }
+
+                    if (!download_file(header_url, temp_header_path)) {
+                        std::cerr << "[WARN] Failed to download aversion.hpp from: " << header_url << '\n';
+                        continue;
+                    }
+
+                    std::ifstream header_file(temp_header_path);
+                    if (!header_file) {
+                        std::cerr << "[ERROR] Failed to open downloaded aversion.hpp for reading.\n";
+                    }
+                    else {
+                        std::string major_value, minor_value, revision_value;
+                        std::regex major_regex(R"(constexpr\s+int\s+major\s*=\s*([0-9]+);)");
+                        std::regex minor_regex(R"(constexpr\s+int\s+minor\s*=\s*([0-9]+);)");
+                        std::regex revision_regex(R"(constexpr\s+int\s+revision\s*=\s*([0-9]+);)");
+
+                        while (std::getline(header_file, line)) {
+                            std::smatch match;
+                            if (major_value.empty() && std::regex_search(line, match, major_regex)) {
+                                major_value = match[1];
+                                continue;
+                            }
+                            if (minor_value.empty() && std::regex_search(line, match, minor_regex)) {
+                                minor_value = match[1];
+                                continue;
+                            }
+                            if (revision_value.empty() && std::regex_search(line, match, revision_regex)) {
+                                revision_value = match[1];
+                                if (!major_value.empty() && !minor_value.empty()) {
+                                    break;
+                                }
+                            }
+                        }
+
+                        if (!major_value.empty() && !minor_value.empty() && !revision_value.empty()) {
+                            latest_version = major_value + "." + minor_value + "." + revision_value;
+                        }
+                        else {
+                            std::cerr << "[ERROR] Failed to parse version components from aversion.hpp!\n";
+                        }
+                    }
+
+#if defined(_WIN32)
+                    system(("del /F /Q " + temp_header_path + " >nul 2>&1").c_str());
+#else
+                    system(("rm -f " + temp_header_path).c_str());
+#endif
+                    if (!latest_version.empty()) {
+                        break;
+                    }
+                }
+            }
+
+            if (latest_version.empty()) {
+                std::cerr << "[ERROR] Failed to extract version information from remote configuration!\n";
                 return false;
             }
 
