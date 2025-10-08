@@ -129,13 +129,8 @@ namespace almondnamespace::sdlcontext
             ctx->height = clampedHeight;
         }
 
-        if (sdlcontext.running && sdlcontext.window && sdlcontext.renderer) {
-            return true;
-        }
-
-        if (SDL_Init(SDL_INIT_VIDEO) != 0) {
-            std::cerr << "[SDL] Failed to initialize SDL: " << SDL_GetError() << "\n";
-            return false;
+        if (SDL_Init(SDL_INIT_VIDEO) == 0) {
+            throw std::runtime_error("[SDL] Failed to initialize SDL: " + std::string(SDL_GetError()));
         }
 
         // Create properties object
@@ -152,22 +147,9 @@ namespace almondnamespace::sdlcontext
         SDL_SetNumberProperty(props, SDL_PROP_WINDOW_CREATE_HEIGHT_NUMBER, sdlcontext.height);
         SDL_SetBooleanProperty(props, SDL_PROP_WINDOW_CREATE_RESIZABLE_BOOLEAN, true);
 
-        HWND embedTarget = nullptr;
-        if (ctx && ctx->hwnd) {
-            embedTarget = ctx->hwnd;
-        }
-        else if (parentWnd) {
-            embedTarget = parentWnd;
-        }
-
-        if (embedTarget) {
-            SDL_SetPointerProperty(props, SDL_PROP_WINDOW_CREATE_WIN32_HWND_POINTER, embedTarget);
-            if (HWND parentForSDL = GetParent(embedTarget)) {
-                SDL_SetPointerProperty(props, SDL_PROP_WINDOW_CREATE_WIN32_PARENT_POINTER, parentForSDL);
-            }
-#ifdef SDL_PROP_WINDOW_CREATE_EXTERNAL_BOOLEAN
-            SDL_SetBooleanProperty(props, SDL_PROP_WINDOW_CREATE_EXTERNAL_BOOLEAN, true);
-#endif
+        // Embed into existing HWND if parentWnd != nullptr
+        if (parentWnd) {
+            HWND parentHwnd = (HWND)SDL_GetPointerProperty(props, SDL_PROP_WINDOW_CREATE_WIN32_HWND_POINTER, nullptr);
         }
 
         // Create window with properties
@@ -395,7 +377,7 @@ namespace almondnamespace::sdlcontext
             SDL_DestroyWindow(sdlcontext.window);
             sdlcontext.window = nullptr;
         }
-        SDL_QuitSubSystem(SDL_INIT_VIDEO);
+        SDL_Quit();
         sdlcontext.running = false;
         //SDL_GL_DestroyContext(s_sdlstate.window.sdl_glrc);
         //SDL_DestroyWindow(s_sdlstate.window.sdl_window);
