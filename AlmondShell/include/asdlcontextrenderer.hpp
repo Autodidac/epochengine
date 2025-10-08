@@ -88,4 +88,4 @@ namespace almondnamespace::sdlcontext
     }
 
 } // namespace almondnamespace::sdl
-#endif
+#endif // ALMOND_USING_SDL

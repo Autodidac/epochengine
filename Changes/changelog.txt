@@ -1,5 +1,10 @@
 # Changelog
 
+## [v0.59.1]
+- Reworked the SDL3 backend initialisation to embed child windows without freezing the render queue, ensuring docked overlays refresh without resize hacks.
+- Synced Raylib context sizing and command queue draining so atlas draws update every frame, matching the OpenGL and software backends.
+- Documented the renderer fixes in the roadmap and analysis notes while bumping the engine revision metadata.
+
 ## [v0.59.0]
 - Restricted the Win32 multi-context manager implementation and threading hooks to Windows builds while providing a no-op stub for other platforms, unblocking POSIX consumers.
 - Replaced the unconditional `<windows.h>` include in `awindowdata.hpp` with lightweight handle aliases so cross-platform and headless tooling builds avoid Win32 dependency errors.
