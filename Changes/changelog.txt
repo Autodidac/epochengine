@@ -1,5 +1,11 @@
 # Changelog
 
+## [v0.58.3]
+- Hooked the shared runtime loop into `RunEngine()` and `wWinMain` so non-updater entry points launch the full multi-context
+  manager instead of returning immediately.
+- Refactored the Windows engine bootstrap to reuse the same helper from both entry paths, keeping renderer lifecycle and scene
+  selection logic in one place.
+
 ## [v0.58.2]
 - Made `GetEngineVersion()` thread-safe by switching to a `thread_local` buffer and exposing helper views for tooling.
 - Sourced updater configuration version strings from the engine's version helpers and taught the updater to fall back to `aversion.hpp` when parsing remote releases.
