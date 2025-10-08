@@ -56,8 +56,8 @@ namespace almondnamespace::core
     // ======================================================
     struct Context {
         // --- Backend render hooks (fast raw function pointers) ---
-        using InitializeFunc = void(*)();
-        using CleanupFunc = void(*)();
+        using InitializeFunc = std::function<bool(const std::shared_ptr<core::Context>&)>;
+        using CleanupFunc = std::function<void(const std::shared_ptr<core::Context>&)>;
         using ProcessFunc = bool(*)(std::shared_ptr<core::Context>, CommandQueue&);
         using ClearFunc = void(*)();
         using PresentFunc = void(*)();
@@ -126,8 +126,41 @@ namespace almondnamespace::core
         }
 
         // --- Safe wrappers ---
-        inline void initialize_safe() const noexcept { if (initialize) initialize(); }
-        inline void cleanup_safe()   const noexcept { if (cleanup) cleanup(); }
+        inline bool initialize_safe(const std::shared_ptr<Context>& ctx) const noexcept
+        {
+            if (!initialize) return true;
+            try
+            {
+                return initialize(ctx);
+            }
+            catch (const std::exception& e)
+            {
+                std::cerr << "[Context] Exception in initialize: " << e.what() << "\n";
+                return false;
+            }
+            catch (...)
+            {
+                std::cerr << "[Context] Unknown exception in initialize" << "\n";
+                return false;
+            }
+        }
+
+        inline void cleanup_safe(const std::shared_ptr<Context>& ctx) const noexcept
+        {
+            if (!cleanup) return;
+            try
+            {
+                cleanup(ctx);
+            }
+            catch (const std::exception& e)
+            {
+                std::cerr << "[Context] Exception in cleanup: " << e.what() << "\n";
+            }
+            catch (...)
+            {
+                std::cerr << "[Context] Unknown exception in cleanup" << "\n";
+            }
+        }
         bool process_safe(std::shared_ptr<core::Context> ctx, CommandQueue& queue);
 
         inline void clear_safe(std::shared_ptr<Context>) const noexcept { if (clear) clear(); }
