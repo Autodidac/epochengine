@@ -78,8 +78,6 @@
 #include <iostream>
 #include <stdexcept>
 #include <vector>
-#include <algorithm>
-#include <utility>
 #include <cstdint>
 #include <memory>
 #include <mutex>
@@ -202,8 +200,8 @@ namespace almondnamespace::core {
 
     // ─── Backend stubs (minimal no-op defaults) ──────────────
 #ifdef ALMOND_USING_OPENGL
-    inline bool opengl_initialize(const std::shared_ptr<core::Context>&) { return true; }
-    inline void opengl_cleanup(const std::shared_ptr<core::Context>&) {}
+    inline void opengl_initialize() {}
+    inline void opengl_cleanup() {}
     bool opengl_process(std::shared_ptr<core::Context> ctx, CommandQueue& queue) {
         atlasmanager::process_pending_uploads(ctx->type);
         queue.drain();
@@ -216,8 +214,8 @@ namespace almondnamespace::core {
 #endif
 
 #ifdef ALMOND_USING_SDL
-    inline bool sdl_initialize(const std::shared_ptr<core::Context>&) { return true; }
-    inline void sdl_cleanup(const std::shared_ptr<core::Context>&) {}
+    inline void sdl_initialize() {}
+    inline void sdl_cleanup() {}
     bool sdl_process(std::shared_ptr<core::Context> ctx, CommandQueue& queue) {
         if (!ctx) return false;
         atlasmanager::process_pending_uploads(ctx->type);
@@ -231,8 +229,8 @@ namespace almondnamespace::core {
 #endif
 
 #ifdef ALMOND_USING_SFML
-    inline bool sfml_initialize(const std::shared_ptr<core::Context>&) { return true; }
-    inline void sfml_cleanup(const std::shared_ptr<core::Context>&) {}
+    inline void sfml_initialize() {}
+    inline void sfml_cleanup() {}
     bool sfml_process(std::shared_ptr<core::Context> ctx, CommandQueue& queue) {
         if (!ctx) return false;
         atlasmanager::process_pending_uploads(ctx->type);
@@ -246,8 +244,8 @@ namespace almondnamespace::core {
 #endif
 
 #ifdef ALMOND_USING_RAYLIB
-    inline bool raylib_initialize(const std::shared_ptr<core::Context>&) { return true; }
-    inline void raylib_cleanup(const std::shared_ptr<core::Context>&) {}
+    inline void raylib_initialize() {}
+    inline void raylib_cleanup() {}
     bool raylib_process(std::shared_ptr<core::Context> ctx, CommandQueue& queue) {
         if (!ctx) return false;
         atlasmanager::process_pending_uploads(ctx->type);
@@ -261,8 +259,8 @@ namespace almondnamespace::core {
 #endif
 
 #ifdef ALMOND_USING_VULKAN
-    inline bool vulkan_initialize(const std::shared_ptr<core::Context>&) { return true; }
-    inline void vulkan_cleanup(const std::shared_ptr<core::Context>&) {}
+    inline void vulkan_initialize() {}
+    inline void vulkan_cleanup() {}
     bool vulkan_process(std::shared_ptr<core::Context> ctx, CommandQueue& queue) {
         if (!ctx) return false;
         atlasmanager::process_pending_uploads(ctx->type);
@@ -276,8 +274,8 @@ namespace almondnamespace::core {
 #endif
 
 #ifdef ALMOND_USING_DIRECTX
-    inline bool directx_initialize(const std::shared_ptr<core::Context>&) { return true; }
-    inline void directx_cleanup(const std::shared_ptr<core::Context>&) {}
+    inline void directx_initialize() {}
+    inline void directx_cleanup() {}
     bool directx_process(std::shared_ptr<core::Context> ctx, CommandQueue& queue) {
         if (!ctx) return false;
         atlasmanager::process_pending_uploads(ctx->type);
@@ -291,8 +289,8 @@ namespace almondnamespace::core {
 #endif
 
 #ifdef ALMOND_USING_CUSTOM
-    inline bool custom_initialize(const std::shared_ptr<core::Context>&) { return true; }
-    inline void custom_cleanup(const std::shared_ptr<core::Context>&) {}
+    inline void custom_initialize() {}
+    inline void custom_cleanup() {}
     bool custom_process(std::shared_ptr<core::Context> ctx, CommandQueue& queue) {
         if (!ctx) return false;
         atlasmanager::process_pending_uploads(ctx->type);
@@ -306,8 +304,8 @@ namespace almondnamespace::core {
 #endif
 
 #ifdef ALMOND_USING_SOFTWARE_RENDERER
-    inline bool softrenderer_initialize(const std::shared_ptr<core::Context>&) { return true; }
-    inline void softrenderer_cleanup(const std::shared_ptr<core::Context>&) {}
+    inline void softrenderer_initialize() {}
+    inline void softrenderer_cleanup() {}
     bool softrenderer_process(std::shared_ptr<core::Context> ctx, CommandQueue& queue) {
         if (!ctx) return false;
         atlasmanager::process_pending_uploads(ctx->type);
@@ -340,6 +338,49 @@ namespace almondnamespace::core {
             }
         }
 
+        void opengl_cleanup_adapter() {
+            if (auto ctx = MultiContextManager::GetCurrent()) {
+                auto copy = ctx;
+                almondnamespace::openglcontext::opengl_cleanup(copy);
+            }
+        }
+#endif
+
+#ifdef ALMOND_USING_SOFTWARE_RENDERER
+        void softrenderer_cleanup_adapter() {
+            if (auto ctx = MultiContextManager::GetCurrent()) {
+                auto copy = ctx;
+                almondnamespace::anativecontext::softrenderer_cleanup(copy);
+            }
+        }
+#endif
+
+#ifdef ALMOND_USING_SDL
+        void sdl_cleanup_adapter() {
+            if (auto ctx = MultiContextManager::GetCurrent()) {
+                auto copy = ctx;
+                almondnamespace::sdlcontext::sdl_cleanup(copy);
+            }
+        }
+#endif
+
+#ifdef ALMOND_USING_SFML
+        void sfml_cleanup_adapter() {
+            if (auto ctx = MultiContextManager::GetCurrent()) {
+                auto copy = ctx;
+                almondnamespace::sfmlcontext::sfml_cleanup(copy);
+            }
+        }
+#endif
+
+#ifdef ALMOND_USING_RAYLIB
+        void raylib_cleanup_adapter() {
+            if (auto ctx = MultiContextManager::GetCurrent()) {
+                auto copy = ctx;
+                almondnamespace::raylibcontext::raylib_cleanup(copy);
+            }
+        }
+#endif
     }
 
     std::shared_ptr<Context> CloneContext(const Context& prototype) {
@@ -388,21 +429,8 @@ namespace almondnamespace::core {
 
 #if defined(ALMOND_USING_OPENGL)
         auto openglContext = std::make_shared<Context>();
-        openglContext->initialize = [](const std::shared_ptr<core::Context>& ctx) {
-            auto strong = ctx;
-            if (!strong)
-                return false;
-            HWND parent = strong->windowData ? strong->windowData->hwnd : strong->hwnd;
-            const unsigned int width = static_cast<unsigned int>(std::max(1, strong->width));
-            const unsigned int height = static_cast<unsigned int>(std::max(1, strong->height));
-            auto onResize = strong->onResize;
-            return almondnamespace::openglcontext::opengl_initialize(strong, parent, width, height, std::move(onResize));
-        };
-        openglContext->cleanup = [](const std::shared_ptr<core::Context>& ctx) {
-            if (!ctx) return;
-            auto copy = ctx;
-            almondnamespace::openglcontext::opengl_cleanup(copy);
-        };
+        openglContext->initialize = opengl_initialize;
+        openglContext->cleanup = opengl_cleanup_adapter;
         openglContext->process = almondnamespace::openglcontext::opengl_process;
         openglContext->clear = opengl_clear_adapter;
         openglContext->present = almondnamespace::openglcontext::opengl_present;
@@ -441,21 +469,8 @@ namespace almondnamespace::core {
 
 #if defined(ALMOND_USING_SDL)
         auto sdlContext = std::make_shared<Context>();
-        sdlContext->initialize = [](const std::shared_ptr<core::Context>& ctx) {
-            auto strong = ctx;
-            if (!strong)
-                return false;
-            HWND parent = strong->windowData ? strong->windowData->hwnd : strong->hwnd;
-            const int width = std::max(1, strong->width);
-            const int height = std::max(1, strong->height);
-            auto onResize = strong->onResize;
-            return almondnamespace::sdlcontext::sdl_initialize(strong, parent, width, height, onResize);
-        };
-        sdlContext->cleanup = [](const std::shared_ptr<core::Context>& ctx) {
-            if (!ctx) return;
-            auto copy = ctx;
-            almondnamespace::sdlcontext::sdl_cleanup(copy);
-        };
+        sdlContext->initialize = sdl_initialize;
+        sdlContext->cleanup = sdl_cleanup_adapter;
         sdlContext->process = almondnamespace::sdlcontext::sdl_process;
         sdlContext->clear = almondnamespace::sdlcontext::sdl_clear;
         sdlContext->present = almondnamespace::sdlcontext::sdl_present;
@@ -493,21 +508,8 @@ namespace almondnamespace::core {
 
 #if defined(ALMOND_USING_SFML)
         auto sfmlContext = std::make_shared<Context>();
-        sfmlContext->initialize = [](const std::shared_ptr<core::Context>& ctx) {
-            auto strong = ctx;
-            if (!strong)
-                return false;
-            HWND parent = strong->windowData ? strong->windowData->hwnd : strong->hwnd;
-            const unsigned int width = static_cast<unsigned int>(std::max(1, strong->width));
-            const unsigned int height = static_cast<unsigned int>(std::max(1, strong->height));
-            auto onResize = strong->onResize;
-            return almondnamespace::sfmlcontext::sfml_initialize(strong, parent, width, height, onResize);
-        };
-        sfmlContext->cleanup = [](const std::shared_ptr<core::Context>& ctx) {
-            if (!ctx) return;
-            auto copy = ctx;
-            almondnamespace::sfmlcontext::sfml_cleanup(copy);
-        };
+        sfmlContext->initialize = sfml_initialize;
+        sfmlContext->cleanup = sfml_cleanup_adapter;
         sfmlContext->process = almondnamespace::sfmlcontext::sfml_process;
         sfmlContext->clear = almondnamespace::sfmlcontext::sfml_clear;
         sfmlContext->present = almondnamespace::sfmlcontext::sfml_present;
@@ -545,21 +547,8 @@ namespace almondnamespace::core {
 
 #if defined(ALMOND_USING_RAYLIB)
         auto raylibContext = std::make_shared<Context>();
-        raylibContext->initialize = [](const std::shared_ptr<core::Context>& ctx) {
-            auto strong = ctx;
-            if (!strong)
-                return false;
-            HWND parent = strong->windowData ? strong->windowData->hwnd : strong->hwnd;
-            const unsigned int width = static_cast<unsigned int>(std::max(1, strong->width));
-            const unsigned int height = static_cast<unsigned int>(std::max(1, strong->height));
-            auto onResize = strong->onResize;
-            return almondnamespace::raylibcontext::raylib_initialize(strong, parent, width, height, onResize);
-        };
-        raylibContext->cleanup = [](const std::shared_ptr<core::Context>& ctx) {
-            if (!ctx) return;
-            auto copy = ctx;
-            almondnamespace::raylibcontext::raylib_cleanup(copy);
-        };
+        raylibContext->initialize = raylib_initialize;
+        raylibContext->cleanup = raylib_cleanup_adapter;
         raylibContext->process = almondnamespace::raylibcontext::raylib_process;
         raylibContext->clear = almondnamespace::raylibcontext::raylib_clear;
         raylibContext->present = almondnamespace::raylibcontext::raylib_present;
@@ -597,12 +586,8 @@ namespace almondnamespace::core {
 
 #if defined(ALMOND_USING_VULKAN)
         auto vulkanContext = std::make_shared<Context>();
-        vulkanContext->initialize = [](const std::shared_ptr<core::Context>& ctx) {
-            return vulkan_initialize(ctx);
-        };
-        vulkanContext->cleanup = [](const std::shared_ptr<core::Context>& ctx) {
-            vulkan_cleanup(ctx);
-        };
+        vulkanContext->initialize = vulkan_initialize;
+        vulkanContext->cleanup = vulkan_cleanup;
         vulkanContext->process = vulkan_process;
         vulkanContext->clear = vulkan_clear;
         vulkanContext->present = vulkan_present;
@@ -636,12 +621,8 @@ namespace almondnamespace::core {
 
 #if defined(ALMOND_USING_DIRECTX)
         auto directxContext = std::make_shared<Context>();
-        directxContext->initialize = [](const std::shared_ptr<core::Context>& ctx) {
-            return directx_initialize(ctx);
-        };
-        directxContext->cleanup = [](const std::shared_ptr<core::Context>& ctx) {
-            directx_cleanup(ctx);
-        };
+        directxContext->initialize = directx_initialize;
+        directxContext->cleanup = directx_cleanup;
         directxContext->process = directx_process;
         directxContext->clear = directx_clear;
         directxContext->present = directx_present;
@@ -675,12 +656,8 @@ namespace almondnamespace::core {
 
 #if defined(ALMOND_USING_CUSTOM)
         auto customContext = std::make_shared<Context>();
-        customContext->initialize = [](const std::shared_ptr<core::Context>& ctx) {
-            return custom_initialize(ctx);
-        };
-        customContext->cleanup = [](const std::shared_ptr<core::Context>& ctx) {
-            custom_cleanup(ctx);
-        };
+        customContext->initialize = custom_initialize;
+        customContext->cleanup = custom_cleanup;
         customContext->process = custom_process;
         customContext->clear = custom_clear;
         customContext->present = custom_present;
@@ -714,21 +691,8 @@ namespace almondnamespace::core {
 
 #if defined(ALMOND_USING_SOFTWARE_RENDERER)
         auto softwareContext = std::make_shared<Context>();
-        softwareContext->initialize = [](const std::shared_ptr<core::Context>& ctx) {
-            auto strong = ctx;
-            if (!strong)
-                return false;
-            HWND parent = strong->windowData ? strong->windowData->hwnd : strong->hwnd;
-            const unsigned int width = static_cast<unsigned int>(std::max(1, strong->width));
-            const unsigned int height = static_cast<unsigned int>(std::max(1, strong->height));
-            auto onResize = strong->onResize;
-            return almondnamespace::anativecontext::softrenderer_initialize(strong, parent, width, height, onResize);
-        };
-        softwareContext->cleanup = [](const std::shared_ptr<core::Context>& ctx) {
-            if (!ctx) return;
-            auto copy = ctx;
-            almondnamespace::anativecontext::softrenderer_cleanup(copy);
-        };
+        softwareContext->initialize = softrenderer_initialize;
+        softwareContext->cleanup = softrenderer_cleanup_adapter;
         softwareContext->process = almondnamespace::anativecontext::softrenderer_process;
         softwareContext->clear = nullptr;
         softwareContext->present = nullptr;

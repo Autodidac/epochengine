@@ -874,11 +874,7 @@ namespace almondnamespace::core
 
         // Backend-specific initialize
         if (ctx->initialize) {
-            if (!ctx->initialize_safe(ctx)) {
-                ctx->cleanup_safe(ctx);
-                win.running = false;
-                return;
-            }
+            ctx->initialize_safe();
         }
         else {
             win.running = false;
@@ -908,7 +904,9 @@ namespace almondnamespace::core
         }
 
         // Cleanup
-        ctx->cleanup_safe(ctx);
+        if (ctx->cleanup) {
+            ctx->cleanup_safe();
+        }
     }
 
     void MultiContextManager::HandleDropFiles(HWND hwnd, HDROP hDrop) {

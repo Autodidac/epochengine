@@ -11,12 +11,6 @@
 - **Roadmap Traceability** – The existing `roadmap.txt` lacked granular prompts or acceptance checks per phase, making automation hand-offs hard to script.
 - **Testing Surface** – No automated smoke tests or CI hooks are defined for the critical updater and renderer paths, leaving regression risk high during phase transitions.
 
-## Recent Progress (v0.59.1)
-- Backend initialization now flows through context-aware lambdas so SDL and Raylib receive live multiplexer window handles and
-  refresh their menu overlays without the frozen placeholder texture.
-- SDL embedding reuses the existing child window and releases only the video subsystem on shutdown, preventing one backend from
-  tearing down other runtime services mid-session.
-
 ## Recent Progress (v0.59.0)
 - The Win32-specific multi-context manager is now compiled only on Windows, and a portable stub keeps non-Windows builds linking while the docked UI remains a platform-specific feature.
 - `awindowdata.hpp` no longer drags in `<windows.h>` on every platform, replacing the raw handle types with lightweight aliases so headless tools and POSIX builds stop failing during preprocessing.
