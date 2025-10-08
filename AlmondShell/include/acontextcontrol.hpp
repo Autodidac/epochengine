@@ -1,4 +1,27 @@
-
+﻿/**************************************************************
+ *   █████╗ ██╗     ███╗   ███╗   ███╗   ██╗    ██╗██████╗    *
+ *  ██╔══██╗██║     ████╗ ████║ ██╔═══██╗████╗  ██║██╔══██╗   *
+ *  ███████║██║     ██╔████╔██║ ██║   ██║██╔██╗ ██║██║  ██║   *
+ *  ██╔══██║██║     ██║╚██╔╝██║ ██║   ██║██║╚██╗██║██║  ██║   *
+ *  ██║  ██║███████╗██║ ╚═╝ ██║ ╚██████╔╝██║ ╚████║██████╔╝   *
+ *  ╚═╝  ╚═╝╚══════╝╚═╝     ╚═╝  ╚═════╝ ╚═╝  ╚═══╝╚═════╝    *
+ *                                                            *
+ *   This file is part of the Almond Project.                 *
+ *   AlmondShell - Modular C++ Framework                      *
+ *                                                            *
+ *   SPDX-License-Identifier: LicenseRef-MIT-NoSell           *
+ *                                                            *
+ *   Provided "AS IS", without warranty of any kind.          *
+ *   Use permitted for Non-Commercial Purposes ONLY,          *
+ *   without prior commercial licensing agreement.            *
+ *                                                            *
+ *   Redistribution Allowed with This Notice and              *
+ *   LICENSE file. No obligation to disclose modifications.   *
+ *                                                            *
+ *   See LICENSE file for full terms.                         *
+ *                                                            *
+ **************************************************************/
+ // acontextcontrol.hpp
 #pragma once
 
 #include "aplatform.hpp"          // must be first
@@ -19,17 +42,19 @@ using HWND = void*; // placeholder if you later add non-Win32 platforms
 
 namespace almondnamespace::core { struct Context; }
 
-namespace almondnamespace::user {
-
+namespace almondnamespace::user 
+{
     // --------- Lock-free SPSC ring (single-producer / single-consumer) ---------
     template <typename T, std::size_t CapacityPow2 = 1024>
-    class SPSCQueue {
+    class SPSCQueue 
+    {
         static_assert((CapacityPow2& (CapacityPow2 - 1)) == 0, "Capacity must be power of two");
         alignas(64) std::array<T, CapacityPow2> buf_;
         alignas(64) std::atomic<uint32_t> head_{ 0 }; // consumer
         alignas(64) std::atomic<uint32_t> tail_{ 0 }; // producer
     public:
-        bool try_push(const T& v) noexcept {
+        bool try_push(const T& v) noexcept 
+        {
             const uint32_t t = tail_.load(std::memory_order_relaxed);
             const uint32_t h = head_.load(std::memory_order_acquire);
             if (((t + 1) & (CapacityPow2 - 1)) == (h & (CapacityPow2 - 1))) return false; // full
@@ -37,7 +62,8 @@ namespace almondnamespace::user {
             tail_.store((t + 1) & (CapacityPow2 - 1), std::memory_order_release);
             return true;
         }
-        bool try_push(T&& v) noexcept {
+        bool try_push(T&& v) noexcept 
+        {
             const uint32_t t = tail_.load(std::memory_order_relaxed);
             const uint32_t h = head_.load(std::memory_order_acquire);
             if (((t + 1) & (CapacityPow2 - 1)) == (h & (CapacityPow2 - 1))) return false;
@@ -45,7 +71,8 @@ namespace almondnamespace::user {
             tail_.store((t + 1) & (CapacityPow2 - 1), std::memory_order_release);
             return true;
         }
-        bool try_pop(T& out) noexcept {
+        bool try_pop(T& out) noexcept 
+        {
             const uint32_t h = head_.load(std::memory_order_relaxed);
             const uint32_t t = tail_.load(std::memory_order_acquire);
             if (h == t) return false; // empty
@@ -54,7 +81,8 @@ namespace almondnamespace::user {
             return true;
         }
         template <typename F>
-        uint32_t drain(F&& fn, uint32_t max = UINT32_MAX) noexcept {
+        uint32_t drain(F&& fn, uint32_t max = UINT32_MAX) noexcept 
+        {
             uint32_t n = 0; T item;
             while (n < max && try_pop(item)) { fn(std::move(item)); ++n; }
             return n;
@@ -62,7 +90,8 @@ namespace almondnamespace::user {
     };
 
     // --------- Command definitions ----------
-    enum class Op : uint16_t {
+    enum class Op : uint16_t 
+    {
         PresentNow,
         ClearNow,
         Resize,             // payload: width, height
@@ -70,7 +99,7 @@ namespace almondnamespace::user {
         SetActive,          // payload: bool active
         EnsureAtlasUploaded,// payload: atlasIndex
         DrawSprite,         // payload: (atlasIndex, localIndex, x,y,w,h)
-        RunScriptOnce,      // payload: (string/id) � you can fill later
+        RunScriptOnce,      // payload: (string/id) – you can fill later
         CustomCallable,     // payload: function<void(core::Context&)>
         Quiesce,            // render thread should stop issuing GPU calls & mark paused
         Resume,             // resume rendering
@@ -99,7 +128,8 @@ namespace almondnamespace::user {
     struct Command { Op op{}; Payload payload{}; };
 
     // --------- Per-window mailbox (render thread consumes) ----------
-    struct Mailbox {
+    struct Mailbox 
+    {
         SPSCQueue<Command, 1024> q;
         bool post(Command c) noexcept { return q.try_push(std::move(c)); }
         template <typename F>
@@ -109,7 +139,8 @@ namespace almondnamespace::user {
     };
 
     // --------- Global broker (no locks; tiny fixed array) ----------
-    class ControlBus {
+    class ControlBus 
+    {
     public:
         static ControlBus& instance() { static ControlBus bus; return bus; }
 

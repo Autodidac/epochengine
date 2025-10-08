@@ -382,7 +382,7 @@ namespace almondnamespace::core {
         }
 #endif
     }
-#endif
+
 
     std::shared_ptr<Context> CloneContext(const Context& prototype) {
         auto clone = std::make_shared<Context>();
