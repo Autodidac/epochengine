@@ -1,5 +1,9 @@
 # Changelog
 
+## [v0.59.0]
+- Restricted the Win32 multi-context manager implementation and threading hooks to Windows builds while providing a no-op stub for other platforms, unblocking POSIX consumers.
+- Replaced the unconditional `<windows.h>` include in `awindowdata.hpp` with lightweight handle aliases so cross-platform and headless tooling builds avoid Win32 dependency errors.
+
 ## [v0.58.2]
 - Made `GetEngineVersion()` thread-safe by switching to a `thread_local` buffer and exposing helper views for tooling.
 - Sourced updater configuration version strings from the engine's version helpers and taught the updater to fall back to `aversion.hpp` when parsing remote releases.

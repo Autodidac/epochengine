@@ -3,6 +3,7 @@
 
 #include "acontextmultiplexer.hpp"
 
+#if defined(_WIN32)
 #include "aopenglcontext.hpp"
 #include "asdlcontext.hpp"
 #include "asfmlcontext.hpp"
@@ -1109,7 +1110,9 @@ namespace almondnamespace::core
             }
         }
 
-	    return 0;
+            return 0;
     }
 } // namespace almondnamespace::core
+
+#endif // defined(_WIN32)
 

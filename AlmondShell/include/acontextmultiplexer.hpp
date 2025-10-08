@@ -31,11 +31,29 @@
 #include "acontexttype.hpp"
 #include "awindowdata.hpp"
 
-//#include <windows.h>
-//#include <windowsx.h>
-//#include <shellapi.h>
-#include <commctrl.h>
-#pragma comment(lib, "comctl32.lib")
+#if defined(_WIN32)
+#    include <windows.h>
+#    include <windowsx.h>
+#    include <shellapi.h>
+#    include <commctrl.h>
+#    pragma comment(lib, "comctl32.lib")
+#else
+#    include <cstdint>
+struct POINT { long x{}; long y{}; };
+using HINSTANCE = void*;
+using HDROP = void*;
+using ATOM = unsigned int;
+using LRESULT = long;
+using UINT = unsigned int;
+using WPARAM = uintptr_t;
+using LPARAM = intptr_t;
+using LPCWSTR = const wchar_t*;
+using UINT_PTR = uintptr_t;
+using DWORD_PTR = uintptr_t;
+#    ifndef CALLBACK
+#        define CALLBACK
+#    endif
+#endif
 
 #include <atomic>
 #include <functional>
@@ -64,6 +82,7 @@ namespace almondnamespace::core
     // -----------------------------------------------------------------
     // Global thread table (key = HWND)
     // -----------------------------------------------------------------
+#if defined(_WIN32)
     extern std::unordered_map<HWND, std::thread> gThreads;
 
     // -----------------------------------------------------------------
@@ -156,6 +175,48 @@ namespace almondnamespace::core
         inline static thread_local std::shared_ptr<core::Context> currentContext;
         inline static MultiContextManager* s_activeInstance = nullptr;
     };
+#else
+    class MultiContextManager
+    {
+    public:
+        using ResizeCallback = std::function<void(int, int)>;
+        using RenderCommand = std::function<void()>;
+
+        static void ShowConsole() {}
+        bool Initialize(HINSTANCE, int, int, int, int, int, bool) { return false; }
+        void StopAll() {}
+        bool IsRunning() const noexcept { return false; }
+        void StopRunning() noexcept {}
+
+        void AddWindow(HWND, HWND, HDC, HGLRC, bool, ResizeCallback, ContextType) {}
+        void RemoveWindow(HWND) {}
+        void ArrangeDockedWindowsGrid() {}
+        void StartRenderThreads() {}
+
+        void HandleResize(HWND, int, int) {}
+
+        HWND GetParentWindow() const { return nullptr; }
+        const std::vector<std::unique_ptr<WindowData>>& GetWindows() const { return s_emptyWindows; }
+
+        void EnqueueRenderCommand(HWND, RenderCommand) {}
+
+        static void SetCurrent(std::shared_ptr<core::Context> ctx) { s_currentContext = std::move(ctx); }
+        static std::shared_ptr<core::Context> GetCurrent() { return s_currentContext; }
+
+        static LRESULT CALLBACK ParentProc(HWND, UINT, WPARAM, LPARAM) { return 0; }
+        static LRESULT CALLBACK ChildProc(HWND, UINT, WPARAM, LPARAM) { return 0; }
+        void HandleDropFiles(HWND, HDROP) {}
+
+        WindowData* findWindowByHWND(HWND) { return nullptr; }
+        const WindowData* findWindowByHWND(HWND) const { return nullptr; }
+        WindowData* findWindowByContext(const std::shared_ptr<core::Context>&) { return nullptr; }
+        const WindowData* findWindowByContext(const std::shared_ptr<core::Context>&) const { return nullptr; }
+
+    private:
+        inline static const std::vector<std::unique_ptr<WindowData>> s_emptyWindows{};
+        inline static thread_local std::shared_ptr<core::Context> s_currentContext{};
+    };
+#endif
 
     // ======================================================
     // WindowData : Per-context state holder

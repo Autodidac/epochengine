@@ -1,8 +1,17 @@
 #pragma once
 
-#include <windows.h>
 #include <memory>
 #include <functional>
+#include <atomic>
+
+#if defined(_WIN32)
+#    include <windows.h>
+#else
+#    include <cstdint>
+using HWND = void*;
+using HDC = void*;
+using HGLRC = void*;
+#endif
 
 #include "acontexttype.hpp"  // for ContextType
 #include "acommandqueue.hpp" // for CommandQueue
