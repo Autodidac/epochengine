@@ -11,6 +11,11 @@
 - **Roadmap Traceability** – The existing `roadmap.txt` lacked granular prompts or acceptance checks per phase, making automation hand-offs hard to script.
 - **Testing Surface** – No automated smoke tests or CI hooks are defined for the critical updater and renderer paths, leaving regression risk high during phase transitions.
 
+## Recent Progress (v0.59.1)
+- SDL3 contexts now initialise as well-behaved child windows: parenting hints are applied up-front, resize callbacks keep `WindowData` dimensions in sync, and the renderer drains queued draw commands every frame instead of waiting for a manual resize nudge.
+- The Raylib backend mirrors the same behaviour by exporting its HWND/GL context to `WindowData` and firing resize callbacks when the backing buffer changes, so menu overlays refresh without docking tricks.
+- Version metadata and roadmap notes were updated to capture the renderer fixes and unblock follow-up automation on the remaining Phase 2 items.
+
 ## Recent Progress (v0.59.0)
 - The Win32-specific multi-context manager is now compiled only on Windows, and a portable stub keeps non-Windows builds linking while the docked UI remains a platform-specific feature.
 - `awindowdata.hpp` no longer drags in `<windows.h>` on every platform, replacing the raw handle types with lightweight aliases so headless tools and POSIX builds stop failing during preprocessing.
