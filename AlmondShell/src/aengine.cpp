@@ -340,8 +340,7 @@ namespace almondnamespace::core
                                         begin_scene([] { return std::make_unique<almondnamespace::cellular::CellularScene>(); }, SceneID::Cellular);
                                     }
                                     else if (*choice == almondnamespace::menu::Choice::Settings) {
-                                        std::cout << "[Menu] Settings selected.
-";
+                                        std::cout << "[Menu] Settings selected.";
                                     }
                                     else if (*choice == almondnamespace::menu::Choice::Exit) {
                                         g_sceneID = SceneID::Exit;
@@ -1786,7 +1785,7 @@ int APIENTRY wWinMain(_In_ HINSTANCE hInstance,
     almondnamespace::core::ShowConsole();
 #endif
 
-    return RunEngineMainLoopInternal(hInstance, SW_SHOWNORMAL);
+    return almondnamespace::core::RunEngineMainLoopInternal(hInstance, SW_SHOWNORMAL);
 }
 #endif
 
