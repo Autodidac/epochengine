@@ -160,19 +160,6 @@ namespace almondnamespace::raylibcontext
 
         std::cout << "[Raylib] Context: " << s_raylibstate.glContext << "\n";
 
-        if (ctx) {
-            ctx->hwnd = s_raylibstate.hwnd;
-            ctx->width = static_cast<int>(s_raylibstate.width);
-            ctx->height = static_cast<int>(s_raylibstate.height);
-            if (ctx->windowData) {
-                ctx->windowData->hwnd = s_raylibstate.hwnd;
-                ctx->windowData->hdc = s_raylibstate.hdc;
-                ctx->windowData->glContext = s_raylibstate.glContext;
-                ctx->windowData->width = static_cast<int>(s_raylibstate.width);
-                ctx->windowData->height = static_cast<int>(s_raylibstate.height);
-            }
-        }
-
         if (s_raylibstate.parent) {
             RECT parentRect;
             GetWindowRect(s_raylibstate.parent, &parentRect);
@@ -191,15 +178,6 @@ namespace almondnamespace::raylibcontext
 
             s_raylibstate.width = width;
             s_raylibstate.height = height;
-
-            if (ctx) {
-                ctx->width = width;
-                ctx->height = height;
-                if (ctx->windowData) {
-                    ctx->windowData->width = width;
-                    ctx->windowData->height = height;
-                }
-            }
 
             SetWindowPos(s_raylibstate.hwnd, nullptr, 0, 0,
                 width, height,
@@ -301,6 +279,7 @@ namespace almondnamespace::raylibcontext
     // Per-frame event processing
     // ──────────────────────────────────────────────
     inline bool raylib_process(std::shared_ptr<core::Context> ctx, core::CommandQueue& queue) {
+        (void)ctx;
         if (!s_raylibstate.running || WindowShouldClose()) {
             s_raylibstate.running = false;
             return true;
@@ -315,20 +294,6 @@ namespace almondnamespace::raylibcontext
         }
         if (currentHeight > 0) {
             s_raylibstate.height = static_cast<unsigned int>(currentHeight);
-        }
-
-        if (ctx) {
-            const bool sizeChanged = (ctx->width != static_cast<int>(s_raylibstate.width)) ||
-                (ctx->height != static_cast<int>(s_raylibstate.height));
-            ctx->width = static_cast<int>(s_raylibstate.width);
-            ctx->height = static_cast<int>(s_raylibstate.height);
-            if (ctx->windowData) {
-                ctx->windowData->width = static_cast<int>(s_raylibstate.width);
-                ctx->windowData->height = static_cast<int>(s_raylibstate.height);
-            }
-            if (sizeChanged && ctx->onResize) {
-                ctx->onResize(ctx->width, ctx->height);
-            }
         }
 
         if (!wglMakeCurrent(s_raylibstate.hdc, s_raylibstate.glContext)) {

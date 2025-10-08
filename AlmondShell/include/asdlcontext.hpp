@@ -45,7 +45,6 @@
 #include "asdlstate.hpp"
 
 #include <algorithm>
-#include <atomic>
 #include <stdexcept>
 #include <iostream>
 
@@ -100,7 +99,6 @@ namespace almondnamespace::sdlcontext
     };
     
     inline SDLState sdlcontext;
-    inline std::atomic<int> sdl_init_refcount{ 0 };
 
     inline bool sdl_initialize(std::shared_ptr<core::Context> ctx, HWND parentWnd = nullptr, int w = 400, int h = 300, std::function<void(int, int)> onResize = nullptr)
     {
@@ -131,39 +129,15 @@ namespace almondnamespace::sdlcontext
             ctx->height = clampedHeight;
         }
 
-        const int previousInitCount = sdl_init_refcount.fetch_add(1, std::memory_order_acq_rel);
-        const bool initializedInThisCall = (previousInitCount == 0);
-
-        struct InitGuard {
-            bool active = true;
-            ~InitGuard() {
-                if (!active) return;
-                const int prev = sdl_init_refcount.fetch_sub(1, std::memory_order_acq_rel);
-                if (prev <= 1) {
-                    SDL_QuitSubSystem(SDL_INIT_VIDEO);
-                    SDL_Quit();
-                }
-            }
-            void release() noexcept { active = false; }
-        } initGuard;
-
-        if (initializedInThisCall) {
-            if (SDL_Init(SDL_INIT_VIDEO) != 0) {
-                std::cerr << "[SDL] Failed to initialize SDL: " << SDL_GetError() << "\n";
-                return false;
-            }
-        }
-        else if ((SDL_WasInit(SDL_INIT_VIDEO) & SDL_INIT_VIDEO) == 0) {
-            if (SDL_InitSubSystem(SDL_INIT_VIDEO) != 0) {
-                std::cerr << "[SDL] Failed to reinitialize SDL video subsystem: " << SDL_GetError() << "\n";
-                return false;
-            }
+        if (SDL_Init(SDL_INIT_VIDEO) == 0) {
+            throw std::runtime_error("[SDL] Failed to initialize SDL: " + std::string(SDL_GetError()));
         }
 
         // Create properties object
         SDL_PropertiesID props = SDL_CreateProperties();
         if (!props) {
             std::cerr << "[SDL] SDL_CreateProperties failed: " << SDL_GetError() << "\n";
+            SDL_Quit();
             return false;
         }
 
@@ -175,8 +149,7 @@ namespace almondnamespace::sdlcontext
 
         // Embed into existing HWND if parentWnd != nullptr
         if (parentWnd) {
-            SDL_SetPointerProperty(props, SDL_PROP_WINDOW_CREATE_WIN32_PARENT_POINTER, parentWnd);
-            SDL_SetPointerProperty(props, SDL_PROP_WINDOW_CREATE_PARENT_POINTER, parentWnd);
+            HWND parentHwnd = (HWND)SDL_GetPointerProperty(props, SDL_PROP_WINDOW_CREATE_WIN32_HWND_POINTER, nullptr);
         }
 
         // Create window with properties
@@ -187,6 +160,7 @@ namespace almondnamespace::sdlcontext
 
         if (!sdlcontext.window) {
             std::cerr << "[SDL] SDL_CreateWindowWithProperties failed: " << SDL_GetError() << "\n";
+            SDL_Quit();
             return false;
         }
 
@@ -195,21 +169,12 @@ namespace almondnamespace::sdlcontext
         if (!windowProps) {
             std::cerr << "[SDL] SDL_GetWindowProperties failed: " << SDL_GetError() << "\n";
             SDL_DestroyWindow(sdlcontext.window);
+            SDL_Quit();
             return false;
         }
 
         HWND hwnd = (HWND)SDL_GetPointerProperty(windowProps, SDL_PROP_WINDOW_WIN32_HWND_POINTER, nullptr);
         sdlcontext.hwnd = hwnd;
-        if (ctx) {
-            ctx->hwnd = hwnd;
-            ctx->width = sdlcontext.width;
-            ctx->height = sdlcontext.height;
-            if (ctx->windowData) {
-                ctx->windowData->hwnd = hwnd;
-                ctx->windowData->width = sdlcontext.width;
-                ctx->windowData->height = sdlcontext.height;
-            }
-        }
         if (!sdlcontext.hwnd) {
             std::cerr << "[SDL] Failed to retrieve HWND\n";
             SDL_DestroyWindow(sdlcontext.window);
@@ -222,6 +187,7 @@ namespace almondnamespace::sdlcontext
         if (!sdlcontext.renderer) {
             std::cerr << "[SDL] SDL_CreateRenderer failed: " << SDL_GetError() << "\n";
             SDL_DestroyWindow(sdlcontext.window);
+            SDL_Quit();
             return false;
         }
 
@@ -249,15 +215,6 @@ namespace almondnamespace::sdlcontext
                 width, height,
                 SWP_NOZORDER | SWP_FRAMECHANGED | SWP_SHOWWINDOW);
 
-            if (ctx) {
-                ctx->width = width;
-                ctx->height = height;
-                if (ctx->windowData) {
-                    ctx->windowData->width = width;
-                    ctx->windowData->height = height;
-                }
-            }
-
             if (sdlcontext.onResize) {
                 sdlcontext.onResize(width, height);
             }
@@ -267,8 +224,6 @@ namespace almondnamespace::sdlcontext
         // SDL_SetRenderDrawColor(ctx.renderer, 0, 0, 0, SDL_ALPHA_OPAQUE);
         SDL_ShowWindow(sdlcontext.window);
         sdlcontext.running = true;
-
-        initGuard.release();
 
         atlasmanager::register_backend_uploader(core::ContextType::SDL,
             [](const TextureAtlas& atlas) {
@@ -372,32 +327,14 @@ namespace almondnamespace::sdlcontext
         Uint8 g = static_cast<Uint8>((0.5 + 0.5 * std::sin(t * 0.7 + 2.0)) * 255);
         Uint8 b = static_cast<Uint8>((0.5 + 0.5 * std::sin(t * 1.3 + 4.0)) * 255);
 
-        int renderW = sdlcontext.width;
-        int renderH = sdlcontext.height;
         if (sdlcontext.renderer) {
-            int queriedW = 0;
-            int queriedH = 0;
-            if (SDL_GetCurrentRenderOutputSize(sdlcontext.renderer, &queriedW, &queriedH) == 0) {
-                if (queriedW > 0) renderW = queriedW;
-                if (queriedH > 0) renderH = queriedH;
-            }
-        }
-
-        if (renderW != sdlcontext.width || renderH != sdlcontext.height) {
-            sdlcontext.width = renderW;
-            sdlcontext.height = renderH;
-        }
-
-        if (ctx) {
-            bool sizeChanged = (ctx->width != renderW) || (ctx->height != renderH);
-            ctx->width = renderW;
-            ctx->height = renderH;
-            if (ctx->windowData) {
-                ctx->windowData->width = renderW;
-                ctx->windowData->height = renderH;
-            }
-            if (sizeChanged && ctx->onResize) {
-                ctx->onResize(renderW, renderH);
+            int renderW = 0;
+            int renderH = 0;
+            if (SDL_GetCurrentRenderOutputSize(sdlcontext.renderer, &renderW, &renderH) == 0) {
+                if (renderW > 0 && renderH > 0) {
+                    sdlcontext.width = renderW;
+                    sdlcontext.height = renderH;
+                }
             }
         }
 
@@ -440,11 +377,7 @@ namespace almondnamespace::sdlcontext
             SDL_DestroyWindow(sdlcontext.window);
             sdlcontext.window = nullptr;
         }
-        const int previousCount = sdl_init_refcount.fetch_sub(1, std::memory_order_acq_rel);
-        if (previousCount <= 1) {
-            SDL_QuitSubSystem(SDL_INIT_VIDEO);
-            SDL_Quit();
-        }
+        SDL_Quit();
         sdlcontext.running = false;
         //SDL_GL_DestroyContext(s_sdlstate.window.sdl_glrc);
         //SDL_DestroyWindow(s_sdlstate.window.sdl_window);
