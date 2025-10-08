@@ -1,5 +1,11 @@
 # Changelog
 
+## [v0.59.1]
+- Routed context initialization through backend-aware lambdas so SDL, Raylib, SFML, OpenGL, and the software renderer receive the
+  live multiplexer window handles and refresh their atlases every frame.
+- Embedded the SDL renderer into the existing child window, tightened lifecycle guards, and made cleanup release only the video
+  subsystem to stop the frozen overlay from masking real renders.
+
 ## [v0.59.0]
 - Restricted the Win32 multi-context manager implementation and threading hooks to Windows builds while providing a no-op stub for other platforms, unblocking POSIX consumers.
 - Replaced the unconditional `<windows.h>` include in `awindowdata.hpp` with lightweight handle aliases so cross-platform and headless tooling builds avoid Win32 dependency errors.
