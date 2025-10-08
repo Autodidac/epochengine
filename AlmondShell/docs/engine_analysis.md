@@ -15,6 +15,12 @@
 - The Win32-specific multi-context manager is now compiled only on Windows, and a portable stub keeps non-Windows builds linking while the docked UI remains a platform-specific feature.
 - `awindowdata.hpp` no longer drags in `<windows.h>` on every platform, replacing the raw handle types with lightweight aliases so headless tools and POSIX builds stop failing during preprocessing.
 
+## Recent Progress (v0.58.3)
+- `RunEngine()` now launches the same multi-context render loop that powers `wWinMain`, letting non-Windows entry points exercise
+  the full renderer/task orchestration stack without stubbing out the runtime.
+- The Win32 bootstrap delegates to a shared helper so there is a single source of truth for context startup, menu routing, and
+  scene lifecycle management.
+
 ## Recent Progress (v0.58.2)
 - Version helpers now use thread-local buffers and expose string views, making it safe to query build metadata from concurrent tools.
 - Updater configuration derives its semantic version directly from the version helpers, eliminating manual sync errors.
