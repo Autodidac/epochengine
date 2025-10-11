@@ -11,6 +11,10 @@
 - **Roadmap Traceability** – The existing `roadmap.txt` lacked granular prompts or acceptance checks per phase, making automation hand-offs hard to script.
 - **Testing Surface** – No automated smoke tests or CI hooks are defined for the critical updater and renderer paths, leaving regression risk high during phase transitions.
 
+## Recent Progress (v0.59.2)
+- Raylib resize dispatch now mirrors the other backends by updating `Context::windowData`, clamping dimensions, and forcing the docked child window to follow parent moves without re-entrant loops.
+- SDL windows skip Win32 `SetParent` docking to avoid the backend hijacking the host window. The runtime now repositions the SDL surface to the parent client rectangle instead.
+
 ## Recent Progress (v0.59.1)
 - The Raylib backend now coalesces OS-driven resize events and forwards them through guarded callbacks, keeping context dimensions and client hooks in sync with the window manager.
 

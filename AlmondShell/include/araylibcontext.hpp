@@ -89,17 +89,38 @@ namespace almondnamespace::raylibcontext
 
             s_raylibstate.width = safeWidth;
             s_raylibstate.height = safeHeight;
+            s_raylibstate.screenWidth = static_cast<int>(safeWidth);
+            s_raylibstate.screenHeight = static_cast<int>(safeHeight);
 
             if (ctx)
             {
                 ctx->width = safeWidth;
                 ctx->height = safeHeight;
+                if (auto* window = ctx->windowData)
+                {
+                    window->width = static_cast<int>(safeWidth);
+                    window->height = static_cast<int>(safeHeight);
+                }
             }
 
 #if !defined(RAYLIB_NO_WINDOW)
             if (nextUpdateWindow && IsWindowReady())
             {
                 SetWindowSize(static_cast<int>(safeWidth), static_cast<int>(safeHeight));
+            }
+#endif
+
+#if defined(_WIN32)
+            if (s_raylibstate.hwnd && s_raylibstate.parent)
+            {
+                SetWindowPos(
+                    s_raylibstate.hwnd,
+                    nullptr,
+                    0,
+                    0,
+                    static_cast<int>(safeWidth),
+                    static_cast<int>(safeHeight),
+                    SWP_NOZORDER | SWP_NOACTIVATE | SWP_NOMOVE | SWP_NOSENDCHANGING);
             }
 #endif
 
