@@ -47,15 +47,21 @@ namespace almondnamespace::raylibcontext
       //  WNDPROC oldWndProc = nullptr;
        // WNDPROC getOldWndProc() const noexcept { return oldWndProc; }
         HWND parent = nullptr;
-        std::function<void(int, int)> onResize;
-        unsigned int width{ 400 };
-        unsigned int height{ 300 };
-
-        bool running{ false };
 #endif
 
-        
-		bool shouldClose = false; // Set to true when the window should close
+        std::function<void(int, int)> onResize{};
+        std::function<void(int, int)> clientOnResize{};
+        bool dispatchingResize{ false };
+        bool hasPendingResize{ false };
+        unsigned int pendingWidth{ 0 };
+        unsigned int pendingHeight{ 0 };
+        bool pendingUpdateWindow{ false };
+        bool pendingNotifyClient{ false };
+        unsigned int width{ 400 };
+        unsigned int height{ 300 };
+        bool running{ false };
+
+        bool shouldClose = false; // Set to true when the window should close
         // Raylib manages window internally, but track width & height for consistency
        // int screenWidth = 800;
         //int screenHeight = 600;

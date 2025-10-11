@@ -1,5 +1,9 @@
 # Changelog
 
+## [v0.59.1]
+- Coalesced Raylib window resize notifications so engine contexts and client callbacks stay in sync with OS window dimensions without recursive loops.
+- Updated the roadmap and engine analysis documentation to capture the Raylib backend stability work.
+
 ## [v0.59.0]
 - Restricted the Win32 multi-context manager implementation and threading hooks to Windows builds while providing a no-op stub for other platforms, unblocking POSIX consumers.
 - Replaced the unconditional `<windows.h>` include in `awindowdata.hpp` with lightweight handle aliases so cross-platform and headless tooling builds avoid Win32 dependency errors.
