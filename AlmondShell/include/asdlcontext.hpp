@@ -195,25 +195,31 @@ namespace almondnamespace::sdlcontext
         sdltextures::sdl_renderer = sdlcontext.renderer;
 
         if (sdlcontext.parent) {
+            std::cout << "[SDL] Setting parent window: " << sdlcontext.parent << "\n";
+            SetParent(hwnd, sdlcontext.parent);
+
+            LONG_PTR style = GetWindowLongPtr(hwnd, GWL_STYLE);
+            style &= ~WS_OVERLAPPEDWINDOW;
+            style |= WS_CHILD | WS_VISIBLE;
+            SetWindowLongPtr(hwnd, GWL_STYLE, style);
+
             RECT client{};
             GetClientRect(sdlcontext.parent, &client);
-            POINT origin{ client.left, client.top };
-            ClientToScreen(sdlcontext.parent, &origin);
-
             const int width = std::max<LONG>(1, client.right - client.left);
             const int height = std::max<LONG>(1, client.bottom - client.top);
 
             sdlcontext.width = width;
             sdlcontext.height = height;
 
-            SDL_SetWindowPosition(sdlcontext.window, origin.x, origin.y);
-            SDL_SetWindowSize(sdlcontext.window, width, height);
+            SetWindowPos(sdlcontext.hwnd, nullptr, 0, 0,
+                width, height,
+                SWP_NOZORDER | SWP_FRAMECHANGED | SWP_SHOWWINDOW);
 
             if (sdlcontext.onResize) {
                 sdlcontext.onResize(width, height);
             }
 
-            std::cerr << "[SDL] Docking skipped; aligned to parent client rect instead.\n";
+            PostMessage(sdlcontext.parent, WM_SIZE, 0, MAKELPARAM(width, height));
         }
         // SDL_SetRenderDrawColor(ctx.renderer, 0, 0, 0, SDL_ALPHA_OPAQUE);
         SDL_ShowWindow(sdlcontext.window);

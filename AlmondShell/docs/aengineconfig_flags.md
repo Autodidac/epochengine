@@ -14,7 +14,7 @@ This guide summarises the build-time switches exposed from `include/aengineconfi
 
 | Macro | Default | Purpose | Supported Values |
 | --- | --- | --- | --- |
-| `ALMOND_SINGLE_PARENT` | `1` | Indicates whether child contexts share a single top-level parent window. | `1` keeps multi-backend layouts contained inside the main shell window. SDL now mirrors this layout by following the parent rectangle without taking ownership of the HWND. Set to `0` only when running fully detached platform windows. |
+| `ALMOND_SINGLE_PARENT` | `1` | Indicates whether child contexts share a single top-level parent window. | `1` keeps multi-backend layouts contained inside the main shell window. Set to `0` only when running fully detached platform windows. |
 
 ## Backend Availability
 
