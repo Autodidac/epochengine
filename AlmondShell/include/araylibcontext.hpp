@@ -315,8 +315,8 @@ namespace almondnamespace::raylibcontext
         unsigned char b = static_cast<unsigned char>((0.5 + 0.5 * std::sin(t * 1.3 + 4.0)) * 255);
 
 
-        BeginDrawing();
         ClearBackground(Color{ r, g, b, 255 });
+        BeginDrawing();
 
         queue.drain();
 

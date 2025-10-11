@@ -343,7 +343,7 @@ namespace almondnamespace::core
                 HWND hwnd = CreateWindowEx(
                     0, L"AlmondChild", L"",
                     (parent ? WS_CHILD | WS_VISIBLE : WS_OVERLAPPEDWINDOW | WS_VISIBLE),
-                    0, 0, 10, 10,
+                    0, 0, 400, 300,
                     parent, nullptr, hInst, nullptr);
 
                 if (!hwnd) continue;
@@ -455,7 +455,7 @@ namespace almondnamespace::core
                 case ContextType::SDL:
                     std::cerr << "[Init] Initializing SDL context for hwnd=" << hwnd << "\n";
                     almondnamespace::sdlcontext::sdl_initialize(
-                        ctx, hwnd, ctx->width, ctx->height, w ? w->onResize : nullptr);
+                        ctx, hwnd, ctx->width, ctx->height, w->onResize);
                     break;
 #endif
 #ifdef ALMOND_USING_SFML
@@ -469,7 +469,7 @@ namespace almondnamespace::core
                 case ContextType::RayLib:
                     std::cerr << "[Init] Initializing RayLib context for hwnd=" << hwnd << "\n";
                     almondnamespace::raylibcontext::raylib_initialize(
-                        ctx, hwnd, ctx->width, ctx->height, w ? w->onResize : nullptr);
+                        ctx, hwnd, ctx->width, ctx->height, w->onResize);
                     break;
 #endif
                 default:
