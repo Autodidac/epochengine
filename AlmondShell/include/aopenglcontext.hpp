@@ -33,26 +33,13 @@
 #include "acontextmultiplexer.hpp" // BackendMap, windows
 #include "awindowdata.hpp"
 
-//#include "acontextwindow.hpp"   // WindowContext::getWindowHandle()
 #include "aplatformpump.hpp"    // platform::pump_events()
 #include "aatlasmanager.hpp"
 #include "arobusttime.hpp"      // RobustTime
 #include "ainput.hpp"
 
-//#include "aopenglstate.hpp"  // brings in the actual inline s_state
-//#include "aopenglcontextinput.hpp"   // WndProcHook()
-//#include "aopenglrenderer.hpp" // RendererContext, RenderMode
 #include "aopengltextures.hpp" // ensure_uploaded, AtlasGPU, gpu_atlases 
 
-//#include <array>
-//#include <chrono>
-//#include <format>
-//#include <iostream>
-//#include <stdexcept>
-//#include <bitset>
-//#include <mutex>
-//#include <queue>
-//#include <functional>
 #include <algorithm>
 #include <format>
 #include <iostream>
