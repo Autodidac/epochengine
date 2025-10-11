@@ -103,8 +103,8 @@ namespace almondnamespace::raylibcontext
             const unsigned int safeHeight = std::max(1u, nextHeight);
 
             // Update state and ctx mirror
-            s_raylibstate.width = safeWidth;
-            s_raylibstate.height = safeHeight;
+            s_raylibstate.width.store(safeWidth, std::memory_order_release);
+            s_raylibstate.height.store(safeHeight, std::memory_order_release);
 
             if (ctx) {
                 ctx->width = static_cast<int>(safeWidth);
@@ -197,8 +197,12 @@ namespace almondnamespace::raylibcontext
 
         // If you need resizable window behavior, set before InitWindow:
         SetConfigFlags(FLAG_WINDOW_RESIZABLE);
-        InitWindow(static_cast<int>(s_raylibstate.width),
-            static_cast<int>(s_raylibstate.height),
+
+        const auto initialWidth = static_cast<int>(s_raylibstate.width.load(std::memory_order_acquire));
+        const auto initialHeight = static_cast<int>(s_raylibstate.height.load(std::memory_order_acquire));
+
+        InitWindow(initialWidth,
+            initialHeight,
             "Raylib Window");
 
         // Mirror raylib’s native handles
@@ -211,8 +215,8 @@ namespace almondnamespace::raylibcontext
             ctx->hwnd = s_raylibstate.hwnd;
             ctx->hdc = s_raylibstate.hdc;
             ctx->hglrc = s_raylibstate.glContext;
-            ctx->width = static_cast<int>(s_raylibstate.width);
-            ctx->height = static_cast<int>(s_raylibstate.height);
+            ctx->width = initialWidth;
+            ctx->height = initialHeight;
         }
 
         // If docking into a parent, reparent + hard resize both sides once
@@ -234,8 +238,8 @@ namespace almondnamespace::raylibcontext
             apply_native_resize(pw, ph, /*updateRaylibWindow=*/true);
 
             // Sync back to state/ctx
-            s_raylibstate.width = static_cast<unsigned int>(pw);
-            s_raylibstate.height = static_cast<unsigned int>(ph);
+            s_raylibstate.width.store(static_cast<unsigned int>(pw), std::memory_order_release);
+            s_raylibstate.height.store(static_cast<unsigned int>(ph), std::memory_order_release);
             if (ctx) { ctx->width = pw; ctx->height = ph; }
 
             // Notify client once (optional)
@@ -245,7 +249,7 @@ namespace almondnamespace::raylibcontext
             PostMessage(s_raylibstate.parent, WM_SIZE, 0, MAKELPARAM(pw, ph));
         }
 
-        s_raylibstate.running = true;
+        s_raylibstate.running.store(true, std::memory_order_release);
 
         // Hook atlas uploads
         atlasmanager::register_backend_uploader(core::ContextType::RayLib,
@@ -263,16 +267,16 @@ namespace almondnamespace::raylibcontext
     // ──────────────────────────────────────────────
     inline bool raylib_process(std::shared_ptr<core::Context> ctx, core::CommandQueue& queue)
     {
-        if (!s_raylibstate.running || WindowShouldClose()) {
-            s_raylibstate.running = false;
+        if (!s_raylibstate.running.load(std::memory_order_acquire) || WindowShouldClose()) {
+            s_raylibstate.running.store(false, std::memory_order_release);
             return true;
         }
 
         atlasmanager::process_pending_uploads(core::ContextType::RayLib);
 
         // Observe current window size from raylib; coalesce through dispatcher
-        const unsigned int prevW = s_raylibstate.width;
-        const unsigned int prevH = s_raylibstate.height;
+        const unsigned int prevW = s_raylibstate.width.load(std::memory_order_acquire);
+        const unsigned int prevH = s_raylibstate.height.load(std::memory_order_acquire);
 
         unsigned int obsW = prevW;
         unsigned int obsH = prevH;
@@ -288,7 +292,7 @@ namespace almondnamespace::raylibcontext
         }
 
         if (!wglMakeCurrent(s_raylibstate.hdc, s_raylibstate.glContext)) {
-            s_raylibstate.running = false;
+            s_raylibstate.running.store(false, std::memory_order_release);
             std::cerr << "[Raylib] Failed to make Raylib GL context current\n";
             return true;
         }
@@ -331,7 +335,7 @@ namespace almondnamespace::raylibcontext
     // ──────────────────────────────────────────────
     inline void raylib_cleanup(std::shared_ptr<almondnamespace::core::Context>& ctx)
     {
-        if (!s_raylibstate.running) return;
+        if (!s_raylibstate.running.load(std::memory_order_acquire)) return;
 
         // IMPORTANT: raylib CloseWindow() (no HWND overload)
         ::CloseWindow(s_raylibstate.hwnd);
@@ -341,7 +345,7 @@ namespace almondnamespace::raylibcontext
             s_raylibstate.hdc = nullptr;
         }
 
-        s_raylibstate.running = false;
+        s_raylibstate.running.store(false, std::memory_order_release);
 
         if (ctx) {
             ctx->hwnd = nullptr;
@@ -353,10 +357,10 @@ namespace almondnamespace::raylibcontext
     // ──────────────────────────────────────────────
     // Helpers
     // ──────────────────────────────────────────────
-    inline int  raylib_get_width()  noexcept { return static_cast<int>(s_raylibstate.width); }
-    inline int  raylib_get_height() noexcept { return static_cast<int>(s_raylibstate.height); }
+    inline int  raylib_get_width()  noexcept { return static_cast<int>(s_raylibstate.width.load(std::memory_order_acquire)); }
+    inline int  raylib_get_height() noexcept { return static_cast<int>(s_raylibstate.height.load(std::memory_order_acquire)); }
     inline void raylib_set_window_title(const std::string& title) { SetWindowTitle(title.c_str()); }
-    inline bool RaylibIsRunning(std::shared_ptr<core::Context>) { return s_raylibstate.running; }
+    inline bool RaylibIsRunning(std::shared_ptr<core::Context>) { return s_raylibstate.running.load(std::memory_order_acquire); }
 
 } // namespace almondnamespace::raylibcontext
 
