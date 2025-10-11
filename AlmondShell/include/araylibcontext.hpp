@@ -45,8 +45,9 @@
 //#include "araylibcontext_win32.hpp"
 
 #include <algorithm>
-#include <stdexcept>
+#include <exception>
 #include <iostream>
+#include <memory>
 
 // FOR EXAMPLE
 //#include <windows.h>
@@ -57,6 +58,84 @@ namespace almondnamespace::raylibcontext
 {
     // Usually at the start of your program, before window creation:
     static almondnamespace::contextwindow::WindowData* g_raylibwindowContext;
+
+    inline void dispatch_resize(const std::shared_ptr<core::Context>& ctx,
+        unsigned int width,
+        unsigned int height,
+        bool updateRaylibWindow,
+        bool notifyClient = true)
+    {
+        unsigned int nextWidth = width;
+        unsigned int nextHeight = height;
+        bool nextUpdateWindow = updateRaylibWindow;
+        bool nextNotifyClient = notifyClient;
+
+        if (s_raylibstate.dispatchingResize)
+        {
+            s_raylibstate.pendingWidth = nextWidth;
+            s_raylibstate.pendingHeight = nextHeight;
+            s_raylibstate.pendingUpdateWindow = s_raylibstate.pendingUpdateWindow || nextUpdateWindow;
+            s_raylibstate.pendingNotifyClient = s_raylibstate.pendingNotifyClient || nextNotifyClient;
+            s_raylibstate.hasPendingResize = true;
+            return;
+        }
+
+        s_raylibstate.dispatchingResize = true;
+
+        for (;;)
+        {
+            const unsigned int safeWidth = std::max(1u, nextWidth);
+            const unsigned int safeHeight = std::max(1u, nextHeight);
+
+            s_raylibstate.width = safeWidth;
+            s_raylibstate.height = safeHeight;
+
+            if (ctx)
+            {
+                ctx->width = safeWidth;
+                ctx->height = safeHeight;
+            }
+
+#if !defined(RAYLIB_NO_WINDOW)
+            if (nextUpdateWindow && IsWindowReady())
+            {
+                SetWindowSize(static_cast<int>(safeWidth), static_cast<int>(safeHeight));
+            }
+#endif
+
+            if (nextNotifyClient && s_raylibstate.clientOnResize)
+            {
+                try
+                {
+                    s_raylibstate.clientOnResize(static_cast<int>(safeWidth), static_cast<int>(safeHeight));
+                }
+                catch (const std::exception& e)
+                {
+                    std::cerr << "[Raylib] onResize client callback threw: " << e.what() << "\n";
+                }
+                catch (...)
+                {
+                    std::cerr << "[Raylib] onResize client callback threw unknown exception.\n";
+                }
+            }
+
+            if (!s_raylibstate.hasPendingResize)
+            {
+                break;
+            }
+
+            nextWidth = s_raylibstate.pendingWidth;
+            nextHeight = s_raylibstate.pendingHeight;
+            nextUpdateWindow = s_raylibstate.pendingUpdateWindow;
+            nextNotifyClient = s_raylibstate.pendingNotifyClient;
+
+            s_raylibstate.hasPendingResize = false;
+            s_raylibstate.pendingUpdateWindow = false;
+            s_raylibstate.pendingNotifyClient = false;
+        }
+
+        s_raylibstate.dispatchingResize = false;
+    }
 
    // HWND hwnd;
     //struct RaylibState {
@@ -76,34 +155,36 @@ namespace almondnamespace::raylibcontext
     // ──────────────────────────────────────────────
     inline bool raylib_initialize(std::shared_ptr<core::Context> ctx, HWND parentWnd = nullptr, unsigned int w = 800, unsigned int h = 600, std::function<void(int, int)> onResize = nullptr)
     {
-        const int clampedWidth = std::max(1u, w);
-        const int clampedHeight = std::max(1u, h);
+        const unsigned int clampedWidth = std::max(1u, w);
+        const unsigned int clampedHeight = std::max(1u, h);
 
-        auto userResize = std::move(onResize);
-        s_raylibstate.onResize = [userResize = std::move(userResize)](int width, int height) mutable {
+        s_raylibstate.clientOnResize = std::move(onResize);
+        s_raylibstate.parent = parentWnd;
+        s_raylibstate.dispatchingResize = false;
+        s_raylibstate.hasPendingResize = false;
+        s_raylibstate.pendingUpdateWindow = false;
+        s_raylibstate.pendingNotifyClient = false;
+        s_raylibstate.pendingWidth = 0;
+        s_raylibstate.pendingHeight = 0;
+
+        std::weak_ptr<core::Context> ctxWeak = ctx;
+        s_raylibstate.onResize = [ctxWeak](int width, int height)
+        {
             const int safeWidth = std::max(1, width);
             const int safeHeight = std::max(1, height);
-            s_raylibstate.width = static_cast<unsigned int>(safeWidth);
-            s_raylibstate.height = static_cast<unsigned int>(safeHeight);
-#if !defined(RAYLIB_NO_WINDOW)
-            if (IsWindowReady()) {
-                SetWindowSize(safeWidth, safeHeight);
-            }
-#endif
-            if (userResize) {
-                userResize(safeWidth, safeHeight);
-            }
+            auto locked = ctxWeak.lock();
+            dispatch_resize(locked,
+                static_cast<unsigned int>(safeWidth),
+                static_cast<unsigned int>(safeHeight),
+                true);
         };
 
-        s_raylibstate.width = clampedWidth;
-        s_raylibstate.height = clampedHeight;
-        s_raylibstate.parent = parentWnd;
-
-        if (ctx) {
+        if (ctx)
+        {
             ctx->onResize = s_raylibstate.onResize;
-            ctx->width = clampedWidth;
-            ctx->height = clampedHeight;
         }
+
+        dispatch_resize(ctx, clampedWidth, clampedHeight, false);
 
 
         static bool initialized = false;
@@ -287,13 +368,23 @@ namespace almondnamespace::raylibcontext
 
         atlasmanager::process_pending_uploads(core::ContextType::RayLib);
 
+        const unsigned int previousWidth = s_raylibstate.width;
+        const unsigned int previousHeight = s_raylibstate.height;
+
+        unsigned int observedWidth = previousWidth;
+        unsigned int observedHeight = previousHeight;
+
         const int currentWidth = GetScreenWidth();
         const int currentHeight = GetScreenHeight();
         if (currentWidth > 0) {
-            s_raylibstate.width = static_cast<unsigned int>(currentWidth);
+            observedWidth = static_cast<unsigned int>(currentWidth);
         }
         if (currentHeight > 0) {
-            s_raylibstate.height = static_cast<unsigned int>(currentHeight);
+            observedHeight = static_cast<unsigned int>(currentHeight);
+        }
+
+        if (observedWidth != previousWidth || observedHeight != previousHeight) {
+            dispatch_resize(ctx, observedWidth, observedHeight, false);
         }
 
         if (!wglMakeCurrent(s_raylibstate.hdc, s_raylibstate.glContext)) {
