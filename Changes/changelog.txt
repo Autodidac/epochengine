@@ -145,5 +145,4 @@
 - Refined the context multiplexer threading spine.
 - Applied miscellaneous adjustments and cleanup.
 - Fixed the menu button grid layout.
-- Synced Raylib resize handling with the shared context window bookkeeping and disabled SDL docking to keep the host window in control.
 
