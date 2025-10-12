@@ -171,14 +171,15 @@ namespace almondnamespace::raylibcontext
         std::weak_ptr<core::Context> ctxWeak = ctx;
         s_raylibstate.onResize = [ctxWeak](int ww, int hh)
             {
-                const int safeW = std::max(1, ww);
-                const int safeH = std::max(1, hh);
+                const unsigned int safeW = static_cast<unsigned int>(std::max(1, ww));
+                const unsigned int safeH = static_cast<unsigned int>(std::max(1, hh));
                 auto locked = ctxWeak.lock();
+                const bool shouldNotifyClient = static_cast<bool>(s_raylibstate.clientOnResize);
                 dispatch_resize(locked,
-                    static_cast<unsigned int>(safeW),
-                    static_cast<unsigned int>(safeH),
-                    /*updateRaylibWindow=*/false,  // avoid feedback loop; caller decides
-                    /*notifyClient=*/false);
+                    safeW,
+                    safeH,
+                    /*updateRaylibWindow=*/true,
+                    /*notifyClient=*/shouldNotifyClient);
             };
 
         if (ctx) {

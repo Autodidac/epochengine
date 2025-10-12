@@ -120,7 +120,7 @@ namespace almondnamespace::menu
             }
             const int targetColumns = std::min(ExpectedColumns, totalItems);
             if (targetColumns > 0)
-                computedCols = std::clamp(computedCols, targetColumns, totalItems);
+                computedCols = std::clamp(computedCols, 1, targetColumns);
             columns = std::max(1, computedCols);
             rows = (totalItems + columns - 1) / columns;
 
@@ -149,9 +149,14 @@ namespace almondnamespace::menu
                 for (int c = 0; c < columns; ++c) {
                     const int idx = r * columns + c;
                     if (idx < totalItems) {
+                        const auto& slice = slicePairs[idx].normal;
+                        const float cellWidth = colWidths[c];
+                        const float cellHeight = rowHeights[r];
+                        const float centeredX = xPos + std::max(0.f, (cellWidth - float(slice.width)) * 0.5f);
+                        const float centeredY = yPos + std::max(0.f, (cellHeight - float(slice.height)) * 0.5f);
                         cachedPositions[idx] = {
-                            static_cast<int>(std::round(xPos)),
-                            static_cast<int>(std::round(yPos))
+                            static_cast<int>(std::round(centeredX)),
+                            static_cast<int>(std::round(centeredY))
                         };
                     }
                     xPos += colWidths[c] + spacing;

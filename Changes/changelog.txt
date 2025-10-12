@@ -1,5 +1,11 @@
 # Changelog
 
+## [v0.59.3]
+- Recentered the menu button grid so each slice sits in the middle of its cell and the layout collapses to fewer columns on
+  narrow viewports, preventing overlap when docked contexts resize.
+- Updated the Raylib resize dispatcher to drive both the GLFW framebuffer and client callbacks, eliminating the inverse scaling
+  observed when the multiplexer resized Raylib windows out-of-band.
+
 ## [v0.59.2]
 - Hardened the Raylib resize pathway by making shared window dimensions and run-state atomic, so the main thread and render
   worker observe consistent sizes and the menu layout now snaps to window changes alongside the other backends.
