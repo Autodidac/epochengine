@@ -29,7 +29,6 @@
 #include "acommandline.hpp"
 
 #include <array>
-#include <atomic>
 #include <bitset>
 #include <functional>
 
@@ -58,9 +57,9 @@ namespace almondnamespace::raylibcontext
         unsigned int pendingHeight{ 0 };
         bool pendingUpdateWindow{ false };
         bool pendingNotifyClient{ false };
-        std::atomic<unsigned int> width{ 400 };
-        std::atomic<unsigned int> height{ 300 };
-        std::atomic<bool> running{ false };
+        unsigned int width{ 400 };
+        unsigned int height{ 300 };
+        bool running{ false };
 
         bool shouldClose = false; // Set to true when the window should close
         // Raylib manages window internally, but track width & height for consistency
