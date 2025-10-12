@@ -11,6 +11,12 @@
 - **Roadmap Traceability** – The existing `roadmap.txt` lacked granular prompts or acceptance checks per phase, making automation hand-offs hard to script.
 - **Testing Surface** – No automated smoke tests or CI hooks are defined for the critical updater and renderer paths, leaving regression risk high during phase transitions.
 
+## Recent Progress (v0.59.3)
+- Menu layout logic now centres each button slice within its grid cell and reduces the column count when viewports shrink, so
+  docked renderers share a consistent overlay footprint.
+- Raylib's resize dispatcher now mirrors multiplexer-driven window size changes into the GLFW framebuffer and replays client
+  callbacks, eliminating the inverse scaling that previously appeared during docking adjustments.
+
 ## Recent Progress (v0.59.2)
 - Raylib's resize pathway now stores shared window dimensions and run-state atomically so the main thread and render loop agree
   on the latest size, keeping menu layouts responsive alongside SDL and OpenGL contexts.
