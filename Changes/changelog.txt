@@ -1,10 +1,5 @@
 # Changelog
 
-## [v0.59.2]
-- Hardened the Raylib resize pathway by making shared window dimensions and run-state atomic, so the main thread and render
-  worker observe consistent sizes and the menu layout now snaps to window changes alongside the other backends.
-- Documented the Raylib resize stability work in the roadmap and engine analysis briefs.
-
 ## [v0.59.1]
 - Coalesced Raylib window resize notifications so engine contexts and client callbacks stay in sync with OS window dimensions without recursive loops.
 - Updated the roadmap and engine analysis documentation to capture the Raylib backend stability work.
