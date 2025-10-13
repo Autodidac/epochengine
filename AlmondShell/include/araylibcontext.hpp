@@ -45,6 +45,7 @@
 #include <exception>
 #include <iostream>
 #include <memory>
+#include <string>
 
 // Raylib last
 #include <raylib.h>
@@ -153,7 +154,8 @@ namespace almondnamespace::raylibcontext
         HWND parentWnd = nullptr,
         unsigned int w = 800,
         unsigned int h = 600,
-        std::function<void(int, int)> onResize = nullptr)
+        std::function<void(int, int)> onResize = nullptr,
+        std::string windowTitle = {})
     {
         const unsigned int clampedWidth = std::max(1u, w);
         const unsigned int clampedHeight = std::max(1u, h);
@@ -197,9 +199,13 @@ namespace almondnamespace::raylibcontext
 
         // If you need resizable window behavior, set before InitWindow:
         SetConfigFlags(FLAG_WINDOW_RESIZABLE);
+        if (windowTitle.empty()) {
+            windowTitle = "Raylib Window";
+        }
         InitWindow(static_cast<int>(s_raylibstate.width),
             static_cast<int>(s_raylibstate.height),
-            "Raylib Window");
+            windowTitle.c_str());
+        SetWindowTitle(windowTitle.c_str());
 
         // Mirror raylib’s native handles
         s_raylibstate.hwnd = (HWND)GetWindowHandle();
@@ -224,6 +230,11 @@ namespace almondnamespace::raylibcontext
             style &= ~WS_OVERLAPPEDWINDOW;
             style |= WS_CHILD | WS_VISIBLE;
             SetWindowLongPtr(s_raylibstate.hwnd, GWL_STYLE, style);
+
+            if (!windowTitle.empty()) {
+                const std::wstring wideTitle(windowTitle.begin(), windowTitle.end());
+                SetWindowTextW(s_raylibstate.hwnd, wideTitle.c_str());
+            }
 
             RECT client{};
             GetClientRect(s_raylibstate.parent, &client);

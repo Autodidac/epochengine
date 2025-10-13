@@ -15,6 +15,8 @@
 #include <glad/glad.h>
 #include <memory>
 #include <shared_mutex>
+#include <string>
+#include <string_view>
 
 // -----------------------------------------------------------------
 // Helper definitions that must be visible to the linker
@@ -68,6 +70,40 @@ void MakeDockable(HWND hwnd, HWND parent) {
 
 namespace almondnamespace::core
 {
+
+    namespace
+    {
+        std::wstring_view BackendDisplayName(ContextType type) noexcept
+        {
+            switch (type)
+            {
+            case ContextType::OpenGL:   return L"OpenGL";
+            case ContextType::SDL:      return L"SDL";
+            case ContextType::SFML:     return L"SFML";
+            case ContextType::RayLib:   return L"Raylib";
+            case ContextType::Software: return L"Software";
+            case ContextType::Vulkan:   return L"Vulkan";
+            case ContextType::DirectX:  return L"DirectX";
+            case ContextType::Noop:     return L"Noop";
+            case ContextType::Custom:   return L"Custom";
+            default:                    return L"Context";
+            }
+        }
+
+        std::wstring BuildChildWindowTitle(ContextType type, int index)
+        {
+            const std::wstring_view base = BackendDisplayName(type);
+            std::wstring title{ base.begin(), base.end() };
+            title += L" Dock ";
+            title += std::to_wstring(static_cast<long long>(index) + 1);
+            return title;
+        }
+
+        std::string NarrowCopy(const std::wstring& wide)
+        {
+            return { wide.begin(), wide.end() };
+        }
+    }
 
     std::unordered_map<HWND, std::thread> gThreads{};
     DragState gDragState{};
@@ -340,13 +376,17 @@ namespace almondnamespace::core
             created.reserve(count);
 
             for (int i = 0; i < count; ++i) {
+                const std::wstring windowTitle = BuildChildWindowTitle(type, i);
+                const std::string narrowTitle = NarrowCopy(windowTitle);
                 HWND hwnd = CreateWindowEx(
-                    0, L"AlmondChild", L"",
+                    0, L"AlmondChild", windowTitle.c_str(),
                     (parent ? WS_CHILD | WS_VISIBLE : WS_OVERLAPPEDWINDOW | WS_VISIBLE),
                     0, 0, 400, 300,
                     parent, nullptr, hInst, nullptr);
 
                 if (!hwnd) continue;
+
+                SetWindowTextW(hwnd, windowTitle.c_str());
 
                 HDC hdc = GetDC(hwnd);
                 HGLRC glrc = nullptr;
@@ -358,6 +398,8 @@ namespace almondnamespace::core
 #endif
 
                 auto winPtr = std::make_unique<WindowData>(hwnd, hdc, glrc, true, type);
+                winPtr->titleWide = windowTitle;
+                winPtr->titleNarrow = narrowTitle;
                 if (parent) MakeDockable(hwnd, parent);
                 {
                     std::scoped_lock lock(windowsMutex);
@@ -455,7 +497,7 @@ namespace almondnamespace::core
                 case ContextType::SDL:
                     std::cerr << "[Init] Initializing SDL context for hwnd=" << hwnd << "\n";
                     almondnamespace::sdlcontext::sdl_initialize(
-                        ctx, hwnd, ctx->width, ctx->height, w->onResize);
+                        ctx, hwnd, ctx->width, ctx->height, w->onResize, narrowTitle);
                     break;
 #endif
 #ifdef ALMOND_USING_SFML
@@ -469,7 +511,7 @@ namespace almondnamespace::core
                 case ContextType::RayLib:
                     std::cerr << "[Init] Initializing RayLib context for hwnd=" << hwnd << "\n";
                     almondnamespace::raylibcontext::raylib_initialize(
-                        ctx, hwnd, ctx->width, ctx->height, w->onResize);
+                        ctx, hwnd, ctx->width, ctx->height, w->onResize, narrowTitle);
                     break;
 #endif
                 default:

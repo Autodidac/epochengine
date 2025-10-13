@@ -3,6 +3,7 @@
 #include <memory>
 #include <functional>
 #include <atomic>
+#include <string>
 
 #if defined(_WIN32)
 #    include <windows.h>
@@ -31,6 +32,9 @@ namespace almondnamespace::core
         bool usesSharedContext = false;
         std::shared_ptr<Context> context;
         almondnamespace::core::ContextType type { almondnamespace::core::ContextType::OpenGL };
+
+        std::wstring titleWide;
+        std::string  titleNarrow;
 
         int width = 0;
         int height = 0;

@@ -55,6 +55,7 @@ The runtime is designed for rapid iteration with hot-reloadable scripting, a sel
 - 🖥️ **Multi-context rendering**
   Pluggable backends: OpenGL, Raylib, SFML, and a software renderer — switchable via thunks and lambdas.
   **Multithreaded** with a state-of-the-art **hybrid coroutine + threaded design** for maximum scalability and efficiency.
+  Docked child windows now display backend labels so it's obvious which renderer owns each pane when SDL and Raylib run side by side.
 
 ---
 
