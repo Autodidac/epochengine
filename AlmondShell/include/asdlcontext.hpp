@@ -47,6 +47,7 @@
 #include <algorithm>
 #include <stdexcept>
 #include <iostream>
+#include <string>
 
 namespace almondnamespace::sdlcontext
 {
@@ -100,7 +101,12 @@ namespace almondnamespace::sdlcontext
     
     inline SDLState sdlcontext;
 
-    inline bool sdl_initialize(std::shared_ptr<core::Context> ctx, HWND parentWnd = nullptr, int w = 400, int h = 300, std::function<void(int, int)> onResize = nullptr)
+    inline bool sdl_initialize(std::shared_ptr<core::Context> ctx,
+        HWND parentWnd = nullptr,
+        int w = 400,
+        int h = 300,
+        std::function<void(int, int)> onResize = nullptr,
+        std::string windowTitle = {})
     {
         const int clampedWidth = std::max(1, w);
         const int clampedHeight = std::max(1, h);
@@ -129,8 +135,14 @@ namespace almondnamespace::sdlcontext
             ctx->height = clampedHeight;
         }
 
-        if (SDL_Init(SDL_INIT_VIDEO) == 0) {
-            throw std::runtime_error("[SDL] Failed to initialize SDL: " + std::string(SDL_GetError()));
+        if ((SDL_WasInit(SDL_INIT_VIDEO) & SDL_INIT_VIDEO) == 0) {
+            if (SDL_Init(SDL_INIT_VIDEO) != 0) {
+                throw std::runtime_error("[SDL] Failed to initialize SDL: " + std::string(SDL_GetError()));
+            }
+        }
+
+        if (windowTitle.empty()) {
+            windowTitle = "SDL3 Window";
         }
 
         // Create properties object
@@ -142,15 +154,10 @@ namespace almondnamespace::sdlcontext
         }
 
         // Set window properties
-        SDL_SetStringProperty(props, SDL_PROP_WINDOW_CREATE_TITLE_STRING, "SDL3 Window");
+        SDL_SetStringProperty(props, SDL_PROP_WINDOW_CREATE_TITLE_STRING, windowTitle.c_str());
         SDL_SetNumberProperty(props, SDL_PROP_WINDOW_CREATE_WIDTH_NUMBER, sdlcontext.width);
         SDL_SetNumberProperty(props, SDL_PROP_WINDOW_CREATE_HEIGHT_NUMBER, sdlcontext.height);
         SDL_SetBooleanProperty(props, SDL_PROP_WINDOW_CREATE_RESIZABLE_BOOLEAN, true);
-
-        // Embed into existing HWND if parentWnd != nullptr
-        if (parentWnd) {
-            HWND parentHwnd = (HWND)SDL_GetPointerProperty(props, SDL_PROP_WINDOW_CREATE_WIN32_HWND_POINTER, nullptr);
-        }
 
         // Create window with properties
         sdlcontext.window = SDL_CreateWindowWithProperties(props);
@@ -182,6 +189,8 @@ namespace almondnamespace::sdlcontext
             return false;
         }
 
+        SDL_SetWindowTitle(sdlcontext.window, windowTitle.c_str());
+
         // Create renderer
         sdlcontext.renderer = SDL_CreateRenderer(sdlcontext.window, nullptr);
         if (!sdlcontext.renderer) {
@@ -202,6 +211,11 @@ namespace almondnamespace::sdlcontext
             style &= ~WS_OVERLAPPEDWINDOW;
             style |= WS_CHILD | WS_VISIBLE;
             SetWindowLongPtr(hwnd, GWL_STYLE, style);
+
+            if (!windowTitle.empty()) {
+                const std::wstring wideTitle(windowTitle.begin(), windowTitle.end());
+                SetWindowTextW(hwnd, wideTitle.c_str());
+            }
 
             RECT client{};
             GetClientRect(sdlcontext.parent, &client);

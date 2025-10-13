@@ -1,5 +1,11 @@
 # Changelog
 
+## [v0.59.2]
+- Fixed SDL3 initialisation by correcting the success check and avoiding bogus error throws, so docked SDL contexts spawn again.
+- Removed references to the deprecated Win32 parent property path for SDL3 and tightened the embedding flow around native parenting.
+- Added backend labels to every docked window, threading them through to SDL and Raylib so each renderer advertises its pane title.
+- Documented the docking label update and bumped the engine version helpers.
+
 ## [v0.59.1]
 - Coalesced Raylib window resize notifications so engine contexts and client callbacks stay in sync with OS window dimensions without recursive loops.
 - Updated the roadmap and engine analysis documentation to capture the Raylib backend stability work.
