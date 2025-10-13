@@ -374,6 +374,8 @@ namespace almondnamespace::core
 
             std::vector<HWND> created;
             created.reserve(count);
+            std::vector<std::string> createdTitles;
+            createdTitles.reserve(count);
 
             for (int i = 0; i < count; ++i) {
                 const std::wstring windowTitle = BuildChildWindowTitle(type, i);
@@ -406,6 +408,7 @@ namespace almondnamespace::core
                     windows.emplace_back(std::move(winPtr));
                 }
                 created.push_back(hwnd);
+                createdTitles.push_back(narrowTitle);
             }
 
             std::vector<std::shared_ptr<Context>> ctxs;
@@ -458,6 +461,8 @@ namespace almondnamespace::core
                 ctx->width = width;
                 ctx->height = height;
 
+                std::string narrowTitle;
+
                 if (w) {
                     ctx->hdc = w->hdc;
                     ctx->hglrc = w->glContext;
@@ -467,6 +472,17 @@ namespace almondnamespace::core
                     w->height = height;
                     if (!ctx->onResize && w->onResize)
                         ctx->onResize = w->onResize;
+                    if (!w->titleNarrow.empty())
+                        narrowTitle = w->titleNarrow;
+                }
+
+                if (narrowTitle.empty()) {
+                    if (i < createdTitles.size()) {
+                        narrowTitle = createdTitles[i];
+                    }
+                    else {
+                        narrowTitle = NarrowCopy(BuildChildWindowTitle(type, static_cast<int>(i)));
+                    }
                 }
 
                 // ---------------- Immediate backend initialization ----------------

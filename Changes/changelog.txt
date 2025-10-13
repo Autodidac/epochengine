@@ -1,5 +1,9 @@
 # Changelog
 
+## [v0.59.3]
+- Fixed the Windows build by persisting each window's narrow title in the multiplexer so SDL and Raylib backends receive the pane label during initialisation.
+- Documented the regression fix in the engine analysis and roadmap, and bumped the engine version metadata.
+
 ## [v0.59.2]
 - Fixed SDL3 initialisation by correcting the success check and avoiding bogus error throws, so docked SDL contexts spawn again.
 - Removed references to the deprecated Win32 parent property path for SDL3 and tightened the embedding flow around native parenting.
