@@ -51,42 +51,6 @@
 
 namespace almondnamespace::sdlcontext
 {
-   // using namespace almondnamespace::contextwindow;
-   // extern state::SDL3State s_sdlstate;
-
-    //inline void initialize_with_sdl_window()
-    //{
-    //    std::cout << "SDL version: " << SDL_GetRevision()
-    //        << " " << SDL_GetVersion() << "\n";
-
-    //    int result = SDL_Init(SDL_INIT_VIDEO);
-    //    if (result < 0) {
-    //        // Handle error
-    //        throw std::runtime_error(SDL_GetError());
-    //    }
-
-
-    //    s_sdlstate.window.sdl_window = SDL_CreateWindow(
-    //        "AlmondEngine",
-    //        800,
-    //        600,
-    //        SDL_WINDOW_RESIZABLE | SDL_WINDOW_HIGH_PIXEL_DENSITY
-    //    );
-
-    //    if (!s_sdlstate.window.sdl_window)
-    //        throw std::runtime_error(SDL_GetError());
-
-    //    sdl_renderer.renderer = SDL_CreateRenderer(s_sdlstate.window.sdl_window, nullptr);
-    //    if (!sdl_renderer.renderer)
-    //    {
-    //        SDL_DestroyWindow(s_sdlstate.window.sdl_window);
-    //        SDL_Quit();
-    //        throw std::runtime_error(SDL_GetError());
-    //    }
-
-    //    SDL_SetRenderDrawColor(sdl_renderer.renderer, 0, 0, 0, 255);
-    //}
-
     struct SDLState {
         SDL_Window* window = nullptr;
         SDL_Renderer* renderer = nullptr;
@@ -135,10 +99,11 @@ namespace almondnamespace::sdlcontext
             ctx->height = clampedHeight;
         }
 
-        if ((SDL_WasInit(SDL_INIT_VIDEO) & SDL_INIT_VIDEO) == 0) {
-            if (SDL_Init(SDL_INIT_VIDEO) != 0) {
-                throw std::runtime_error("[SDL] Failed to initialize SDL: " + std::string(SDL_GetError()));
-            }
+        // SDL3 returns 0 on success, negative on failure.
+        // Force the type with cast so MSVC can’t mis-deduce
+        if (static_cast<int>(SDL_Init(SDL_INIT_VIDEO)) < 0) {
+            SDL_Log("SDL_Init failed: %s", SDL_GetError());
+            return EXIT_FAILURE;
         }
 
         if (windowTitle.empty()) {
