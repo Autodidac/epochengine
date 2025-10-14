@@ -2,6 +2,7 @@
 #include "pch.h"
 
 #include "acontextmultiplexer.hpp"
+#include "astringconverter.hpp"
 
 #if defined(_WIN32)
 #include "aopenglcontext.hpp"
@@ -109,10 +110,10 @@ namespace almondnamespace::core
             return title;
         }
 
-        std::string NarrowCopy(const std::wstring& wide)
-        {
-            return { wide.begin(), wide.end() };
-        }
+        //std::string NarrowCopy(const std::wstring& wide)
+        //{
+        //    return { wide.begin(), wide.end() };
+        //}
     }
 
     std::unordered_map<HWND, std::thread> gThreads{};
@@ -389,7 +390,7 @@ namespace almondnamespace::core
 
             for (int i = 0; i < count; ++i) {
                 const std::wstring windowTitle = BuildChildWindowTitle(type, i);
-                const std::string narrowTitle = NarrowCopy(windowTitle);
+                const std::string narrowTitle = almondnamespace::text::narrow_utf8(windowTitle);
                 HWND hwnd = CreateWindowEx(
                     0, L"AlmondChild", windowTitle.c_str(),
                     (parent ? WS_CHILD | WS_VISIBLE : WS_OVERLAPPEDWINDOW | WS_VISIBLE),
@@ -491,7 +492,7 @@ namespace almondnamespace::core
                         narrowTitle = createdTitles[i];
                     }
                     else {
-                        narrowTitle = NarrowCopy(BuildChildWindowTitle(type, static_cast<int>(i)));
+                        narrowTitle = almondnamespace::text::narrow_utf8(BuildChildWindowTitle(type, static_cast<int>(i)));
                     }
                 }
 

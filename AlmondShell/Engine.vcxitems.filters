@@ -459,6 +459,9 @@
     <ClInclude Include="$(MSBuildThisFileDirectory)include\adiagnostics.hpp">
       <Filter>Header Files\core\utilities</Filter>
     </ClInclude>
+    <ClInclude Include="$(MSBuildThisFileDirectory)include\astringconverter.hpp">
+      <Filter>Header Files\core\utilities</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <Image Include="$(MSBuildThisFileDirectory)src\icon.ico">

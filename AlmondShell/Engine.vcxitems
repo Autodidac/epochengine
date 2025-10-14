@@ -148,6 +148,7 @@
     <ClInclude Include="$(MSBuildThisFileDirectory)include\aspritehandle.hpp" />
     <ClInclude Include="$(MSBuildThisFileDirectory)include\aspritepool.hpp" />
     <ClInclude Include="$(MSBuildThisFileDirectory)include\aspriteregistry.hpp" />
+    <ClInclude Include="$(MSBuildThisFileDirectory)include\astringconverter.hpp" />
     <ClInclude Include="$(MSBuildThisFileDirectory)include\ataskgraphwithdot.hpp" />
     <ClInclude Include="$(MSBuildThisFileDirectory)include\atexture.hpp" />
     <ClInclude Include="$(MSBuildThisFileDirectory)include\aatlastexture.hpp" />
