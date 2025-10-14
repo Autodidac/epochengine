@@ -96,6 +96,8 @@ namespace almondnamespace::core
     };
     extern DragState gDragState;
 
+    void MakeDockable(HWND hwnd, HWND parent);
+
     // ======================================================
     // MultiContextManager : Main orchestrator
     // ======================================================

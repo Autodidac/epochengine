@@ -41,6 +41,10 @@
 #include "acommandline.hpp"    // cli::window_width, cli::window_height
 #include "araylibcontextinput.hpp"
 
+#if defined(_WIN32)
+namespace almondnamespace::core { void MakeDockable(HWND hwnd, HWND parent); }
+#endif
+
 #include <algorithm>
 #include <exception>
 #include <iostream>
@@ -230,6 +234,10 @@ namespace almondnamespace::raylibcontext
             style &= ~WS_OVERLAPPEDWINDOW;
             style |= WS_CHILD | WS_VISIBLE;
             SetWindowLongPtr(s_raylibstate.hwnd, GWL_STYLE, style);
+
+#if defined(_WIN32)
+            almondnamespace::core::MakeDockable(s_raylibstate.hwnd, s_raylibstate.parent);
+#endif
 
             if (!windowTitle.empty()) {
                 const std::wstring wideTitle(windowTitle.begin(), windowTitle.end());
