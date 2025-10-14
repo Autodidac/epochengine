@@ -1,5 +1,9 @@
 # Changelog
 
+## [v0.59.4]
+- Reattached the docking subclass hook when SDL3 and Raylib backends create child windows so docked panes drag and resize correctly again.
+- Normalised Raylib sprite coordinates to account for render-to-screen DPI scaling, preventing menu buttons from shrinking as windows scale up.
+
 ## [v0.59.3]
 - Fixed the Windows build by persisting each window's narrow title in the multiplexer so SDL and Raylib backends receive the pane label during initialisation.
 - Documented the regression fix in the engine analysis and roadmap, and bumped the engine version metadata.

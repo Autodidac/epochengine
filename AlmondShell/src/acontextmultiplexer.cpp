@@ -25,51 +25,61 @@
 // -----------------------------------------------------------------
 // Dockable child handling
 // -----------------------------------------------------------------
-struct SubCtx { HWND originalParent; };
-
-LRESULT CALLBACK DockableProc(HWND hwnd, UINT msg, WPARAM wp, LPARAM lp,
-    UINT_PTR, DWORD_PTR dw)
+namespace
 {
+    struct SubCtx { HWND originalParent; };
+
+    LRESULT CALLBACK DockableProc(HWND hwnd, UINT msg, WPARAM wp, LPARAM lp,
+        UINT_PTR, DWORD_PTR dw)
+    {
 #if ALMOND_SINGLE_PARENT
-    auto* ctx = reinterpret_cast<SubCtx*>(dw);
+        auto* ctx = reinterpret_cast<SubCtx*>(dw);
 #endif
 
-    switch (msg) {
-    case WM_CLOSE:
+        switch (msg) {
+        case WM_CLOSE:
 #if ALMOND_SINGLE_PARENT
-        if (ctx && ctx->originalParent) {
-            if (hwnd == ctx->originalParent) {
-                PostQuitMessage(0); // main parent closed -> shutdown engine
+            if (ctx && ctx->originalParent) {
+                if (hwnd == ctx->originalParent) {
+                    PostQuitMessage(0); // main parent closed -> shutdown engine
+                }
+                else {
+                    DestroyWindow(hwnd); // child closes itself
+                }
             }
             else {
-                DestroyWindow(hwnd); // child closes itself
+                DestroyWindow(hwnd); // no parent -> just close itself
             }
-        }
-        else {
-            DestroyWindow(hwnd); // no parent -> just close itself
-        }
 #else
-        DestroyWindow(hwnd); // always independent
+            DestroyWindow(hwnd); // always independent
 #endif
-        return 0;
+            return 0;
 
-    case WM_LBUTTONDOWN:
-    case WM_MOUSEMOVE:
-    case WM_LBUTTONUP:
-        return almondnamespace::core::MultiContextManager::ChildProc(hwnd, msg, wp, lp);
+        case WM_LBUTTONDOWN:
+        case WM_MOUSEMOVE:
+        case WM_LBUTTONUP:
+            return almondnamespace::core::MultiContextManager::ChildProc(hwnd, msg, wp, lp);
+        }
+        return DefSubclassProc(hwnd, msg, wp, lp);
     }
-    return DefSubclassProc(hwnd, msg, wp, lp);
-}
-
-void MakeDockable(HWND hwnd, HWND parent) {
-#if ALMOND_SINGLE_PARENT
-    auto* ctx = new SubCtx{ parent };
-    SetWindowSubclass(hwnd, DockableProc, 1, reinterpret_cast<DWORD_PTR>(ctx));
-#endif
 }
 
 namespace almondnamespace::core
 {
+
+    void MakeDockable(HWND hwnd, HWND parent)
+    {
+#if ALMOND_SINGLE_PARENT
+        if (!hwnd) return;
+        auto* ctx = new SubCtx{ parent };
+        if (!SetWindowSubclass(hwnd, DockableProc, 1, reinterpret_cast<DWORD_PTR>(ctx))) {
+            delete ctx;
+        }
+#else
+        (void)hwnd;
+        (void)parent;
+#endif
+    }
 
     namespace
     {

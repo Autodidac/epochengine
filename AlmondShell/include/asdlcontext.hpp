@@ -44,6 +44,10 @@
 #include "aatlasmanager.hpp"
 #include "asdlstate.hpp"
 
+#if defined(_WIN32)
+namespace almondnamespace::core { void MakeDockable(HWND hwnd, HWND parent); }
+#endif
+
 #include <algorithm>
 #include <stdexcept>
 #include <iostream>
@@ -176,6 +180,10 @@ namespace almondnamespace::sdlcontext
             style &= ~WS_OVERLAPPEDWINDOW;
             style |= WS_CHILD | WS_VISIBLE;
             SetWindowLongPtr(hwnd, GWL_STYLE, style);
+
+#if defined(_WIN32)
+            almondnamespace::core::MakeDockable(hwnd, sdlcontext.parent);
+#endif
 
             if (!windowTitle.empty()) {
                 const std::wstring wideTitle(windowTitle.begin(), windowTitle.end());
