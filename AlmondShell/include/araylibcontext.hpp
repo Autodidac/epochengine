@@ -396,16 +396,8 @@ namespace almondnamespace::raylibcontext
     // ──────────────────────────────────────────────
     // Helpers
     // ──────────────────────────────────────────────
-    inline int  raylib_get_width()  noexcept {
-        const int liveWidth = GetScreenWidth();
-        if (liveWidth > 0) return liveWidth;
-        return static_cast<int>(s_raylibstate.width);
-    }
-    inline int  raylib_get_height() noexcept {
-        const int liveHeight = GetScreenHeight();
-        if (liveHeight > 0) return liveHeight;
-        return static_cast<int>(s_raylibstate.height);
-    }
+    inline int  raylib_get_width()  noexcept { return static_cast<int>(s_raylibstate.width); }
+    inline int  raylib_get_height() noexcept { return static_cast<int>(s_raylibstate.height); }
     inline void raylib_set_window_title(const std::string& title) { SetWindowTitle(title.c_str()); }
     inline bool RaylibIsRunning(std::shared_ptr<core::Context>) { return s_raylibstate.running; }
 

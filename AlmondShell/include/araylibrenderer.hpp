@@ -118,8 +118,8 @@ namespace almondnamespace::raylibcontext
 
         const int renderWidth = GetRenderWidth();
         const int renderHeight = GetRenderHeight();
-        const unsigned int logicalWidth = std::max(1u, s_raylibstate.width);
-        const unsigned int logicalHeight = std::max(1u, s_raylibstate.height);
+        const int screenWidth = GetScreenWidth();
+        const int screenHeight = GetScreenHeight();
 
         float drawX = x;
         float drawY = y;
@@ -146,22 +146,26 @@ namespace almondnamespace::raylibcontext
             drawHeight = static_cast<float>(region.height);
 
         if (!widthNormalized) {
+            const float screenWf = static_cast<float>(std::max(screenWidth, 1));
             const float renderWf = static_cast<float>(std::max(renderWidth, 1));
-            const float logicalWf = static_cast<float>(logicalWidth);
-            if (logicalWf > 0.f) {
-                const float scaleX = renderWf / logicalWf;
-                drawX *= scaleX;
-                drawWidth *= scaleX;
+            if (screenWf > 0.f && renderWf > 0.f) {
+                const float scaleX = renderWf / screenWf;
+                if (scaleX > 1.0f) {
+                    drawX *= scaleX;
+                    drawWidth *= scaleX;
+                }
             }
         }
 
         if (!heightNormalized) {
+            const float screenHf = static_cast<float>(std::max(screenHeight, 1));
             const float renderHf = static_cast<float>(std::max(renderHeight, 1));
-            const float logicalHf = static_cast<float>(logicalHeight);
-            if (logicalHf > 0.f) {
-                const float scaleY = renderHf / logicalHf;
-                drawY *= scaleY;
-                drawHeight *= scaleY;
+            if (screenHf > 0.f && renderHf > 0.f) {
+                const float scaleY = renderHf / screenHf;
+                if (scaleY > 1.0f) {
+                    drawY *= scaleY;
+                    drawHeight *= scaleY;
+                }
             }
         }
 
