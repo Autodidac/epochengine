@@ -57,6 +57,7 @@ namespace almondnamespace::raylibcontext
         unsigned int pendingHeight{ 0 };
         bool pendingUpdateWindow{ false };
         bool pendingNotifyClient{ false };
+        bool pendingSkipNativeApply{ false };
         unsigned int width{ 400 };
         unsigned int height{ 300 };
         bool running{ false };
