@@ -150,8 +150,10 @@ namespace almondnamespace::raylibcontext
             const float renderWf = static_cast<float>(std::max(renderWidth, 1));
             if (screenWf > 0.f && renderWf > 0.f) {
                 const float scaleX = renderWf / screenWf;
-                drawX *= scaleX;
-                drawWidth *= scaleX;
+                if (scaleX > 1.0f) {
+                    drawX *= scaleX;
+                    drawWidth *= scaleX;
+                }
             }
         }
 
@@ -160,8 +162,10 @@ namespace almondnamespace::raylibcontext
             const float renderHf = static_cast<float>(std::max(renderHeight, 1));
             if (screenHf > 0.f && renderHf > 0.f) {
                 const float scaleY = renderHf / screenHf;
-                drawY *= scaleY;
-                drawHeight *= scaleY;
+                if (scaleY > 1.0f) {
+                    drawY *= scaleY;
+                    drawHeight *= scaleY;
+                }
             }
         }
 
