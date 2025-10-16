@@ -65,7 +65,7 @@ namespace almondnamespace::raylibcontext
         const int W = std::max(1, w);
         const int H = std::max(1, h);
 
-        if (s_raylibstate.hwnd && s_raylibstate.parent) {
+        if (s_raylibstate.hwnd) {
             // Make the child window fit the parent client area precisely
             ::SetWindowPos(s_raylibstate.hwnd, nullptr, 0, 0, W, H,
                 SWP_NOZORDER | SWP_FRAMECHANGED | SWP_SHOWWINDOW);
@@ -106,9 +106,6 @@ namespace almondnamespace::raylibcontext
         {
             const unsigned int safeWidth = std::max(1u, nextWidth);
             const unsigned int safeHeight = std::max(1u, nextHeight);
-            const unsigned int prevWidth = s_raylibstate.width;
-            const unsigned int prevHeight = s_raylibstate.height;
-            const bool sizeChanged = (prevWidth != safeWidth) || (prevHeight != safeHeight);
 
             // Update state and ctx mirror
             s_raylibstate.width = safeWidth;
@@ -120,14 +117,12 @@ namespace almondnamespace::raylibcontext
             }
 
             // Push to native window + framebuffer (both sides)
-            if (sizeChanged || nextUpdateWindow) {
-                apply_native_resize(static_cast<int>(safeWidth),
-                    static_cast<int>(safeHeight),
-                    /*updateRaylibWindow=*/nextUpdateWindow);
-            }
+            apply_native_resize(static_cast<int>(safeWidth),
+                static_cast<int>(safeHeight),
+                /*updateRaylibWindow=*/nextUpdateWindow);
 
             // Notify client
-            if (nextNotifyClient && (sizeChanged || nextUpdateWindow) && s_raylibstate.clientOnResize) {
+            if (nextNotifyClient && s_raylibstate.clientOnResize) {
                 try {
                     s_raylibstate.clientOnResize(static_cast<int>(safeWidth),
                         static_cast<int>(safeHeight));
@@ -188,8 +183,8 @@ namespace almondnamespace::raylibcontext
                 dispatch_resize(locked,
                     static_cast<unsigned int>(safeW),
                     static_cast<unsigned int>(safeH),
-                    /*updateRaylibWindow=*/true,
-                    /*notifyClient=*/true);
+                    /*updateRaylibWindow=*/false,  // avoid feedback loop; caller decides
+                    /*notifyClient=*/false);
             };
 
         if (ctx) {
