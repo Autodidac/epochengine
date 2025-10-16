@@ -1,9 +1,5 @@
 # Changelog
 
-## [v0.59.5]
-- Restored Raylib child-window resize behaviour by forwarding Win32 `WM_SIZE` events through the Raylib dispatcher and forcing framebuffer updates, keeping docked UI scaling consistent without collapsing the window.
-- Documented the resize bridge fix on the roadmap and bumped the engine revision metadata.
-
 ## [v0.59.4]
 - Reattached the docking subclass hook when SDL3 and Raylib backends create child windows so docked panes drag and resize correctly again.
 - Normalised Raylib sprite coordinates to account for render-to-screen DPI scaling, preventing menu buttons from shrinking as windows scale up.
