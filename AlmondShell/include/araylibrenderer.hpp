@@ -21,8 +21,10 @@
  *   See LICENSE file for full terms.                         *
  *                                                            *
  **************************************************************/
+ // araylibrenderer.hpp
 #pragma once
 
+#include "aplatform.hpp"        // Must be first
 #include "aengineconfig.hpp"
 
 #if defined(ALMOND_USING_RAYLIB)
@@ -32,31 +34,46 @@
 #include "aatlastexture.hpp"
 #include "araylibstate.hpp"
 
-#include <iostream>
-//#undef Rectangle // Avoid conflict with raylib Rectangle
 #include <algorithm>
+#include <iostream>
+#include <span>
 
-#include <raylib.h> // Ensure this is included after platform-specific headers
+#include <raylib.h> // must be included (you had it commented out)
+
+// ---------- DPI helpers ----------
 namespace almondnamespace::raylibcontext
 {
-     struct Rect {
-            float x;
-            float y;
-            float width;
-            float height;
+    inline float ui_scale_x() noexcept {
+#if !defined(RAYLIB_NO_WINDOW)
+        if (IsWindowReady()) {
+            const Vector2 dpi = GetWindowScaleDPI();           // e.g. {1.5, 1.5}
+            if (dpi.x > 0.f) return dpi.x;
+        }
+#endif
+        return 1.f;
+    }
 
-            // Conversion operator to raylib's Rectangle type  
-            operator struct Raylib_Rectangle() const {
-                return { x, y, width, height };
-            }
-        };
+    inline float ui_scale_y() noexcept {
+#if !defined(RAYLIB_NO_WINDOW)
+        if (IsWindowReady()) {
+            const Vector2 dpi = GetWindowScaleDPI();
+            if (dpi.y > 0.f) return dpi.y;
+        }
+#endif
+        return 1.f;
+    }
+
+    // Call this after init and whenever size/DPI can change
+    inline void sync_input_scaling() noexcept {
+#if !defined(RAYLIB_NO_WINDOW)
+        if (!IsWindowReady()) return;
+        SetMouseScale(ui_scale_x(), ui_scale_y());
+#endif
+    }
+
     struct RendererContext
     {
-        enum class RenderMode {
-            SingleTexture,
-            TextureAtlas
-        };
-
+        enum class RenderMode { SingleTexture, TextureAtlas };
         RenderMode mode = RenderMode::TextureAtlas;
     };
 
@@ -66,6 +83,8 @@ namespace almondnamespace::raylibcontext
     {
         BeginDrawing();
         ClearBackground(RAYWHITE);
+        // Viewport should be set by your context loop using GetRenderWidth/Height().
+        // (Do it there to avoid GL include churn here.)
     }
 
     inline void end_frame()
@@ -73,113 +92,65 @@ namespace almondnamespace::raylibcontext
         EndDrawing();
     }
 
-    inline void draw_sprite(SpriteHandle handle, std::span<const TextureAtlas* const> atlases, float x, float y, float width, float height) noexcept
+    // Draw sprite in either normalized (0..1) or logical pixels (pre-DPI) space.
+    inline void draw_sprite(SpriteHandle handle,
+        std::span<const TextureAtlas* const> atlases,
+        float x, float y, float width, float height) noexcept
     {
-        if (!handle.is_valid()) {
-            std::cerr << "[Raylib_DrawSprite] Invalid sprite handle.\n";
-            return;
-        }
+        if (!handle.is_valid()) return;
 
-        const int atlasIdx = static_cast<int>(handle.atlasIndex);
-        const int localIdx = static_cast<int>(handle.localIndex);
+        const int a = (int)handle.atlasIndex;
+        const int i = (int)handle.localIndex;
+        if (a < 0 || a >= (int)atlases.size()) return;
 
-        if (atlasIdx < 0 || atlasIdx >= static_cast<int>(atlases.size())) {
-            std::cerr << "[Raylib_DrawSprite] Atlas index out of bounds: " << atlasIdx << '\n';
-            return;
-        }
+        const TextureAtlas* atlas = atlases[a];
+        if (!atlas) return;
 
-        const TextureAtlas* atlas = atlases[atlasIdx];
-        if (!atlas) {
-            std::cerr << "[Raylib_DrawSprite] Null atlas pointer at index: " << atlasIdx << '\n';
-            return;
-        }
+        AtlasRegion r{};
+        if (!atlas->try_get_entry_info(i, r)) return;
 
-        AtlasRegion region{};
-        if (!atlas->try_get_entry_info(localIdx, region)) {
-            std::cerr << "[Raylib_DrawSprite] Sprite index out of bounds: " << localIdx << '\n';
-            return;
-        }
-
+        // Ensure GPU upload
         almondnamespace::raylibtextures::ensure_uploaded(*atlas);
+        auto it = almondnamespace::raylibtextures::raylib_gpu_atlases.find(atlas);
+        if (it == almondnamespace::raylibtextures::raylib_gpu_atlases.end() || it->second.texture.id == 0) return;
 
-        auto texIt = almondnamespace::raylibtextures::raylib_gpu_atlases.find(atlas);
-        if (texIt == almondnamespace::raylibtextures::raylib_gpu_atlases.end() || texIt->second.texture.id == 0) {
-            std::cerr << "[Raylib_DrawSprite] Atlas not uploaded or invalid texture ID: " << atlas->name << "\n";
-            return;
+        const Texture2D& tex = it->second.texture;
+
+        // Source rect in atlas pixels
+        Raylib_Rectangle src{ (float)r.x, (float)r.y, (float)r.width, (float)r.height };
+
+        const int rw = std::max(1, GetRenderWidth());
+        const int rh = std::max(1, GetRenderHeight());
+        const float sx = ui_scale_x(); // DPI scale for logical pixels
+        const float sy = ui_scale_y();
+
+        // Consider rect "normalized" if any dimension is 0<..<=1 or coords are in [0..1]
+        const bool normalized =
+            (width > 0.f && width <= 1.f) ||
+            (height > 0.f && height <= 1.f) ||
+            ((x >= 0.f && x <= 1.f) && (y >= 0.f && y <= 1.f));
+
+        float px, py, pw, ph;
+        if (normalized) {
+            // 0..1 -> framebuffer pixels
+            px = x * rw;
+            py = y * rh;
+            pw = (width > 0.f ? width * rw : (float)r.width);
+            ph = (height > 0.f ? height * rh : (float)r.height);
+        }
+        else {
+            // logical pixels -> DPI-scaled pixels
+            px = x * sx;
+            py = y * sy;
+            pw = (width > 0.f ? width * sx : (float)r.width * sx);
+            ph = (height > 0.f ? height * sy : (float)r.height * sy);
         }
 
-        const Texture2D& texture = texIt->second.texture;
-        Rect srcRect{
-            static_cast<float>(region.x),
-            static_cast<float>(region.y),
-            static_cast<float>(region.width),
-            static_cast<float>(region.height)
-        };
+        pw = std::max(pw, 1.0f);
+        ph = std::max(ph, 1.0f);
 
-        const int renderWidth = GetRenderWidth();
-        const int renderHeight = GetRenderHeight();
-        const int screenWidth = GetScreenWidth();
-        const int screenHeight = GetScreenHeight();
-
-        float drawX = x;
-        float drawY = y;
-        float drawWidth = width;
-        float drawHeight = height;
-
-        const bool widthNormalized = drawWidth > 0.f && drawWidth <= 1.f;
-        const bool heightNormalized = drawHeight > 0.f && drawHeight <= 1.f;
-
-        if (widthNormalized) {
-            if (drawX >= 0.f && drawX <= 1.f)
-                drawX *= static_cast<float>(renderWidth);
-            drawWidth = std::max(drawWidth * static_cast<float>(renderWidth), 1.0f);
-        }
-        if (heightNormalized) {
-            if (drawY >= 0.f && drawY <= 1.f)
-                drawY *= static_cast<float>(renderHeight);
-            drawHeight = std::max(drawHeight * static_cast<float>(renderHeight), 1.0f);
-        }
-
-        if (drawWidth <= 0.f)
-            drawWidth = static_cast<float>(region.width);
-        if (drawHeight <= 0.f)
-            drawHeight = static_cast<float>(region.height);
-
-        if (!widthNormalized) {
-            const float screenWf = static_cast<float>(std::max(screenWidth, 1));
-            const float renderWf = static_cast<float>(std::max(renderWidth, 1));
-            if (screenWf > 0.f && renderWf > 0.f) {
-                const float scaleX = renderWf / screenWf;
-                if (scaleX > 1.0f) {
-                    drawX *= scaleX;
-                    drawWidth *= scaleX;
-                }
-            }
-        }
-
-        if (!heightNormalized) {
-            const float screenHf = static_cast<float>(std::max(screenHeight, 1));
-            const float renderHf = static_cast<float>(std::max(renderHeight, 1));
-            if (screenHf > 0.f && renderHf > 0.f) {
-                const float scaleY = renderHf / screenHf;
-                if (scaleY > 1.0f) {
-                    drawY *= scaleY;
-                    drawHeight *= scaleY;
-                }
-            }
-        }
-
-        Rect destRect{
-            drawX,
-            drawY,
-            drawWidth,
-            drawHeight
-        };
-
-        Vector2 origin{ 0.0f, 0.0f };  // No rotation offset
-        float rotation = 0.0f;
-
-        DrawTexturePro(texture, srcRect, destRect, origin, rotation, WHITE);
+        Raylib_Rectangle dst{ px, py, pw, ph };
+        DrawTexturePro(tex, src, dst, Vector2{ 0,0 }, 0.0f, WHITE);
     }
 
 } // namespace almondnamespace::raylibcontext

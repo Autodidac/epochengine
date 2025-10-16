@@ -21,7 +21,7 @@
  *   See LICENSE file for full terms.                         *
  *                                                            *
  **************************************************************/
- // araylibcontext.hpp
+// araylibcontext.hpp
 #pragma once
 
 #include "aengineconfig.hpp"
@@ -53,6 +53,10 @@ namespace almondnamespace::core { void MakeDockable(HWND hwnd, HWND parent); }
 
 // Raylib last
 #include <raylib.h>
+#if !defined(RAYLIB_NO_WINDOW)
+extern "C" void CloseWindow(void);
+#endif
+
 
 namespace almondnamespace::raylibcontext
 {
@@ -65,16 +69,25 @@ namespace almondnamespace::raylibcontext
         const int W = std::max(1, w);
         const int H = std::max(1, h);
 
+#if defined(_WIN32)
         if (updateNativeWindow && s_raylibstate.hwnd) {
-            // Make the child window fit the parent client area precisely
             ::SetWindowPos(s_raylibstate.hwnd, nullptr, 0, 0, W, H,
                 SWP_NOZORDER | SWP_FRAMECHANGED | SWP_SHOWWINDOW);
         }
+#endif
 
 #if !defined(RAYLIB_NO_WINDOW)
-        // Also force GLFW/raylib to update its framebuffer size (critical after SetParent)
         if (updateRaylibWindow && ::IsWindowReady()) {
-            ::SetWindowSize(W, H);
+            // Convert physical (framebuffer) → logical for GLFW/raylib
+            float dx = 1.0f, dy = 1.0f;
+            const Vector2 dpi = ::GetWindowScaleDPI();
+            if (dpi.x > 0.0f) dx = dpi.x;
+            if (dpi.y > 0.0f) dy = dpi.y;
+
+            const int logicalW = std::max(1, (int)std::lround((double)W / dx));
+            const int logicalH = std::max(1, (int)std::lround((double)H / dy));
+
+            ::SetWindowSize(logicalW, logicalH);
         }
 #endif
     }
@@ -83,18 +96,9 @@ namespace almondnamespace::raylibcontext
     {
 #if !defined(RAYLIB_NO_WINDOW)
         if (!::IsWindowReady()) return;
-
-        const int logicalWidth = ::GetScreenWidth();
-        const int logicalHeight = ::GetScreenHeight();
-        const int renderWidth = ::GetRenderWidth();
-        const int renderHeight = ::GetRenderHeight();
-
-        if (logicalWidth > 0 && logicalHeight > 0 &&
-            renderWidth > 0 && renderHeight > 0)
-        {
-            ::SetMouseScale(static_cast<float>(renderWidth) / static_cast<float>(logicalWidth),
-                static_cast<float>(renderHeight) / static_cast<float>(logicalHeight));
-        }
+        // Our GUI and coordinates are already in framebuffer pixels.
+        // Do NOT scale the mouse further or it overshoots at high DPI.
+        ::SetMouseScale(1.0f, 1.0f);
 #endif
     }
 
@@ -250,17 +254,13 @@ namespace almondnamespace::raylibcontext
             {
                 const int safeW = std::max(1, ww);
                 const int safeH = std::max(1, hh);
-                auto locked = ctxWeak.lock();
-                dispatch_resize(locked,
-                    static_cast<unsigned int>(safeW),
-                    static_cast<unsigned int>(safeH),
-                    /*updateRaylibWindow=*/true,
-                    /*notifyClient=*/false);
+                if (auto locked = ctxWeak.lock()) {
+                    dispatch_resize(locked, (unsigned)safeW, (unsigned)safeH,
+                        /*updateRaylibWindow=*/true,
+                        /*notifyClient=*/false);
+                }
             };
-
-        if (ctx) {
-            ctx->onResize = s_raylibstate.onResize;
-        }
+        if (ctx) ctx->onResize = s_raylibstate.onResize;
 
         // Seed sizes into state (no native calls yet)
         dispatch_resize(ctx, clampedWidth, clampedHeight, /*updateRaylibWindow=*/false, /*notifyClient=*/false);
@@ -269,45 +269,43 @@ namespace almondnamespace::raylibcontext
         if (initialized) return true;
         initialized = true;
 
-        auto& backend = almondnamespace::raylibtextures::get_raylib_backend();
-        auto& rlState = backend.rlState;
+        SetConfigFlags(FLAG_WINDOW_RESIZABLE | FLAG_WINDOW_HIGHDPI);
+        if (windowTitle.empty()) windowTitle = "Raylib Window";
 
-        // If you need resizable window behavior, set before InitWindow:
-        SetConfigFlags(FLAG_WINDOW_RESIZABLE);
-        SetConfigFlags(FLAG_WINDOW_HIGHDPI);
-        if (windowTitle.empty()) {
-            windowTitle = "Raylib Window";
-        }
-        InitWindow(static_cast<int>(s_raylibstate.width),
-            static_cast<int>(s_raylibstate.height),
-            windowTitle.c_str());
+        InitWindow((int)s_raylibstate.width, (int)s_raylibstate.height, windowTitle.c_str());
         SetWindowTitle(windowTitle.c_str());
         update_mouse_scale();
         sync_framebuffer_size(ctx, /*notifyClient=*/false);
 
         // Mirror raylib’s native handles
+#if defined(_WIN32)
         s_raylibstate.hwnd = (HWND)GetWindowHandle();
         s_raylibstate.hdc = GetDC(s_raylibstate.hwnd);
         s_raylibstate.glContext = wglGetCurrentContext();
+#endif
 
-        // Keep ctx in sync with actual handles (parity with OpenGL path)
         if (ctx) {
             ctx->hwnd = s_raylibstate.hwnd;
             ctx->hdc = s_raylibstate.hdc;
             ctx->hglrc = s_raylibstate.glContext;
-            ctx->width = static_cast<int>(s_raylibstate.width);
-            ctx->height = static_cast<int>(s_raylibstate.height);
+            ctx->width = (int)s_raylibstate.width;
+            ctx->height = (int)s_raylibstate.height;
         }
 
         // If docking into a parent, reparent + hard resize both sides once
         if (s_raylibstate.parent) {
-            SetParent(s_raylibstate.hwnd, s_raylibstate.parent);
-            ShowWindow(s_raylibstate.hwnd, SW_SHOW);
+            ::SetParent(s_raylibstate.hwnd, s_raylibstate.parent);
+            ::ShowWindow(s_raylibstate.hwnd, SW_SHOW);
 
-            LONG_PTR style = GetWindowLongPtr(s_raylibstate.hwnd, GWL_STYLE);
+            // Add clip styles for clean child docking
+            LONG_PTR style = ::GetWindowLongPtr(s_raylibstate.hwnd, GWL_STYLE);
             style &= ~WS_OVERLAPPEDWINDOW;
-            style |= WS_CHILD | WS_VISIBLE;
-            SetWindowLongPtr(s_raylibstate.hwnd, GWL_STYLE, style);
+            style |= (WS_CHILD | WS_VISIBLE | WS_CLIPSIBLINGS | WS_CLIPCHILDREN);
+            ::SetWindowLongPtr(s_raylibstate.hwnd, GWL_STYLE, style);
+
+            LONG_PTR ex = ::GetWindowLongPtr(s_raylibstate.hwnd, GWL_EXSTYLE);
+            ex &= ~WS_EX_APPWINDOW;
+            ::SetWindowLongPtr(s_raylibstate.hwnd, GWL_EXSTYLE, ex);
 
 #if defined(_WIN32)
             almondnamespace::core::MakeDockable(s_raylibstate.hwnd, s_raylibstate.parent);
@@ -315,30 +313,31 @@ namespace almondnamespace::raylibcontext
 
             if (!windowTitle.empty()) {
                 const std::wstring wideTitle(windowTitle.begin(), windowTitle.end());
-                SetWindowTextW(s_raylibstate.hwnd, wideTitle.c_str());
+                ::SetWindowTextW(s_raylibstate.hwnd, wideTitle.c_str());
             }
 
             RECT client{};
-            GetClientRect(s_raylibstate.parent, &client);
-            const int pw = std::max<LONG>(1, client.right - client.left);
-            const int ph = std::max<LONG>(1, client.bottom - client.top);
+            ::GetClientRect(s_raylibstate.parent, &client);
+            const int pw = std::max<LONG>(1, client.right - client.left);  // physical
+            const int ph = std::max<LONG>(1, client.bottom - client.top);   // physical
 
-            // Force *both* Win32 child and GLFW framebuffer sizes
+            // Fit child HWND (physical) + tell raylib/GLFW in logical units
             apply_native_resize(pw, ph,
                 /*updateNativeWindow=*/true,
                 /*updateRaylibWindow=*/true);
 
-            // Sync back to state/ctx
-            s_raylibstate.width = static_cast<unsigned int>(pw);
-            s_raylibstate.height = static_cast<unsigned int>(ph);
+            // Sync back to state/ctx with physical size
+            s_raylibstate.width = (unsigned)pw;
+            s_raylibstate.height = (unsigned)ph;
             if (ctx) { ctx->width = pw; ctx->height = ph; }
 
             // Notify client once (optional)
             if (s_raylibstate.onResize) { s_raylibstate.onResize(pw, ph); }
 
             // Let parent layouts react if they care
-            PostMessage(s_raylibstate.parent, WM_SIZE, 0, MAKELPARAM(pw, ph));
+            ::PostMessage(s_raylibstate.parent, WM_SIZE, 0, MAKELPARAM(pw, ph));
 
+            // Final sync from actual framebuffer (handles any rounding)
             sync_framebuffer_size(ctx, /*notifyClient=*/true);
         }
 
@@ -433,13 +432,32 @@ namespace almondnamespace::raylibcontext
     {
         if (!s_raylibstate.running) return;
 
-        // IMPORTANT: raylib CloseWindow() (no HWND overload)
-        ::CloseWindow(s_raylibstate.hwnd);
-
-        if (s_raylibstate.hdc && s_raylibstate.hwnd) {
-            ::ReleaseDC(s_raylibstate.hwnd, s_raylibstate.hdc);
-            s_raylibstate.hdc = nullptr;
+        // Detach current GL context first (avoid dangling current on destroy)
+#if defined(_WIN32)
+        if (s_raylibstate.hdc && s_raylibstate.glContext) {
+            wglMakeCurrent(nullptr, nullptr);
         }
+#endif
+
+#if !defined(RAYLIB_NO_WINDOW)
+        // Proper raylib shutdown (GLFW + GL + internal state)
+        if (IsWindowReady()) {
+            CloseWindow();  // raylib’s zero-arg API
+        }
+#endif
+
+#if defined(_WIN32)
+        // If re-parenting/styling kept the child HWND alive, force-destroy it.
+        if (s_raylibstate.hwnd && ::IsWindow(s_raylibstate.hwnd)) {
+            if (s_raylibstate.hdc) {
+                ::ReleaseDC(s_raylibstate.hwnd, s_raylibstate.hdc);
+                s_raylibstate.hdc = nullptr;
+            }
+            ::DestroyWindow(s_raylibstate.hwnd);
+        }
+        s_raylibstate.hwnd = nullptr;
+        s_raylibstate.glContext = nullptr;
+#endif
 
         s_raylibstate.running = false;
 
@@ -449,7 +467,6 @@ namespace almondnamespace::raylibcontext
             ctx->hglrc = nullptr;
         }
     }
-
     // ──────────────────────────────────────────────
     // Helpers
     // ──────────────────────────────────────────────

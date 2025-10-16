@@ -174,6 +174,7 @@
 	// NOTE: If you want to use raylib with OpenGL 3.3+ core profile, you must define
 	//       RAYLIB_NO_OPENGL_ES2 before including raylib.h
 #define RAYLIB_NO_WINDOW // Use raylib without window management
+#define RAYLIB_STATIC
 //#define RAYLIB_NO_OPENGL_ES2 // Use OpenGL 3.3+ core profile
 //	#define RAYLIB_NO_OPENGL_ES3 // Use OpenGL 3.3+ core profile
 //	#define RAYLIB_NO_OPENGL_11 // Use OpenGL 3.3+ core profile
