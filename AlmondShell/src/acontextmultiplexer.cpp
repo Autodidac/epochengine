@@ -306,12 +306,9 @@ namespace almondnamespace::core
     }
 
     // ----------  MultiContext Manager Initialize  -------------------------------------------------------
-    bool MultiContextManager::Initialize(HINSTANCE hInst,
-        int RayLibWinCount, int SDLWinCount, int SFMLWinCount,
-        int OpenGLWinCount, int SoftwareWinCount, bool parented)
+    bool MultiContextManager::Initialize(HINSTANCE hInst, int RayLibWinCount, int SDLWinCount, int SFMLWinCount, int OpenGLWinCount, int SoftwareWinCount, bool parented)
     {
-        const int totalRequested =
-            RayLibWinCount + SDLWinCount + SFMLWinCount + OpenGLWinCount + SoftwareWinCount;
+        const int totalRequested = RayLibWinCount + SDLWinCount + SFMLWinCount + OpenGLWinCount + SoftwareWinCount;
         if (totalRequested <= 0) return false;
 
         s_activeInstance = this;
@@ -322,7 +319,8 @@ namespace almondnamespace::core
         InitializeAllContexts();
 
         // ---------------- Parent (dock container) ----------------
-        if (parented) {
+        if (parented) 
+        {
             int cols = 1, rows = 1;
             while (cols * rows < totalRequested) (cols <= rows ? ++cols : ++rows);
 
@@ -336,8 +334,7 @@ namespace almondnamespace::core
             DWORD style = WS_OVERLAPPEDWINDOW | WS_VISIBLE;
             AdjustWindowRect(&want, style, FALSE);
 
-            parent = CreateWindowEx(
-                0, L"AlmondParent", L"Almond Docking",
+            parent = CreateWindowEx(0, L"AlmondParent", L"Almond Docking",
                 style,
                 CW_USEDEFAULT, CW_USEDEFAULT,
                 want.right - want.left, want.bottom - want.top,
@@ -354,14 +351,14 @@ namespace almondnamespace::core
 #ifdef ALMOND_USING_OPENGL
         // ---------------- Shared dummy GL context (for wglShareLists) ----------------
         {
-            HWND dummy = CreateWindowEx(WS_EX_TOOLWINDOW, L"AlmondChild", L"Dummy",
-                WS_POPUP, 0, 0, 1, 1, nullptr, nullptr, hInst, nullptr);
+            HWND dummy = CreateWindowEx(WS_EX_TOOLWINDOW, L"AlmondChild", L"Dummy", WS_POPUP, 0, 0, 1, 1, nullptr, nullptr, hInst, nullptr);
             if (!dummy) return false;
 
             HDC dummyDC = GetDC(dummy);
             SetupPixelFormat(dummyDC);
             sharedContext = wglCreateContext(dummyDC);
-            if (!sharedContext) {
+            if (!sharedContext) 
+            {
                 ReleaseDC(dummy, dummyDC);
                 DestroyWindow(dummy);
                 throw std::runtime_error("Failed to create shared OpenGL context");
@@ -380,7 +377,8 @@ namespace almondnamespace::core
 #endif
 
         // ---------------- Helper: create N windows for a backend ----------------
-        auto make_backend_windows = [&](ContextType type, int count) {
+        auto make_backend_windows = [&](ContextType type, int count) 
+        {
             if (count <= 0) return;
 
             std::vector<HWND> created;
@@ -388,16 +386,19 @@ namespace almondnamespace::core
             std::vector<std::string> createdTitles;
             createdTitles.reserve(count);
 
-            for (int i = 0; i < count; ++i) {
+            for (int i = 0; i < count; ++i) 
+            {
                 const std::wstring windowTitle = BuildChildWindowTitle(type, i);
                 const std::string narrowTitle = almondnamespace::text::narrow_utf8(windowTitle);
-                HWND hwnd = CreateWindowEx(
-                    0, L"AlmondChild", windowTitle.c_str(),
+                HWND hwnd = CreateWindowEx(0, L"AlmondChild", windowTitle.c_str(),
                     (parent ? WS_CHILD | WS_VISIBLE : WS_OVERLAPPEDWINDOW | WS_VISIBLE),
                     0, 0, 400, 300,
                     parent, nullptr, hInst, nullptr);
 
-                if (!hwnd) continue;
+                if (!hwnd)
+                {
+                    continue;
+                }
 
                 SetWindowTextW(hwnd, windowTitle.c_str());
 
@@ -405,7 +406,8 @@ namespace almondnamespace::core
                 HGLRC glrc = nullptr;
 
 #ifdef ALMOND_USING_OPENGL
-                if (type == ContextType::OpenGL) {
+                if (type == ContextType::OpenGL) 
+                {
                     glrc = CreateSharedGLContext(hdc);
                 }
 #endif
@@ -413,8 +415,11 @@ namespace almondnamespace::core
                 auto winPtr = std::make_unique<WindowData>(hwnd, hdc, glrc, true, type);
                 winPtr->titleWide = windowTitle;
                 winPtr->titleNarrow = narrowTitle;
-                if (parent) MakeDockable(hwnd, parent);
+                if (parent)
                 {
+                    MakeDockable(hwnd, parent);
+                }
+				{ // lock the scoped window mutex while modifying the windows list
                     std::scoped_lock lock(windowsMutex);
                     windows.emplace_back(std::move(winPtr));
                 }
