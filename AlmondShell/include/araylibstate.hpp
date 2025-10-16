@@ -57,10 +57,6 @@ namespace almondnamespace::raylibcontext
         unsigned int pendingHeight{ 0 };
         bool pendingUpdateWindow{ false };
         bool pendingNotifyClient{ false };
-        unsigned int framebufferWidth{ 0 };
-        unsigned int framebufferHeight{ 0 };
-        float dpiScaleX{ 1.0f };
-        float dpiScaleY{ 1.0f };
         unsigned int width{ 400 };
         unsigned int height{ 300 };
         bool running{ false };
