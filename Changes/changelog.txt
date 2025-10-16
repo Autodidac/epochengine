@@ -1,12 +1,8 @@
 # Changelog
 
-## [v0.59.5]
-- Corrected the Raylib context resize flow to mirror framebuffer and DPI scale changes before rendering so UI elements keep their intended size while the window grows.
-- Documented the resize fix in the roadmap and bumped the engine version metadata.
-
 ## [v0.59.4]
 - Reattached the docking subclass hook when SDL3 and Raylib backends create child windows so docked panes drag and resize correctly again.
-- Initial attempt to normalise Raylib sprite coordinates for HiDPI rendering (superseded by the v0.59.5 resize pipeline fix).
+- Normalised Raylib sprite coordinates to account for render-to-screen DPI scaling, preventing menu buttons from shrinking as windows scale up.
 
 ## [v0.59.3]
 - Fixed the Windows build by persisting each window's narrow title in the multiplexer so SDL and Raylib backends receive the pane label during initialisation.

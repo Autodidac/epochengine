@@ -35,7 +35,6 @@
 #include <iostream>
 //#undef Rectangle // Avoid conflict with raylib Rectangle
 #include <algorithm>
-#include <cmath>
 
 #include <raylib.h> // Ensure this is included after platform-specific headers
 namespace almondnamespace::raylibcontext
@@ -117,21 +116,10 @@ namespace almondnamespace::raylibcontext
             static_cast<float>(region.height)
         };
 
-        const unsigned int fbWidthStored = s_raylibstate.framebufferWidth ? s_raylibstate.framebufferWidth : s_raylibstate.width;
-        const unsigned int fbHeightStored = s_raylibstate.framebufferHeight ? s_raylibstate.framebufferHeight : s_raylibstate.height;
-
-        const float framebufferWidth = static_cast<float>(std::max(1u, fbWidthStored));
-        const float framebufferHeight = static_cast<float>(std::max(1u, fbHeightStored));
-        const float logicalWidth = static_cast<float>(std::max(1u, s_raylibstate.width));
-        const float logicalHeight = static_cast<float>(std::max(1u, s_raylibstate.height));
-
-        float scaleX = logicalWidth > 0.f ? framebufferWidth / logicalWidth : 1.0f;
-        float scaleY = logicalHeight > 0.f ? framebufferHeight / logicalHeight : 1.0f;
-
-        if (!std::isfinite(scaleX) || scaleX <= 0.f)
-            scaleX = 1.0f;
-        if (!std::isfinite(scaleY) || scaleY <= 0.f)
-            scaleY = 1.0f;
+        const int renderWidth = GetRenderWidth();
+        const int renderHeight = GetRenderHeight();
+        const int screenWidth = GetScreenWidth();
+        const int screenHeight = GetScreenHeight();
 
         float drawX = x;
         float drawY = y;
@@ -143,26 +131,39 @@ namespace almondnamespace::raylibcontext
 
         if (widthNormalized) {
             if (drawX >= 0.f && drawX <= 1.f)
-                drawX *= framebufferWidth;
-            drawWidth = std::max(drawWidth * framebufferWidth, 1.0f);
-        } else {
-            drawX *= scaleX;
-            drawWidth *= scaleX;
+                drawX *= static_cast<float>(renderWidth);
+            drawWidth = std::max(drawWidth * static_cast<float>(renderWidth), 1.0f);
         }
-
         if (heightNormalized) {
             if (drawY >= 0.f && drawY <= 1.f)
-                drawY *= framebufferHeight;
-            drawHeight = std::max(drawHeight * framebufferHeight, 1.0f);
-        } else {
-            drawY *= scaleY;
-            drawHeight *= scaleY;
+                drawY *= static_cast<float>(renderHeight);
+            drawHeight = std::max(drawHeight * static_cast<float>(renderHeight), 1.0f);
         }
 
         if (drawWidth <= 0.f)
             drawWidth = static_cast<float>(region.width);
         if (drawHeight <= 0.f)
             drawHeight = static_cast<float>(region.height);
+
+        if (!widthNormalized) {
+            const float screenWf = static_cast<float>(std::max(screenWidth, 1));
+            const float renderWf = static_cast<float>(std::max(renderWidth, 1));
+            if (screenWf > 0.f && renderWf > 0.f) {
+                const float scaleX = renderWf / screenWf;
+                drawX *= scaleX;
+                drawWidth *= scaleX;
+            }
+        }
+
+        if (!heightNormalized) {
+            const float screenHf = static_cast<float>(std::max(screenHeight, 1));
+            const float renderHf = static_cast<float>(std::max(renderHeight, 1));
+            if (screenHf > 0.f && renderHf > 0.f) {
+                const float scaleY = renderHf / screenHf;
+                drawY *= scaleY;
+                drawHeight *= scaleY;
+            }
+        }
 
         Rect destRect{
             drawX,

@@ -111,11 +111,6 @@ namespace almondnamespace::raylibcontext
             s_raylibstate.width = safeWidth;
             s_raylibstate.height = safeHeight;
 
-            if (s_raylibstate.framebufferWidth == 0)
-                s_raylibstate.framebufferWidth = safeWidth;
-            if (s_raylibstate.framebufferHeight == 0)
-                s_raylibstate.framebufferHeight = safeHeight;
-
             if (ctx) {
                 ctx->width = static_cast<int>(safeWidth);
                 ctx->height = static_cast<int>(safeHeight);
@@ -221,36 +216,13 @@ namespace almondnamespace::raylibcontext
         s_raylibstate.hdc = GetDC(s_raylibstate.hwnd);
         s_raylibstate.glContext = wglGetCurrentContext();
 
-        const int initialRenderWidth = GetRenderWidth();
-        const int initialRenderHeight = GetRenderHeight();
-        if (initialRenderWidth > 0)
-            s_raylibstate.framebufferWidth = static_cast<unsigned int>(initialRenderWidth);
-        else if (s_raylibstate.framebufferWidth == 0)
-            s_raylibstate.framebufferWidth = s_raylibstate.width;
-
-        if (initialRenderHeight > 0)
-            s_raylibstate.framebufferHeight = static_cast<unsigned int>(initialRenderHeight);
-        else if (s_raylibstate.framebufferHeight == 0)
-            s_raylibstate.framebufferHeight = s_raylibstate.height;
-
-        Vector2 dpiScale = GetWindowScaleDPI();
-        if (dpiScale.x > 0.f)
-            s_raylibstate.dpiScaleX = dpiScale.x;
-        else
-            s_raylibstate.dpiScaleX = 1.0f;
-
-        if (dpiScale.y > 0.f)
-            s_raylibstate.dpiScaleY = dpiScale.y;
-        else
-            s_raylibstate.dpiScaleY = 1.0f;
-
         // Keep ctx in sync with actual handles (parity with OpenGL path)
         if (ctx) {
             ctx->hwnd = s_raylibstate.hwnd;
             ctx->hdc = s_raylibstate.hdc;
             ctx->hglrc = s_raylibstate.glContext;
-            ctx->width = static_cast<int>(std::max(1u, s_raylibstate.framebufferWidth));
-            ctx->height = static_cast<int>(std::max(1u, s_raylibstate.framebufferHeight));
+            ctx->width = static_cast<int>(s_raylibstate.width);
+            ctx->height = static_cast<int>(s_raylibstate.height);
         }
 
         // If docking into a parent, reparent + hard resize both sides once
@@ -318,56 +290,20 @@ namespace almondnamespace::raylibcontext
         atlasmanager::process_pending_uploads(core::ContextType::RayLib);
 
         // Observe current window size from raylib; coalesce through dispatcher
-        const unsigned int prevWindowW = s_raylibstate.width;
-        const unsigned int prevWindowH = s_raylibstate.height;
+        const unsigned int prevW = s_raylibstate.width;
+        const unsigned int prevH = s_raylibstate.height;
 
-        unsigned int observedWindowW = prevWindowW;
-        unsigned int observedWindowH = prevWindowH;
+        unsigned int obsW = prevW;
+        unsigned int obsH = prevH;
 
-        const int screenW = GetScreenWidth();
-        const int screenH = GetScreenHeight();
-        if (screenW > 0) observedWindowW = static_cast<unsigned int>(screenW);
-        if (screenH > 0) observedWindowH = static_cast<unsigned int>(screenH);
+        const int rw = GetScreenWidth();
+        const int rh = GetScreenHeight();
+        if (rw > 0) obsW = static_cast<unsigned int>(rw);
+        if (rh > 0) obsH = static_cast<unsigned int>(rh);
 
-        if (observedWindowW != prevWindowW || observedWindowH != prevWindowH) {
+        if (obsW != prevW || obsH != prevH) {
             // Do NOT push SetWindowSize here; we only mirror and notify
-            dispatch_resize(ctx, observedWindowW, observedWindowH, /*updateRaylibWindow=*/false, /*notifyClient=*/true);
-        }
-
-        unsigned int observedFramebufferW = s_raylibstate.framebufferWidth;
-        unsigned int observedFramebufferH = s_raylibstate.framebufferHeight;
-
-        const int renderW = GetRenderWidth();
-        const int renderH = GetRenderHeight();
-        if (renderW > 0)
-            observedFramebufferW = static_cast<unsigned int>(renderW);
-        else if (observedFramebufferW == 0)
-            observedFramebufferW = observedWindowW;
-
-        if (renderH > 0)
-            observedFramebufferH = static_cast<unsigned int>(renderH);
-        else if (observedFramebufferH == 0)
-            observedFramebufferH = observedWindowH;
-
-        s_raylibstate.framebufferWidth = observedFramebufferW;
-        s_raylibstate.framebufferHeight = observedFramebufferH;
-        s_raylibstate.screenWidth = static_cast<int>(observedWindowW);
-        s_raylibstate.screenHeight = static_cast<int>(observedWindowH);
-
-        Vector2 dpiScale = GetWindowScaleDPI();
-        if (dpiScale.x > 0.f)
-            s_raylibstate.dpiScaleX = dpiScale.x;
-        else
-            s_raylibstate.dpiScaleX = 1.0f;
-
-        if (dpiScale.y > 0.f)
-            s_raylibstate.dpiScaleY = dpiScale.y;
-        else
-            s_raylibstate.dpiScaleY = 1.0f;
-
-        if (ctx) {
-            ctx->width = static_cast<int>(observedFramebufferW);
-            ctx->height = static_cast<int>(observedFramebufferH);
+            dispatch_resize(ctx, obsW, obsH, /*updateRaylibWindow=*/false, /*notifyClient=*/true);
         }
 
         if (!wglMakeCurrent(s_raylibstate.hdc, s_raylibstate.glContext)) {
@@ -425,10 +361,6 @@ namespace almondnamespace::raylibcontext
         }
 
         s_raylibstate.running = false;
-        s_raylibstate.framebufferWidth = 0;
-        s_raylibstate.framebufferHeight = 0;
-        s_raylibstate.dpiScaleX = 1.0f;
-        s_raylibstate.dpiScaleY = 1.0f;
 
         if (ctx) {
             ctx->hwnd = nullptr;
@@ -440,14 +372,8 @@ namespace almondnamespace::raylibcontext
     // ──────────────────────────────────────────────
     // Helpers
     // ──────────────────────────────────────────────
-    inline int  raylib_get_width()  noexcept {
-        const unsigned int fb = s_raylibstate.framebufferWidth ? s_raylibstate.framebufferWidth : s_raylibstate.width;
-        return static_cast<int>(std::max(1u, fb));
-    }
-    inline int  raylib_get_height() noexcept {
-        const unsigned int fb = s_raylibstate.framebufferHeight ? s_raylibstate.framebufferHeight : s_raylibstate.height;
-        return static_cast<int>(std::max(1u, fb));
-    }
+    inline int  raylib_get_width()  noexcept { return static_cast<int>(s_raylibstate.width); }
+    inline int  raylib_get_height() noexcept { return static_cast<int>(s_raylibstate.height); }
     inline void raylib_set_window_title(const std::string& title) { SetWindowTitle(title.c_str()); }
     inline bool RaylibIsRunning(std::shared_ptr<core::Context>) { return s_raylibstate.running; }
 
