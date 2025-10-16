@@ -60,12 +60,12 @@ namespace almondnamespace::raylibcontext
     static almondnamespace::contextwindow::WindowData* g_raylibwindowContext;
 
     // --- Helper: apply size to Win32 child + raylib/GLFW (after docking) ---
-    inline void apply_native_resize(int w, int h, bool updateRaylibWindow)
+    inline void apply_native_resize(int w, int h, bool updateNativeWindow, bool updateRaylibWindow)
     {
         const int W = std::max(1, w);
         const int H = std::max(1, h);
 
-        if (s_raylibstate.hwnd) {
+        if (updateNativeWindow && s_raylibstate.hwnd) {
             // Make the child window fit the parent client area precisely
             ::SetWindowPos(s_raylibstate.hwnd, nullptr, 0, 0, W, H,
                 SWP_NOZORDER | SWP_FRAMECHANGED | SWP_SHOWWINDOW);
@@ -116,10 +116,32 @@ namespace almondnamespace::raylibcontext
                 ctx->height = static_cast<int>(safeHeight);
             }
 
+            bool hasNativeParent = false;
+#if defined(_WIN32)
+            HWND observedParent = nullptr;
+            if (s_raylibstate.hwnd) {
+                observedParent = ::GetParent(s_raylibstate.hwnd);
+                if (observedParent && observedParent != ::GetDesktopWindow()) {
+                    hasNativeParent = true;
+                }
+                else {
+                    observedParent = nullptr;
+                }
+                s_raylibstate.parent = observedParent;
+            }
+            else if (s_raylibstate.parent) {
+                hasNativeParent = true;
+            }
+#endif
+
+            const bool updateNativeWindow = hasNativeParent;
+            const bool updateFramebuffer = nextUpdateWindow || hasNativeParent;
+
             // Push to native window + framebuffer (both sides)
             apply_native_resize(static_cast<int>(safeWidth),
                 static_cast<int>(safeHeight),
-                /*updateRaylibWindow=*/nextUpdateWindow);
+                updateNativeWindow,
+                updateFramebuffer);
 
             // Notify client
             if (nextNotifyClient && s_raylibstate.clientOnResize) {
@@ -183,7 +205,7 @@ namespace almondnamespace::raylibcontext
                 dispatch_resize(locked,
                     static_cast<unsigned int>(safeW),
                     static_cast<unsigned int>(safeH),
-                    /*updateRaylibWindow=*/false,  // avoid feedback loop; caller decides
+                    /*updateRaylibWindow=*/true,
                     /*notifyClient=*/false);
             };
 
@@ -250,7 +272,9 @@ namespace almondnamespace::raylibcontext
             const int ph = std::max<LONG>(1, client.bottom - client.top);
 
             // Force *both* Win32 child and GLFW framebuffer sizes
-            apply_native_resize(pw, ph, /*updateRaylibWindow=*/true);
+            apply_native_resize(pw, ph,
+                /*updateNativeWindow=*/true,
+                /*updateRaylibWindow=*/true);
 
             // Sync back to state/ctx
             s_raylibstate.width = static_cast<unsigned int>(pw);
