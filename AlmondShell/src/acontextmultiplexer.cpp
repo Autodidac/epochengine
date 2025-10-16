@@ -400,8 +400,6 @@ namespace almondnamespace::core
                     continue;
                 }
 
-                const HWND placeholder = hwnd;
-
                 SetWindowTextW(hwnd, windowTitle.c_str());
 
                 HDC hdc = GetDC(hwnd);
@@ -550,26 +548,6 @@ namespace almondnamespace::core
 #endif
                 default:
                     break;
-                }
-
-                if (ctx && ctx->hwnd && ctx->hwnd != placeholder && w)
-                {
-#if defined(_WIN32)
-                    if (w->hdc && w->hdc != ctx->hdc) {
-                        ReleaseDC(placeholder, w->hdc);
-                    }
-                    if (w->glContext && w->glContext != ctx->hglrc) {
-                        wglMakeCurrent(nullptr, nullptr);
-                        wglDeleteContext(w->glContext);
-                    }
-#endif
-                    w->hwnd = ctx->hwnd;
-                    w->hdc = ctx->hdc;
-                    w->glContext = ctx->hglrc;
-
-#if defined(_WIN32)
-                    DestroyWindow(placeholder);
-#endif
                 }
             }
             };

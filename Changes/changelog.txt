@@ -1,8 +1,5 @@
 # Changelog
 
-## [v0.59.8]
-- Removed the Win32 placeholder windows once SDL3 and Raylib create their native panes so the multi-context manager stops spawning duplicate blank hosts alongside the real renderer output.
-
 ## [v0.59.7]
 - Enabled Raylib HiDPI windowing by setting the high-DPI flag, mirroring framebuffer dimensions into context state, and rescaling mouse input so docked overlays stay pixel-correct on scaled displays.
 - Synced post-docking framebuffer sizes into resize dispatch to stop multi-monitor layouts from inheriting stale logical dimensions when native scaling changes mid-session.
