@@ -1,5 +1,8 @@
 # Changelog
 
+## [v0.59.7]
+- Corrected Raylib sprite scaling so menu buttons now grow proportionally with the window instead of shrinking as the viewport expands, aligning the backend with the other renderer outputs.
+
 ## [v0.59.6]
 - Prevented Raylib UI elements from shrinking when windows scale beyond their backing framebuffer by skipping downscaling passes and only applying HiDPI growth, keeping docked buttons readable at any size.
 
