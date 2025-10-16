@@ -1,5 +1,8 @@
 # Changelog
 
+## [v0.59.6]
+- Prevented Raylib UI elements from shrinking when windows scale beyond their backing framebuffer by skipping downscaling passes and only applying HiDPI growth, keeping docked buttons readable at any size.
+
 ## [v0.59.5]
 - Normalised Raylib child window resizing so docked panes keep the same scale as they move between parents, preventing UI shrinking or collapsing during docking transitions.
 
