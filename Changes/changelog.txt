@@ -1,5 +1,9 @@
 # Changelog
 
+## [v0.59.7]
+- Enabled Raylib HiDPI windowing by setting the high-DPI flag, mirroring framebuffer dimensions into context state, and rescaling mouse input so docked overlays stay pixel-correct on scaled displays.
+- Synced post-docking framebuffer sizes into resize dispatch to stop multi-monitor layouts from inheriting stale logical dimensions when native scaling changes mid-session.
+
 ## [v0.59.6]
 - Prevented Raylib UI elements from shrinking when windows scale beyond their backing framebuffer by skipping downscaling passes and only applying HiDPI growth, keeping docked buttons readable at any size.
 

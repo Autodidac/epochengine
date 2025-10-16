@@ -79,16 +79,37 @@ namespace almondnamespace::raylibcontext
 #endif
     }
 
+    inline void update_mouse_scale()
+    {
+#if !defined(RAYLIB_NO_WINDOW)
+        if (!::IsWindowReady()) return;
+
+        const int logicalWidth = ::GetScreenWidth();
+        const int logicalHeight = ::GetScreenHeight();
+        const int renderWidth = ::GetRenderWidth();
+        const int renderHeight = ::GetRenderHeight();
+
+        if (logicalWidth > 0 && logicalHeight > 0 &&
+            renderWidth > 0 && renderHeight > 0)
+        {
+            ::SetMouseScale(static_cast<float>(renderWidth) / static_cast<float>(logicalWidth),
+                static_cast<float>(renderHeight) / static_cast<float>(logicalHeight));
+        }
+#endif
+    }
+
     inline void dispatch_resize(const std::shared_ptr<core::Context>& ctx,
         unsigned int width,
         unsigned int height,
         bool updateRaylibWindow,
-        bool notifyClient = true)
+        bool notifyClient = true,
+        bool skipNativeApply = false)
     {
         unsigned int nextWidth = width;
         unsigned int nextHeight = height;
         bool nextUpdateWindow = updateRaylibWindow;
         bool nextNotifyClient = notifyClient;
+        bool nextSkipNativeApply = skipNativeApply;
 
         if (s_raylibstate.dispatchingResize)
         {
@@ -96,6 +117,7 @@ namespace almondnamespace::raylibcontext
             s_raylibstate.pendingHeight = nextHeight;
             s_raylibstate.pendingUpdateWindow = s_raylibstate.pendingUpdateWindow || nextUpdateWindow;
             s_raylibstate.pendingNotifyClient = s_raylibstate.pendingNotifyClient || nextNotifyClient;
+            s_raylibstate.pendingSkipNativeApply = nextSkipNativeApply;
             s_raylibstate.hasPendingResize = true;
             return;
         }
@@ -134,14 +156,16 @@ namespace almondnamespace::raylibcontext
             }
 #endif
 
-            const bool updateNativeWindow = hasNativeParent;
-            const bool updateFramebuffer = nextUpdateWindow || hasNativeParent;
+            const bool updateNativeWindow = !nextSkipNativeApply && hasNativeParent;
+            const bool updateFramebuffer = !nextSkipNativeApply && (nextUpdateWindow || hasNativeParent);
 
             // Push to native window + framebuffer (both sides)
-            apply_native_resize(static_cast<int>(safeWidth),
-                static_cast<int>(safeHeight),
-                updateNativeWindow,
-                updateFramebuffer);
+            if (!nextSkipNativeApply) {
+                apply_native_resize(static_cast<int>(safeWidth),
+                    static_cast<int>(safeHeight),
+                    updateNativeWindow,
+                    updateFramebuffer);
+            }
 
             // Notify client
             if (nextNotifyClient && s_raylibstate.clientOnResize) {
@@ -157,6 +181,8 @@ namespace almondnamespace::raylibcontext
                 }
             }
 
+            update_mouse_scale();
+
             if (!s_raylibstate.hasPendingResize) break;
 
             // Drain pending coalesced resize
@@ -164,13 +190,35 @@ namespace almondnamespace::raylibcontext
             nextHeight = s_raylibstate.pendingHeight;
             nextUpdateWindow = s_raylibstate.pendingUpdateWindow;
             nextNotifyClient = s_raylibstate.pendingNotifyClient;
+            nextSkipNativeApply = s_raylibstate.pendingSkipNativeApply;
 
             s_raylibstate.hasPendingResize = false;
             s_raylibstate.pendingUpdateWindow = false;
             s_raylibstate.pendingNotifyClient = false;
+            s_raylibstate.pendingSkipNativeApply = false;
         }
 
         s_raylibstate.dispatchingResize = false;
+    }
+
+    inline void sync_framebuffer_size(const std::shared_ptr<core::Context>& ctx,
+        bool notifyClient)
+    {
+#if !defined(RAYLIB_NO_WINDOW)
+        if (!::IsWindowReady()) return;
+
+        const int framebufferWidth = ::GetRenderWidth();
+        const int framebufferHeight = ::GetRenderHeight();
+
+        if (framebufferWidth > 0 && framebufferHeight > 0) {
+            dispatch_resize(ctx,
+                static_cast<unsigned int>(framebufferWidth),
+                static_cast<unsigned int>(framebufferHeight),
+                /*updateRaylibWindow=*/false,
+                notifyClient,
+                /*skipNativeApply=*/true);
+        }
+#endif
     }
 
     // ──────────────────────────────────────────────
@@ -192,6 +240,7 @@ namespace almondnamespace::raylibcontext
         s_raylibstate.hasPendingResize = false;
         s_raylibstate.pendingUpdateWindow = false;
         s_raylibstate.pendingNotifyClient = false;
+        s_raylibstate.pendingSkipNativeApply = false;
         s_raylibstate.pendingWidth = 0;
         s_raylibstate.pendingHeight = 0;
 
@@ -225,6 +274,7 @@ namespace almondnamespace::raylibcontext
 
         // If you need resizable window behavior, set before InitWindow:
         SetConfigFlags(FLAG_WINDOW_RESIZABLE);
+        SetConfigFlags(FLAG_WINDOW_HIGHDPI);
         if (windowTitle.empty()) {
             windowTitle = "Raylib Window";
         }
@@ -232,6 +282,8 @@ namespace almondnamespace::raylibcontext
             static_cast<int>(s_raylibstate.height),
             windowTitle.c_str());
         SetWindowTitle(windowTitle.c_str());
+        update_mouse_scale();
+        sync_framebuffer_size(ctx, /*notifyClient=*/false);
 
         // Mirror raylib’s native handles
         s_raylibstate.hwnd = (HWND)GetWindowHandle();
@@ -286,6 +338,8 @@ namespace almondnamespace::raylibcontext
 
             // Let parent layouts react if they care
             PostMessage(s_raylibstate.parent, WM_SIZE, 0, MAKELPARAM(pw, ph));
+
+            sync_framebuffer_size(ctx, /*notifyClient=*/true);
         }
 
         s_raylibstate.running = true;
@@ -320,14 +374,17 @@ namespace almondnamespace::raylibcontext
         unsigned int obsW = prevW;
         unsigned int obsH = prevH;
 
-        const int rw = GetScreenWidth();
-        const int rh = GetScreenHeight();
+        const int rw = GetRenderWidth();
+        const int rh = GetRenderHeight();
         if (rw > 0) obsW = static_cast<unsigned int>(rw);
         if (rh > 0) obsH = static_cast<unsigned int>(rh);
 
         if (obsW != prevW || obsH != prevH) {
             // Do NOT push SetWindowSize here; we only mirror and notify
-            dispatch_resize(ctx, obsW, obsH, /*updateRaylibWindow=*/false, /*notifyClient=*/true);
+            dispatch_resize(ctx, obsW, obsH,
+                /*updateRaylibWindow=*/false,
+                /*notifyClient=*/true,
+                /*skipNativeApply=*/true);
         }
 
         if (!wglMakeCurrent(s_raylibstate.hdc, s_raylibstate.glContext)) {
