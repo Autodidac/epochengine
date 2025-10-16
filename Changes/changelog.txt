@@ -1,5 +1,8 @@
 # Changelog
 
+## [v0.59.5]
+- Normalised Raylib child window resizing so docked panes keep the same scale as they move between parents, preventing UI shrinking or collapsing during docking transitions.
+
 ## [v0.59.4]
 - Reattached the docking subclass hook when SDL3 and Raylib backends create child windows so docked panes drag and resize correctly again.
 - Normalised Raylib sprite coordinates to account for render-to-screen DPI scaling, preventing menu buttons from shrinking as windows scale up.
