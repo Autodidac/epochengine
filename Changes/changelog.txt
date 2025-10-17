@@ -1,10 +1,5 @@
 # Changelog
 
-## [v0.59.8]
-- Fixed Raylib menu sprites rendering at the inverse of the window scale by drawing GUI quads in framebuffer pixels instead of
-  multiplying by the DPI factor twice, keeping atlas-driven buttons crisp as the window grows.
-- Synced the version metadata to 0.59.8 and documented the Raylib UI fix in the engine analysis notes.
-
 ## [v0.59.7]
 - Enabled Raylib HiDPI windowing by setting the high-DPI flag, mirroring framebuffer dimensions into context state, and rescaling mouse input so docked overlays stay pixel-correct on scaled displays.
 - Synced post-docking framebuffer sizes into resize dispatch to stop multi-monitor layouts from inheriting stale logical dimensions when native scaling changes mid-session.
