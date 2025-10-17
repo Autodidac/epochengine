@@ -121,9 +121,6 @@ namespace almondnamespace::raylibcontext
 
         const int rw = std::max(1, GetRenderWidth());
         const int rh = std::max(1, GetRenderHeight());
-        const float sx = ui_scale_x(); // DPI scale for logical pixels
-        const float sy = ui_scale_y();
-
         // Consider rect "normalized" if any dimension is 0<..<=1 or coords are in [0..1]
         const bool normalized =
             (width > 0.f && width <= 1.f) ||
@@ -139,11 +136,13 @@ namespace almondnamespace::raylibcontext
             ph = (height > 0.f ? height * rh : (float)r.height);
         }
         else {
-            // logical pixels -> DPI-scaled pixels
-            px = x * sx;
-            py = y * sy;
-            pw = (width > 0.f ? width * sx : (float)r.width * sx);
-            ph = (height > 0.f ? height * sy : (float)r.height * sy);
+            // AlmondShell already feeds framebuffer-space coordinates and sizes
+            // through the context pipeline, so draw directly in physical pixels
+            // without applying the HiDPI scale twice.
+            px = x;
+            py = y;
+            pw = (width > 0.f ? width : (float)r.width);
+            ph = (height > 0.f ? height : (float)r.height);
         }
 
         pw = std::max(pw, 1.0f);
