@@ -11,6 +11,11 @@
 - **Roadmap Traceability** – The existing `roadmap.txt` lacked granular prompts or acceptance checks per phase, making automation hand-offs hard to script.
 - **Testing Surface** – No automated smoke tests or CI hooks are defined for the critical updater and renderer paths, leaving regression risk high during phase transitions.
 
+## Recent Progress (v0.61.0)
+- Raylib caches its virtual-fit viewport each frame and reprojects atlas sprites through that transform, eliminating the clipping and drifting that previously affected menu buttons in letterboxed windows.
+- SDL3 keeps its context dimensions in lockstep with the renderer output size so GUI layouts always see the correct canvas and remain visually centered after resizes.
+- The menu overlay now honours a configurable column cap (defaulting to four via `--menu-columns`), preventing overly wide grids while still allowing narrower layouts for constrained displays.
+
 ## Recent Progress (v0.60.0)
 - Raylib now mirrors its internal viewport offset when drawing atlas-backed GUI sprites and when scaling mouse input, so letterboxed windows keep buttons aligned with their visual positions.
 - SDL3 rendering queries the active viewport before mapping normalized GUI coordinates, ensuring atlas-driven overlays remain centered when logical presentation introduces padding.
@@ -55,10 +60,10 @@
 - Script reload orchestration awaits completion synchronously, guaranteeing that editors and tooling observe a consistent state before proceeding.
 
 ## Recommended Focus Areas
-1. **Viewport Regression Harness** – Capture golden images for Raylib, SDL3, and OpenGL letterbox scenarios to prevent future offset regressions in atlas-driven GUI rendering.
-2. **Unified GUI Metrics** – Extract shared layout helpers so contexts consume the same logical-to-physical coordinate conversions instead of duplicating scale checks in each backend.
-3. **Automated Context QA** – Extend CI with smoke scenes that spin Raylib and SDL3 side by side, exercising docking, resizing, and atlas uploads on every platform.
-4. **Context Integration Docs** – Expand `docs/context_audit.md` with viewport and input calibration notes so downstream contributors know which hooks must stay in sync across renderers.
+1. **Viewport Regression Harness** – Capture golden images for Raylib, SDL3, and software renderers to lock in the new fit-viewport logic and catch drift before it reaches production builds.
+2. **Shared Layout Utilities** – Centralise the letterbox-aware size helpers so every backend (and future UI code) consumes the same conversion logic instead of duplicating clamps in multiple files.
+3. **Menu Configuration UX** – Surface the new `--menu-columns` knob inside in-engine settings so column limits can be adjusted without restarting, then validate keyboard/gamepad navigation against dynamic changes.
+4. **Cross-Context Resize Telemetry** – Instrument resize callbacks to log logical vs framebuffer dimensions, making it easier to diagnose when a backend falls out of sync with the multiplexer’s expectations.
 
 ## Context Cleanup Watchlist
 - See `docs/context_audit.md` for a full census of "context" modules.  The audit tags `include/araylibcontext_win32.hpp` and `include/avulkanglfwcontext.hpp` as safe deletion candidates once external dependencies are ruled out, while `include/acontextrenderer.hpp` remains a "maybe" pending deeper archaeology.

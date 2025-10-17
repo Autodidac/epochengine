@@ -327,8 +327,16 @@ namespace almondnamespace::sdlcontext
                 if (renderW > 0 && renderH > 0) {
                     sdlcontext.width = renderW;
                     sdlcontext.height = renderH;
+                    if (ctx) {
+                        ctx->width = renderW;
+                        ctx->height = renderH;
+                    }
                 }
             }
+        }
+        else if (ctx) {
+            ctx->width = sdlcontext.width;
+            ctx->height = sdlcontext.height;
         }
 
         SDL_SetRenderDrawColor(sdl_renderer.renderer, r, g, b, 255);

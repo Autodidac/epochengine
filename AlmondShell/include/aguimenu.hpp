@@ -30,6 +30,7 @@
 
 #include "acontext.hpp"
 #include "acontextmultiplexer.hpp"
+#include "acommandline.hpp"
 #include "ainput.hpp"
 #include "aatlasmanager.hpp"
 #include "aimageloader.hpp"
@@ -81,11 +82,21 @@ namespace almondnamespace::menu
         int cachedHeight = -1;
         int columns = 1;
         int rows = 0;
+        int maxColumns = ExpectedColumns;
 
         static constexpr int ExpectedColumns = 4;
         static constexpr int ExpectedRowsPerHalf = 3;
 
         static constexpr float LayoutSpacing = 32.f;
+
+        void set_max_columns(int desiredMax) {
+            const int clamped = std::clamp(desiredMax, 1, ExpectedColumns);
+            if (maxColumns != clamped) {
+                maxColumns = clamped;
+                cachedWidth = -1;
+                cachedHeight = -1;
+            }
+        }
 
         void recompute_layout(std::shared_ptr<core::Context> ctx) {
             const int totalItems = static_cast<int>(slicePairs.size());
@@ -118,10 +129,8 @@ namespace almondnamespace::menu
                     computedCols = std::clamp(computedCols, 1, totalItems);
                 }
             }
-            // Fix for MSVC: add <algorithm> and use std::min<int>(...) to avoid ambiguity
-            const int targetColumns = std::min<int>(ExpectedColumns, totalItems);
-            if (targetColumns > 0)
-                computedCols = std::clamp(computedCols, targetColumns, totalItems);
+            const int maxAllowed = std::max(1, std::min(totalItems, maxColumns));
+            computedCols = std::min(computedCols, maxAllowed);
             columns = std::max(1, computedCols);
             rows = (totalItems + columns - 1) / columns;
 
@@ -199,6 +208,8 @@ namespace almondnamespace::menu
                     atlasmanager::ensure_uploaded(*atlas);
                 });
             }
+
+            set_max_columns(core::cli::menu_columns);
 
             constexpr int totalButtons = ExpectedColumns * ExpectedRowsPerHalf;
 

@@ -36,6 +36,14 @@
 
 namespace almondnamespace::raylibcontext
 {
+    struct GuiFitViewport
+    {
+        int vpX = 0, vpY = 0, vpW = 1, vpH = 1;
+        int fbW = 1, fbH = 1;
+        int refW = 1920, refH = 1080;
+        float scale = 1.0f;
+    };
+
     struct RaylibState
     {
 #ifdef ALMOND_USING_WINMAIN
@@ -70,6 +78,7 @@ namespace almondnamespace::raylibcontext
         //int screenHeight = 600;
         int screenWidth = DEFAULT_WINDOW_WIDTH;
         int screenHeight = DEFAULT_WINDOW_HEIGHT;
+        GuiFitViewport lastViewport{};
         // Mouse state (if you want to hook raw input logic)
         struct MouseState {
             std::array<bool, 5> down{};     // 5 mouse buttons

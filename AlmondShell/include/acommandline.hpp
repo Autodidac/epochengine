@@ -27,6 +27,7 @@
 
 #include "aversion.hpp"          // GetEngineName(), GetEngineVersion()
 
+#include <algorithm>
 #include <filesystem>
 #include <iostream>
 #include <string_view>
@@ -36,6 +37,7 @@ namespace almondnamespace::core::cli {
     // ─── public, mutable knobs (inline globals) ────────────────────────
     inline int  window_width = DEFAULT_WINDOW_WIDTH;
     inline int  window_height = DEFAULT_WINDOW_HEIGHT;
+    inline int  menu_columns = 4;
     inline std::filesystem::path exe_path;
 
     // ─── helpers ───────────────────────────────────────────────────────
@@ -63,7 +65,8 @@ namespace almondnamespace::core::cli {
                         "  --help, -h            Show this help message\n"
                         "  --version, -v         Display the engine version\n"
                         "  --width  <value>      Set window width\n"
-                        "  --height <value>      Set window height\n";
+                        "  --height <value>      Set window height\n"
+                        "  --menu-columns <n>    Cap the menu grid at n columns (default 4)\n";
                 }
                 else if (arg == "--version"sv || arg == "-v"sv) {
                     print_engine_info();
@@ -73,6 +76,9 @@ namespace almondnamespace::core::cli {
                 }
                 else if (arg == "--height"sv && i + 1 < argc) {
                     window_height = std::stoi(argv[++i]);
+                }
+                else if (arg == "--menu-columns"sv && i + 1 < argc) {
+                    menu_columns = std::max(1, std::stoi(argv[++i]));
                 }
                 else {
                     std::cerr << "Unknown arg: " << arg << '\n';

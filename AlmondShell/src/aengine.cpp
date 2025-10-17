@@ -186,6 +186,7 @@ namespace almondnamespace::core
             SceneID g_sceneID = SceneID::Menu;
             std::unique_ptr<almondnamespace::scene::Scene> g_activeScene;
             almondnamespace::menu::MenuOverlay menu;
+            menu.set_max_columns(cli::menu_columns);
         
             try {
                 // ---- Setup command line ----

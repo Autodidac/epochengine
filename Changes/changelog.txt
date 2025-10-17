@@ -182,4 +182,8 @@
 - Corrected Raylib viewport offsets so atlas-driven UI no longer clips or drifts inside letterboxed windows.
 - Adjusted the SDL3 renderer to honour the active viewport, keeping GUI overlays centered across aspect ratios.
 - Bumped the engine version to v0.60.0 and refreshed the analysis notes with new focus areas.
+- Cached Raylib viewport fit data and reused it during sprite draws to remove the remaining atlas clipping regressions.
+- Synced SDL3 context dimensions with the renderer output so menu layouts stay centered after window resizes.
+- Added a configurable `--menu-columns` cap for the main overlay grid and documented the runtime flag.
+- Bumped the engine version to v0.61.0 and updated the engine analysis focus areas.
 
