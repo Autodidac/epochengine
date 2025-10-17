@@ -25,7 +25,7 @@
 
 #include "aplatform.hpp"          // must be first
 #include "aeditor.hpp"
-#include "aui.hpp"
+#include "agui.hpp"
 #include "afilewatch.hpp"
 
 namespace almondnamespace {

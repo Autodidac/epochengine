@@ -51,6 +51,8 @@ The runtime is designed for rapid iteration with hot-reloadable scripting, a sel
 
 - 🖼️ **Sprite & atlas management**
   Global registries, unique atlas indexing, and atlas-driven GUI (buttons, highlights, and menus) backed by the multi-context atlas pipeline that has been refined over thousands of development hours.
+- 🪟 **Built-in immediate GUI (`agui.hpp`)**
+  The new `agui` module exposes simple window, label, and button primitives that automatically provision a font atlas and upload it to Raylib and SDL backends so every context can draw the same HUD elements out of the box.
 
 - 🖥️ **Multi-context rendering**
   Pluggable backends: OpenGL, Raylib, SFML, and a software renderer — switchable via thunks and lambdas.

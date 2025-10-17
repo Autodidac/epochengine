@@ -60,6 +60,7 @@
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|x64'">false</ExcludedFromBuild>
     </ClInclude>
     <ClInclude Include="$(MSBuildThisFileDirectory)include\agamecore.hpp" />
+    <ClInclude Include="$(MSBuildThisFileDirectory)include\agui.hpp" />
     <ClInclude Include="$(MSBuildThisFileDirectory)include\aguimenu.hpp" />
     <ClInclude Include="$(MSBuildThisFileDirectory)include\aimageloader.hpp" />
     <ClInclude Include="$(MSBuildThisFileDirectory)include\aimagewriter.hpp" />
@@ -206,7 +207,7 @@
     <ClCompile Include="$(MSBuildThisFileDirectory)src\aengine.cpp" />
     <ClCompile Include="$(MSBuildThisFileDirectory)src\afilewatch.cpp" />
     <ClCompile Include="$(MSBuildThisFileDirectory)src\ascriptingsystem.cpp" />
-    <ClCompile Include="$(MSBuildThisFileDirectory)src\aui.cpp" />
+    <ClCompile Include="$(MSBuildThisFileDirectory)src\agui.cpp" />
     <ClCompile Include="$(MSBuildThisFileDirectory)src\scripts\editor_launcher.ascript.cpp">
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">true</ExcludedFromBuild>
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">true</ExcludedFromBuild>

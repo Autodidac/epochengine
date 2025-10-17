@@ -28,7 +28,7 @@
 // #include "aassetsystem.hpp" // uncomment when asset system is ready
 #include "aatlastexture.hpp"
 #include "arenderer.hpp"
-#include "aui.hpp"
+#include "agui.hpp"
 
 #include <string>
 #include <unordered_map>
