@@ -158,6 +158,12 @@ namespace almondnamespace::sdlcontext
             return false;
         }
 
+        if (ctx) {
+            ctx->hwnd = sdlcontext.hwnd;
+            ctx->width = sdlcontext.width;
+            ctx->height = sdlcontext.height;
+        }
+
         SDL_SetWindowTitle(sdlcontext.window, windowTitle.c_str());
 
         // Create renderer

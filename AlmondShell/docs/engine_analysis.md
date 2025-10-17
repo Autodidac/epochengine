@@ -11,6 +11,12 @@
 - **Roadmap Traceability** – The existing `roadmap.txt` lacked granular prompts or acceptance checks per phase, making automation hand-offs hard to script.
 - **Testing Surface** – No automated smoke tests or CI hooks are defined for the critical updater and renderer paths, leaving regression risk high during phase transitions.
 
+## Recent Progress (v0.59.8)
+- Adopted backend-owned Raylib and SDL window handles inside the multiplexer, replacing the temporary shell HWNDs with the real
+  render surfaces so docking keeps working without spawning blank white host windows.
+- Normalised Raylib GUI scaling by driving sprite metrics from the framebuffer-to-context ratio, keeping menu buttons sized with
+  the window instead of shrinking as the viewport grows.
+
 ## Recent Progress (v0.59.3)
 - Cached narrow window titles alongside HWND handles in the multiplexer so SDL and Raylib initialisers can read consistent UTF-8
   names when contexts spawn, fixing the Windows build regression caused by the loop-scoped `narrowTitle` identifier.

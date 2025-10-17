@@ -1,5 +1,9 @@
 # Changelog
 
+## [v0.59.8]
+- Removed the extra placeholder Win32 shells after SDL3 and Raylib contexts hand back their native window handles, so the multiplexer now docks the real backends without spawning blank white host panes.
+- Scaled Raylib sprites and mouse input from the live framebuffer ratio, keeping menu buttons proportional as windows grow instead of shrinking against the viewport.
+
 ## [v0.59.7]
 - Enabled Raylib HiDPI windowing by setting the high-DPI flag, mirroring framebuffer dimensions into context state, and rescaling mouse input so docked overlays stay pixel-correct on scaled displays.
 - Synced post-docking framebuffer sizes into resize dispatch to stop multi-monitor layouts from inheriting stale logical dimensions when native scaling changes mid-session.

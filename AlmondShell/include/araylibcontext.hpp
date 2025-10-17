@@ -50,6 +50,7 @@ namespace almondnamespace::core { void MakeDockable(HWND hwnd, HWND parent); }
 #include <iostream>
 #include <memory>
 #include <string>
+#include <utility>
 
 // Raylib last
 #include <raylib.h>
@@ -92,13 +93,37 @@ namespace almondnamespace::raylibcontext
 #endif
     }
 
+    inline std::pair<float, float> framebuffer_scale() noexcept
+    {
+#if !defined(RAYLIB_NO_WINDOW)
+        if (!::IsWindowReady()) {
+            return { 1.0f, 1.0f };
+        }
+
+        const int framebufferWidth = std::max(1, ::GetRenderWidth());
+        const int framebufferHeight = std::max(1, ::GetRenderHeight());
+        const float logicalWidth = static_cast<float>(std::max(1u, s_raylibstate.width));
+        const float logicalHeight = static_cast<float>(std::max(1u, s_raylibstate.height));
+
+        const float sx = (logicalWidth > 0.0f)
+            ? static_cast<float>(framebufferWidth) / logicalWidth
+            : 1.0f;
+        const float sy = (logicalHeight > 0.0f)
+            ? static_cast<float>(framebufferHeight) / logicalHeight
+            : 1.0f;
+
+        return { sx, sy };
+#else
+        return { 1.0f, 1.0f };
+#endif
+    }
+
     inline void update_mouse_scale()
     {
 #if !defined(RAYLIB_NO_WINDOW)
         if (!::IsWindowReady()) return;
-        // Our GUI and coordinates are already in framebuffer pixels.
-        // Do NOT scale the mouse further or it overshoots at high DPI.
-        ::SetMouseScale(1.0f, 1.0f);
+        const auto [sx, sy] = framebuffer_scale();
+        ::SetMouseScale(sx, sy);
 #endif
     }
 
