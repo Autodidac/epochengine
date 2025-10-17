@@ -179,4 +179,7 @@
 - Refined the context multiplexer threading spine.
 - Applied miscellaneous adjustments and cleanup.
 - Fixed the menu button grid layout.
+- Corrected Raylib viewport offsets so atlas-driven UI no longer clips or drifts inside letterboxed windows.
+- Adjusted the SDL3 renderer to honour the active viewport, keeping GUI overlays centered across aspect ratios.
+- Bumped the engine version to v0.60.0 and refreshed the analysis notes with new focus areas.
 

@@ -144,6 +144,10 @@ namespace almondnamespace::raylibcontext
         if (!::IsWindowReady()) return;
         const auto [sx, sy] = framebuffer_scale();
         ::SetMouseScale(sx, sy);
+
+        const Vector2 offset = ::GetRenderOffset();
+        ::SetMouseOffset(static_cast<int>(std::lround(offset.x)),
+            static_cast<int>(std::lround(offset.y)));
 #endif
     }
 
