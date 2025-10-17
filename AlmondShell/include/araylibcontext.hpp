@@ -224,8 +224,8 @@ namespace almondnamespace::raylibcontext
             s_raylibstate.logicalHeight = std::max(1u, logicalHeight);
 
             if (ctx) {
-                ctx->width = static_cast<int>(safeWidth);
-                ctx->height = static_cast<int>(safeHeight);
+                ctx->width = static_cast<int>(s_raylibstate.logicalWidth);
+                ctx->height = static_cast<int>(s_raylibstate.logicalHeight);
             }
 
             bool hasNativeParent = false;
@@ -374,8 +374,8 @@ namespace almondnamespace::raylibcontext
             ctx->hwnd = s_raylibstate.hwnd;
             ctx->hdc = s_raylibstate.hdc;
             ctx->hglrc = s_raylibstate.glContext;
-            ctx->width = (int)s_raylibstate.width;
-            ctx->height = (int)s_raylibstate.height;
+            ctx->width = static_cast<int>(s_raylibstate.logicalWidth);
+            ctx->height = static_cast<int>(s_raylibstate.logicalHeight);
         }
 
         // If docking into a parent, reparent + hard resize both sides once
@@ -428,7 +428,10 @@ namespace almondnamespace::raylibcontext
 #endif
             s_raylibstate.logicalWidth = std::max(1u, logicalChildW);
             s_raylibstate.logicalHeight = std::max(1u, logicalChildH);
-            if (ctx) { ctx->width = pw; ctx->height = ph; }
+            if (ctx) {
+                ctx->width = static_cast<int>(s_raylibstate.logicalWidth);
+                ctx->height = static_cast<int>(s_raylibstate.logicalHeight);
+            }
 
             // Notify client once (optional)
             if (s_raylibstate.onResize) { s_raylibstate.onResize(pw, ph); }
@@ -569,8 +572,8 @@ namespace almondnamespace::raylibcontext
     // ──────────────────────────────────────────────
     // Helpers
     // ──────────────────────────────────────────────
-    inline int  raylib_get_width()  noexcept { return static_cast<int>(s_raylibstate.width); }
-    inline int  raylib_get_height() noexcept { return static_cast<int>(s_raylibstate.height); }
+    inline int  raylib_get_width()  noexcept { return static_cast<int>(s_raylibstate.logicalWidth); }
+    inline int  raylib_get_height() noexcept { return static_cast<int>(s_raylibstate.logicalHeight); }
     inline void raylib_set_window_title(const std::string& title) { SetWindowTitle(title.c_str()); }
     inline bool RaylibIsRunning(std::shared_ptr<core::Context>) { return s_raylibstate.running; }
 
