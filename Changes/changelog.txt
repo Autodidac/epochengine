@@ -1,12 +1,5 @@
 # Changelog
 
-## [v0.59.8]
-- Corrected Raylib GUI quad sizing so menu buttons now honour the spinal render
-  pipeline's framebuffer coordinates instead of double-scaling against DPI and
-  window size, keeping hover targets consistent as panes resize.
-- Documented the Raylib GUI fix in the engine analysis and roadmap, and bumped
-  the engine version metadata.
-
 ## [v0.59.7]
 - Enabled Raylib HiDPI windowing by setting the high-DPI flag, mirroring framebuffer dimensions into context state, and rescaling mouse input so docked overlays stay pixel-correct on scaled displays.
 - Synced post-docking framebuffer sizes into resize dispatch to stop multi-monitor layouts from inheriting stale logical dimensions when native scaling changes mid-session.

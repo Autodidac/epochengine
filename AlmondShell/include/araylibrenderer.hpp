@@ -121,29 +121,31 @@ namespace almondnamespace::raylibcontext
 
         const int rw = std::max(1, GetRenderWidth());
         const int rh = std::max(1, GetRenderHeight());
+        const float sx = ui_scale_x(); // DPI scale for logical pixels
+        const float sy = ui_scale_y();
 
-        const bool widthNormalized = (width > 0.f && width <= 1.f);
-        const bool heightNormalized = (height > 0.f && height <= 1.f);
-        const bool coordsNormalized =
-            (x >= 0.f && x <= 1.f) &&
-            (y >= 0.f && y <= 1.f);
+        // Consider rect "normalized" if any dimension is 0<..<=1 or coords are in [0..1]
+        const bool normalized =
+            (width > 0.f && width <= 1.f) ||
+            (height > 0.f && height <= 1.f) ||
+            ((x >= 0.f && x <= 1.f) && (y >= 0.f && y <= 1.f));
 
-        float px = coordsNormalized ? x * rw : x;
-        float py = coordsNormalized ? y * rh : y;
-
-        float pw = widthNormalized ? std::max(width * rw, 1.0f) : width;
-        if (!widthNormalized) {
-            if (pw <= 0.f) pw = static_cast<float>(r.width);
+        float px, py, pw, ph;
+        if (normalized) {
+            // 0..1 -> framebuffer pixels
+            px = x * rw;
+            py = y * rh;
+            pw = (width > 0.f ? width * rw : (float)r.width);
+            ph = (height > 0.f ? height * rh : (float)r.height);
+        }
+        else {
+            // logical pixels -> DPI-scaled pixels
+            px = x * sx;
+            py = y * sy;
+            pw = (width > 0.f ? width * sx : (float)r.width * sx);
+            ph = (height > 0.f ? height * sy : (float)r.height * sy);
         }
 
-        float ph = heightNormalized ? std::max(height * rh, 1.0f) : height;
-        if (!heightNormalized) {
-            if (ph <= 0.f) ph = static_cast<float>(r.height);
-        }
-
-        // Clamp to sane minimums to avoid zero-area quads.  Raylib's command queue
-        // expects physical framebuffer pixels so we do not apply any additional
-        // DPI scaling here—the spinal pipeline already feeds render-space coords.
         pw = std::max(pw, 1.0f);
         ph = std::max(ph, 1.0f);
 
