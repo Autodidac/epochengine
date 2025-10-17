@@ -140,9 +140,11 @@ namespace almondnamespace::raylibcontext
         // Source rect in atlas pixels
         Raylib_Rectangle src{ (float)r.x, (float)r.y, (float)r.width, (float)r.height };
 
-        const int rw = (std::max)(1, GetRenderWidth());
-        const int rh = (std::max)(1, GetRenderHeight());
-        const auto [scaleX, scaleY] = framebuffer_scale();
+        const GuiFitViewport fit = s_raylibstate.lastViewport;
+        const float viewportWidth = (float)std::max(1, fit.vpW);
+        const float viewportHeight = (float)std::max(1, fit.vpH);
+        const float viewportScale = (fit.scale > 0.0f) ? fit.scale : 1.0f;
+
 #if !defined(RAYLIB_NO_WINDOW)
         Vector2 offset = { 0.0f, 0.0f };
         if (IsWindowReady()) {
@@ -152,6 +154,9 @@ namespace almondnamespace::raylibcontext
         Vector2 offset = { 0.0f, 0.0f };
 #endif
 
+        const float baseOffsetX = offset.x + static_cast<float>(fit.vpX);
+        const float baseOffsetY = offset.y + static_cast<float>(fit.vpY);
+
         // Consider rect "normalized" if any dimension is 0<..<=1 or coords are in [0..1]
         const bool normalized =
             (width > 0.f && width <= 1.f) ||
@@ -160,22 +165,23 @@ namespace almondnamespace::raylibcontext
 
         float px, py, pw, ph;
         if (normalized) {
-            // 0..1 -> framebuffer pixels
-            px = x * rw + offset.x;
-            py = y * rh + offset.y;
-            pw = (width > 0.f ? width * rw : (float)r.width);
-            ph = (height > 0.f ? height * rh : (float)r.height);
+            // 0..1 -> viewport pixels
+            px = baseOffsetX + x * viewportWidth;
+            py = baseOffsetY + y * viewportHeight;
+            const float scaledW = (width > 0.f ? width * viewportWidth : (float)r.width * viewportScale);
+            const float scaledH = (height > 0.f ? height * viewportHeight : (float)r.height * viewportScale);
+            pw = (std::max)(scaledW, 1.0f);
+            ph = (std::max)(scaledH, 1.0f);
         }
         else {
-            // logical pixels -> DPI-scaled pixels
-            px = x * scaleX + offset.x;
-            py = y * scaleY + offset.y;
-            pw = (width > 0.f ? width * scaleX : (float)r.width * scaleX);
-            ph = (height > 0.f ? height * scaleY : (float)r.height * scaleY);
+            // logical pixels -> viewport-scaled pixels
+            px = baseOffsetX + x * viewportScale;
+            py = baseOffsetY + y * viewportScale;
+            const float scaledW = (width > 0.f ? width * viewportScale : (float)r.width * viewportScale);
+            const float scaledH = (height > 0.f ? height * viewportScale : (float)r.height * viewportScale);
+            pw = (std::max)(scaledW, 1.0f);
+            ph = (std::max)(scaledH, 1.0f);
         }
-
-        pw = (std::max)(pw, 1.0f);
-        ph = (std::max)(ph, 1.0f);
 
         Raylib_Rectangle dst{ px, py, pw, ph };
         DrawTexturePro(tex, src, dst, Vector2{ 0,0 }, 0.0f, WHITE);

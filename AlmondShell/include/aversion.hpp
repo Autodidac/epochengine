@@ -33,7 +33,7 @@ namespace almondnamespace
 {
     // Version information as constexpr for compile-time evaluation
     constexpr int major = 0;
-    constexpr int minor = 60;
+    constexpr int minor = 61;
     constexpr int revision = 0;
 
     inline constexpr std::string_view kEngineName = "Almond Shell";

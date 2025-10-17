@@ -69,13 +69,6 @@ namespace almondnamespace::raylibcontext
     // Usually at the start of your program, before window creation:
     static almondnamespace::contextwindow::WindowData* g_raylibwindowContext;
 
-    struct GuiFitViewport {
-        int vpX = 0, vpY = 0, vpW = 1, vpH = 1; // framebuffer coords
-        int fbW = 1, fbH = 1;                   // framebuffer size
-        int refW = 1920, refH = 1080;          // virtual canvas
-        float scale = 1.0f;                     // fb pixels per virtual pixel
-    };
-
     inline GuiFitViewport compute_fit_viewport(int fbW, int fbH, int refW, int refH) noexcept
     {
         GuiFitViewport r{};
@@ -427,12 +420,13 @@ namespace almondnamespace::raylibcontext
         const GuiFitViewport fit = compute_fit_viewport(fbW, fbH, refW, refH);
 
         // Viewport for rendering (letterbox/pillarbox)
-        glViewport(fit.vpX, fit.vpY, fit.vpW, fit.vpH);
+        s_raylibstate.lastViewport = fit;
 
         // Mouse: map framebuffer -> virtual
 #if !defined(RAYLIB_NO_WINDOW)
         ::SetMouseOffset(-fit.vpX, -fit.vpY);
-        ::SetMouseScale(1.0f / fit.scale, 1.0f / fit.scale);
+        const float invScale = (fit.scale > 0.0f) ? (1.0f / fit.scale) : 1.0f;
+        ::SetMouseScale(invScale, invScale);
 #endif
         // -----------------------------------------------
 

@@ -45,4 +45,5 @@ Unsupported mixes:
 
 ## Change Log
 
+- **v0.61.0** – Added the `--menu-columns` runtime flag to cap the overlay grid width without recompiling; defaults to four columns.
 - **v0.58.2** – First publication of this guide in conjunction with the roadmap milestone for documenting configuration options.
