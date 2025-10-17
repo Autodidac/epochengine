@@ -501,6 +501,67 @@ namespace almondnamespace::core
                     }
                 }
 
+                const HWND placeholderHwnd = hwnd;
+                const HWND hostParent = parent;
+
+                auto adopt_backend_window = [&](HWND actualHwnd)
+                {
+                    if (!w || !ctx || !actualHwnd || actualHwnd == placeholderHwnd) {
+                        return;
+                    }
+
+                    const HWND previous = w->hwnd;
+
+                    if (hostParent) {
+                        ::SetParent(actualHwnd, hostParent);
+
+                        LONG_PTR style = ::GetWindowLongPtr(actualHwnd, GWL_STYLE);
+                        style &= ~(WS_POPUP | WS_OVERLAPPEDWINDOW);
+                        style |= (WS_CHILD | WS_VISIBLE | WS_CLIPCHILDREN | WS_CLIPSIBLINGS);
+                        ::SetWindowLongPtr(actualHwnd, GWL_STYLE, style);
+
+                        LONG_PTR exStyle = ::GetWindowLongPtr(actualHwnd, GWL_EXSTYLE);
+                        exStyle &= ~WS_EX_APPWINDOW;
+                        exStyle |= WS_EX_NOPARENTNOTIFY;
+                        ::SetWindowLongPtr(actualHwnd, GWL_EXSTYLE, exStyle);
+
+                        MakeDockable(actualHwnd, hostParent);
+                    }
+                    else {
+                        ::SetParent(actualHwnd, nullptr);
+                    }
+
+                    ::ShowWindow(actualHwnd, SW_SHOW);
+
+                    w->hwnd = actualHwnd;
+                    w->hdc = ctx->hdc;
+                    w->glContext = ctx->hglrc;
+                    w->context = ctx;
+                    w->usesSharedContext = false;
+                    ctx->windowData = w;
+
+                    RECT client{};
+                    if (::GetClientRect(actualHwnd, &client)) {
+                        const int actualWidth = std::max<LONG>(1, client.right - client.left);
+                        const int actualHeight = std::max<LONG>(1, client.bottom - client.top);
+                        w->width = actualWidth;
+                        w->height = actualHeight;
+                        ctx->width = actualWidth;
+                        ctx->height = actualHeight;
+                    }
+
+                    if (previous && previous != actualHwnd) {
+                        if (gThreads.contains(previous)) {
+                            auto node = gThreads.extract(previous);
+                            if (!node.empty()) {
+                                node.key() = actualHwnd;
+                                gThreads.insert(std::move(node));
+                            }
+                        }
+                        ::DestroyWindow(previous);
+                    }
+                };
+
                 // ---------------- Immediate backend initialization ----------------
                 switch (type) {
 #ifdef ALMOND_USING_OPENGL
@@ -529,7 +590,7 @@ namespace almondnamespace::core
                 case ContextType::SDL:
                     std::cerr << "[Init] Initializing SDL context for hwnd=" << hwnd << "\n";
                     almondnamespace::sdlcontext::sdl_initialize(
-                        ctx, hwnd, ctx->width, ctx->height, w->onResize, narrowTitle);
+                        ctx, hostParent, ctx->width, ctx->height, w->onResize, narrowTitle);
                     break;
 #endif
 #ifdef ALMOND_USING_SFML
@@ -543,11 +604,15 @@ namespace almondnamespace::core
                 case ContextType::RayLib:
                     std::cerr << "[Init] Initializing RayLib context for hwnd=" << hwnd << "\n";
                     almondnamespace::raylibcontext::raylib_initialize(
-                        ctx, hwnd, ctx->width, ctx->height, w->onResize, narrowTitle);
+                        ctx, hostParent, ctx->width, ctx->height, w->onResize, narrowTitle);
                     break;
 #endif
                 default:
                     break;
+                }
+
+                if (type == ContextType::SDL || type == ContextType::RayLib) {
+                    adopt_backend_window(ctx->hwnd);
                 }
             }
             };

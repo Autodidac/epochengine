@@ -37,12 +37,15 @@
 #include <algorithm>
 #include <iostream>
 #include <span>
+#include <utility>
 
 #include <raylib.h> // must be included (you had it commented out)
 
 // ---------- DPI helpers ----------
 namespace almondnamespace::raylibcontext
 {
+    std::pair<float, float> framebuffer_scale() noexcept;
+
     inline float ui_scale_x() noexcept {
 #if !defined(RAYLIB_NO_WINDOW)
         if (IsWindowReady()) {
@@ -67,7 +70,8 @@ namespace almondnamespace::raylibcontext
     inline void sync_input_scaling() noexcept {
 #if !defined(RAYLIB_NO_WINDOW)
         if (!IsWindowReady()) return;
-        SetMouseScale(ui_scale_x(), ui_scale_y());
+        const auto [sx, sy] = framebuffer_scale();
+        SetMouseScale(sx, sy);
 #endif
     }
 
@@ -121,8 +125,7 @@ namespace almondnamespace::raylibcontext
 
         const int rw = std::max(1, GetRenderWidth());
         const int rh = std::max(1, GetRenderHeight());
-        const float sx = ui_scale_x(); // DPI scale for logical pixels
-        const float sy = ui_scale_y();
+        const auto [scaleX, scaleY] = framebuffer_scale();
 
         // Consider rect "normalized" if any dimension is 0<..<=1 or coords are in [0..1]
         const bool normalized =
@@ -140,10 +143,10 @@ namespace almondnamespace::raylibcontext
         }
         else {
             // logical pixels -> DPI-scaled pixels
-            px = x * sx;
-            py = y * sy;
-            pw = (width > 0.f ? width * sx : (float)r.width * sx);
-            ph = (height > 0.f ? height * sy : (float)r.height * sy);
+            px = x * scaleX;
+            py = y * scaleY;
+            pw = (width > 0.f ? width * scaleX : (float)r.width * scaleX);
+            ph = (height > 0.f ? height * scaleY : (float)r.height * scaleY);
         }
 
         pw = std::max(pw, 1.0f);
