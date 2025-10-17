@@ -11,6 +11,11 @@
 - **Roadmap Traceability** – The existing `roadmap.txt` lacked granular prompts or acceptance checks per phase, making automation hand-offs hard to script.
 - **Testing Surface** – No automated smoke tests or CI hooks are defined for the critical updater and renderer paths, leaving regression risk high during phase transitions.
 
+## Recent Progress (v0.59.8)
+- Raylib's GUI spinal pipeline now renders atlas-driven buttons using
+  framebuffer pixel coordinates, eliminating the inverse scaling effect that
+  previously shrank hover targets as docked panes grew.
+
 ## Recent Progress (v0.59.3)
 - Cached narrow window titles alongside HWND handles in the multiplexer so SDL and Raylib initialisers can read consistent UTF-8
   names when contexts spawn, fixing the Windows build regression caused by the loop-scoped `narrowTitle` identifier.
