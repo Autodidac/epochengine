@@ -21,7 +21,11 @@
  *   See LICENSE file for full terms.                         *
  *                                                            *
  **************************************************************/
+// agui.hpp
 #pragma once
+
+#include "aplatform.hpp"
+#include "aengineconfig.hpp"
 
 #include <cstdint>
 #include <string_view>

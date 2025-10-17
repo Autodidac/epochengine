@@ -26,6 +26,9 @@
 
 //#include "asoftrenderer_textures.hpp"
 
+#undef min
+#undef max
+
 #include <cstdint>
 #include <vector>
 #include <algorithm>

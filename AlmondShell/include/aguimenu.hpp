@@ -118,7 +118,8 @@ namespace almondnamespace::menu
                     computedCols = std::clamp(computedCols, 1, totalItems);
                 }
             }
-            const int targetColumns = std::min(ExpectedColumns, totalItems);
+            // Fix for MSVC: add <algorithm> and use std::min<int>(...) to avoid ambiguity
+            const int targetColumns = std::min<int>(ExpectedColumns, totalItems);
             if (targetColumns > 0)
                 computedCols = std::clamp(computedCols, targetColumns, totalItems);
             columns = std::max(1, computedCols);

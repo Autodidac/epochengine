@@ -21,6 +21,7 @@
  *   See LICENSE file for full terms.                         *
  *                                                            *
  **************************************************************/
+ // agui.cpp
 #include "pch.h"
 
 #include "agui.hpp"
@@ -46,6 +47,11 @@ namespace almondnamespace::gui
 {
 namespace
 {
+    using Vec2 = almondnamespace::gui::Vec2;
+    using Color = ::almondnamespace::gui::Color;
+    using EventType = almondnamespace::gui::EventType;
+    using InputEvent = ::almondnamespace::gui::InputEvent;
+
     // ASCII glyphs 0x20-0x7F from the public domain font8x8_basic set by Daniel Hepper.
     constexpr std::array<std::array<std::uint8_t, 8>, 96> kFont8x8Basic = { {
         { 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00 }, // space
@@ -109,6 +115,7 @@ namespace
         { 0x7F, 0x63, 0x31, 0x18, 0x4C, 0x66, 0x7F, 0x00 }, // Z
         { 0x1E, 0x06, 0x06, 0x06, 0x06, 0x06, 0x1E, 0x00 }, // [
         { 0x03, 0x06, 0x0C, 0x18, 0x30, 0x60, 0x40, 0x00 }, // \
+
         { 0x1E, 0x18, 0x18, 0x18, 0x18, 0x18, 0x1E, 0x00 }, // ]
         { 0x08, 0x1C, 0x36, 0x63, 0x00, 0x00, 0x00, 0x00 }, // ^
         { 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0xFF }, // _
@@ -161,29 +168,34 @@ namespace
     GuiResources g_resources{};
     std::mutex g_resourceMutex;
 
-    struct ContextTypeHash {
-        std::size_t operator()(core::ContextType type) const noexcept
-        {
-            return static_cast<std::size_t>(type);
+    struct PtrHash {
+        size_t operator()(const void* p) const noexcept {
+            return std::hash<const void*>{}(p);
         }
     };
-
-    std::unordered_set<core::ContextType, ContextTypeHash> g_uploadedBackends{};
-    std::mutex g_uploadMutex;
+    static std::unordered_set<const void*, PtrHash> g_uploadedContexts;
+    static std::mutex g_uploadMutex;
 
     struct FrameState {
+        // thread's active render context (must be set in begin_frame)
         core::Context* ctx = nullptr;
+
         Vec2 cursor{};
         Vec2 origin{};
         Vec2 windowSize{};
         Vec2 mousePos{};
+
         bool mouseDown = false;
         bool prevMouseDown = false;
         bool insideWindow = false;
         bool justPressed = false;
     };
 
-    FrameState g_frame{};
+    thread_local FrameState g_frame{};
+
+    // Cheap tripwire so this doesn't regress again:
+    static_assert(std::is_same_v<decltype(g_frame.ctx), core::Context*>,
+        "FrameState must carry core::Context* ctx");
 
     constexpr const char* kAtlasName = "__agui_builtin";
     constexpr float kContentPadding = 8.0f;
@@ -302,19 +314,16 @@ namespace
     void ensure_backend_upload(core::Context& ctx)
     {
         ensure_resources();
-        if (!g_resources.atlas)
-            return;
+        if (!g_resources.atlas) return;
 
-        std::scoped_lock uploadLock(g_uploadMutex);
-        if (g_uploadedBackends.contains(ctx.type))
-            return;
+        std::scoped_lock lock(g_uploadMutex);
+        if (g_uploadedContexts.contains(&ctx)) return;
 
         const std::uint32_t handle = ctx.add_atlas_safe(*g_resources.atlas);
         if (handle == 0) {
-            throw std::runtime_error("[agui] Failed to upload GUI atlas for backend");
+            throw std::runtime_error("[agui] Failed to upload GUI atlas for this context");
         }
-
-        g_uploadedBackends.insert(ctx.type);
+        g_uploadedContexts.insert(&ctx);
     }
 
     void draw_sprite(const SpriteHandle& handle, float x, float y, float w, float h)
@@ -364,7 +373,7 @@ namespace
 
 } // namespace
 
-void push_input(const InputEvent& e) noexcept
+void push_input(const almondnamespace::gui::InputEvent& e) noexcept
 {
     g_frame.mousePos = e.mouse_pos;
     if (e.type == EventType::MouseDown) {
@@ -429,8 +438,8 @@ bool button(std::string_view label, Vec2 size) noexcept
         return false;
 
     const Vec2 pos = g_frame.cursor;
-    const float width = std::max(size.x, g_resources.glyphWidth * kFontScale + 2.0f * kContentPadding);
-    const float height = std::max(size.y, g_resources.glyphHeight * kFontScale + 2.0f * kContentPadding);
+    const float width = std::max<float>(static_cast<float>(size.x), g_resources.glyphWidth * kFontScale + 2.0f * kContentPadding);
+    const float height = std::max<float>(static_cast<float>(size.y), g_resources.glyphHeight * kFontScale + 2.0f * kContentPadding);
 
     const bool hovered = (g_frame.mousePos.x >= pos.x && g_frame.mousePos.x <= pos.x + width &&
         g_frame.mousePos.y >= pos.y && g_frame.mousePos.y <= pos.y + height);
