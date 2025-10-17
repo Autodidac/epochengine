@@ -1,5 +1,8 @@
 # Changelog
 
+## [v0.59.9]
+- Normalised Raylib GUI scaling when panes dock or undock by tracking logical window dimensions separately from framebuffer sizes, keeping buttons consistent during DPI-aware resizes.
+
 ## [v0.59.8]
 - Removed the extra placeholder Win32 shells after SDL3 and Raylib contexts hand back their native window handles, so the multiplexer now docks the real backends without spawning blank white host panes.
 - Scaled Raylib sprites and mouse input from the live framebuffer ratio, keeping menu buttons proportional as windows grow instead of shrinking against the viewport.
