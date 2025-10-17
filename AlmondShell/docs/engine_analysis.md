@@ -11,6 +11,10 @@
 - **Roadmap Traceability** – The existing `roadmap.txt` lacked granular prompts or acceptance checks per phase, making automation hand-offs hard to script.
 - **Testing Surface** – No automated smoke tests or CI hooks are defined for the critical updater and renderer paths, leaving regression risk high during phase transitions.
 
+## Recent Progress (v0.60.0)
+- Raylib now mirrors its internal viewport offset when drawing atlas-backed GUI sprites and when scaling mouse input, so letterboxed windows keep buttons aligned with their visual positions.
+- SDL3 rendering queries the active viewport before mapping normalized GUI coordinates, ensuring atlas-driven overlays remain centered when logical presentation introduces padding.
+
 ## Recent Progress (v0.59.10)
 - Introduced `agui.hpp` as a backend-agnostic immediate mode GUI layer that seeds a shared atlas and drives Raylib/SDL draw calls through the existing sprite pipeline, giving every context text and button primitives out of the box.
 
@@ -51,10 +55,10 @@
 - Script reload orchestration awaits completion synchronously, guaranteeing that editors and tooling observe a consistent state before proceeding.
 
 ## Recommended Focus Areas
-1. **Build & CI Hardening** – Introduce cross-platform CMake presets and GitHub Actions to execute `updater` builds plus smoke runs with each PR.
-2. **Renderer Regression Harness** – Build headless validation scenes that render deterministic atlas frames for OpenGL, Raylib, SDL, and the software backend.
-3. **Task Scheduler Profiling** – Instrument `include/aenginesystems.hpp` and the scheduler loop to trace coroutine stalls, especially during reload storms.
-4. **Documentation Automation** – Generate API references from headers and surface them via GitHub Pages to reduce onboarding friction.
+1. **Viewport Regression Harness** – Capture golden images for Raylib, SDL3, and OpenGL letterbox scenarios to prevent future offset regressions in atlas-driven GUI rendering.
+2. **Unified GUI Metrics** – Extract shared layout helpers so contexts consume the same logical-to-physical coordinate conversions instead of duplicating scale checks in each backend.
+3. **Automated Context QA** – Extend CI with smoke scenes that spin Raylib and SDL3 side by side, exercising docking, resizing, and atlas uploads on every platform.
+4. **Context Integration Docs** – Expand `docs/context_audit.md` with viewport and input calibration notes so downstream contributors know which hooks must stay in sync across renderers.
 
 ## Context Cleanup Watchlist
 - See `docs/context_audit.md` for a full census of "context" modules.  The audit tags `include/araylibcontext_win32.hpp` and `include/avulkanglfwcontext.hpp` as safe deletion candidates once external dependencies are ruled out, while `include/acontextrenderer.hpp` remains a "maybe" pending deeper archaeology.

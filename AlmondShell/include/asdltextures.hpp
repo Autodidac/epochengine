@@ -293,6 +293,15 @@ namespace almondnamespace::sdltextures
             SDL_GetCurrentRenderOutputSize(sdl_renderer, &outputW, &outputH);
         }
 
+        SDL_Rect viewport{ 0, 0, outputW, outputH };
+        if (sdl_renderer) {
+            SDL_Rect currentViewport{ 0, 0, 0, 0 };
+            if (SDL_GetRenderViewport(sdl_renderer, &currentViewport) == 0 &&
+                currentViewport.w > 0 && currentViewport.h > 0) {
+                viewport = currentViewport;
+            }
+        }
+
         float drawX = static_cast<float>(x);
         float drawY = static_cast<float>(y);
         float drawWidth = static_cast<float>(width);
@@ -300,22 +309,33 @@ namespace almondnamespace::sdltextures
 
         const bool widthNormalized = drawWidth > 0.f && drawWidth <= 1.f;
         const bool heightNormalized = drawHeight > 0.f && drawHeight <= 1.f;
+        const bool xNormalized = drawX >= 0.f && drawX <= 1.f;
+        const bool yNormalized = drawY >= 0.f && drawY <= 1.f;
+
+        const float baseWidth = static_cast<float>(std::max(1, viewport.w));
+        const float baseHeight = static_cast<float>(std::max(1, viewport.h));
 
         if (widthNormalized) {
-            if (drawX >= 0.f && drawX <= 1.f)
-                drawX *= static_cast<float>(outputW);
-            drawWidth = std::max(drawWidth * static_cast<float>(outputW), 1.0f);
+            drawWidth = std::max(drawWidth * baseWidth, 1.0f);
         }
         if (heightNormalized) {
-            if (drawY >= 0.f && drawY <= 1.f)
-                drawY *= static_cast<float>(outputH);
-            drawHeight = std::max(drawHeight * static_cast<float>(outputH), 1.0f);
+            drawHeight = std::max(drawHeight * baseHeight, 1.0f);
+        }
+
+        if (xNormalized) {
+            drawX = drawX * baseWidth;
+        }
+        if (yNormalized) {
+            drawY = drawY * baseHeight;
         }
 
         if (drawWidth <= 0.f)
             drawWidth = static_cast<float>(region.width);
         if (drawHeight <= 0.f)
             drawHeight = static_cast<float>(region.height);
+
+        drawX += static_cast<float>(viewport.x);
+        drawY += static_cast<float>(viewport.y);
 
         SDL_FRect dstRect{
             drawX,

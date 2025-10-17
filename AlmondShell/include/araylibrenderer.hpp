@@ -125,6 +125,14 @@ namespace almondnamespace::raylibcontext
         const int rw = std::max(1, GetRenderWidth());
         const int rh = std::max(1, GetRenderHeight());
         const auto [scaleX, scaleY] = framebuffer_scale();
+#if !defined(RAYLIB_NO_WINDOW)
+        Vector2 offset = { 0.0f, 0.0f };
+        if (IsWindowReady()) {
+            offset = GetRenderOffset();
+        }
+#else
+        Vector2 offset = { 0.0f, 0.0f };
+#endif
 
         // Consider rect "normalized" if any dimension is 0<..<=1 or coords are in [0..1]
         const bool normalized =
@@ -135,15 +143,15 @@ namespace almondnamespace::raylibcontext
         float px, py, pw, ph;
         if (normalized) {
             // 0..1 -> framebuffer pixels
-            px = x * rw;
-            py = y * rh;
+            px = x * rw + offset.x;
+            py = y * rh + offset.y;
             pw = (width > 0.f ? width * rw : (float)r.width);
             ph = (height > 0.f ? height * rh : (float)r.height);
         }
         else {
             // logical pixels -> DPI-scaled pixels
-            px = x * scaleX;
-            py = y * scaleY;
+            px = x * scaleX + offset.x;
+            py = y * scaleY + offset.y;
             pw = (width > 0.f ? width * scaleX : (float)r.width * scaleX);
             ph = (height > 0.f ? height * scaleY : (float)r.height * scaleY);
         }
