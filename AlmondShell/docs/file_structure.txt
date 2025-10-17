@@ -67,7 +67,7 @@
 │   │── almondengine              # Almond engine entry point
 │   │── almondshell               # Almond shell entry point
 │   │── ascriptingsystem.cpp      # Scripting system implementation
-│   │── aui.cpp                   # UI implementation
+│   │── agui.cpp                  # Immediate-mode GUI implementation
 │   │── main.cpp                  # Main entry point
 │
 │── examples/

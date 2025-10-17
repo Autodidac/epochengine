@@ -68,5 +68,5 @@ src Directory
 •	almondengine
 •	almondshell
 •	ascriptingsystem.cpp
-•	aui.cpp
+•	agui.cpp
 •	main.cpp

@@ -1,5 +1,8 @@
 # Changelog
 
+## [v0.59.10]
+- Added `agui.hpp` as the shared immediate-mode GUI layer, generating a built-in font atlas and wiring Raylib + SDL3 draw paths so every backend can render consistent windows, labels, and buttons without bespoke setup.
+
 ## [v0.59.9]
 - Normalised Raylib GUI scaling when panes dock or undock by tracking logical window dimensions separately from framebuffer sizes, keeping buttons consistent during DPI-aware resizes.
 

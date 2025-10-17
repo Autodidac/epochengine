@@ -162,6 +162,9 @@
     <ClInclude Include="$(MSBuildThisFileDirectory)include\atetrislike.hpp">
       <Filter>Header Files\core\backbone\external\modules\games</Filter>
     </ClInclude>
+    <ClInclude Include="$(MSBuildThisFileDirectory)include\agui.hpp">
+      <Filter>Header Files\core\backbone\userinterface</Filter>
+    </ClInclude>
     <ClInclude Include="$(MSBuildThisFileDirectory)include\aui.hpp">
       <Filter>Header Files\core\backbone\userinterface</Filter>
     </ClInclude>
@@ -494,7 +497,7 @@
     <ClCompile Include="$(MSBuildThisFileDirectory)src\afilewatch.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="$(MSBuildThisFileDirectory)src\aui.cpp">
+    <ClCompile Include="$(MSBuildThisFileDirectory)src\agui.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="$(MSBuildThisFileDirectory)src\scripts\editor_launcher.ascript.cpp">
