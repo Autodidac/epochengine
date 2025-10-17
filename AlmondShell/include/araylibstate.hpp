@@ -60,6 +60,8 @@ namespace almondnamespace::raylibcontext
         bool pendingSkipNativeApply{ false };
         unsigned int width{ 400 };
         unsigned int height{ 300 };
+        unsigned int logicalWidth{ 400 };
+        unsigned int logicalHeight{ 300 };
         bool running{ false };
 
         bool shouldClose = false; // Set to true when the window should close

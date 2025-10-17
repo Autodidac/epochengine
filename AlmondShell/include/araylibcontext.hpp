@@ -46,6 +46,7 @@ namespace almondnamespace::core { void MakeDockable(HWND hwnd, HWND parent); }
 #endif
 
 #include <algorithm>
+#include <cmath>
 #include <exception>
 #include <iostream>
 #include <memory>
@@ -102,15 +103,34 @@ namespace almondnamespace::raylibcontext
 
         const int framebufferWidth = std::max(1, ::GetRenderWidth());
         const int framebufferHeight = std::max(1, ::GetRenderHeight());
-        const float logicalWidth = static_cast<float>(std::max(1u, s_raylibstate.width));
-        const float logicalHeight = static_cast<float>(std::max(1u, s_raylibstate.height));
 
-        const float sx = (logicalWidth > 0.0f)
-            ? static_cast<float>(framebufferWidth) / logicalWidth
-            : 1.0f;
-        const float sy = (logicalHeight > 0.0f)
-            ? static_cast<float>(framebufferHeight) / logicalHeight
-            : 1.0f;
+        unsigned int logicalWidth = s_raylibstate.logicalWidth;
+        unsigned int logicalHeight = s_raylibstate.logicalHeight;
+
+        if (::IsWindowReady()) {
+            const int screenWidth = ::GetScreenWidth();
+            const int screenHeight = ::GetScreenHeight();
+            if (screenWidth > 0) {
+                logicalWidth = static_cast<unsigned int>(screenWidth);
+            }
+            if (screenHeight > 0) {
+                logicalHeight = static_cast<unsigned int>(screenHeight);
+            }
+
+            const Vector2 dpi = ::GetWindowScaleDPI();
+            if (dpi.x > 0.0f) {
+                logicalWidth = static_cast<unsigned int>(std::max(1, (int)std::lround(static_cast<double>(framebufferWidth) / dpi.x)));
+            }
+            if (dpi.y > 0.0f) {
+                logicalHeight = static_cast<unsigned int>(std::max(1, (int)std::lround(static_cast<double>(framebufferHeight) / dpi.y)));
+            }
+        }
+
+        const float logicalWidthF = static_cast<float>(std::max(1u, logicalWidth));
+        const float logicalHeightF = static_cast<float>(std::max(1u, logicalHeight));
+
+        const float sx = static_cast<float>(framebufferWidth) / logicalWidthF;
+        const float sy = static_cast<float>(framebufferHeight) / logicalHeightF;
 
         return { sx, sy };
 #else
@@ -161,6 +181,47 @@ namespace almondnamespace::raylibcontext
             // Update state and ctx mirror
             s_raylibstate.width = safeWidth;
             s_raylibstate.height = safeHeight;
+
+            unsigned int logicalWidth = s_raylibstate.logicalWidth;
+            unsigned int logicalHeight = s_raylibstate.logicalHeight;
+
+#if !defined(RAYLIB_NO_WINDOW)
+            if (::IsWindowReady()) {
+                const Vector2 dpi = ::GetWindowScaleDPI();
+                if (dpi.x > 0.0f) {
+                    logicalWidth = static_cast<unsigned int>(std::max(1, (int)std::lround(static_cast<double>(safeWidth) / dpi.x)));
+                }
+                else {
+                    logicalWidth = safeWidth;
+                }
+
+                if (dpi.y > 0.0f) {
+                    logicalHeight = static_cast<unsigned int>(std::max(1, (int)std::lround(static_cast<double>(safeHeight) / dpi.y)));
+                }
+                else {
+                    logicalHeight = safeHeight;
+                }
+
+                const int screenWidth = ::GetScreenWidth();
+                const int screenHeight = ::GetScreenHeight();
+                if (screenWidth > 0) {
+                    logicalWidth = static_cast<unsigned int>(screenWidth);
+                }
+                if (screenHeight > 0) {
+                    logicalHeight = static_cast<unsigned int>(screenHeight);
+                }
+            }
+            else {
+                logicalWidth = safeWidth;
+                logicalHeight = safeHeight;
+            }
+#else
+            logicalWidth = safeWidth;
+            logicalHeight = safeHeight;
+#endif
+
+            s_raylibstate.logicalWidth = std::max(1u, logicalWidth);
+            s_raylibstate.logicalHeight = std::max(1u, logicalHeight);
 
             if (ctx) {
                 ctx->width = static_cast<int>(safeWidth);
@@ -354,6 +415,19 @@ namespace almondnamespace::raylibcontext
             // Sync back to state/ctx with physical size
             s_raylibstate.width = (unsigned)pw;
             s_raylibstate.height = (unsigned)ph;
+            unsigned int logicalChildW = static_cast<unsigned int>(std::max<LONG>(1, pw));
+            unsigned int logicalChildH = static_cast<unsigned int>(std::max<LONG>(1, ph));
+#if !defined(RAYLIB_NO_WINDOW)
+            const Vector2 childDpi = ::GetWindowScaleDPI();
+            if (childDpi.x > 0.0f) {
+                logicalChildW = static_cast<unsigned int>(std::max(1, (int)std::lround(static_cast<double>(pw) / childDpi.x)));
+            }
+            if (childDpi.y > 0.0f) {
+                logicalChildH = static_cast<unsigned int>(std::max(1, (int)std::lround(static_cast<double>(ph) / childDpi.y)));
+            }
+#endif
+            s_raylibstate.logicalWidth = std::max(1u, logicalChildW);
+            s_raylibstate.logicalHeight = std::max(1u, logicalChildH);
             if (ctx) { ctx->width = pw; ctx->height = ph; }
 
             // Notify client once (optional)
