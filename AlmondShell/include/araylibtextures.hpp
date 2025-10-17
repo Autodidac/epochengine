@@ -73,7 +73,7 @@ namespace almondnamespace::raylibtextures
 
     inline std::unordered_map<const TextureAtlas*, AtlasGPU, TextureAtlasPtrHash, TextureAtlasPtrEqual> raylib_gpu_atlases;
 
-    // forward declare OpenGL4State to avoid pulling in aopenglcontext here
+    
     namespace raylibcontext { struct RaylibState; }
     struct BackendData {
         std::unordered_map<const TextureAtlas*, AtlasGPU,
@@ -114,7 +114,8 @@ namespace almondnamespace::raylibtextures
     }
 
     [[nodiscard]]
-    inline ImageData ensure_rgba(const ImageData& img) {
+    inline ImageData ensure_rgba(const ImageData& img) 
+    {
         const size_t pixelCount = static_cast<size_t>(img.width) * img.height;
         const size_t channels = img.pixels.size() / pixelCount;
 
@@ -137,12 +138,14 @@ namespace almondnamespace::raylibtextures
         return { std::move(rgba), img.width, img.height, 4 };
     }
 
-    inline std::string make_dump_name(int atlasIdx, std::string_view tag) {
+    inline std::string make_dump_name(int atlasIdx, std::string_view tag) 
+    {
         std::filesystem::create_directories("atlas_dump");
         return std::format("atlas_dump/{}_{}_{}.ppm", tag, atlasIdx, s_dumpSerial.fetch_add(1, std::memory_order_relaxed));
     }
 
-    inline void dump_atlas(const TextureAtlas& atlas, int atlasIdx) {
+    inline void dump_atlas(const TextureAtlas& atlas, int atlasIdx) 
+    {
         std::string filename = make_dump_name(atlasIdx, atlas.name);
         std::ofstream out(filename, std::ios::binary);
         out << "P6\n" << atlas.width << " " << atlas.height << "\n255\n";
@@ -154,7 +157,8 @@ namespace almondnamespace::raylibtextures
         std::cerr << "[Dump] Wrote: " << filename << "\n";
     }
 
-    inline void upload_atlas_to_gpu(const TextureAtlas& atlas) {
+    inline void upload_atlas_to_gpu(const TextureAtlas& atlas) 
+    {
         if (atlas.pixel_data.empty()) {
             const_cast<TextureAtlas&>(atlas).rebuild_pixels();
         }

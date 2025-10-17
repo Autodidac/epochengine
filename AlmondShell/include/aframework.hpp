@@ -29,7 +29,9 @@
  // Almond Entry Point No-Op
 #define WIN32_LEAN_AND_MEAN
 //#define NOGDI
-//#define NOMINMAX
+#ifndef NOMINMAX
+#define NOMINMAX
+#endif
 //#define NOUSER
 #include <windows.h>
 #include <windowsx.h>         // for GET_X_LPARAM / GET_Y_LPARAM

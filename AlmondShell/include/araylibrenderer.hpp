@@ -29,6 +29,10 @@
 
 #if defined(ALMOND_USING_RAYLIB)
 
+#ifndef NOMINMAX
+#define NOMINMAX
+#endif
+
 #include "araylibtextures.hpp"
 #include "aspritehandle.hpp"
 #include "aatlastexture.hpp"
@@ -38,12 +42,26 @@
 #include <span>
 #include <utility>
 
-#include <raylib.h> // must be included (you had it commented out)
+#include <raylib.h> // required
 
-// ---------- DPI helpers ----------
 namespace almondnamespace::raylibcontext
 {
-    std::pair<float, float> framebuffer_scale() noexcept;
+    // ---------- DPI / framebuffer helpers (header-inline for MSVC/linker) ----------
+
+    // Returns (pixels_per_logical_x, pixels_per_logical_y)
+    inline std::pair<float, float> framebuffer_scale() noexcept
+    {
+#if !defined(RAYLIB_NO_WINDOW)
+        if (IsWindowReady()) {
+            const int rw = (std::max)(1, GetRenderWidth());   // framebuffer pixels
+            const int rh = (std::max)(1, GetRenderHeight());
+            const int sw = (std::max)(1, GetScreenWidth());   // logical window units
+            const int sh = (std::max)(1, GetScreenHeight());
+            return { float(rw) / float(sw), float(rh) / float(sh) };
+        }
+#endif
+        return { 1.0f, 1.0f };
+    }
 
     inline float ui_scale_x() noexcept {
 #if !defined(RAYLIB_NO_WINDOW)
@@ -74,6 +92,7 @@ namespace almondnamespace::raylibcontext
 #endif
     }
 
+    // ---------- Renderer state ----------
     struct RendererContext
     {
         enum class RenderMode { SingleTexture, TextureAtlas };
@@ -86,8 +105,7 @@ namespace almondnamespace::raylibcontext
     {
         BeginDrawing();
         ClearBackground(RAYWHITE);
-        // Viewport should be set by your context loop using GetRenderWidth/Height().
-        // (Do it there to avoid GL include churn here.)
+        // Viewport is set in your context loop (raylib_process); keep it there.
     }
 
     inline void end_frame()
@@ -122,8 +140,8 @@ namespace almondnamespace::raylibcontext
         // Source rect in atlas pixels
         Raylib_Rectangle src{ (float)r.x, (float)r.y, (float)r.width, (float)r.height };
 
-        const int rw = std::max(1, GetRenderWidth());
-        const int rh = std::max(1, GetRenderHeight());
+        const int rw = (std::max)(1, GetRenderWidth());
+        const int rh = (std::max)(1, GetRenderHeight());
         const auto [scaleX, scaleY] = framebuffer_scale();
 #if !defined(RAYLIB_NO_WINDOW)
         Vector2 offset = { 0.0f, 0.0f };
@@ -156,8 +174,8 @@ namespace almondnamespace::raylibcontext
             ph = (height > 0.f ? height * scaleY : (float)r.height * scaleY);
         }
 
-        pw = std::max(pw, 1.0f);
-        ph = std::max(ph, 1.0f);
+        pw = (std::max)(pw, 1.0f);
+        ph = (std::max)(ph, 1.0f);
 
         Raylib_Rectangle dst{ px, py, pw, ph };
         DrawTexturePro(tex, src, dst, Vector2{ 0,0 }, 0.0f, WHITE);
