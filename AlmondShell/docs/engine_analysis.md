@@ -12,7 +12,7 @@
 - **Testing Surface** – No automated smoke tests or CI hooks are defined for the critical updater and renderer paths, leaving regression risk high during phase transitions.
 
 ## Recent Progress (v0.59.9)
-- Stabilised Raylib UI scaling across docked and standalone windows by preserving logical dimensions alongside framebuffer sizes, so button quads stay proportional after DPI-aware resizes.
+- Stabilised Raylib UI scaling across docked and standalone windows by preserving logical dimensions alongside framebuffer sizes, so atlas-driven GUI buttons keep their intended proportions after DPI-aware resizes in the Raylib backend.
 
 ## Recent Progress (v0.59.8)
 - Adopted backend-owned Raylib and SDL window handles inside the multiplexer, replacing the temporary shell HWNDs with the real
@@ -52,6 +52,9 @@
 2. **Renderer Regression Harness** – Build headless validation scenes that render deterministic atlas frames for OpenGL, Raylib, SDL, and the software backend.
 3. **Task Scheduler Profiling** – Instrument `include/aenginesystems.hpp` and the scheduler loop to trace coroutine stalls, especially during reload storms.
 4. **Documentation Automation** – Generate API references from headers and surface them via GitHub Pages to reduce onboarding friction.
+
+## Context Cleanup Watchlist
+- See `docs/context_audit.md` for a full census of "context" modules.  The audit tags `include/araylibcontext_win32.hpp` and `include/avulkanglfwcontext.hpp` as safe deletion candidates once external dependencies are ruled out, while `include/acontextrenderer.hpp` remains a "maybe" pending deeper archaeology.
 
 ## Next-Step Prompt Template
 > "You are advancing AlmondShell through Phase {N} of the roadmap. Inspect the outstanding tasks for this phase, create a mini plan listing concrete PR-sized steps, implement them, and return a report with code diffs, tests, and docs updated."
