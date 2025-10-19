@@ -14,9 +14,6 @@ It distils over **4,000 hours** of engineering effort invested into getting a mu
 
 The runtime is designed for rapid iteration with hot-reloadable scripting, a self-updating launcher capable of downloading and building from source, and the low-level systems that power rendering, scripting, task scheduling, and asset pipelines. Editor automation currently lives in `src/scripts/`, which the runtime watches and reloads on demand.
 
-- **End users** can download the prebuilt binary, drop it into an empty directory, and let AlmondShell populate the latest files automatically.
-(Currently disabled while under active development.)
-
 ---
 
 ## Architectural Pillars
@@ -30,29 +27,39 @@ The runtime is designed for rapid iteration with hot-reloadable scripting, a sel
 
 ---
 
+## Current Snapshot (v0.61.0)
+
+- ✅ **Immediate GUI everywhere** – `agui.hpp` seeds a shared font atlas and wires button/label primitives through Raylib and SDL3 so every backend can render consistent overlays out of the box.
+- ✅ **HiDPI-aware multi-context rendering** – Raylib and SDL3 cache framebuffer metrics and remap input coordinates so docked panes stay pixel-accurate after DPI or window changes.
+- ✅ **Configurable menu layouts** – The runtime honours a `--menu-columns` cap to keep atlas-driven menus readable on constrained displays.
+- ✅ **Robust hot reload** – The scripting pipeline emits `ScriptLoadReport` diagnostics, prunes completed jobs, and waits synchronously so tooling observes a deterministic post-reload state.
+
+Refer to [`Changes/changelog.txt`](Changes/changelog.txt) for the full history of fixes and enhancements.
+
+---
+
 ## Key Features
 
 - 🔄 **Self-updating launcher**
   Designed to automatically fetch the newest release when run, ensuring users always stay up to date.
   Can also be built directly from source for full control.
-  *(Currently disabled while under active development.)*  
 
-- ⚙️ **Modular C++20 engine**  
-  Built in a **functional, header-only style** with static linkage.  
-  Context-driven architecture with systems for rendering, windowing, input, scripting, tasks, and asset management.  
+- ⚙️ **Modular C++20 engine**
+  Built in a **functional, header-only style** with static linkage.
+  Context-driven architecture with systems for rendering, windowing, input, scripting, tasks, and asset management.
 
-- 🧪 **Live script reloading**  
-  Changes to `*.ascript.cpp` files are detected at runtime, recompiled with LLVM/Clang, and seamlessly reloaded.  
+- 🧪 **Live script reloading**
+  Changes to `*.ascript.cpp` files are detected at runtime, recompiled with LLVM/Clang, and seamlessly reloaded.
 
-- 🗂️ **Well-organised codebase**  
-  - Headers in `include/`  
-  - Implementation in `src/`  
-  - Helper scripts under `unix/` plus project-level `.sh` helpers  
+- 🗂️ **Well-organised codebase**
+  - Headers in `include/`
+  - Implementation in `src/`
+  - Helper scripts under `unix/` plus project-level `.sh` helpers
 
 - 🖼️ **Sprite & atlas management**
   Global registries, unique atlas indexing, and atlas-driven GUI (buttons, highlights, and menus) backed by the multi-context atlas pipeline that has been refined over thousands of development hours.
 - 🪟 **Built-in immediate GUI (`agui.hpp`)**
-  The new `agui` module exposes simple window, label, and button primitives that automatically provision a font atlas and upload it to Raylib and SDL backends so every context can draw the same HUD elements out of the box.
+  Shared GUI primitives provision a font atlas automatically and upload it to Raylib and SDL backends so every context can draw the same HUD elements out of the box.
 
 - 🖥️ **Multi-context rendering**
   Pluggable backends: OpenGL, Raylib, SFML, and a software renderer — switchable via thunks and lambdas.
@@ -65,7 +72,8 @@ The runtime is designed for rapid iteration with hot-reloadable scripting, a sel
 
 ✅ **Actively Developed**
 AlmondShell is under **active development** as the software engine base of AlmondEngine.
-It continues to evolve as the **core foundation layer**, ensuring speed, modularity, and cross-platform compatibility with a **static, header-only functional design**.
+The current focus is **Phase 2 of the roadmap**: hardening the multi-context runtime, building renderer smoke coverage, and integrating automated reload diagnostics.
+See [`Changes/roadmap.txt`](Changes/roadmap.txt) and [`AlmondShell/docs/engine_analysis.md`](AlmondShell/docs/engine_analysis.md) for the detailed plan and analysis notes.
 
 ---
 
@@ -78,16 +86,17 @@ It continues to evolve as the **core foundation layer**, ensuring speed, modular
 ├── AlmondShell/
 │   ├── include/             # Core engine headers
 │   ├── src/                 # Engine, updater entry point, and scripts
-│   ├── docs/                # Supplementary documentation and setup notes
+│   ├── docs/                # Engine analysis, configuration matrix, context audit, tooling notes
 │   ├── examples/            # Sample projects and templates
 │   └── CMakeLists.txt       # Build script for the updater target
 ├── AlmondShell.sln          # Visual Studio solution for Windows developers
-└── images/                  # Non-code repository assets (logos, promo art, etc.)
+├── Changes/                 # Roadmap and changelog snapshots
+└── Images/                  # Non-code repository assets (logos, promo art, etc.)
     ├── 567.jpg
     └── almondshell.bmp
 ```
 
-Refer to `AlmondShell/docs/file_structure.txt` for a more exhaustive tour of the available modules.
+Refer to `AlmondShell/docs/file_structure.txt` for a more exhaustive tour of the available modules and helper tooling, and `AlmondShell/docs/tools_list.txt` for environment prerequisites.
 
 ---
 
@@ -132,7 +141,7 @@ To build AlmondShell from source you will need the following tools:
 | Requirement            | Notes |
 | ---------------------- | ----- |
 | A C++20 toolchain      | Visual Studio 2022, clang, or GCC 11+ are recommended. |
-| CMake ≥ 3.10           | Used to generate build files. |
+| CMake ≥ 3.21           | Used to generate build files and drive the provided presets. |
 | Ninja _or_ MSBuild     | Pick the generator that matches your platform. |
 | Git                    | Required for cloning the repository and fetching dependencies. |
 | [vcpkg](https://vcpkg.io/) | Simplifies acquiring third-party libraries listed in `AlmondShell/vcpkg.json`. |
@@ -176,33 +185,36 @@ cd AlmondShell
 ### Windows (MSVC)
 
 ```powershell
-cmake -B build -S . -G "Visual Studio 17 2022"
-cmake --build build --config Release
+cmake --preset x64-release
+cmake --build --preset x64-release
 ```
 
-### Linux & macOS (Clang/GCC + Ninja)
+### Linux (Clang/GCC + Ninja)
 
 ```bash
-cmake -B build -S . -G Ninja
-cmake --build build
+cmake --preset Ninja-Release
+cmake --build --preset Ninja-Release
 ```
 
-Both configurations produce the `updater` executable inside the `build` directory. Adjust `--config` or the generator settings to create Debug builds when needed.
+### macOS (Clang + Ninja)
+
+```bash
+cmake --preset macos-release
+cmake --build --preset macos-release
+```
+
+Each preset generates binaries under `AlmondShell/bin/<preset>/`. Switch to the corresponding `*-Debug` preset for debug symbols or override generator settings as needed.
 
 ---
 
 ## Running the Updater & Engine
 
-### Using a Release Binary
-1. Create an empty working directory.
-2. Download the appropriate `almondshell` binary from the [Releases](https://github.com/Autodidac/AlmondShell/releases) page.
-
-### Running From Source
-
 On launch the updater:
 1. Reads the remote configuration targets defined in `include/aupdateconfig.hpp` (for example the `include/config.hpp` manifest in the release repository).
 2. Downloads and applies updates when available.
-3. Starts the engine runtime, which in turn loads `src/scripts/editor_launcher.ascript.cpp` and watches for changes. Editing the script triggers automatic recompilation within the running session.
+3. Starts the engine runtime, which in turn loads `src/scripts/editor_launcher.ascript.cpp` and watches for changes. Editing the script triggers automatic recompilation within the running session, with `ScriptLoadReport` diagnostics surfacing reload status in the console.
+
+Release binaries are not currently published while the runtime is under active development. Build from source using the steps above until the release automation in the roadmap is complete.
 
 Stop the session with `Ctrl+C` or by closing the console window.
 
@@ -212,7 +224,8 @@ Stop the session with `Ctrl+C` or by closing the console window.
 
 - The hot-reload loop in `src/main.cpp` monitors script timestamps roughly every 200 ms. Keep editor builds incremental to benefit from the fast feedback.
 - Utility shell scripts (`build.sh`, `run.sh`, `unix/*.sh`) can streamline development on POSIX systems.
-- Check the `docs/` folder for platform-specific setup guides, tool recommendations, and dependency notes.
+- `AlmondShell/docs/engine_analysis.md` and `AlmondShell/docs/context_audit.md` catalogue current focus areas and cleanup candidates for future contributors.
+- Check the remaining `docs/` entries for platform-specific setup guides, tool recommendations, and dependency notes.
 
 ---
 
