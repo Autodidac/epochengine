@@ -36,6 +36,7 @@
 #include <array>
 #include <cstddef>
 #include <cstdint>
+#include <limits>
 #include <mutex>
 #include <stdexcept>
 #include <string>
@@ -160,6 +161,10 @@ namespace
         SpriteHandle buttonNormal{};
         SpriteHandle buttonHover{};
         SpriteHandle buttonActive{};
+        SpriteHandle textField{};
+        SpriteHandle textFieldActive{};
+        SpriteHandle panelBackground{};
+        SpriteHandle consoleBackground{};
         std::array<SpriteHandle, 96> glyphs{};
         float glyphWidth = 8.0f;
         float glyphHeight = 8.0f;
@@ -187,11 +192,20 @@ namespace
 
         bool mouseDown = false;
         bool prevMouseDown = false;
+        bool justReleased = false;
         bool insideWindow = false;
         bool justPressed = false;
+
+        float deltaTime = 0.0f;
+        float caretTimer = 0.0f;
+        bool caretVisible = true;
+
+        std::vector<InputEvent> events{};
     };
 
     thread_local FrameState g_frame{};
+    thread_local std::vector<InputEvent> g_pendingEvents{};
+    thread_local const void* g_activeWidget = nullptr;
 
     // Cheap tripwire so this doesn't regress again:
     static_assert(std::is_same_v<decltype(g_frame.ctx), core::Context*>,
@@ -202,6 +216,8 @@ namespace
     constexpr float kLineSpacing = 4.0f;
     constexpr float kFontScale = 2.0f;
     constexpr float kTitleScale = 2.5f;
+    constexpr float kBoxInnerPadding = 6.0f;
+    constexpr float kCaretBlinkPeriod = 1.0f;
 
     [[nodiscard]] std::vector<std::uint8_t> make_solid_pixels(std::uint8_t r, std::uint8_t g, std::uint8_t b, std::uint8_t a, std::uint32_t w, std::uint32_t h)
     {
@@ -300,6 +316,14 @@ namespace
             make_solid_pixels(0x76, 0x7C, 0x85, 0xFF, 8, 8), 8, 8);
         g_resources.buttonActive = add_sprite(atlas, "__agui/button_active",
             make_solid_pixels(0x94, 0x9A, 0xA3, 0xFF, 8, 8), 8, 8);
+        g_resources.textField = add_sprite(atlas, "__agui/text_field",
+            make_solid_pixels(0x2B, 0x2E, 0x33, 0xFF, 8, 8), 8, 8);
+        g_resources.textFieldActive = add_sprite(atlas, "__agui/text_field_active",
+            make_solid_pixels(0x3A, 0x3E, 0x45, 0xFF, 8, 8), 8, 8);
+        g_resources.panelBackground = add_sprite(atlas, "__agui/panel_bg",
+            make_solid_pixels(0x27, 0x29, 0x2E, 0xFF, 8, 8), 8, 8);
+        g_resources.consoleBackground = add_sprite(atlas, "__agui/console_bg",
+            make_solid_pixels(0x1F, 0x21, 0x26, 0xFF, 8, 8), 8, 8);
 
         for (std::size_t i = 0; i < kFont8x8Basic.size(); ++i) {
             const int codepoint = static_cast<int>(i) + 32;
@@ -335,6 +359,116 @@ namespace
         g_frame.ctx->draw_sprite_safe(handle, atlases, x, y, w, h);
     }
 
+    [[nodiscard]] SpriteHandle glyph_handle(unsigned char ch) noexcept
+    {
+        if (ch >= 32 && ch < 128) {
+            return g_resources.glyphs[ch - 32];
+        }
+        return g_resources.glyphs['?' - 32];
+    }
+
+    [[nodiscard]] bool point_in_rect(Vec2 point, float x, float y, float w, float h) noexcept
+    {
+        return (point.x >= x && point.x <= x + w && point.y >= y && point.y <= y + h);
+    }
+
+    [[nodiscard]] float measure_wrapped_text_height(std::string_view text, float width, float scale) noexcept
+    {
+        ensure_resources();
+        const float glyphW = g_resources.glyphWidth * scale;
+        const float glyphH = g_resources.glyphHeight * scale;
+        const float effectiveWidth = std::max(glyphW, width);
+
+        std::size_t lines = 1;
+        float penX = 0.0f;
+        for (char ch : text) {
+            if (ch == '\n') {
+                ++lines;
+                penX = 0.0f;
+                continue;
+            }
+
+            if (penX + glyphW > effectiveWidth + 0.001f) {
+                ++lines;
+                penX = 0.0f;
+            }
+
+            penX += glyphW;
+        }
+
+        const float totalHeight = static_cast<float>(lines) * glyphH + static_cast<float>(lines - 1) * kLineSpacing;
+        return std::max(glyphH, totalHeight);
+    }
+
+    [[nodiscard]] almondnamespace::gui::Vec2 compute_caret_position(std::string_view text, float x, float y, float width, float scale) noexcept
+    {
+        ensure_resources();
+        const float glyphW = g_resources.glyphWidth * scale;
+        const float glyphH = g_resources.glyphHeight * scale;
+        const float effectiveWidth = std::max(glyphW, width);
+
+        float startX = x;
+        float penX = x;
+        float penY = y;
+
+        for (char ch : text) {
+            if (ch == '\n') {
+                penX = startX;
+                penY += glyphH + kLineSpacing;
+                continue;
+            }
+
+            if (penX + glyphW > startX + effectiveWidth + 0.001f) {
+                penX = startX;
+                penY += glyphH + kLineSpacing;
+            }
+
+            penX += glyphW;
+        }
+
+        return {penX, penY};
+    }
+
+    float draw_wrapped_text(std::string_view text, float x, float y, float width, float scale)
+    {
+        ensure_resources();
+        if (!g_frame.ctx)
+            return 0.0f;
+
+        const float glyphW = g_resources.glyphWidth * scale;
+        const float glyphH = g_resources.glyphHeight * scale;
+        const float effectiveWidth = std::max(glyphW, width);
+
+        const float startX = x;
+        float penX = x;
+        float penY = y;
+
+        for (char ch : text) {
+            if (ch == '\n') {
+                penX = startX;
+                penY += glyphH + kLineSpacing;
+                continue;
+            }
+
+            if (penX + glyphW > startX + effectiveWidth + 0.001f) {
+                penX = startX;
+                penY += glyphH + kLineSpacing;
+            }
+
+            const SpriteHandle handle = glyph_handle(static_cast<unsigned char>(ch));
+            draw_sprite(handle, penX, penY, glyphW, glyphH);
+            penX += glyphW;
+        }
+
+        return (penY - y) + glyphH;
+    }
+
+    void draw_caret(float x, float y, float height)
+    {
+        const float caretWidth = std::max(1.0f, g_resources.glyphWidth * kFontScale * 0.1f);
+        draw_sprite(g_resources.buttonActive, x, y, caretWidth, height);
+    }
+
     void draw_text_line(std::string_view text, float x, float y, float scale)
     {
         ensure_resources();
@@ -343,7 +477,6 @@ namespace
 
         const float glyphW = g_resources.glyphWidth * scale;
         const float glyphH = g_resources.glyphHeight * scale;
-        const SpriteHandle fallback = g_resources.glyphs['?' - 32];
 
         for (char ch : text) {
             if (ch == '\n') {
@@ -352,12 +485,7 @@ namespace
                 continue;
             }
 
-            unsigned char uch = static_cast<unsigned char>(ch);
-            SpriteHandle handle = fallback;
-            if (uch >= 32 && uch < 128) {
-                handle = g_resources.glyphs[uch - 32];
-            }
-
+            const SpriteHandle handle = glyph_handle(static_cast<unsigned char>(ch));
             draw_sprite(handle, x, y, glyphW, glyphH);
             x += glyphW;
         }
@@ -375,16 +503,10 @@ namespace
 
 void push_input(const almondnamespace::gui::InputEvent& e) noexcept
 {
-    g_frame.mousePos = e.mouse_pos;
-    if (e.type == EventType::MouseDown) {
-        g_frame.mouseDown = true;
-    }
-    else if (e.type == EventType::MouseUp) {
-        g_frame.mouseDown = false;
-    }
+    g_pendingEvents.push_back(e);
 }
 
-void begin_frame(core::Context& ctx, float, Vec2 mouse_pos, bool mouse_down) noexcept
+void begin_frame(core::Context& ctx, float dt, Vec2 mouse_pos, bool mouse_down) noexcept
 {
     try {
         ensure_backend_upload(ctx);
@@ -394,10 +516,47 @@ void begin_frame(core::Context& ctx, float, Vec2 mouse_pos, bool mouse_down) noe
     }
 
     g_frame.ctx = &ctx;
-    g_frame.prevMouseDown = g_frame.mouseDown;
-    g_frame.mouseDown = mouse_down;
-    g_frame.justPressed = (!g_frame.prevMouseDown && g_frame.mouseDown);
-    g_frame.mousePos = mouse_pos;
+    g_frame.deltaTime = dt;
+
+    g_frame.caretTimer += dt;
+    while (g_frame.caretTimer >= kCaretBlinkPeriod) {
+        g_frame.caretTimer -= kCaretBlinkPeriod;
+    }
+    g_frame.caretVisible = (g_frame.caretTimer < (kCaretBlinkPeriod * 0.5f));
+
+    const bool prevMouseDown = g_frame.mouseDown;
+    bool currentMouseDown = mouse_down;
+    Vec2 currentMousePos = mouse_pos;
+
+    g_frame.events.clear();
+    if (!g_pendingEvents.empty()) {
+        g_frame.events.insert(g_frame.events.end(), g_pendingEvents.begin(), g_pendingEvents.end());
+        g_pendingEvents.clear();
+    }
+
+    for (const auto& evt : g_frame.events) {
+        switch (evt.type) {
+        case EventType::MouseMove:
+            currentMousePos = evt.mouse_pos;
+            break;
+        case EventType::MouseDown:
+            currentMouseDown = true;
+            currentMousePos = evt.mouse_pos;
+            break;
+        case EventType::MouseUp:
+            currentMouseDown = false;
+            currentMousePos = evt.mouse_pos;
+            break;
+        default:
+            break;
+        }
+    }
+
+    g_frame.prevMouseDown = prevMouseDown;
+    g_frame.mouseDown = currentMouseDown;
+    g_frame.mousePos = currentMousePos;
+    g_frame.justPressed = (!prevMouseDown && currentMouseDown);
+    g_frame.justReleased = (prevMouseDown && !currentMouseDown);
     reset_frame();
 }
 
@@ -405,6 +564,9 @@ void end_frame() noexcept
 {
     g_frame.ctx = nullptr;
     g_frame.insideWindow = false;
+    g_frame.events.clear();
+    g_frame.justPressed = false;
+    g_frame.justReleased = false;
 }
 
 void begin_window(std::string_view title, Vec2 position, Vec2 size) noexcept
@@ -441,8 +603,7 @@ bool button(std::string_view label, Vec2 size) noexcept
     const float width = std::max<float>(static_cast<float>(size.x), g_resources.glyphWidth * kFontScale + 2.0f * kContentPadding);
     const float height = std::max<float>(static_cast<float>(size.y), g_resources.glyphHeight * kFontScale + 2.0f * kContentPadding);
 
-    const bool hovered = (g_frame.mousePos.x >= pos.x && g_frame.mousePos.x <= pos.x + width &&
-        g_frame.mousePos.y >= pos.y && g_frame.mousePos.y <= pos.y + height);
+    const bool hovered = point_in_rect(g_frame.mousePos, pos.x, pos.y, width, height);
 
     const SpriteHandle background = hovered
         ? (g_frame.mouseDown ? g_resources.buttonActive : g_resources.buttonHover)
@@ -458,6 +619,246 @@ bool button(std::string_view label, Vec2 size) noexcept
 
     g_frame.cursor.y += height + kContentPadding;
     return hovered && g_frame.justPressed;
+}
+
+bool image_button(const SpriteHandle& sprite, Vec2 size) noexcept
+{
+    if (!g_frame.insideWindow || !g_frame.ctx)
+        return false;
+
+    ensure_resources();
+
+    const Vec2 pos = g_frame.cursor;
+    const float minSize = g_resources.glyphHeight * kFontScale * 2.0f;
+    const float width = std::max<float>(static_cast<float>(size.x), minSize);
+    const float height = std::max<float>(static_cast<float>(size.y), minSize);
+
+    const bool hovered = point_in_rect(g_frame.mousePos, pos.x, pos.y, width, height);
+    const SpriteHandle background = hovered
+        ? (g_frame.mouseDown ? g_resources.buttonActive : g_resources.buttonHover)
+        : g_resources.buttonNormal;
+
+    draw_sprite(background, pos.x, pos.y, width, height);
+    if (sprite.is_valid()) {
+        draw_sprite(sprite, pos.x, pos.y, width, height);
+    }
+
+    g_frame.cursor.y += height + kContentPadding;
+    return hovered && g_frame.justPressed;
+}
+
+EditBoxResult edit_box(std::string& text, Vec2 size, std::size_t max_chars, bool multiline) noexcept
+{
+    EditBoxResult result{};
+    if (!g_frame.insideWindow || !g_frame.ctx)
+        return result;
+
+    ensure_resources();
+
+    const Vec2 pos = g_frame.cursor;
+    const float minWidth = g_resources.glyphWidth * kFontScale * 4.0f;
+    const float minHeight = g_resources.glyphHeight * kFontScale + 2.0f * kBoxInnerPadding;
+    const float width = std::max<float>(static_cast<float>(size.x), minWidth);
+    const float height = std::max<float>(static_cast<float>(size.y), minHeight);
+
+    const bool hovered = point_in_rect(g_frame.mousePos, pos.x, pos.y, width, height);
+    const void* id = static_cast<const void*>(&text);
+
+    if (g_frame.justPressed) {
+        if (hovered) {
+            g_activeWidget = id;
+            g_frame.caretTimer = 0.0f;
+            g_frame.caretVisible = true;
+        }
+        else if (g_activeWidget == id) {
+            g_activeWidget = nullptr;
+        }
+    }
+
+    if (g_frame.justReleased && !hovered && g_activeWidget == id) {
+        g_activeWidget = nullptr;
+    }
+
+    const bool active = (g_activeWidget == id);
+    result.active = active;
+
+    const SpriteHandle background = active ? g_resources.textFieldActive : g_resources.textField;
+    draw_sprite(background, pos.x, pos.y, width, height);
+
+    const float contentWidth = std::max(1.0f, width - 2.0f * kBoxInnerPadding);
+    const float contentHeight = std::max(1.0f, height - 2.0f * kBoxInnerPadding);
+    const float textX = pos.x + kBoxInnerPadding;
+    const float textY = pos.y + kBoxInnerPadding;
+
+    if (multiline) {
+        draw_wrapped_text(text, textX, textY, contentWidth, kFontScale);
+    }
+    else {
+        draw_text_line(text, textX, textY, kFontScale);
+    }
+
+    const std::size_t limit = max_chars == 0 ? std::numeric_limits<std::size_t>::max() : max_chars;
+
+    if (active) {
+        for (const auto& evt : g_frame.events) {
+            switch (evt.type) {
+            case EventType::TextInput:
+                for (char ch : evt.text) {
+                    if (ch == '\r')
+                        continue;
+                    if (ch == '\n') {
+                        if (multiline) {
+                            if (text.size() < limit) {
+                                text.push_back('\n');
+                                result.changed = true;
+                            }
+                        }
+                        else {
+                            result.submitted = true;
+                        }
+                        continue;
+                    }
+                    if (static_cast<unsigned char>(ch) < 32)
+                        continue;
+                    if (text.size() < limit) {
+                        text.push_back(ch);
+                        result.changed = true;
+                    }
+                }
+                break;
+            case EventType::KeyDown:
+                if (evt.key == 8 || evt.key == 127) {
+                    if (!text.empty()) {
+                        text.pop_back();
+                        result.changed = true;
+                    }
+                }
+                else if (evt.key == 27) {
+                    g_activeWidget = nullptr;
+                    result.active = false;
+                }
+                else if (evt.key == 13) {
+                    if (multiline) {
+                        if (text.size() < limit) {
+                            text.push_back('\n');
+                            result.changed = true;
+                        }
+                    }
+                    else {
+                        result.submitted = true;
+                    }
+                }
+                break;
+            default:
+                break;
+            }
+        }
+    }
+
+    if (active && g_frame.caretVisible) {
+        const Vec2 caret = multiline
+            ? compute_caret_position(text, textX, textY, contentWidth, kFontScale)
+            : Vec2{ textX + static_cast<float>(text.size()) * g_resources.glyphWidth * kFontScale, textY };
+
+        const float caretHeight = multiline
+            ? std::min(contentHeight, g_resources.glyphHeight * kFontScale)
+            : g_resources.glyphHeight * kFontScale;
+
+        const float caretRight = textX + std::max(1.0f, contentWidth) - 1.0f;
+        const float caretX = std::clamp(caret.x, textX, caretRight);
+        const float caretY = std::clamp(caret.y, textY, textY + std::max(0.0f, contentHeight - caretHeight));
+        draw_caret(caretX, caretY, caretHeight);
+    }
+
+    g_frame.cursor.y += height + kContentPadding;
+    return result;
+}
+
+void text_box(std::string_view text, Vec2 size) noexcept
+{
+    if (!g_frame.insideWindow || !g_frame.ctx)
+        return;
+
+    ensure_resources();
+
+    const Vec2 pos = g_frame.cursor;
+    const float minWidth = g_resources.glyphWidth * kFontScale * 4.0f;
+    float width = static_cast<float>(size.x);
+    if (width <= 0.0f) {
+        const float estimated = static_cast<float>(text.size()) * g_resources.glyphWidth * kFontScale + 2.0f * kBoxInnerPadding;
+        width = std::max(minWidth, estimated);
+    }
+    else {
+        width = std::max(width, minWidth);
+    }
+
+    const float contentWidth = std::max(1.0f, width - 2.0f * kBoxInnerPadding);
+    float height = static_cast<float>(size.y);
+    if (height <= 0.0f) {
+        const float textHeight = measure_wrapped_text_height(text, contentWidth, kFontScale);
+        height = textHeight + 2.0f * kBoxInnerPadding;
+    }
+    else {
+        height = std::max(height, g_resources.glyphHeight * kFontScale + 2.0f * kBoxInnerPadding);
+    }
+
+    draw_sprite(g_resources.panelBackground, pos.x, pos.y, width, height);
+    draw_wrapped_text(text, pos.x + kBoxInnerPadding, pos.y + kBoxInnerPadding, contentWidth, kFontScale);
+
+    g_frame.cursor.y += height + kContentPadding;
+}
+
+ConsoleWindowResult console_window(const ConsoleWindowOptions& options) noexcept
+{
+    ConsoleWindowResult result{};
+    if (!g_frame.ctx)
+        return result;
+
+    begin_window(options.title, options.position, options.size);
+    if (!g_frame.insideWindow || !g_frame.ctx) {
+        end_window();
+        return result;
+    }
+
+    ensure_resources();
+
+    const float availableWidth = std::max(0.0f, options.size.x - 2.0f * kContentPadding);
+    const float logHeight = std::max(0.0f, options.size.y - 3.0f * kContentPadding - (g_resources.glyphHeight * kFontScale));
+    const Vec2 logPos = g_frame.cursor;
+
+    if (availableWidth > 0.0f && logHeight > 0.0f) {
+        draw_sprite(g_resources.consoleBackground, logPos.x, logPos.y, availableWidth, logHeight);
+    }
+
+    const float contentWidth = std::max(1.0f, availableWidth - 2.0f * kBoxInnerPadding);
+    float penY = logPos.y + kBoxInnerPadding;
+    const float maxY = logPos.y + std::max(0.0f, logHeight - kBoxInnerPadding);
+
+    if (!options.lines.empty() && logHeight > 0.0f) {
+        const std::size_t count = options.lines.size();
+        const std::size_t start = (count > options.max_visible_lines)
+            ? count - options.max_visible_lines
+            : 0;
+        for (std::size_t i = start; i < count; ++i) {
+            const std::string& line = options.lines[i];
+            const float drawn = draw_wrapped_text(line, logPos.x + kBoxInnerPadding, penY, contentWidth, kFontScale);
+            penY += drawn + kLineSpacing;
+            if (penY > maxY) {
+                break;
+            }
+        }
+    }
+
+    g_frame.cursor.y = logPos.y + logHeight + kContentPadding;
+
+    if (options.input) {
+        const float fieldHeight = g_resources.glyphHeight * kFontScale + 2.0f * kBoxInnerPadding;
+        Vec2 inputSize{ availableWidth, fieldHeight };
+        result.input = edit_box(*options.input, inputSize, options.max_input_chars, options.multiline_input);
+    }
+
+    end_window();
+    return result;
 }
 
 void label(std::string_view text) noexcept
