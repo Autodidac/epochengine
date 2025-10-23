@@ -161,7 +161,6 @@
     <ClInclude Include="$(MSBuildThisFileDirectory)include\aupdatesystem.hpp" />
     <ClInclude Include="$(MSBuildThisFileDirectory)include\autilities.hpp" />
     <ClInclude Include="$(MSBuildThisFileDirectory)include\aversion.hpp" />
-    <ClInclude Include="$(MSBuildThisFileDirectory)include\avulkanglfwcontext.hpp" />
     <ClInclude Include="$(MSBuildThisFileDirectory)include\avulkanglfwsetup.hpp" />
     <ClInclude Include="$(MSBuildThisFileDirectory)include\avulkanquad.hpp" />
     <ClInclude Include="$(MSBuildThisFileDirectory)include\avulkanrenderer.hpp" />

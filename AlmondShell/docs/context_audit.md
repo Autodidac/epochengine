@@ -19,10 +19,8 @@ The following table summarises the current state of every file whose name includ
 | `include/anoopcontext.hpp` | Minimal Stub | Only compiled for headless builds; harmless placeholder for tests. | No |
 | `include/araylibcontext.hpp` | Active | Primary Raylib backend implementation. | No |
 | `include/araylibcontextinput.hpp` | Active | Required to translate Raylib input to engine enums. | No |
-| `include/araylibcontext_win32.hpp` | Unused Header | Declaration-only file; not referenced anywhere in the build graph. | Yes |
 | `include/araylibstate.hpp` | Active | Shared Raylib state container; consumed by renderer and context glue. | No |
 | `include/asdlcontextrenderer.hpp` | Partial | SDL renderer wrapper is wired in but lacks texture batching; revisit once SDL backend stabilises. | No |
-| `include/avulkanglfwcontext.hpp` | Legacy Prototype | Standalone Vulkan experiment with global state and no callers. | Yes |
 | `src/acontext.cpp` | Active | Registers every backend and owns the dispatch table. | No |
 
-Files marked "Yes" should be scheduled for removal after confirming no external consumers rely on them; "Maybe" entries need further code archaeology before any destructive change.
+Continue reviewing entries marked "Maybe" before performing destructive changes; the prior "Yes" candidates have been excised from the tree.

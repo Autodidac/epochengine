@@ -48,7 +48,6 @@ include Directory
 •	aupdatesystem.hpp
 •	autilities.hpp
 •	aversion.hpp
-•	avulkanglfwcontext.hpp
 •	avulkanglfwsetup.hpp
 •	avulkanquad.hpp
 •	avulkanrenderer.hpp

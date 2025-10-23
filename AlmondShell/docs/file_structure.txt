@@ -48,7 +48,6 @@
 │   │── aupdatesystem.hpp         # Update system
 │   │── autilities.hpp            # General utilities
 │   │── aversion.hpp              # Versioning utilities
-│   │── avulkanglfwcontext.hpp    # Vulkan GLFW context
 │   │── avulkanglfwsetup.hpp      # Vulkan GLFW setup
 │   │── avulkanquad.hpp           # Vulkan quad rendering
 │   │── avulkanrenderer.hpp       # Vulkan renderer
