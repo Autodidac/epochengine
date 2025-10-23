@@ -32,13 +32,31 @@
 #include <fstream>
 #include <iostream>
 #include <regex>
+#include <span>
 #include <string>
+#include <string_view>
 #include <system_error>
 
 namespace almondnamespace
 {
     namespace updater
     {
+        struct UpdateChannel
+        {
+            std::string version_url;
+            std::string binary_url;
+        };
+
+        struct BootstrapResult
+        {
+            bool should_exit = false;
+            int exit_code = 0;
+            bool update_performed = false;
+        };
+
+        void cleanup_previous_update_artifacts();
+        BootstrapResult bootstrap_from_command(const UpdateChannel& channel,
+                                               std::span<const std::string_view> arguments);
         // 🔄 **Replace binary with the new compiled version**
         inline void replace_binary_from_script(const std::string& new_binary) {
             std::cout << "[INFO] Replacing current binary...\n";
