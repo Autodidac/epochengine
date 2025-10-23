@@ -6,10 +6,9 @@
 #include <chrono>
 #include <filesystem>
 #include <iostream>
+#include <string_view>
 #include <thread>
-
-// this basically just leaves ninja.zip when commented out, but will be configured better in the future
-#define LEAVE_NO_FILES_ALWAYS_REDOWNLOAD
+#include <vector>
 
 // configuration overrides 
 namespace urls {
@@ -26,29 +25,21 @@ namespace urls {
     const std::string binary_url = github_base + owner + repo + "/releases/latest/download/updater.exe";
 }
 
-int main() {
-    // 🔄 **Cleanup Restart Script on Restart & Old Files on Update**
-#ifdef LEAVE_NO_FILES_ALWAYS_REDOWNLOAD
-#if defined(_WIN32)
-    system("del /F /Q replace_updater.bat >nul 2>&1");
-    system(("rmdir /s /q \"" + std::string(config::REPO.c_str()) + "-main\" >nul 2>&1").c_str());
-#else
-    system("rm -rf replace_updater");
-#endif
-#endif
-
-    if (check_for_updates(urls::version_url)) {
-        std::cout << "[INFO] New version available!\n";
-        update_project(urls::version_url, urls::binary_url);
+int main(int argc, char* argv[]) {
+    std::vector<std::string_view> arguments;
+    arguments.reserve(static_cast<std::size_t>(argc));
+    for (int index = 0; index < argc; ++index) {
+        arguments.emplace_back(argv[index]);
     }
-    else {
-        // Clear console before showing "No updates available."
-#if defined(_WIN32)
-        system("cls");
-#else
-        system("clear");
-#endif
-        std::cout << "[INFO] No updates available.\n";
+
+    const almondnamespace::updater::UpdateChannel channel{
+        .version_url = urls::version_url,
+        .binary_url = urls::binary_url,
+    };
+
+    const auto bootstrap_result = almondnamespace::updater::bootstrap_from_command(channel, arguments);
+    if (bootstrap_result.should_exit) {
+        return bootstrap_result.exit_code;
     }
 
     // Lets Begin
