@@ -26,8 +26,12 @@
 
 #include "aplatform.hpp"
 #include "aengineconfig.hpp"
+#include "aspritehandle.hpp"
 
+#include <cstddef>
 #include <cstdint>
+#include <span>
+#include <string>
 #include <string_view>
 
 namespace almondnamespace::core {
@@ -67,13 +71,21 @@ namespace almondnamespace::gui
         None,
         MouseDown,
         MouseUp,
-        MouseMove
+        MouseMove,
+        KeyDown,
+        KeyUp,
+        TextInput
     };
 
     struct InputEvent {
         EventType type = EventType::None;
         Vec2 mouse_pos{};
         std::uint8_t mouse_button = 0;
+        std::uint32_t key = 0;
+        bool shift = false;
+        bool ctrl = false;
+        bool alt = false;
+        std::string text;
     };
 
     void push_input(const InputEvent& e) noexcept;
@@ -85,7 +97,36 @@ namespace almondnamespace::gui
     void end_window() noexcept;
 
     [[nodiscard]] bool button(std::string_view label, Vec2 size) noexcept;
+    [[nodiscard]] bool image_button(const almondnamespace::SpriteHandle& sprite, Vec2 size) noexcept;
+
+    struct EditBoxResult {
+        bool active = false;
+        bool changed = false;
+        bool submitted = false;
+    };
+
+    [[nodiscard]] EditBoxResult edit_box(std::string& text, Vec2 size, std::size_t max_chars = 256, bool multiline = false) noexcept;
+
+    void text_box(std::string_view text, Vec2 size) noexcept;
+
     void label(std::string_view text) noexcept;
+
+    struct ConsoleWindowOptions {
+        std::string_view title;
+        Vec2 position{};
+        Vec2 size{};
+        std::span<const std::string> lines{};
+        std::size_t max_visible_lines = 128;
+        std::string* input = nullptr;
+        std::size_t max_input_chars = 256;
+        bool multiline_input = false;
+    };
+
+    struct ConsoleWindowResult {
+        EditBoxResult input;
+    };
+
+    [[nodiscard]] ConsoleWindowResult console_window(const ConsoleWindowOptions& options) noexcept;
 
     [[nodiscard]] float line_height() noexcept;
     [[nodiscard]] float glyph_width() noexcept;
@@ -104,7 +145,14 @@ namespace almondnamespace::ui
     using gui::begin_window;
     using gui::end_window;
     using gui::button;
+    using gui::image_button;
+    using gui::EditBoxResult;
+    using gui::edit_box;
+    using gui::text_box;
     using gui::label;
+    using gui::ConsoleWindowOptions;
+    using gui::ConsoleWindowResult;
+    using gui::console_window;
     using gui::push_input;
     using gui::line_height;
     using gui::glyph_width;

@@ -29,7 +29,7 @@ The runtime is designed for rapid iteration with hot-reloadable scripting, a sel
 
 ## Current Snapshot (v0.61.0)
 
-- ✅ **Immediate GUI everywhere** – `agui.hpp` seeds a shared font atlas and wires button/label primitives through Raylib and SDL3 so every backend can render consistent overlays out of the box.
+- ✅ **Immediate GUI everywhere** – `agui.hpp` seeds a shared font atlas, now covers buttons, image buttons, editable text fields, text boxes, and a turnkey console overlay so every backend renders consistent tooling widgets out of the box.
 - ✅ **HiDPI-aware multi-context rendering** – Raylib and SDL3 cache framebuffer metrics and remap input coordinates so docked panes stay pixel-accurate after DPI or window changes.
 - ✅ **Configurable menu layouts** – The runtime honours a `--menu-columns` cap to keep atlas-driven menus readable on constrained displays.
 - ✅ **Robust hot reload** – The scripting pipeline emits `ScriptLoadReport` diagnostics, prunes completed jobs, and waits synchronously so tooling observes a deterministic post-reload state.
@@ -59,7 +59,7 @@ Refer to [`Changes/changelog.txt`](Changes/changelog.txt) for the full history o
 - 🖼️ **Sprite & atlas management**
   Global registries, unique atlas indexing, and atlas-driven GUI (buttons, highlights, and menus) backed by the multi-context atlas pipeline that has been refined over thousands of development hours.
 - 🪟 **Built-in immediate GUI (`agui.hpp`)**
-  Shared GUI primitives provision a font atlas automatically and upload it to Raylib and SDL backends so every context can draw the same HUD elements out of the box.
+  Shared GUI primitives provision a font atlas automatically, upload it to Raylib and SDL backends, and expose ready-made buttons, text inputs, image buttons, and console widgets so every context can draw the same HUD elements out of the box.
 
 - 🖥️ **Multi-context rendering**
   Pluggable backends: OpenGL, Raylib, SFML, and a software renderer — switchable via thunks and lambdas.

@@ -1,5 +1,8 @@
 # Changelog
 
+## [v0.59.11]
+- Expanded the immediate-mode GUI with image buttons, editable text fields, multiline text boxes, and a ready-made console window helper while plumbing keyboard/text input through `agui`'s event queue.
+
 ## [v0.59.10]
 - Added `agui.hpp` as the shared immediate-mode GUI layer, generating a built-in font atlas and wiring Raylib + SDL3 draw paths so every backend can render consistent windows, labels, and buttons without bespoke setup.
 
