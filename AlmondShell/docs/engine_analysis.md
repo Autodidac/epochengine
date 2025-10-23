@@ -66,7 +66,7 @@
 4. **Cross-Context Resize Telemetry** – Instrument resize callbacks to log logical vs framebuffer dimensions, making it easier to diagnose when a backend falls out of sync with the multiplexer’s expectations.
 
 ## Context Cleanup Watchlist
-- See `docs/context_audit.md` for a full census of "context" modules.  The audit tags `include/araylibcontext_win32.hpp` and `include/avulkanglfwcontext.hpp` as safe deletion candidates once external dependencies are ruled out, while `include/acontextrenderer.hpp` remains a "maybe" pending deeper archaeology.
+- See `docs/context_audit.md` for a full census of "context" modules.  With the deprecated Win32 and Vulkan GLFW shims removed, `include/acontextrenderer.hpp` remains the lone "maybe" pending deeper archaeology.
 
 ## Next-Step Prompt Template
 > "You are advancing AlmondShell through Phase {N} of the roadmap. Inspect the outstanding tasks for this phase, create a mini plan listing concrete PR-sized steps, implement them, and return a report with code diffs, tests, and docs updated."

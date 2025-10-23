@@ -132,9 +132,6 @@
     <ClInclude Include="$(MSBuildThisFileDirectory)include\aopengltriangle.hpp">
       <Filter>Header Files\core\backbone\external\context\opengl</Filter>
     </ClInclude>
-    <ClInclude Include="$(MSBuildThisFileDirectory)include\avulkanglfwcontext.hpp">
-      <Filter>Header Files\core\backbone\external\context\vulkan</Filter>
-    </ClInclude>
     <ClInclude Include="$(MSBuildThisFileDirectory)include\avulkanglfwsetup.hpp">
       <Filter>Header Files\core\backbone\external\context\vulkan</Filter>
     </ClInclude>
