@@ -98,6 +98,14 @@ See [`Changes/roadmap.txt`](Changes/roadmap.txt) and [`AlmondShell/docs/engine_a
 
 Refer to `AlmondShell/docs/file_structure.txt` for a more exhaustive tour of the available modules and helper tooling, and `AlmondShell/docs/tools_list.txt` for environment prerequisites.
 
+## API Documentation
+
+The repository ships with a [Doxygen](https://www.doxygen.nl/) configuration that indexes every public header beneath `AlmondShell/include/` and emits an HTML reference under `AlmondShell/docs/api/html/`.
+
+- Run the standard build helper (`./AlmondShell/build.sh <gcc|clang> <Debug|Release>`) and the script will invoke the documentation target automatically whenever Doxygen is available on your system.
+- Alternatively, generate the reference manually from an existing build tree via `cmake --build <build directory> --target docs`.
+- Publish the resulting HTML directory (for example by pointing GitHub Pages at `docs/api/html/`) to keep the roadmap's documentation milestone marked as complete.
+
 ---
 
 ## Engine Configuration (`include/aengineconfig.hpp`)

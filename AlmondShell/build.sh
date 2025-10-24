@@ -41,3 +41,15 @@ cmake -S . -B "$BUILD_DIR" \
 
 # Build the project (verbose output)
 cmake --build "$BUILD_DIR" --verbose
+
+# Generate documentation if Doxygen is available
+if cmake -LA -N "$BUILD_DIR" | grep -q "DOXYGEN_FOUND:BOOL=1"; then
+  echo "Generating AlmondShell API documentation..."
+  if cmake --build "$BUILD_DIR" --target docs; then
+    echo "API reference available under $(pwd)/docs/api/html/index.html"
+  else
+    echo "Doxygen reported an error while generating documentation." >&2
+  fi
+else
+  echo "Skipping API documentation generation (Doxygen not detected during configure)."
+fi
