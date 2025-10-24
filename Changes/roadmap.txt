@@ -53,7 +53,7 @@ Phase 4 – Tooling & Automation
 - [ ] Add `scripts/` commands for build, test, package, and release flows (POSIX + PowerShell).
 - [ ] Create editor automation templates under `src/scripts/` demonstrating UI bootstrapping for future editor work.
 - [ ] Set up GitHub Actions/CI pipelines for build + test + artifact upload (matrix across supported OS/toolchains).
-- [ ] Generate API documentation from headers (Doxygen/Sphinx) and publish via GitHub Pages.
+- [x] Generate API documentation from headers (Doxygen/Sphinx) and publish via GitHub Pages. *(Doxygen configuration + build integration generates HTML artefacts under `docs/api/` ready for GitHub Pages publishing.)*
 - [ ] Implement crash reporting with symbol upload and minidump collection.
 
 Phase 5 – Documentation & Release Readiness

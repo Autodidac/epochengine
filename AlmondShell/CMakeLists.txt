@@ -16,3 +16,16 @@ target_include_directories(updater PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/include)
 if(MSVC)
     set(CMAKE_GENERATOR "Visual Studio 17 2022" CACHE STRING "Generator" FORCE)
 endif()
+
+find_package(Doxygen QUIET)
+
+if(DOXYGEN_FOUND)
+    add_custom_target(docs
+        COMMAND ${CMAKE_COMMAND} -E make_directory ${CMAKE_CURRENT_SOURCE_DIR}/docs/api
+        COMMAND ${DOXYGEN_EXECUTABLE} ${CMAKE_CURRENT_SOURCE_DIR}/Doxyfile
+        WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}
+        COMMENT "Generating AlmondShell API documentation"
+        VERBATIM)
+else()
+    message(STATUS "Doxygen not found; the 'docs' target will be skipped.")
+endif()
