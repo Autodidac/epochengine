@@ -506,5 +506,8 @@
     <ClCompile Include="$(MSBuildThisFileDirectory)src\acontextmultiplexer.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="$(MSBuildThisFileDirectory)src\updater_bootstrap.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
 </Project>

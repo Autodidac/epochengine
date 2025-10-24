@@ -39,7 +39,10 @@
 #include "awindowdata.hpp"
 #include "ascene.hpp"
 #include "ainput.hpp"
-  
+//#include "ascriptingsystem.hpp"
+//#include "ataskgraphwithdot.hpp"
+#include "aupdatesystem.hpp"
+
 // Code Analysis
 #include "acodeinspector.hpp"
 
@@ -1770,7 +1773,25 @@ almondnamespace::contextwindow::WindowData windowContext{};
 //
 /////////////////////////////////////////////////////////
 
+// this basically just leaves ninja.zip when commented out, but will be configured better in the future
+#define LEAVE_NO_FILES_ALWAYS_REDOWNLOAD
 
+//using namespace almondnamespace::core;
+
+// configuration overrides
+namespace urls {
+    const std::string github_base = "https://github.com/"; // base github url
+    const std::string github_raw_base = "https://raw.githubusercontent.com/"; // raw base github url, for source downloads
+
+    const std::string owner = "Autodidac/"; // github project developer username for url
+    const std::string repo = "Cpp_Ultimate_Project_Updater"; // whatever your github project name is
+    const std::string branch = "main/"; // incase you need a different branch than githubs default branch main
+
+    // It's now using this internal file to fetch update versions internally without version.txt file that can be modified
+    const std::string version_url = github_raw_base + owner + repo + "/" + branch + "/include/config.hpp";
+    //const std::string source_url = github_base + owner + repo + "/archive/refs/heads/main.zip";
+    const std::string binary_url = github_base + owner + repo + "/releases/latest/download/updater.exe";
+}
 
 //// Now ALWAYS define WinMain so the linker will find it
 int APIENTRY wWinMain(_In_ HINSTANCE hInstance,
@@ -1786,6 +1807,52 @@ int APIENTRY wWinMain(_In_ HINSTANCE hInstance,
     almondnamespace::core::ShowConsole();
 #endif
 
+
+    try {
+        // Command line processing
+        int argc = __argc;
+        char** argv = __argv;
+
+        // Convert command line to wide string array (LPWSTR)
+        int32_t numCmdLineArgs = 0;
+        LPWSTR* pCommandLineArgvArray = CommandLineToArgvW(GetCommandLineW(), &numCmdLineArgs);
+
+        if (pCommandLineArgvArray == nullptr) {
+            MessageBoxW(NULL, L"Command line parsing failed!", L"Error", MB_ICONERROR | MB_OK);
+            return -1;
+        }
+
+        // Free the argument array after use
+        LocalFree(pCommandLineArgvArray);
+
+        almondnamespace::core::cli::parse(argc, argv);
+
+        LPCWSTR window_name = L"Almond Example Window";
+
+        // Updater
+        std::vector<std::string_view> arguments;
+        arguments.reserve(static_cast<std::size_t>(argc));
+        for (int index = 0; index < argc; ++index) {
+            arguments.emplace_back(argv[index]);
+        }
+
+        const almondnamespace::updater::UpdateChannel channel{
+            .version_url = urls::version_url,
+            .binary_url = urls::binary_url,
+        };
+
+        const auto bootstrap_result = almondnamespace::updater::bootstrap_from_command(channel, arguments);
+        if (bootstrap_result.should_exit) {
+            return bootstrap_result.exit_code;
+        }
+
+
+    }
+    catch (const std::exception& ex) {
+        MessageBoxA(nullptr, ex.what(), "Error", MB_ICONERROR | MB_OK);
+        return -1;
+    }
+
     return almondnamespace::core::RunEngineMainLoopInternal(hInstance, SW_SHOWNORMAL);
 }
 #endif
@@ -1799,6 +1866,24 @@ int main(int argc, char* argv[]) {
     return wWinMain(GetModuleHandle(NULL), NULL, pCommandLine, SW_SHOWNORMAL);
 #else
     cli::parse(argc, argv);
+
+    std::vector<std::string_view> arguments;
+    arguments.reserve(static_cast<std::size_t>(argc));
+    for (int index = 0; index < argc; ++index) {
+        arguments.emplace_back(argv[index]);
+    }
+
+    const almondnamespace::updater::UpdateChannel channel{
+        .version_url = urls::version_url,
+        .binary_url = urls::binary_url,
+    };
+
+    const auto bootstrap_result = almondnamespace::updater::bootstrap_from_command(channel, arguments);
+    if (bootstrap_result.should_exit) {
+        return bootstrap_result.exit_code;
+    }
+
+
     core::StartEngine(); // Replace with actual engine logic
     return 0;
 #endif

@@ -39,24 +39,70 @@
 
 namespace almondnamespace
 {
+    namespace cmds
+    {
+        constexpr std::string_view kUpdateLong{ "--update" };
+        constexpr std::string_view kUpdateShort{ "-u" };
+        constexpr std::string_view kForceFlag{ "--force" };
+        constexpr std::string_view kHelpLong{ "--help" };
+        constexpr std::string_view kHelpShort{ "-h" };
+
+        inline bool matches_command(std::string_view argument, std::string_view option) noexcept
+        {
+            return argument == option;
+        }
+
+        inline bool contains_option(std::span<const std::string_view> arguments,
+            std::string_view option) noexcept
+        {
+            return std::any_of(arguments.begin(), arguments.end(),
+                [&](std::string_view value) { return matches_command(value, option); });
+        }
+
+
+        inline void cleanup_previous_update_artifacts()
+        {
+            namespace fs = std::filesystem;
+
+            std::vector<std::filesystem::path> cleanup_targets;
+#ifdef LEAVE_NO_FILES_ALWAYS_REDOWNLOAD
+#if defined(_WIN32)
+            cleanup_targets.emplace_back(updater::REPLACE_RUNNING_EXE_SCRIPT_NAME());
+#else
+            cleanup_targets.emplace_back("replace_and_restart.sh");
+            cleanup_targets.emplace_back("replace_updater");
+#endif
+            cleanup_targets.emplace_back(updater::REPO + "-main");
+#endif
+
+            for (const auto& target : cleanup_targets)
+            {
+                if (target.empty())
+                {
+                    continue;
+                }
+
+                std::error_code ec;
+                if (fs::is_directory(target, ec))
+                {
+                    fs::remove_all(target, ec);
+                }
+                else
+                {
+                    fs::remove(target, ec);
+                }
+
+                if (ec && ec != std::errc::no_such_file_or_directory)
+                {
+                    std::cerr << "[WARN] Failed to remove artifact '" << target.string()
+                        << "': " << ec.message() << '\n';
+                }
+            }
+        }
+    } // namespace
+
     namespace updater
     {
-        struct UpdateChannel
-        {
-            std::string version_url;
-            std::string binary_url;
-        };
-
-        struct BootstrapResult
-        {
-            bool should_exit = false;
-            int exit_code = 0;
-            bool update_performed = false;
-        };
-
-        void cleanup_previous_update_artifacts();
-        BootstrapResult bootstrap_from_command(const UpdateChannel& channel,
-                                               std::span<const std::string_view> arguments);
         // 🔄 **Replace binary with the new compiled version**
         inline void replace_binary_from_script(const std::string& new_binary) {
             std::cout << "[INFO] Replacing current binary...\n";
@@ -190,7 +236,8 @@ namespace almondnamespace
         }
 
         // 🔄 **Replace the Current Binary**
-        inline void replace_binary(const std::string& new_binary) {
+        inline void replace_binary(const std::string& new_binary) 
+        {
             std::cout << "[INFO] Replacing binary...\n";
             clean_up_build_files();
 #if defined(_WIN32)
@@ -204,7 +251,8 @@ namespace almondnamespace
         }
 
         // 🔍 **Check for Updates**
-        bool check_for_updates(const std::string& remote_config_url) {
+        inline bool check_for_updates(const std::string& remote_config_url)
+        {
             std::cout << "[INFO] Checking for updates...\n";
 
             std::string temp_config_path = "temp_config.hpp";
@@ -403,7 +451,7 @@ namespace almondnamespace
         }
 
         // 🔄 **Update from Source (Minimal)**
-        void update_project(const std::string& source_url, const std::string& binary_url) {
+        inline void update_project(const std::string& source_url, const std::string& binary_url) {
 
             //    if (!check_for_updates(source_url)) {
             //#if defined(_WIN32)
@@ -416,11 +464,94 @@ namespace almondnamespace
             //    }
 
                 // get rid of this line if you're looking to reverse redundant fallback order
-            if (!install_from_binary(binary_url))
-            {
-                std::cout << "[INFO] Updating from source...\n";
-                install_from_source(binary_url);
-            }
+            //if (!install_from_binary(binary_url))
+            //{
+            //    std::cout << "[INFO] Updating from source...\n";
+            //    install_from_source(binary_url);
+            //}
         }
+
+        struct UpdateChannel
+        {
+            std::string version_url;
+            std::string binary_url;
+        };
+
+        struct BootstrapResult
+        {
+            bool should_exit = false;
+            int exit_code = 0;
+            bool update_performed = false;
+        };
+
+        inline BootstrapResult bootstrap_from_command(const UpdateChannel& channel,
+            std::span<const std::string_view> arguments)
+        {
+            cmds::cleanup_previous_update_artifacts();
+
+            const auto begin = arguments.begin();
+            const auto end = arguments.end();
+
+            const bool update_requested = std::any_of(begin, end, [](std::string_view value) {
+                return value == cmds::kUpdateLong || value == cmds::kUpdateShort;
+                });
+
+            const bool force_requested = almondnamespace::cmds::contains_option(arguments, cmds::kForceFlag);
+            const bool help_requested = cmds::contains_option(arguments, cmds::kHelpLong) || cmds::contains_option(arguments, cmds::kHelpShort);
+
+            BootstrapResult result{};
+
+            if (!update_requested)
+            {
+                if (check_for_updates(channel.version_url))
+                {
+                    std::cout << "[INFO] New version available!\n";
+                    update_project(channel.version_url, channel.binary_url);
+                    result.update_performed = true;
+                }
+                else
+                {
+                    std::cout << "[INFO] No updates available.\n";
+                }
+
+                return result;
+            }
+
+            result.should_exit = true;
+
+            if (help_requested || !force_requested)
+            {
+                std::cout << "Usage: updater --update [--force]\n\n";
+                std::cout << "Use --update --force to apply the latest release. Without --force the updater will"
+                    " perform a version check only.\n";
+
+                if (check_for_updates(channel.version_url))
+                {
+                    std::cout << "[INFO] Update available but not applied. Re-run with --force to continue.\n";
+                }
+                else
+                {
+                    std::cout << "[INFO] No updates available.\n";
+                }
+
+                return result;
+            }
+
+            if (check_for_updates(channel.version_url))
+            {
+                std::cout << "[INFO] New version available!\n";
+                update_project(channel.version_url, channel.binary_url);
+                result.update_performed = true;
+            }
+            else
+            {
+                std::cout << "[INFO] No updates available.\n";
+            }
+
+            return result;
+        }
+
+        void cleanup_previous_update_artifacts();
+
     }
 }
