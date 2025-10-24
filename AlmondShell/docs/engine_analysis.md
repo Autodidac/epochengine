@@ -6,6 +6,58 @@
 - **Context Management** – `src/acontext.cpp` and `include/acontextmultiplexer.hpp` orchestrate the per-backend render contexts and their window lifecycles, while `include/acontextwindow.hpp` encapsulates platform window data.
 - **Hot-Reload Pipeline** – `src/ascriptingsystem.cpp` drives compilation and loading of `.ascript.cpp` files via the task graph scheduler, handing control to `ScriptScheduler` nodes created in `include/ascriptingsystem.hpp`.
 
+## MultiContextManager Startup Sequence
+
+1. **Bootstrap Win32 scaffolding.** `MultiContextManager::Initialize` registers parent/child window classes, seeds all context prototypes via `InitializeAllContexts`, and creates the optional parent docking window together with a dummy OpenGL context that owns shared resources used during `wglShareLists` calls.【F:AlmondShell/src/acontextmultiplexer.cpp†L309-L392】【F:AlmondShell/src/acontextmultiplexer.cpp†L395-L429】【F:AlmondShell/src/acontext.cpp†L431-L520】
+2. **Instantiate backend windows.** The inline `make_backend_windows` helper allocates Win32 child shells, looks up the backend’s `BackendState`, clones prototype `Context` objects with `CloneContext`, and binds each clone to a fresh `WindowData`. This pass also hands backend-specific initialisers (SDL, Raylib, SFML, OpenGL, software) the correct HWND/size pairing before adopting backend-managed windows when needed.【F:AlmondShell/src/acontextmultiplexer.cpp†L431-L587】【F:AlmondShell/src/acontext.cpp†L365-L426】
+3. **Bind live windows.** The public `AddWindow` path mirrors the initialization routine for dynamically attached windows: it ensures pixel formats, fetches or clones a backend `Context`, hooks up the `WindowData` bi-directional pointers, and records the size so resize callbacks and command queues can be wired immediately.【F:AlmondShell/src/acontextmultiplexer.cpp†L602-L736】【F:AlmondShell/include/awindowdata.hpp†L19-L79】
+4. **Launch render threads.** When a window is registered (either during startup or later) the manager spawns a dedicated thread that runs `RenderLoop`. The thread calls `SetCurrent`, performs backend initialization, repeatedly invokes `Context::process_safe`, and drains the window’s `CommandQueue` until shutdown.【F:AlmondShell/src/acontextmultiplexer.cpp†L736-L820】【F:AlmondShell/src/acontextmultiplexer.cpp†L980-L1065】【F:AlmondShell/src/acontext.cpp†L117-L198】
+5. **Maintain active context tracking.** Each render loop keeps `WindowData::context` and `Context::windowData` in sync so other systems (menu, atlas manager) can enqueue render-safe work or query dimensions without touching Win32 handles directly.【F:AlmondShell/src/acontextmultiplexer.cpp†L510-L692】【F:AlmondShell/include/acontext.hpp†L41-L159】
+
+```mermaid
+sequenceDiagram
+    participant Engine as Engine Bootstrap
+    participant Mgr as MultiContextManager
+    participant Backend as Backend Prototype
+    participant Window as WindowData
+    participant Thread as Render Thread
+
+    Engine->>Mgr: Initialize()
+    Mgr->>Mgr: Register window classes & parent
+    Mgr->>Backend: InitializeAllContexts()
+    Mgr->>Window: make_backend_windows()
+    Window-->>Backend: CloneContext()
+    Mgr->>Thread: spawn RenderLoop(Window)
+    Thread->>Backend: process_safe(ctx, queue)
+    Thread-->>Window: Drain command queue
+```
+
+## Context State During Resizes and Atlas Uploads
+
+### Resize propagation flow
+
+```mermaid
+flowchart LR
+    WM_SIZE[Win32 WM_SIZE] --> HandleResize{MultiContextManager::HandleResize}
+    HandleResize --> UpdateShared[Update WindowData & Context dimensions]
+    UpdateShared --> QueueResize[Enqueue resize callback]
+    QueueResize --> RenderThread[RenderLoop drains CommandQueue]
+    RenderThread --> BackendResize[Backend-specific resize handler]
+    BackendResize --> AtlasCheck[atlasmanager::process_pending_uploads]
+```
+
+| Trigger | Shared `Context` / `WindowData` effect | Raylib backend reaction | SDL backend reaction |
+| --- | --- | --- | --- |
+| `WM_SIZE` on a child window | `HandleResize` clamps the client size, updates both `WindowData::width/height` and the owning `Context`, and pushes a resize callback into the per-window `CommandQueue` so it executes on the render thread.【F:AlmondShell/src/acontextmultiplexer.cpp†L782-L820】 | `raylibcontext::dispatch_resize` coalesces resize storms, adjusts both framebuffer and logical dimensions, mirrors the virtual canvas into `Context::width/height`, and applies native HWND and Raylib window resizes only when required.【F:AlmondShell/include/araylibcontext.hpp†L62-L166】 | `sdl_process` re-queries the renderer output size every frame, pushes the resolved dimensions back into the shared `Context`, and mirrors them into the SDL renderer before draining queued commands.【F:AlmondShell/include/asdlcontext.hpp†L231-L309】 |
+| Render thread iteration | `RenderLoop` calls `Context::process_safe`, keeping the window alive while draining queued lambdas from `CommandQueue` (including resize callbacks).【F:AlmondShell/src/acontextmultiplexer.cpp†L996-L1065】 | The Raylib backend’s process loop updates viewport scaling and mouse transforms before returning control, so GUI coordinates align with the resized canvas.【F:AlmondShell/include/araylibcontext.hpp†L167-L260】 | SDL’s loop clears/presents via `SDL_Renderer`, maintaining parity between logical canvas size and the context-provided dimensions.【F:AlmondShell/include/asdlcontext.hpp†L231-L309】 |
+| Atlas upload request | `Context::add_atlas_safe` delegates to `AddAtlasThunk`, which ensures the atlas is staged and marks pending uploads for every backend; the shared `BackendState` keeps versioned upload bookkeeping.【F:AlmondShell/src/acontext.cpp†L147-L199】【F:AlmondShell/include/acontext.hpp†L108-L178】 | Raylib registers its uploader via `atlasmanager::register_backend_uploader`, which later drives `raylibtextures::ensure_uploaded` when the render thread flushes pending tasks.【F:AlmondShell/src/acontext.cpp†L565-L585】【F:AlmondShell/include/araylibcontext.hpp†L112-L138】 | SDL performs the same dance, registering `sdltextures::ensure_uploaded` so uploads execute once the renderer thread calls `atlasmanager::process_pending_uploads(ContextType::SDL)`.【F:AlmondShell/src/acontext.cpp†L504-L543】【F:AlmondShell/include/asdlcontext.hpp†L206-L264】 |
+
+## Render Data Flow: `process_safe`, atlas thunks, and the scheduler
+
+`Context::process_safe` is the choke point that render threads and the main thread use to run backend update loops while shielding the engine from exceptions. Each backend process implementation invokes `atlasmanager::process_pending_uploads(type)` before draining the per-window `CommandQueue`, ensuring any `AddTextureThunk`/`AddAtlasThunk` calls queued by game systems are serviced while the correct graphics context is bound.【F:AlmondShell/src/acontext.cpp†L117-L205】【F:AlmondShell/src/acontext.cpp†L205-L311】 The thunks convert high-level atlas operations into backend-specific upload calls, then hand control back to `atlasmanager`, which tracks pending versions per backend and executes the registered uploader on the active render thread.【F:AlmondShell/src/acontext.cpp†L148-L199】【F:AlmondShell/include/aatlasmanager.hpp†L338-L409】
+
+Asset producers can run off the main thread via the coroutine-enabled `taskgraph::TaskGraph`. Systems such as the sprite pool schedule allocation jobs on the graph; once work completes they enqueue render-safe lambdas (for example atlas uploads) into the owning window’s `CommandQueue`. The render thread then resumes, calls `process_safe`, flushes atlas uploads, and drains queued commands, giving a deterministic hand-off from background workers to GPU submission.【F:AlmondShell/include/ataskgraphwithdot.hpp†L24-L124】【F:AlmondShell/include/aspritepool.hpp†L120-L189】【F:AlmondShell/src/acontextmultiplexer.cpp†L996-L1065】
+
 ## Observed Gaps
 - **Fragile Script Loading** – Before this update, missing script sources or compilation artefacts would silently cascade into load failures. The scripting system now validates inputs and outputs before attempting to load DLLs.
 - **Roadmap Traceability** – The existing `roadmap.txt` lacked granular prompts or acceptance checks per phase, making automation hand-offs hard to script.
