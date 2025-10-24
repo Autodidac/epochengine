@@ -223,6 +223,7 @@ Stop the session with `Ctrl+C` or by closing the console window.
 ## Development Tips
 
 - The hot-reload loop in `src/main.cpp` monitors script timestamps roughly every 200 ms. Keep editor builds incremental to benefit from the fast feedback.
+- Consult [`AlmondShell/docs/runtime_operations.md`](AlmondShell/docs/runtime_operations.md) for prerequisites, updater flow, reload diagnostics, and multi-context troubleshooting guidance.
 - Utility shell scripts (`build.sh`, `run.sh`, `unix/*.sh`) can streamline development on POSIX systems.
 - `AlmondShell/docs/engine_analysis.md` and `AlmondShell/docs/context_audit.md` catalogue current focus areas and cleanup candidates for future contributors.
 - Check the remaining `docs/` entries for platform-specific setup guides, tool recommendations, and dependency notes.
