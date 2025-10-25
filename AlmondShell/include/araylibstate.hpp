@@ -70,6 +70,8 @@ namespace almondnamespace::raylibcontext
         unsigned int height{ 300 };
         unsigned int logicalWidth{ 400 };
         unsigned int logicalHeight{ 300 };
+        unsigned int virtualWidth{ 400 };
+        unsigned int virtualHeight{ 300 };
         bool running{ false };
 
         bool shouldClose = false; // Set to true when the window should close

@@ -46,6 +46,7 @@ namespace almondnamespace::core { void MakeDockable(HWND hwnd, HWND parent); }
 #endif
 
 #include <algorithm>
+#include <cassert>
 #include <cmath>
 #include <exception>
 #include <iostream>
@@ -166,6 +167,11 @@ namespace almondnamespace::raylibcontext
             s_raylibstate.width = safeFbW;
             s_raylibstate.height = safeFbH;
 
+            if (ctx) {
+                ctx->framebufferWidth = static_cast<int>(safeFbW);
+                ctx->framebufferHeight = static_cast<int>(safeFbH);
+            }
+
             // Logical window size (for info only)
             unsigned int logicalW = safeFbW, logicalH = safeFbH;
 #if !defined(RAYLIB_NO_WINDOW)
@@ -183,9 +189,14 @@ namespace almondnamespace::raylibcontext
 
             // Mirror VIRTUAL size into ctx for GUI/sprite math
             if (ctx) {
+                ctx->virtualWidth = refW;
+                ctx->virtualHeight = refH;
                 ctx->width = refW;
                 ctx->height = refH;
             }
+
+            s_raylibstate.virtualWidth = static_cast<unsigned int>(std::max(1, refW));
+            s_raylibstate.virtualHeight = static_cast<unsigned int>(std::max(1, refH));
 
             bool hasNativeParent = false;
 #if defined(_WIN32)
@@ -325,6 +336,53 @@ namespace almondnamespace::raylibcontext
             ctx->hdc = s_raylibstate.hdc;
             ctx->hglrc = s_raylibstate.glContext;
             // ctx->width/height already set to virtual in dispatch_resize
+            ctx->get_mouse_position = [](int& outX, int& outY) noexcept {
+#if !defined(RAYLIB_NO_WINDOW)
+                if (!::IsWindowReady()) {
+                    outX = -1;
+                    outY = -1;
+                    return;
+                }
+
+                const GuiFitViewport fit = s_raylibstate.lastViewport;
+                const float scale = (fit.scale > 0.0f) ? fit.scale : 1.0f;
+                const float invScale = (scale > 0.0f) ? (1.0f / scale) : 1.0f;
+
+                Vector2 offset = ::GetRenderOffset();
+                const Vector2 raw = ::GetMousePosition();
+
+                const float baseX = offset.x + static_cast<float>(fit.vpX);
+                const float baseY = offset.y + static_cast<float>(fit.vpY);
+                const float adjustedX = (raw.x - baseX) * invScale;
+                const float adjustedY = (raw.y - baseY) * invScale;
+
+                const bool inside =
+                    (adjustedX >= 0.0f && adjustedY >= 0.0f &&
+                        adjustedX < static_cast<float>(fit.refW) &&
+                        adjustedY < static_cast<float>(fit.refH));
+
+                if (inside) {
+                    outX = static_cast<int>(std::lround(adjustedX));
+                    outY = static_cast<int>(std::lround(adjustedY));
+                }
+                else {
+                    outX = -1;
+                    outY = -1;
+                }
+
+#ifndef NDEBUG
+                const float viewportMaxX = baseX + static_cast<float>(fit.vpW);
+                const float viewportMaxY = baseY + static_cast<float>(fit.vpH);
+                const bool rawInside =
+                    (raw.x >= baseX && raw.x < viewportMaxX &&
+                        raw.y >= baseY && raw.y < viewportMaxY);
+                assert(rawInside == inside);
+#endif
+#else
+                outX = -1;
+                outY = -1;
+#endif
+            };
         }
 
         // If docking into a parent, reparent + single hard resize pass
@@ -415,18 +473,26 @@ namespace almondnamespace::raylibcontext
         const int refH = (core::cli::window_height > 0) ? core::cli::window_height : 1080;
 
         // Ensure ctx continues to see VIRTUAL size
-        if (ctx) { ctx->width = refW; ctx->height = refH; }
+        if (ctx) {
+            ctx->virtualWidth = refW;
+            ctx->virtualHeight = refH;
+            ctx->width = refW;
+            ctx->height = refH;
+            ctx->framebufferWidth = fbW;
+            ctx->framebufferHeight = fbH;
+        }
 
         const GuiFitViewport fit = compute_fit_viewport(fbW, fbH, refW, refH);
 
         // Viewport for rendering (letterbox/pillarbox)
         s_raylibstate.lastViewport = fit;
+        s_raylibstate.virtualWidth = static_cast<unsigned int>(std::max(1, refW));
+        s_raylibstate.virtualHeight = static_cast<unsigned int>(std::max(1, refH));
 
-        // Mouse: map framebuffer -> virtual
+        // Mouse: leave raw coordinates in framebuffer space; ctx->get_mouse_position remaps.
 #if !defined(RAYLIB_NO_WINDOW)
-        ::SetMouseOffset(-fit.vpX, -fit.vpY);
-        const float invScale = (fit.scale > 0.0f) ? (1.0f / fit.scale) : 1.0f;
-        ::SetMouseScale(invScale, invScale);
+        ::SetMouseOffset(0, 0);
+        ::SetMouseScale(1.0f, 1.0f);
 #endif
         // -----------------------------------------------
 
@@ -503,8 +569,8 @@ namespace almondnamespace::raylibcontext
     // ──────────────────────────────────────────────
     // Helpers
     // ──────────────────────────────────────────────
-    inline int  raylib_get_width()  noexcept { return static_cast<int>(s_raylibstate.logicalWidth); }
-    inline int  raylib_get_height() noexcept { return static_cast<int>(s_raylibstate.logicalHeight); }
+    inline int  raylib_get_width()  noexcept { return static_cast<int>(s_raylibstate.virtualWidth); }
+    inline int  raylib_get_height() noexcept { return static_cast<int>(s_raylibstate.virtualHeight); }
     inline void raylib_set_window_title(const std::string& title) { SetWindowTitle(title.c_str()); }
     inline bool RaylibIsRunning(std::shared_ptr<core::Context>) { return s_raylibstate.running; }
 
