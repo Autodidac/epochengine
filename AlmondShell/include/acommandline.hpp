@@ -40,52 +40,69 @@ namespace almondnamespace::core::cli {
     inline int  menu_columns = 4;
     inline std::filesystem::path exe_path;
 
+    struct ParseResult
+    {
+        bool update_requested = false;
+        bool force_update = false;
+    };
+
     // ─── helpers ───────────────────────────────────────────────────────
     inline void print_engine_info() {
         std::cout << GetEngineName() << " v" << GetEngineVersion() << '\n';
     }
 
     // ─── parse() ───────────────────────────────────────────────────────
-    inline void parse(int argc, char* argv[])
+    inline ParseResult parse(int argc, char* argv[])
     {
         using namespace std::string_view_literals;
+        ParseResult result{};
         if (argc < 1) {
             std::cerr << "No command-line arguments provided.\n";
-            return;
-		}
-        else
-        { 
-            exe_path = argv[0];
-            std::cout << "Commandline for " << exe_path.filename().string() << ":\n";
-            for (int i = 1; i < argc; ++i) {
-                std::string_view arg{ argv[i] };
-
-                if (arg == "--help"sv || arg == "-h"sv) {
-                    std::cout <<
-                        "  --help, -h            Show this help message\n"
-                        "  --version, -v         Display the engine version\n"
-                        "  --width  <value>      Set window width\n"
-                        "  --height <value>      Set window height\n"
-                        "  --menu-columns <n>    Cap the menu grid at n columns (default 4)\n";
-                }
-                else if (arg == "--version"sv || arg == "-v"sv) {
-                    print_engine_info();
-                }
-                else if (arg == "--width"sv && i + 1 < argc) {
-                    window_width = std::stoi(argv[++i]);
-                }
-                else if (arg == "--height"sv && i + 1 < argc) {
-                    window_height = std::stoi(argv[++i]);
-                }
-                else if (arg == "--menu-columns"sv && i + 1 < argc) {
-                    menu_columns = std::max(1, std::stoi(argv[++i]));
-                }
-                else {
-                    std::cerr << "Unknown arg: " << arg << '\n';
-                }
-            }
-            std::cout << '\n';
+            return result;
         }
+
+        exe_path = argv[0];
+        std::cout << "Commandline for " << exe_path.filename().string() << ":\n";
+        for (int i = 1; i < argc; ++i) {
+            std::string_view arg{ argv[i] };
+
+            if (arg == "--help"sv || arg == "-h"sv) {
+                std::cout <<
+                    "  --help, -h            Show this help message\n"
+                    "  --version, -v         Display the engine version\n"
+                    "  --width  <value>      Set window width\n"
+                    "  --height <value>      Set window height\n"
+                    "  --menu-columns <n>    Cap the menu grid at n columns (default 4)\n"
+                    "  --update, -u          Check for a newer AlmondShell build\n"
+                    "  --force               Apply the available update immediately\n";
+            }
+            else if (arg == "--version"sv || arg == "-v"sv) {
+                print_engine_info();
+            }
+            else if (arg == "--width"sv && i + 1 < argc) {
+                window_width = std::stoi(argv[++i]);
+            }
+            else if (arg == "--height"sv && i + 1 < argc) {
+                window_height = std::stoi(argv[++i]);
+            }
+            else if (arg == "--menu-columns"sv && i + 1 < argc) {
+                menu_columns = std::max(1, std::stoi(argv[++i]));
+            }
+            else if (arg == "--update"sv || arg == "-u"sv) {
+                result.update_requested = true;
+            }
+            else if (arg == "--force"sv) {
+                result.force_update = true;
+            }
+            else {
+                std::cerr << "Unknown arg: " << arg << '\n';
+            }
+        }
+        std::cout << '\n';
+        if (result.force_update && !result.update_requested) {
+            std::cout << "[WARN] Ignoring --force without --update.\n";
+        }
+        return result;
     }
 
 } // namespace almondnamespace::core::cli

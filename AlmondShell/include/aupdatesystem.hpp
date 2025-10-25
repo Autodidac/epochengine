@@ -32,7 +32,6 @@
 #include <fstream>
 #include <iostream>
 #include <regex>
-#include <span>
 #include <string>
 #include <string_view>
 #include <system_error>
@@ -46,19 +45,6 @@ namespace almondnamespace
         constexpr std::string_view kForceFlag{ "--force" };
         constexpr std::string_view kHelpLong{ "--help" };
         constexpr std::string_view kHelpShort{ "-h" };
-
-        inline bool matches_command(std::string_view argument, std::string_view option) noexcept
-        {
-            return argument == option;
-        }
-
-        inline bool contains_option(std::span<const std::string_view> arguments,
-            std::string_view option) noexcept
-        {
-            return std::any_of(arguments.begin(), arguments.end(),
-                [&](std::string_view value) { return matches_command(value, option); });
-        }
-
 
         inline void cleanup_previous_update_artifacts()
         {
@@ -477,81 +463,40 @@ namespace almondnamespace
             std::string binary_url;
         };
 
-        struct BootstrapResult
+        struct UpdateCommandResult
         {
-            bool should_exit = false;
-            int exit_code = 0;
+            bool update_available = false;
             bool update_performed = false;
+            bool force_required = false;
+            int exit_code = 0;
         };
 
-        inline BootstrapResult bootstrap_from_command(const UpdateChannel& channel,
-            std::span<const std::string_view> arguments)
+        inline UpdateCommandResult run_update_command(const UpdateChannel& channel, bool force_install)
         {
             cmds::cleanup_previous_update_artifacts();
 
-            const auto begin = arguments.begin();
-            const auto end = arguments.end();
+            UpdateCommandResult result{};
 
-            const bool update_requested = std::any_of(begin, end, [](std::string_view value) {
-                return value == cmds::kUpdateLong || value == cmds::kUpdateShort;
-                });
-
-            const bool force_requested = almondnamespace::cmds::contains_option(arguments, cmds::kForceFlag);
-            const bool help_requested = cmds::contains_option(arguments, cmds::kHelpLong) || cmds::contains_option(arguments, cmds::kHelpShort);
-
-            BootstrapResult result{};
-
-            if (!update_requested)
-            {
-                if (check_for_updates(channel.version_url))
-                {
-                    std::cout << "[INFO] New version available!\n";
-                    update_project(channel.version_url, channel.binary_url);
-                    result.update_performed = true;
-                }
-                else
-                {
-                    std::cout << "[INFO] No updates available.\n";
-                }
-
-                return result;
-            }
-
-            result.should_exit = true;
-
-            if (help_requested || !force_requested)
-            {
-                std::cout << "Usage: updater --update [--force]\n\n";
-                std::cout << "Use --update --force to apply the latest release. Without --force the updater will"
-                    " perform a version check only.\n";
-
-                if (check_for_updates(channel.version_url))
-                {
-                    std::cout << "[INFO] Update available but not applied. Re-run with --force to continue.\n";
-                }
-                else
-                {
-                    std::cout << "[INFO] No updates available.\n";
-                }
-
-                return result;
-            }
-
-            if (check_for_updates(channel.version_url))
-            {
-                std::cout << "[INFO] New version available!\n";
-                update_project(channel.version_url, channel.binary_url);
-                result.update_performed = true;
-            }
-            else
+            if (!check_for_updates(channel.version_url))
             {
                 std::cout << "[INFO] No updates available.\n";
+                return result;
             }
 
+            result.update_available = true;
+
+            if (!force_install)
+            {
+                std::cout << "[INFO] Update available but not applied. Re-run with --update --force to continue.\n";
+                result.force_required = true;
+                return result;
+            }
+
+            std::cout << "[INFO] Applying update...\n";
+            update_project(channel.version_url, channel.binary_url);
+            result.update_performed = true;
             return result;
         }
-
-        void cleanup_previous_update_artifacts();
 
     }
 }

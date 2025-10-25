@@ -1825,26 +1825,19 @@ int APIENTRY wWinMain(_In_ HINSTANCE hInstance,
         // Free the argument array after use
         LocalFree(pCommandLineArgvArray);
 
-        almondnamespace::core::cli::parse(argc, argv);
-
-        LPCWSTR window_name = L"Almond Example Window";
-
-        // Updater
-        std::vector<std::string_view> arguments;
-        arguments.reserve(static_cast<std::size_t>(argc));
-        for (int index = 0; index < argc; ++index) {
-            arguments.emplace_back(argv[index]);
-        }
+        const auto cli_result = almondnamespace::core::cli::parse(argc, argv);
 
         const almondnamespace::updater::UpdateChannel channel{
             .version_url = urls::version_url,
             .binary_url = urls::binary_url,
         };
 
-        const auto bootstrap_result = almondnamespace::updater::bootstrap_from_command(channel, arguments);
-        if (bootstrap_result.should_exit) {
-            return bootstrap_result.exit_code;
+        if (cli_result.update_requested) {
+            const auto update_result = almondnamespace::updater::run_update_command(channel, cli_result.force_update);
+            return update_result.exit_code;
         }
+
+        LPCWSTR window_name = L"Almond Example Window";
 
 
     }
@@ -1865,22 +1858,16 @@ int main(int argc, char* argv[]) {
     LPWSTR pCommandLine = GetCommandLineW();
     return wWinMain(GetModuleHandle(NULL), NULL, pCommandLine, SW_SHOWNORMAL);
 #else
-    cli::parse(argc, argv);
-
-    std::vector<std::string_view> arguments;
-    arguments.reserve(static_cast<std::size_t>(argc));
-    for (int index = 0; index < argc; ++index) {
-        arguments.emplace_back(argv[index]);
-    }
+    const auto cli_result = cli::parse(argc, argv);
 
     const almondnamespace::updater::UpdateChannel channel{
         .version_url = urls::version_url,
         .binary_url = urls::binary_url,
     };
 
-    const auto bootstrap_result = almondnamespace::updater::bootstrap_from_command(channel, arguments);
-    if (bootstrap_result.should_exit) {
-        return bootstrap_result.exit_code;
+    if (cli_result.update_requested) {
+        const auto update_result = almondnamespace::updater::run_update_command(channel, cli_result.force_update);
+        return update_result.exit_code;
     }
 
 

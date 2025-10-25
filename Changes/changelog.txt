@@ -189,4 +189,5 @@
 - Synced SDL3 context dimensions with the renderer output so menu layouts stay centered after window resizes.
 - Added a configurable `--menu-columns` cap for the main overlay grid and documented the runtime flag.
 - Bumped the engine version to v0.61.0 and updated the engine analysis focus areas.
+- Wired the CLI `--update` command into the modular updater flow, requiring `--force` to install builds, and bumped the engine version to v0.62.0.
 

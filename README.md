@@ -27,7 +27,7 @@ The runtime is designed for rapid iteration with hot-reloadable scripting, a sel
 
 ---
 
-## Current Snapshot (v0.61.0)
+## Current Snapshot (v0.62.0)
 
 - ✅ **Immediate GUI everywhere** – `agui.hpp` seeds a shared font atlas, now covers buttons, image buttons, editable text fields, text boxes, and a turnkey console overlay so every backend renders consistent tooling widgets out of the box.
 - ✅ **HiDPI-aware multi-context rendering** – Raylib and SDL3 cache framebuffer metrics and remap input coordinates so docked panes stay pixel-accurate after DPI or window changes.
@@ -41,7 +41,7 @@ Refer to [`Changes/changelog.txt`](Changes/changelog.txt) for the full history o
 ## Key Features
 
 - 🔄 **Self-updating launcher**
-  Designed to automatically fetch the newest release when run, ensuring users always stay up to date.
+  Designed to automatically fetch the newest release when run, or perform an on-demand check via `--update` before applying builds with `--force`.
   Can also be built directly from source for full control.
 
 - ⚙️ **Modular C++20 engine**
