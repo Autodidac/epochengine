@@ -82,6 +82,10 @@ namespace almondnamespace::core
 
         int width = 400;
         int height = 300;
+        int framebufferWidth = 400;
+        int framebufferHeight = 300;
+        int virtualWidth = 400;
+        int virtualHeight = 300;
         ContextType type = ContextType::Custom;
         std::string backendName;
 
@@ -116,7 +120,9 @@ namespace almondnamespace::core
             ClearFunc clr, PresentFunc pres, GetWidthFunc gw, GetHeightFunc gh,
             RegistryGetFunc rg, DrawSpriteFunc ds,
             AddTextureFunc at, AddAtlasFunc aa, AddModelFunc am)
-            : width(400), height(300), type(t), backendName(name),
+            : width(400), height(300), framebufferWidth(400), framebufferHeight(300),
+            virtualWidth(400), virtualHeight(300),
+            type(t), backendName(name),
             initialize(init), cleanup(cln), process(proc), clear(clr),
             present(pres), get_width(gw), get_height(gh),
             registry_get(rg), draw_sprite(ds), add_model(am)

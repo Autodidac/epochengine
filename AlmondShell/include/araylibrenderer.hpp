@@ -159,9 +159,9 @@ namespace almondnamespace::raylibcontext
 
         // Consider rect "normalized" if any dimension is 0<..<=1 or coords are in [0..1]
         const bool normalized =
-            (width > 0.f && width <= 1.f) ||
-            (height > 0.f && height <= 1.f) ||
-            ((x >= 0.f && x <= 1.f) && (y >= 0.f && y <= 1.f));
+            (x >= 0.f && x <= 1.f && y >= 0.f && y <= 1.f) &&
+            ((width <= 1.f && width >= 0.f) || width <= 0.f) &&
+            ((height <= 1.f && height >= 0.f) || height <= 0.f);
 
         float px, py, pw, ph;
         if (normalized) {
