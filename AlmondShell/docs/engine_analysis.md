@@ -65,7 +65,7 @@ Asset producers can run off the main thread via the coroutine-enabled `taskgraph
 
 ## Recent Progress (v0.62.0)
 
-- Routed the `--update` command through the modular updater entrypoint so the launcher checks availability by default and only applies builds when invoked with `--force`, paving the way for in-engine update menus.
+- Routed the `--update` command through the modular updater entrypoint so the launcher checks availability by default and only applies builds when invoked with `--force`, paving the way for in-engine update menus while ensuring forced runs hydrate the full source tree beside the binary for inspection and rebuilds.
 - Raylib caches its virtual-fit viewport each frame and reprojects atlas sprites through that transform, eliminating the clipping and drifting that previously affected menu buttons in letterboxed windows.
 - SDL3 keeps its context dimensions in lockstep with the renderer output size so GUI layouts always see the correct canvas and remain visually centered after resizes.
 - The menu overlay now honours a configurable column cap (defaulting to four via `--menu-columns`), preventing overly wide grids while still allowing narrower layouts for constrained displays.

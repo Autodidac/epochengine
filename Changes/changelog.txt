@@ -191,4 +191,5 @@
 - Bumped the engine version to v0.61.0 and updated the engine analysis focus areas.
 - Wired the CLI `--update` command into the modular updater flow, requiring `--force` to install builds, and bumped the engine version to v0.62.0.
 - Ensured updater download failures print diagnostics on a fresh line, documented the release, and bumped the engine version to v0.62.1.
+- Documented that forced updater runs rehydrate the AlmondShell source tree, added Windows 11 guidance for running uncertified builds, and refreshed the README accordingly.
 
