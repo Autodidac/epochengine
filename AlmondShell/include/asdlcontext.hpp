@@ -43,12 +43,14 @@
 #include "asdltextures.hpp"
 #include "aatlasmanager.hpp"
 #include "asdlstate.hpp"
+#include "acommandline.hpp"
 
 #if defined(_WIN32)
 namespace almondnamespace::core { void MakeDockable(HWND hwnd, HWND parent); }
 #endif
 
 #include <algorithm>
+#include <cmath>
 #include <stdexcept>
 #include <iostream>
 #include <string>
@@ -64,10 +66,60 @@ namespace almondnamespace::sdlcontext
         bool running = false;
         int width = 400;
         int height = 300;
+        unsigned int framebufferWidth = 400;
+        unsigned int framebufferHeight = 300;
+        unsigned int virtualWidth = 1920;
+        unsigned int virtualHeight = 1080;
+        sdltextures::GuiFitViewport lastViewport{};
         std::function<void(int, int)> onResize;
     };
     
     inline SDLState sdlcontext;
+
+    inline sdltextures::GuiFitViewport compute_fit_viewport(int fbW, int fbH, int refW, int refH) noexcept
+    {
+        sdltextures::GuiFitViewport fit{};
+        fit.fbW = std::max(1, fbW);
+        fit.fbH = std::max(1, fbH);
+        fit.refW = std::max(1, refW);
+        fit.refH = std::max(1, refH);
+
+        const float sx = static_cast<float>(fit.fbW) / static_cast<float>(fit.refW);
+        const float sy = static_cast<float>(fit.fbH) / static_cast<float>(fit.refH);
+        fit.scale = std::max(0.0001f, std::min(sx, sy));
+
+        fit.vpW = std::max(1, static_cast<int>(std::lround(fit.refW * fit.scale)));
+        fit.vpH = std::max(1, static_cast<int>(std::lround(fit.refH * fit.scale)));
+        fit.vpX = (fit.fbW - fit.vpW) / 2;
+        fit.vpY = (fit.fbH - fit.vpH) / 2;
+        return fit;
+    }
+
+    inline void map_mouse_to_virtual(int rawX, int rawY, int& outX, int& outY) noexcept
+    {
+        const auto fit = sdlcontext.lastViewport;
+        const float scale = (fit.scale > 0.0f) ? fit.scale : 1.0f;
+        const float invScale = (scale > 0.0f) ? (1.0f / scale) : 1.0f;
+
+        const float baseX = static_cast<float>(fit.vpX);
+        const float baseY = static_cast<float>(fit.vpY);
+        const float adjustedX = (static_cast<float>(rawX) - baseX) * invScale;
+        const float adjustedY = (static_cast<float>(rawY) - baseY) * invScale;
+
+        const bool inside =
+            adjustedX >= 0.0f && adjustedY >= 0.0f &&
+            adjustedX < static_cast<float>(fit.refW) &&
+            adjustedY < static_cast<float>(fit.refH);
+
+        if (inside) {
+            outX = static_cast<int>(std::lround(adjustedX));
+            outY = static_cast<int>(std::lround(adjustedY));
+        }
+        else {
+            outX = -1;
+            outY = -1;
+        }
+    }
 
     inline bool sdl_initialize(std::shared_ptr<core::Context> ctx,
         HWND parentWnd = nullptr,
@@ -85,6 +137,12 @@ namespace almondnamespace::sdlcontext
             const int safeHeight = std::max(1, height);
             sdlcontext.width = safeWidth;
             sdlcontext.height = safeHeight;
+            sdlcontext.framebufferWidth = static_cast<unsigned int>(safeWidth);
+            sdlcontext.framebufferHeight = static_cast<unsigned int>(safeHeight);
+            const int refW = static_cast<int>(sdlcontext.virtualWidth);
+            const int refH = static_cast<int>(sdlcontext.virtualHeight);
+            sdlcontext.lastViewport = compute_fit_viewport(safeWidth, safeHeight, refW, refH);
+            sdltextures::set_fit_viewport(sdlcontext.lastViewport);
             if (sdlcontext.window) {
                 SDL_SetWindowSize(sdlcontext.window, safeWidth, safeHeight);
             }
@@ -95,12 +153,26 @@ namespace almondnamespace::sdlcontext
 
         sdlcontext.width = clampedWidth;
         sdlcontext.height = clampedHeight;
+        sdlcontext.framebufferWidth = static_cast<unsigned int>(clampedWidth);
+        sdlcontext.framebufferHeight = static_cast<unsigned int>(clampedHeight);
+
+        const int cliRefW = (core::cli::window_width > 0) ? core::cli::window_width : 1920;
+        const int cliRefH = (core::cli::window_height > 0) ? core::cli::window_height : 1080;
+        sdlcontext.virtualWidth = static_cast<unsigned int>(std::max(1, cliRefW));
+        sdlcontext.virtualHeight = static_cast<unsigned int>(std::max(1, cliRefH));
+        sdlcontext.lastViewport = compute_fit_viewport(clampedWidth, clampedHeight, cliRefW, cliRefH);
+        sdltextures::set_fit_viewport(sdlcontext.lastViewport);
+
         sdlcontext.parent = parentWnd;
 
         if (ctx) {
             ctx->onResize = sdlcontext.onResize;
             ctx->width = clampedWidth;
             ctx->height = clampedHeight;
+            ctx->framebufferWidth = clampedWidth;
+            ctx->framebufferHeight = clampedHeight;
+            ctx->virtualWidth = static_cast<int>(sdlcontext.virtualWidth);
+            ctx->virtualHeight = static_cast<int>(sdlcontext.virtualHeight);
         }
 
         // SDL3 returns 0 on success, negative on failure.
@@ -320,29 +392,49 @@ namespace almondnamespace::sdlcontext
         Uint8 g = static_cast<Uint8>((0.5 + 0.5 * std::sin(t * 0.7 + 2.0)) * 255);
         Uint8 b = static_cast<Uint8>((0.5 + 0.5 * std::sin(t * 1.3 + 4.0)) * 255);
 
+        int renderW = sdlcontext.width;
+        int renderH = sdlcontext.height;
         if (sdlcontext.renderer) {
-            int renderW = 0;
-            int renderH = 0;
-            if (SDL_GetCurrentRenderOutputSize(sdlcontext.renderer, &renderW, &renderH) == 0) {
-                if (renderW > 0 && renderH > 0) {
-                    sdlcontext.width = renderW;
-                    sdlcontext.height = renderH;
-                    if (ctx) {
-                        ctx->width = renderW;
-                        ctx->height = renderH;
-                    }
-                }
+            int queriedW = 0;
+            int queriedH = 0;
+            if (SDL_GetCurrentRenderOutputSize(sdlcontext.renderer, &queriedW, &queriedH) == 0 &&
+                queriedW > 0 && queriedH > 0) {
+                renderW = queriedW;
+                renderH = queriedH;
             }
         }
-        else if (ctx) {
-            ctx->width = sdlcontext.width;
-            ctx->height = sdlcontext.height;
+
+        renderW = std::max(1, renderW);
+        renderH = std::max(1, renderH);
+        sdlcontext.width = renderW;
+        sdlcontext.height = renderH;
+        sdlcontext.framebufferWidth = static_cast<unsigned int>(renderW);
+        sdlcontext.framebufferHeight = static_cast<unsigned int>(renderH);
+
+        const int refW = static_cast<int>(sdlcontext.virtualWidth);
+        const int refH = static_cast<int>(sdlcontext.virtualHeight);
+        sdlcontext.lastViewport = compute_fit_viewport(renderW, renderH, refW, refH);
+        sdltextures::set_fit_viewport(sdlcontext.lastViewport);
+
+        if (ctx) {
+            ctx->width = renderW;
+            ctx->height = renderH;
+            ctx->framebufferWidth = renderW;
+            ctx->framebufferHeight = renderH;
+            ctx->virtualWidth = refW;
+            ctx->virtualHeight = refH;
         }
 
+        SDL_Rect clipRect{ sdlcontext.lastViewport.vpX, sdlcontext.lastViewport.vpY,
+            sdlcontext.lastViewport.vpW, sdlcontext.lastViewport.vpH };
+
+        SDL_RenderSetClipRect(sdl_renderer.renderer, nullptr);
         SDL_SetRenderDrawColor(sdl_renderer.renderer, r, g, b, 255);
         SDL_RenderClear(sdl_renderer.renderer);
 
+        SDL_RenderSetClipRect(sdl_renderer.renderer, &clipRect);
         queue.drain();
+        SDL_RenderSetClipRect(sdl_renderer.renderer, nullptr);
 
         SDL_RenderPresent(sdl_renderer.renderer);
         return true;

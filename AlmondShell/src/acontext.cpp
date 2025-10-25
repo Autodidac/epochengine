@@ -481,8 +481,9 @@ namespace almondnamespace::core {
         sdlContext->is_key_held = [](input::Key k) { return input::is_key_held(k); };
         sdlContext->is_key_down = [](input::Key k) { return input::is_key_down(k); };
         sdlContext->get_mouse_position = [](int& x, int& y) {
-            x = input::mouseX.load(std::memory_order_relaxed);
-            y = input::mouseY.load(std::memory_order_relaxed);
+            const int rawX = input::mouseX.load(std::memory_order_relaxed);
+            const int rawY = input::mouseY.load(std::memory_order_relaxed);
+            almondnamespace::sdlcontext::map_mouse_to_virtual(rawX, rawY, x, y);
         };
         sdlContext->is_mouse_button_held = [](input::MouseButton b) { return input::is_mouse_button_held(b); };
         sdlContext->is_mouse_button_down = [](input::MouseButton b) { return input::is_mouse_button_down(b); };
