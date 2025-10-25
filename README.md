@@ -42,6 +42,7 @@ Refer to [`Changes/changelog.txt`](Changes/changelog.txt) for the full history o
 
 - 🔄 **Self-updating launcher**
   Designed to automatically fetch the newest release when run, or perform an on-demand check via `--update` before applying builds with `--force`.
+  When you force an update the bundled updater downloads the matching source archive, expands it next to the executable, and rebuilds the binary so you can inspect or extend the engine even when starting from a published release.
   Can also be built directly from source for full control.
 
 - ⚙️ **Modular C++20 engine**
@@ -204,6 +205,16 @@ cmake --preset Ninja-Release
 cmake --build --preset Ninja-Release
 ```
 
+### Forcing the updater to rebuild from source
+
+The release binary ships with an updater that can repopulate the full source tree on demand:
+
+1. Run `AlmondShell.exe --update --force` (or `./AlmondShell --update --force` on Unix). The `--update` switch checks the hosted manifest, while `--force` tells the launcher to proceed even if the local build is already running.
+2. During the forced update the launcher downloads the matching source archive, extracts it beside the executable, installs the required build tooling (7-Zip, LLVM/Clang, Ninja), and regenerates the Ninja project files.
+3. Once the rebuild completes the new executable replaces the running binary, leaving the full AlmondShell repository contents on disk so you can audit, modify, and rebuild the engine without recloning the project manually.
+
+If you prefer to keep the generated sources for longer-term work, move them to a separate workspace before launching another forced update, as subsequent runs overwrite the extracted tree.
+
 ### macOS (Clang + Ninja)
 
 ```bash
@@ -212,6 +223,22 @@ cmake --build --preset macos-release
 ```
 
 Each preset generates binaries under `AlmondShell/bin/<preset>/`. Switch to the corresponding `*-Debug` preset for debug symbols or override generator settings as needed.
+
+## Running uncertified builds on Windows 11
+
+Windows 11 blocks executables that are not distributed via the Microsoft Store by default. To allow AlmondShell (or any locally built executable) to run while retaining SmartScreen prompts:
+
+1. Press **Win + I** to open Settings, then navigate to **Apps → Advanced app settings**.
+2. Under **Choose where to get apps**, change the dropdown from **The Microsoft Store only (recommended)** to **Anywhere**.
+
+![Windows 11 app settings screenshot showing the "Choose where to get apps" dropdown set to "Anywhere"](Images/appsetting.jpg)
+
+Optional for unsigned builds and local testing:
+
+- Search for **Windows Security**, open **App & browser control**, and select **SmartScreen settings**.
+- Set **Check apps and files** to **Warn** instead of **Block** so Windows surfaces a confirmation dialog without silently preventing the executable from starting.
+
+These two adjustments let you run uncertified binaries, including the updater that expands the AlmondShell source tree, while keeping the normal Windows security warnings in place.
 
 ---
 
