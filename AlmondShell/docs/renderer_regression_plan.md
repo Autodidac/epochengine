@@ -5,6 +5,23 @@ for validating AlmondShell's renderer backends (OpenGL, SDL, Raylib, software).
 It also identifies telemetry hooks required to make resize and framebuffer
 behaviour observable when the plan is executed.
 
+## Menu overlay invariants
+
+Menu smoke scenes exercise the menu overlay; keep the following invariants in
+mind when auditing backend behaviour:
+
+1. `MenuOverlay::recompute_layout` caches `ctx->get_width_safe()` and
+   `ctx->get_height_safe()` and centres the grid from those dimensions, so the
+   context getters must track the actual pixel space that `draw_sprite_safe`
+   renders into.【F:AlmondShell/include/aguimenu.hpp†L101-L170】
+2. The cached positions produced during layout are reused for both hit-testing
+   and the render-thread sprite enqueues inside `update_and_draw`, meaning any
+   backend scaling must keep those coordinate systems in lockstep.【F:AlmondShell/include/aguimenu.hpp†L277-L395】
+3. `update_and_draw` compares `ctx->get_mouse_position_safe()` against the same
+   rectangles it submits to `draw_sprite_safe`, so pointer coordinates have to
+   arrive already translated into the sprite grid (with the OpenGL flip handled
+   explicitly in the overlay).【F:AlmondShell/include/aguimenu.hpp†L285-L352】【F:AlmondShell/include/aguimenu.hpp†L374-L395】
+
 ## 1. Smoke scenes per backend
 
 | Backend | Launch arguments / setup | Scene coverage | Expected outputs |
