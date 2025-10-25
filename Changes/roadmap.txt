@@ -62,7 +62,7 @@ Phase 5 – Documentation & Release Readiness
 - [ ] Update README with latest setup steps, feature matrix, and platform support table.
 - [ ] Write migration guide for integrators upgrading from prior snapshots.
 - [ ] Produce quickstart tutorials (text + video) using example projects.
-- [ ] Draft release notes summarising new features, known issues, and roadmap alignment.
+- [x] Draft release notes summarising new features, known issues, and roadmap alignment. *(v0.62.1 introduces `Changes/release_notes_v0.62.1.md` with highlights, known issues, and roadmap context.)*
 - [ ] Run a final release candidate dry run: build, package, sign, and verify checksums.
 
 Acceptance Criteria
