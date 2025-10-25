@@ -48,7 +48,6 @@
 #include <cmath>
 #include <iostream>
 #include <memory>
-#include <utility>
 
 namespace almondnamespace::menu
 {
@@ -90,27 +89,6 @@ namespace almondnamespace::menu
 
         static constexpr float LayoutSpacing = 32.f;
 
-        static std::pair<int, int> resolve_canvas_dimensions(const std::shared_ptr<core::Context>& ctx)
-        {
-            if (!ctx) return { 0, 0 };
-
-            switch (ctx->type) {
-            case core::ContextType::RayLib:
-            case core::ContextType::SDL:
-                return {
-                    std::max(1, ctx->virtualWidth),
-                    std::max(1, ctx->virtualHeight)
-                };
-            default:
-                break;
-            }
-
-            return {
-                std::max(1, ctx->get_width_safe()),
-                std::max(1, ctx->get_height_safe())
-            };
-        }
-
         void set_max_columns(int desiredMax) {
             const int clamped = std::clamp(desiredMax, 1, ExpectedColumns);
             if (maxColumns != clamped) {
@@ -131,9 +109,8 @@ namespace almondnamespace::menu
                 return;
             }
 
-            const auto [canvasW, canvasH] = resolve_canvas_dimensions(ctx);
-            cachedWidth = canvasW;
-            cachedHeight = canvasH;
+            cachedWidth = ctx->get_width_safe();
+            cachedHeight = ctx->get_height_safe();
 
             float maxItemWidth = 0.f;
             float maxItemHeight = 0.f;
@@ -300,8 +277,7 @@ namespace almondnamespace::menu
         std::optional<Choice> update_and_draw(std::shared_ptr<core::Context> ctx, core::WindowData* win) {
             if (!initialized) return std::nullopt;
 
-            const auto [canvasW, canvasH] = resolve_canvas_dimensions(ctx);
-            if (canvasW != cachedWidth || canvasH != cachedHeight)
+            if (ctx->get_width_safe() != cachedWidth || ctx->get_height_safe() != cachedHeight)
                 recompute_layout(ctx);
 
             //input::poll_input();
