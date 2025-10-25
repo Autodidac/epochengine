@@ -198,6 +198,17 @@ namespace almondnamespace::raylibcontext
             s_raylibstate.virtualWidth = static_cast<unsigned int>(std::max(1, refW));
             s_raylibstate.virtualHeight = static_cast<unsigned int>(std::max(1, refH));
 
+            // Seed the viewport fit immediately so the very next draw call uses
+            // the correct logical-to-framebuffer transform instead of a 1×1
+            // placeholder from the default-initialised state. This keeps atlas
+            // driven widgets from clipping or drifting while the window is
+            // still processing the resize notification on the render thread.
+            s_raylibstate.lastViewport = compute_fit_viewport(
+                static_cast<int>(safeFbW),
+                static_cast<int>(safeFbH),
+                refW,
+                refH);
+
             bool hasNativeParent = false;
 #if defined(_WIN32)
             HWND observedParent = nullptr;
