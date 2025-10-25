@@ -46,6 +46,11 @@ namespace almondnamespace
 
             int result = std::system(command.c_str());
 
+            // ✅ If the transfer failed, ensure we end any partial curl line before printing diagnostics
+            if (result != 0) {
+                std::cerr << std::endl;
+            }
+
             // ✅ If `curl` failed, remove the invalid file
             std::ifstream file_check(output_path, std::ios::binary | std::ios::ate);
             if (result != 0 || !file_check || file_check.tellg() <= 1) {  // File doesn't exist or is too small
