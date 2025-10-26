@@ -26,6 +26,7 @@
 
 #include "aplatform.hpp"
 #include "aengineconfig.hpp"
+
 #include "acontext.hpp"
 #include "acontextwindow.hpp"
 #include "acontextmultiplexer.hpp"
@@ -79,6 +80,10 @@
 #include <iostream>
 #include <stdexcept>
 #include <vector>
+#include <cstdint>
+#include <memory>
+#include <mutex>
+#include <queue>
 
 namespace
 {
@@ -108,10 +113,6 @@ namespace
     void ClampMouseToClientRectIfNeeded(const std::shared_ptr<almondnamespace::core::Context>&, int&, int&) noexcept {}
 #endif
 }
-#include <cstdint>
-#include <memory>
-#include <mutex>
-#include <queue>
 
 namespace almondnamespace::core {
 

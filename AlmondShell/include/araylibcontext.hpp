@@ -325,8 +325,8 @@ namespace almondnamespace::raylibcontext
     // ──────────────────────────────────────────────
     inline bool raylib_initialize(std::shared_ptr<core::Context> ctx,
         HWND parentWnd = nullptr,
-        unsigned int w = 400,
-        unsigned int h = 300,
+        unsigned int w = 800,
+        unsigned int h = 600,
         std::function<void(int, int)> onResize = nullptr,
         std::string windowTitle = {})
     {

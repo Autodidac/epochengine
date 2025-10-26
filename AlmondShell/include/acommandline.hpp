@@ -38,7 +38,7 @@ namespace almondnamespace::core::cli {
     inline int  window_width = DEFAULT_WINDOW_WIDTH;
     inline int  window_height = DEFAULT_WINDOW_HEIGHT;
     inline int  menu_columns = 4;
-    inline bool trace_menu_button0_rect = false;
+    inline bool trace_menu_button0_rect = true;
     inline std::filesystem::path exe_path;
 
     struct ParseResult
