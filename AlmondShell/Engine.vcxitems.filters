@@ -103,6 +103,9 @@
     <Filter Include="Header Files\core\platform">
       <UniqueIdentifier>{d4d94f55-512b-4b47-9645-de2196105cd8}</UniqueIdentifier>
     </Filter>
+    <Filter Include="Header Files\core\scripting\cpp">
+      <UniqueIdentifier>{f299a200-e310-4b2f-92e8-1124a79c7f5a}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="$(MSBuildThisFileDirectory)include\almondengine.hpp">
@@ -192,20 +195,11 @@
     <ClInclude Include="$(MSBuildThisFileDirectory)include\atexture.hpp">
       <Filter>Header Files\core\backbone\textures</Filter>
     </ClInclude>
-    <ClInclude Include="$(MSBuildThisFileDirectory)include\acompiler.hpp">
-      <Filter>Header Files\core\scripting</Filter>
-    </ClInclude>
-    <ClInclude Include="$(MSBuildThisFileDirectory)include\ascriptingsystem.hpp">
-      <Filter>Header Files\core\scripting</Filter>
-    </ClInclude>
     <ClInclude Include="$(MSBuildThisFileDirectory)include\aupdateconfig.hpp">
       <Filter>Header Files\updater</Filter>
     </ClInclude>
     <ClInclude Include="$(MSBuildThisFileDirectory)include\aupdatesystem.hpp">
       <Filter>Header Files\updater</Filter>
-    </ClInclude>
-    <ClInclude Include="$(MSBuildThisFileDirectory)include\aenginebindings.hpp">
-      <Filter>Header Files\core\scripting</Filter>
     </ClInclude>
     <ClInclude Include="$(MSBuildThisFileDirectory)include\aeditor.hpp">
       <Filter>Header Files\core</Filter>
@@ -461,6 +455,15 @@
     </ClInclude>
     <ClInclude Include="$(MSBuildThisFileDirectory)include\astringconverter.hpp">
       <Filter>Header Files\core\utilities</Filter>
+    </ClInclude>
+    <ClInclude Include="$(MSBuildThisFileDirectory)include\ascriptingsystem.hpp">
+      <Filter>Header Files\core\scripting\cpp</Filter>
+    </ClInclude>
+    <ClInclude Include="$(MSBuildThisFileDirectory)include\aenginebindings.hpp">
+      <Filter>Header Files\core\scripting\cpp</Filter>
+    </ClInclude>
+    <ClInclude Include="$(MSBuildThisFileDirectory)include\acompiler.hpp">
+      <Filter>Header Files\core\scripting\cpp</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>

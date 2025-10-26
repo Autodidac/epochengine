@@ -209,8 +209,8 @@ namespace almondnamespace::core {
     }
     inline void opengl_clear() {}
     inline void opengl_present() {}
-    inline int  opengl_get_width() { return 1280; }
-    inline int  opengl_get_height() { return 720; }
+    inline int  opengl_get_width() { return 800; }
+    inline int  opengl_get_height() { return 600; }
 #endif
 
 #ifdef ALMOND_USING_SDL
@@ -224,8 +224,8 @@ namespace almondnamespace::core {
     }
     inline void sdl_clear() {}
     inline void sdl_present() {}
-    inline int  sdl_get_width() { return 1280; }
-    inline int  sdl_get_height() { return 720; }
+    inline int  sdl_get_width() { return 800; }
+    inline int  sdl_get_height() { return 600; }
 #endif
 
 #ifdef ALMOND_USING_SFML
@@ -239,8 +239,8 @@ namespace almondnamespace::core {
     }
     inline void sfml_clear() {}
     inline void sfml_present() {}
-    inline int  sfml_get_width() { return 1280; }
-    inline int  sfml_get_height() { return 720; }
+    inline int  sfml_get_width() { return 800; }
+    inline int  sfml_get_height() { return 600; }
 #endif
 
 #ifdef ALMOND_USING_RAYLIB
@@ -254,8 +254,8 @@ namespace almondnamespace::core {
     }
     inline void raylib_clear() {}
     inline void raylib_present() {}
-    inline int  raylib_get_width() { return 1280; }
-    inline int  raylib_get_height() { return 720; }
+    inline int  raylib_get_width() { return 800; }
+    inline int  raylib_get_height() { return 600; }
 #endif
 
 #ifdef ALMOND_USING_VULKAN
@@ -269,8 +269,8 @@ namespace almondnamespace::core {
     }
     inline void vulkan_clear() {}
     inline void vulkan_present() {}
-    inline int  vulkan_get_width() { return 1280; }
-    inline int  vulkan_get_height() { return 720; }
+    inline int  vulkan_get_width() { return 800; }
+    inline int  vulkan_get_height() { return 600; }
 #endif
 
 #ifdef ALMOND_USING_DIRECTX
@@ -284,8 +284,8 @@ namespace almondnamespace::core {
     }
     inline void directx_clear() {}
     inline void directx_present() {}
-    inline int  directx_get_width() { return 1280; }
-    inline int  directx_get_height() { return 720; }
+    inline int  directx_get_width() { return 800; }
+    inline int  directx_get_height() { return 600; }
 #endif
 
 #ifdef ALMOND_USING_CUSTOM
@@ -299,8 +299,8 @@ namespace almondnamespace::core {
     }
     inline void custom_clear() {}
     inline void custom_present() {}
-    inline int  custom_get_width() { return 1280; }
-    inline int  custom_get_height() { return 720; }
+    inline int  custom_get_width() { return 800; }
+    inline int  custom_get_height() { return 600; }
 #endif
 
 #ifdef ALMOND_USING_SOFTWARE_RENDERER
