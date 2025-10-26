@@ -327,16 +327,15 @@ namespace almondnamespace::sdlcontext
                 if (renderW > 0 && renderH > 0) {
                     sdlcontext.width = renderW;
                     sdlcontext.height = renderH;
-                    if (ctx) {
-                        ctx->width = renderW;
-                        ctx->height = renderH;
-                    }
+                    state::s_sdlstate.set_dimensions(renderW, renderH);
+                    state::s_sdlstate.window.set_size(renderW, renderH);
                 }
             }
         }
-        else if (ctx) {
-            ctx->width = sdlcontext.width;
-            ctx->height = sdlcontext.height;
+
+        if (ctx) {
+            ctx->width = std::max(1, sdlcontext.width);
+            ctx->height = std::max(1, sdlcontext.height);
         }
 
         SDL_SetRenderDrawColor(sdl_renderer.renderer, r, g, b, 255);

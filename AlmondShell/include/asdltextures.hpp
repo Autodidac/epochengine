@@ -245,13 +245,6 @@ namespace almondnamespace::sdltextures
             return;
         }
 
-        const int w = s_sdlstate.window.width;
-        const int h = s_sdlstate.window.height;
-        if (w == 0 || h == 0) {
-            std::cerr << "[SDL_DrawSprite] ERROR: Window dimensions are zero.\n";
-            return;
-        }
-
         const int atlasIdx = int(handle.atlasIndex);
         const int localIdx = int(handle.localIndex);
 
@@ -287,10 +280,13 @@ namespace almondnamespace::sdltextures
             return;
         }
 
-        int outputW = w;
-        int outputH = h;
+        int outputW = 0;
+        int outputH = 0;
         if (sdl_renderer) {
-            SDL_GetCurrentRenderOutputSize(sdl_renderer, &outputW, &outputH);
+            if (SDL_GetCurrentRenderOutputSize(sdl_renderer, &outputW, &outputH) != 0) {
+                outputW = 0;
+                outputH = 0;
+            }
         }
 
         SDL_Rect viewport{ 0, 0, outputW, outputH };
@@ -302,40 +298,84 @@ namespace almondnamespace::sdltextures
             }
         }
 
-        float drawX = static_cast<float>(x);
-        float drawY = static_cast<float>(y);
-        float drawWidth = static_cast<float>(width);
-        float drawHeight = static_cast<float>(height);
-
-        const bool widthNormalized = drawWidth > 0.f && drawWidth <= 1.f;
-        const bool heightNormalized = drawHeight > 0.f && drawHeight <= 1.f;
-        const bool xNormalized = drawX >= 0.f && drawX <= 1.f;
-        const bool yNormalized = drawY >= 0.f && drawY <= 1.f;
-
-        const float baseWidth = static_cast<float>(std::max(1, viewport.w));
-        const float baseHeight = static_cast<float>(std::max(1, viewport.h));
-
-        if (widthNormalized) {
-            drawWidth = std::max(drawWidth * baseWidth, 1.0f);
-        }
-        if (heightNormalized) {
-            drawHeight = std::max(drawHeight * baseHeight, 1.0f);
+        if (viewport.w <= 0 || viewport.h <= 0) {
+            viewport.x = 0;
+            viewport.y = 0;
+            viewport.w = outputW;
+            viewport.h = outputH;
         }
 
-        if (xNormalized) {
-            drawX = drawX * baseWidth;
-        }
-        if (yNormalized) {
-            drawY = drawY * baseHeight;
+        if (viewport.w <= 0 || viewport.h <= 0) {
+            viewport.w = std::max(1, outputW);
+            viewport.h = std::max(1, outputH);
         }
 
-        if (drawWidth <= 0.f)
-            drawWidth = static_cast<float>(region.width);
-        if (drawHeight <= 0.f)
-            drawHeight = static_cast<float>(region.height);
+        const float baseWidth = static_cast<float>(std::max(viewport.w, std::max(1, outputW)));
+        const float baseHeight = static_cast<float>(std::max(viewport.h, std::max(1, outputH)));
+        const float viewportWidth = static_cast<float>(std::max(1, viewport.w));
+        const float viewportHeight = static_cast<float>(std::max(1, viewport.h));
 
-        drawX += static_cast<float>(viewport.x);
-        drawY += static_cast<float>(viewport.y);
+        const bool widthNormalized = width > 0.f && width <= 1.f;
+        const bool heightNormalized = height > 0.f && height <= 1.f;
+        const bool xNormalized = x >= 0.f && x <= 1.f;
+        const bool yNormalized = y >= 0.f && y <= 1.f;
+
+        const auto normalize_span = [](float value, float base, bool treatAsRatio) -> float {
+            if (treatAsRatio) {
+                return value;
+            }
+            if (base <= 0.f) {
+                return 0.f;
+            }
+            return value / base;
+        };
+
+        float normalizedWidth = normalize_span(width, baseWidth, widthNormalized);
+        float normalizedHeight = normalize_span(height, baseHeight, heightNormalized);
+        float normalizedX = normalize_span(x, baseWidth, xNormalized);
+        float normalizedY = normalize_span(y, baseHeight, yNormalized);
+
+        if (width <= 0.f) {
+            normalizedWidth = normalize_span(static_cast<float>(region.width), baseWidth, false);
+        }
+        if (height <= 0.f) {
+            normalizedHeight = normalize_span(static_cast<float>(region.height), baseHeight, false);
+        }
+
+        if (normalizedWidth <= 0.f && baseWidth > 0.f) {
+            normalizedWidth = static_cast<float>(region.width) / baseWidth;
+        }
+        if (normalizedHeight <= 0.f && baseHeight > 0.f) {
+            normalizedHeight = static_cast<float>(region.height) / baseHeight;
+        }
+
+        float drawWidth = normalizedWidth * viewportWidth;
+        float drawHeight = normalizedHeight * viewportHeight;
+        float drawX = viewport.x + normalizedX * viewportWidth;
+        float drawY = viewport.y + normalizedY * viewportHeight;
+
+#if defined(DEBUG_TEXTURE_RENDERING_VERBOSE)
+        const float viewportRight = static_cast<float>(viewport.x) + viewportWidth;
+        const float viewportBottom = static_cast<float>(viewport.y) + viewportHeight;
+        const float rectRight = drawX + drawWidth;
+        const float rectBottom = drawY + drawHeight;
+        std::cerr << "[SDL_DrawSprite] viewport x=" << viewport.x
+            << " y=" << viewport.y
+            << " w=" << viewport.w
+            << " h=" << viewport.h
+            << " | dst x=" << drawX
+            << " y=" << drawY
+            << " w=" << drawWidth
+            << " h=" << drawHeight;
+        if (drawX < viewport.x || drawY < viewport.y
+            || rectRight > viewportRight || rectBottom > viewportBottom) {
+            std::cerr << " [OUT OF BOUNDS]";
+        }
+        else {
+            std::cerr << " [OK]";
+        }
+        std::cerr << '\n';
+#endif
 
         SDL_FRect dstRect{
             drawX,
