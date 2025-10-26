@@ -55,13 +55,13 @@
 // Only one of each context will be used, if you want multiple contexts, you must define them in the engine config, 
 
 // Contexts - External Engine Backends
-#define ALMOND_USING_SDL
+//#define ALMOND_USING_SDL
 //#define ALMOND_USING_SFML // perminently disabled - issues with sfml 3 until they update
 #define ALMOND_USING_RAYLIB
 
 // Rendering Only backends
-#define ALMOND_USING_SOFTWARE_RENDERER
-#define ALMOND_USING_OPENGL
+//#define ALMOND_USING_SOFTWARE_RENDERER
+//#define ALMOND_USING_OPENGL
 //#define ALMOND_USING_VULKAN  // You must also set the context in the example
 //#define ALMOND_USING_DIRECTX  // Currently Not Supported In AlmondShell, See AlmondEngine...
 

@@ -64,7 +64,7 @@ using DWORD_PTR = uintptr_t;
 #include <vector>
 #include <unordered_map>
 
-//#include <glad/glad.h>
+#include <glad/glad.h>
 
 //#define ALMOND_SINGLE_PARENT 1  // 0 = multiple top-level windows, 1 = single parent + children
 #define ALMOND_SHARED_CONTEXT 1  // Force shared OpenGL context

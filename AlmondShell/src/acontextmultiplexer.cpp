@@ -13,7 +13,9 @@
 
 #include <stdexcept>
 #include <algorithm>
-#include <glad/glad.h>
+
+//#include <glad/glad.h>
+
 #include <memory>
 #include <shared_mutex>
 #include <string>
@@ -337,8 +339,8 @@ namespace almondnamespace::core
             int cols = 1, rows = 1;
             while (cols * rows < totalRequested) (cols <= rows ? ++cols : ++rows);
 
-            int cellW = (totalRequested == 1) ? cli::window_width : 400;
-            int cellH = (totalRequested == 1) ? cli::window_height : 300;
+            int cellW = (totalRequested == 1) ? cli::window_width : 800;
+            int cellH = (totalRequested == 1) ? cli::window_height : 600;
 
             int clientW = cols * cellW;
             int clientH = rows * cellH;
@@ -361,7 +363,7 @@ namespace almondnamespace::core
             parent = nullptr;
         }
 
-#ifdef ALMOND_USING_OPENGL
+//#ifdef ALMOND_USING_OPENGL
         // ---------------- Shared dummy GL context (for wglShareLists) ----------------
         {
             HWND dummy = CreateWindowEx(WS_EX_TOOLWINDOW, L"AlmondChild", L"Dummy", WS_POPUP, 0, 0, 1, 1, nullptr, nullptr, hInst, nullptr);
@@ -387,7 +389,7 @@ namespace almondnamespace::core
             ReleaseDC(dummy, dummyDC);
             DestroyWindow(dummy);
         }
-#endif
+//#endif
 
         // ---------------- Helper: create N windows for a backend ----------------
         auto make_backend_windows = [&](ContextType type, int count) 
@@ -405,7 +407,7 @@ namespace almondnamespace::core
                 const std::string narrowTitle = almondnamespace::text::narrow_utf8(windowTitle);
                 HWND hwnd = CreateWindowEx(0, L"AlmondChild", windowTitle.c_str(),
                     (parent ? WS_CHILD | WS_VISIBLE : WS_OVERLAPPEDWINDOW | WS_VISIBLE),
-                    0, 0, 400, 300,
+                    0, 0, 800, 600,
                     parent, nullptr, hInst, nullptr);
 
                 if (!hwnd)
