@@ -24,6 +24,7 @@
  // araylibcontext.hpp
 #pragma once
 
+#include "aplatform.hpp"
 #include "aengineconfig.hpp"
 
 #if defined(ALMOND_USING_RAYLIB)
@@ -61,7 +62,7 @@ extern "C" void CloseWindow(void);
 #endif
 
 #if defined(_WIN32)
-#include <windows.h>
+//#include <windows.h>
 #include <gl/gl.h>
 #endif
 
