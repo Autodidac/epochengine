@@ -110,6 +110,19 @@ namespace almondnamespace::core
             return title;
         }
 
+        void ResolveClientSize(HWND hwnd, int& width, int& height) noexcept
+        {
+            if (!hwnd) return;
+
+            RECT client{};
+            if (!::GetClientRect(hwnd, &client)) {
+                return;
+            }
+
+            width = std::max<LONG>(1, client.right - client.left);
+            height = std::max<LONG>(1, client.bottom - client.top);
+        }
+
         //std::string NarrowCopy(const std::wstring& wide)
         //{
         //    return { wide.begin(), wide.end() };
@@ -472,8 +485,10 @@ namespace almondnamespace::core
                 RECT rc{};
                 if (parent) GetClientRect(parent, &rc);
                 else GetClientRect(hwnd, &rc);
-                const int width = std::max<LONG>(1, rc.right - rc.left);
-                const int height = std::max<LONG>(1, rc.bottom - rc.top);
+                int width = std::max<LONG>(1, rc.right - rc.left);
+                int height = std::max<LONG>(1, rc.bottom - rc.top);
+
+                ResolveClientSize(hwnd, width, height);
                 ctx->width = width;
                 ctx->height = height;
 
@@ -770,8 +785,9 @@ namespace almondnamespace::core
     {
         if (!hwnd) return;
 
-        const int clampedWidth = std::max(1, width);
-        const int clampedHeight = std::max(1, height);
+        int clampedWidth = std::max(1, width);
+        int clampedHeight = std::max(1, height);
+        ResolveClientSize(hwnd, clampedWidth, clampedHeight);
 
         std::function<void(int, int)> resizeCallback;
         WindowData* window = nullptr;
