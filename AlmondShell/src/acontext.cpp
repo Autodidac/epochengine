@@ -75,9 +75,39 @@
 #include "aatlastexture.hpp"
 #include "aatlasmanager.hpp"
 
+#include <algorithm>
 #include <iostream>
 #include <stdexcept>
 #include <vector>
+
+namespace
+{
+#if defined(_WIN32)
+    void ClampMouseToClientRectIfNeeded(const std::shared_ptr<almondnamespace::core::Context>& ctx, int& x, int& y) noexcept
+    {
+        if (!ctx || !ctx->hwnd) return;
+
+        if (almondnamespace::input::are_mouse_coords_global()) {
+            return; // Safe wrapper will translate + clamp when coordinates are global.
+        }
+
+        RECT rc{};
+        if (!::GetClientRect(ctx->hwnd, &rc)) {
+            return;
+        }
+
+        const int width = std::max<LONG>(1, rc.right - rc.left);
+        const int height = std::max<LONG>(1, rc.bottom - rc.top);
+
+        if (x < 0 || y < 0 || x >= width || y >= height) {
+            x = -1;
+            y = -1;
+        }
+    }
+#else
+    void ClampMouseToClientRectIfNeeded(const std::shared_ptr<almondnamespace::core::Context>&, int&, int&) noexcept {}
+#endif
+}
 #include <cstdint>
 #include <memory>
 #include <mutex>
@@ -440,9 +470,12 @@ namespace almondnamespace::core {
 
         openglContext->is_key_held = [](input::Key k) { return input::is_key_held(k); };
         openglContext->is_key_down = [](input::Key k) { return input::is_key_down(k); };
-        openglContext->get_mouse_position = [](int& x, int& y) {
+        openglContext->get_mouse_position = [weakCtx = std::weak_ptr<Context>(openglContext)](int& x, int& y) {
             x = input::mouseX.load(std::memory_order_relaxed);
             y = input::mouseY.load(std::memory_order_relaxed);
+            if (auto ctx = weakCtx.lock()) {
+                ClampMouseToClientRectIfNeeded(ctx, x, y);
+            }
         };
         openglContext->is_mouse_button_held = [](input::MouseButton b) { return input::is_mouse_button_held(b); };
         openglContext->is_mouse_button_down = [](input::MouseButton b) { return input::is_mouse_button_down(b); };

@@ -31,7 +31,7 @@
 #ifdef ALMOND_USING_OPENGL
 
 #include "acontext.hpp"
-//#include "acontextmultiplexer.hpp"  // declares g_backends
+#include "acontextmultiplexer.hpp"
 #include "aopenglstate.hpp"
 #include "aatlasmanager.hpp"
 #include "aatlastexture.hpp"
@@ -349,6 +349,12 @@ namespace almondnamespace::opengltextures
         if (w <= 0 || h <= 0) {
             w = static_cast<int>(backend.glState.width);
             h = static_cast<int>(backend.glState.height);
+        }
+        if (w <= 0 || h <= 0) {
+            if (auto ctx = core::MultiContextManager::GetCurrent()) {
+                w = std::max(1, ctx->get_width_safe());
+                h = std::max(1, ctx->get_height_safe());
+            }
         }
         if (w <= 0 || h <= 0) {
             w = std::max(1, core::cli::window_width);
