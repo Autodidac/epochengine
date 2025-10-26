@@ -78,8 +78,6 @@
 #include <iostream>
 #include <stdexcept>
 #include <vector>
-#include <cmath>
-#include <algorithm>
 #include <cstdint>
 #include <memory>
 #include <mutex>
@@ -482,62 +480,9 @@ namespace almondnamespace::core {
 
         sdlContext->is_key_held = [](input::Key k) { return input::is_key_held(k); };
         sdlContext->is_key_down = [](input::Key k) { return input::is_key_down(k); };
-        sdlContext->get_mouse_position = [](int& outX, int& outY) {
-            const auto fallback = [&]() {
-                outX = input::mouseX.load(std::memory_order_relaxed);
-                outY = input::mouseY.load(std::memory_order_relaxed);
-            };
-
-            if (!sdlcontext::sdlcontext.renderer) {
-                fallback();
-                return;
-            }
-
-            float mouseXF = 0.0f;
-            float mouseYF = 0.0f;
-            if (sdlcontext::sdlcontext.window) {
-                SDL_GetMouseState(&mouseXF, &mouseYF);
-            }
-            else {
-                SDL_GetGlobalMouseState(&mouseXF, &mouseYF);
-            }
-
-            int outputW = 0;
-            int outputH = 0;
-            SDL_GetCurrentRenderOutputSize(sdlcontext::sdlcontext.renderer, &outputW, &outputH);
-
-            SDL_Rect viewport{ 0, 0, outputW, outputH };
-            SDL_Rect currentViewport{ 0, 0, 0, 0 };
-            if (SDL_GetRenderViewport(sdlcontext::sdlcontext.renderer, &currentViewport) == 0 &&
-                currentViewport.w > 0 && currentViewport.h > 0) {
-                viewport = currentViewport;
-            }
-
-            if (viewport.w <= 0 || viewport.h <= 0) {
-                viewport.x = 0;
-                viewport.y = 0;
-                viewport.w = std::max(1, outputW);
-                viewport.h = std::max(1, outputH);
-            }
-
-            const float viewportWidth = static_cast<float>(std::max(1, viewport.w));
-            const float viewportHeight = static_cast<float>(std::max(1, viewport.h));
-            const float baseWidth = static_cast<float>(std::max(1, sdlcontext::sdlcontext.width));
-            const float baseHeight = static_cast<float>(std::max(1, sdlcontext::sdlcontext.height));
-
-            float relativeX = mouseXF - static_cast<float>(viewport.x);
-            float relativeY = mouseYF - static_cast<float>(viewport.y);
-
-            if (relativeX < 0.f) relativeX = 0.f;
-            if (relativeY < 0.f) relativeY = 0.f;
-            if (relativeX > viewportWidth) relativeX = viewportWidth;
-            if (relativeY > viewportHeight) relativeY = viewportHeight;
-
-            const float normalizedX = (viewportWidth > 0.f) ? (relativeX / viewportWidth) : 0.f;
-            const float normalizedY = (viewportHeight > 0.f) ? (relativeY / viewportHeight) : 0.f;
-
-            outX = static_cast<int>(std::lround(normalizedX * baseWidth));
-            outY = static_cast<int>(std::lround(normalizedY * baseHeight));
+        sdlContext->get_mouse_position = [](int& x, int& y) {
+            x = input::mouseX.load(std::memory_order_relaxed);
+            y = input::mouseY.load(std::memory_order_relaxed);
         };
         sdlContext->is_mouse_button_held = [](input::MouseButton b) { return input::is_mouse_button_held(b); };
         sdlContext->is_mouse_button_down = [](input::MouseButton b) { return input::is_mouse_button_down(b); };
