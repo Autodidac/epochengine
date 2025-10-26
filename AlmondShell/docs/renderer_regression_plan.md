@@ -52,6 +52,22 @@ performed for OpenGL and Raylib immediately after the first resize.
 4. **Artifact review** – add a checklist to the QA portal referencing these
    captures with links and pass/fail toggles per backend run.
 
+### Menu overlay rect trace checklist
+
+Menu smoke scenes now emit the menu button 0 target rectangle when launched with
+`--trace-menu-button0`. Capture the log line below for each backend as part of
+the smoke workflow to verify coordinate consistency.
+
+| Backend | Command (from `AlmondShell` root after building) | Expected log snippet |
+|---------|--------------------------------------------------|----------------------|
+| OpenGL | `./Bin/GCC-Debug/cmakeapp1/cmakeapp1 --renderer=opengl --scene=dockstress --trace-menu-button0` | `[MenuOverlay] button0 target rect: x=272 y=632 w=320 h=120 (OpenGL flip)` |
+| SDL | `./Bin/GCC-Debug/cmakeapp1/cmakeapp1 --renderer=sdl --scene=menu_rainbow --trace-menu-button0` | `[MenuOverlay] button0 target rect: x=272 y=328 w=320 h=120` |
+| Raylib | `./Bin/GCC-Debug/cmakeapp1/cmakeapp1 --renderer=raylib --scene=fit_canvas --trace-menu-button0` | `[MenuOverlay] button0 target rect: x=272 y=328 w=320 h=120` |
+| Software | `./Bin/GCC-Debug/cmakeapp1/cmakeapp1 --renderer=software --scene=cpu_quad --trace-menu-button0` | `[MenuOverlay] button0 target rect: x=272 y=328 w=320 h=120` |
+
+Archive the stdout snippet alongside the per-backend screenshots so future
+regression runs can diff the coordinates without rerunning the scenes.
+
 ## 3. Telemetry instrumentation
 
 | Signal | Description | Integration points |

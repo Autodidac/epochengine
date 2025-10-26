@@ -38,6 +38,7 @@ namespace almondnamespace::core::cli {
     inline int  window_width = DEFAULT_WINDOW_WIDTH;
     inline int  window_height = DEFAULT_WINDOW_HEIGHT;
     inline int  menu_columns = 4;
+    inline bool trace_menu_button0_rect = false;
     inline std::filesystem::path exe_path;
 
     struct ParseResult
@@ -73,6 +74,7 @@ namespace almondnamespace::core::cli {
                     "  --width  <value>      Set window width\n"
                     "  --height <value>      Set window height\n"
                     "  --menu-columns <n>    Cap the menu grid at n columns (default 4)\n"
+                    "  --trace-menu-button0  Log the target rect for menu button index 0\n"
                     "  --update, -u          Check for a newer AlmondShell build\n"
                     "  --force               Apply the available update immediately\n";
             }
@@ -87,6 +89,9 @@ namespace almondnamespace::core::cli {
             }
             else if (arg == "--menu-columns"sv && i + 1 < argc) {
                 menu_columns = std::max(1, std::stoi(argv[++i]));
+            }
+            else if (arg == "--trace-menu-button0"sv) {
+                trace_menu_button0_rect = true;
             }
             else if (arg == "--update"sv || arg == "-u"sv) {
                 result.update_requested = true;
