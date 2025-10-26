@@ -57,6 +57,7 @@ namespace almondnamespace::anativecontext
 
     // Reentrancy guard to avoid stack overflow when onResize chains back into ctx->onResize.
     inline std::atomic_bool s_isDispatchingResize{ false };
+    inline std::atomic_bool s_cleanupIssued{ false };
 
     // If the software backend did not create the window, we shouldn't destroy it.
     inline bool s_createdOwnWindow = false; // stays false here; flip only if you ever CreateWindow in this backend.
@@ -93,6 +94,8 @@ namespace almondnamespace::anativecontext
             std::cerr << "[SoftRenderer] Invalid context hwnd\n";
             return false;
         }
+
+        s_cleanupIssued.store(false, std::memory_order_release);
 
         resize_framebuffer(static_cast<int>(w), static_cast<int>(h));
         s_softrendererstate.running = true;
@@ -385,6 +388,10 @@ namespace almondnamespace::anativecontext
     inline void softrenderer_cleanup(std::shared_ptr<core::Context> /*ctx*/)
     {
         auto& sr = s_softrendererstate;
+
+        if (s_cleanupIssued.exchange(true, std::memory_order_acq_rel)) {
+            return;
+        }
 
         sr.framebuffer.clear();
         cubeTexture.reset();
