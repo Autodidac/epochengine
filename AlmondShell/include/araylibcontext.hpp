@@ -376,7 +376,12 @@ namespace almondnamespace::raylibcontext
 
 #if defined(_WIN32)
         s_raylibstate.hwnd = (HWND)GetWindowHandle();
-        s_raylibstate.hdc = GetDC(s_raylibstate.hwnd);
+        s_raylibstate.ownsDC = false;
+        s_raylibstate.hdc = wglGetCurrentDC();
+        if (!s_raylibstate.hdc && s_raylibstate.hwnd) {
+            s_raylibstate.hdc = GetDC(s_raylibstate.hwnd);
+            s_raylibstate.ownsDC = (s_raylibstate.hdc != nullptr);
+        }
         s_raylibstate.glContext = wglGetCurrentContext();
 #endif
 
@@ -510,10 +515,16 @@ namespace almondnamespace::raylibcontext
         }
 
 #if defined(_WIN32)
-        if (!wglMakeCurrent(s_raylibstate.hdc, s_raylibstate.glContext)) {
-            s_raylibstate.running = false;
-            std::cerr << "[Raylib] Failed to make Raylib GL context current\n";
-            return true;
+        if (s_raylibstate.hdc && s_raylibstate.glContext) {
+            const HDC currentDC = wglGetCurrentDC();
+            const HGLRC currentCtx = wglGetCurrentContext();
+            if (currentDC != s_raylibstate.hdc || currentCtx != s_raylibstate.glContext) {
+                if (!wglMakeCurrent(s_raylibstate.hdc, s_raylibstate.glContext)) {
+                    s_raylibstate.running = false;
+                    std::cerr << "[Raylib] Failed to make Raylib GL context current\n";
+                    return true;
+                }
+            }
         }
 #endif
 
@@ -615,14 +626,15 @@ namespace almondnamespace::raylibcontext
 
 #if defined(_WIN32)
         if (s_raylibstate.hwnd && ::IsWindow(s_raylibstate.hwnd)) {
-            if (s_raylibstate.hdc) {
+            if (s_raylibstate.ownsDC && s_raylibstate.hdc) {
                 ::ReleaseDC(s_raylibstate.hwnd, s_raylibstate.hdc);
-                s_raylibstate.hdc = nullptr;
             }
             ::DestroyWindow(s_raylibstate.hwnd);
         }
         s_raylibstate.hwnd = nullptr;
+        s_raylibstate.hdc = nullptr;
         s_raylibstate.glContext = nullptr;
+        s_raylibstate.ownsDC = false;
 #endif
 
         s_raylibstate.running = false;
