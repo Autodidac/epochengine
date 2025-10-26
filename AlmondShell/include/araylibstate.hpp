@@ -52,6 +52,7 @@ namespace almondnamespace::raylibcontext
         HGLRC hglrc = nullptr;
 
         HGLRC glContext{}; // Store GL context created
+        bool ownsDC{ false };
       //  WNDPROC oldWndProc = nullptr;
        // WNDPROC getOldWndProc() const noexcept { return oldWndProc; }
         HWND parent = nullptr;
