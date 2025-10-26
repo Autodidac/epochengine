@@ -90,6 +90,31 @@ namespace almondnamespace::raylibcontext
         return r;
     }
 
+    inline void seed_viewport_from_framebuffer(const std::shared_ptr<core::Context>& ctx) noexcept
+    {
+        int refW = (core::cli::window_width > 0) ? core::cli::window_width
+            : static_cast<int>(s_raylibstate.virtualWidth);
+        int refH = (core::cli::window_height > 0) ? core::cli::window_height
+            : static_cast<int>(s_raylibstate.virtualHeight);
+
+        if (ctx) {
+            if (ctx->width > 0) refW = ctx->width;
+            if (ctx->height > 0) refH = ctx->height;
+        }
+
+        int fbW = static_cast<int>(s_raylibstate.width);
+        int fbH = static_cast<int>(s_raylibstate.height);
+
+#if !defined(RAYLIB_NO_WINDOW)
+        if (::IsWindowReady()) {
+            fbW = std::max(1, ::GetRenderWidth());
+            fbH = std::max(1, ::GetRenderHeight());
+        }
+#endif
+
+        s_raylibstate.lastViewport = compute_fit_viewport(fbW, fbH, refW, refH);
+    }
+
     // --- Helper: apply size to Win32 child + raylib/GLFW (after docking) ---
     inline void apply_native_resize(int w, int h, bool updateNativeWindow, bool updateRaylibWindow)
     {
@@ -209,6 +234,16 @@ namespace almondnamespace::raylibcontext
                 static_cast<int>(safeFbH),
                 refW,
                 refH);
+
+#if !defined(RAYLIB_NO_WINDOW)
+            if (::IsWindowReady()) {
+                // Raylib aligns the framebuffer to the desktop until the child
+                // window is fully docked. Re-seed the viewport using the
+                // actual render dimensions so clipping matches the live
+                // backbuffer even before the next resize callback arrives.
+                seed_viewport_from_framebuffer(ctx);
+            }
+#endif
 
             bool hasNativeParent = false;
 #if defined(_WIN32)
@@ -334,6 +369,8 @@ namespace almondnamespace::raylibcontext
         InitWindow((int)s_raylibstate.width, (int)s_raylibstate.height, windowTitle.c_str());
         SetWindowTitle(windowTitle.c_str());
 
+        seed_viewport_from_framebuffer(ctx);
+
         // First sync to actual framebuffer + logical sizes
         sync_framebuffer_size(ctx, /*notifyClient=*/false);
 
@@ -429,6 +466,7 @@ namespace almondnamespace::raylibcontext
 
             // Sync from real framebuffer
             sync_framebuffer_size(ctx, /*notifyClient=*/true);
+            seed_viewport_from_framebuffer(ctx);
         }
 
         s_raylibstate.cleanupIssued = false;

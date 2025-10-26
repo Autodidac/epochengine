@@ -45,6 +45,7 @@ Unsupported mixes:
 
 ## Change Log
 
+- **v0.62.4** – Recorded that Raylib now seeds its fitted viewport from the live framebuffer during creation so docked GUIs align immediately.
 - **v0.62.3** – Noted the Raylib viewport scissor fix and the idempotent software renderer cleanup.
 - **v0.62.2** – Clarified that forcing the updater also downloads and expands the source tree so release binaries can bootstrap local development without a fresh clone.
 - **v0.62.0** – Documented the `--update`/`--force` flow so command-line runs can check for updates without automatically applying them.
