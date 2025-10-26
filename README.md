@@ -27,10 +27,10 @@ The runtime is designed for rapid iteration with hot-reloadable scripting, a sel
 
 ---
 
-## Current Snapshot (v0.62.3)
+## Current Snapshot (v0.62.4)
 
 - ✅ **Immediate GUI everywhere** – `agui.hpp` seeds a shared font atlas, now covers buttons, image buttons, editable text fields, text boxes, and a turnkey console overlay so every backend renders consistent tooling widgets out of the box.
-- ✅ **HiDPI-aware multi-context rendering** – Raylib now clamps its letterboxed viewport with a scissor rectangle so GUI sprites stay clipped to the intended surface, seeds its fit metrics immediately during resize events, and SDL3 continues to remap input so docked panes stay pixel-accurate after DPI or window changes.
+- ✅ **HiDPI-aware multi-context rendering** – Raylib now reseeds its fitted viewport from the live framebuffer during creation so atlas-driven overlays line up before the child window finishes docking, maintains the scissor clamp added last cycle, and SDL3 continues to remap input so docked panes stay pixel-accurate after DPI or window changes.
 - ✅ **Configurable menu layouts** – The runtime honours a `--menu-columns` cap to keep atlas-driven menus readable on constrained displays.
 - ✅ **Robust hot reload** – The scripting pipeline emits `ScriptLoadReport` diagnostics, prunes completed jobs, and waits synchronously so tooling observes a deterministic post-reload state.
 

@@ -47,6 +47,9 @@ mismatches relative to the software renderer baseline.
       virtual canvas and scales them into the fitted viewport.【F:AlmondShell/include/araylibrenderer.hpp†L120-L188】【F:AlmondShell/include/araylibcontext.hpp†L411-L430】
 - [x] Mouse polling switches to Raylib’s per-frame cursor data and disables the
       global-to-client conversion after applying `SetMouseOffset/Scale`.【F:AlmondShell/include/araylibcontext.hpp†L411-L430】【F:AlmondShell/include/araylibcontextinput.hpp†L105-L132】
+- [x] Viewport seeding now reads the live framebuffer during context creation so
+      atlas-driven overlays stay aligned before the child window finishes
+      docking.【F:AlmondShell/include/araylibcontext.hpp†L79-L189】【F:AlmondShell/include/araylibcontext.hpp†L318-L429】
 - [ ] Align `ctx->get_width_safe()/get_height_safe()` with the virtual canvas so
       menu layout positions match the viewport scaling used during draw calls.【F:AlmondShell/include/araylibcontext.hpp†L160-L218】【F:AlmondShell/include/araylibcontext.hpp†L503-L507】
 - [ ] Confirm that hit-testing uses the same scaled coordinates Raylib hands back
