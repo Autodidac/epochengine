@@ -430,6 +430,7 @@ namespace almondnamespace::raylibcontext
             sync_framebuffer_size(ctx, /*notifyClient=*/true);
         }
 
+        s_raylibstate.cleanupIssued = false;
         s_raylibstate.running = true;
 
         // Hook atlas uploads
@@ -519,9 +520,23 @@ namespace almondnamespace::raylibcontext
         BeginDrawing();
         ClearBackground(Color{ r, g, b, 255 });
 
+        int scissorX = fit.vpX;
+        int scissorY = fit.vpY;
+#if !defined(RAYLIB_NO_WINDOW)
+        if (IsWindowReady()) {
+            const Vector2 renderOffset = GetRenderOffset();
+            scissorX += static_cast<int>(std::floor(renderOffset.x));
+            scissorY += static_cast<int>(std::floor(renderOffset.y));
+        }
+#endif
+
+        BeginScissorMode(scissorX, scissorY, fit.vpW, fit.vpH);
+
         // NOTE: Your draw_sprite path uses ctx->width/height → now virtual.
         // That guarantees consistent atlas button sizing/placement.
         queue.drain();
+
+        EndScissorMode();
 
         EndDrawing();
 
@@ -542,7 +557,10 @@ namespace almondnamespace::raylibcontext
     // ──────────────────────────────────────────────
     inline void raylib_cleanup(std::shared_ptr<almondnamespace::core::Context>& ctx)
     {
-        if (!s_raylibstate.running) return;
+        if (s_raylibstate.cleanupIssued) {
+            return;
+        }
+        s_raylibstate.cleanupIssued = true;
 
 #if defined(_WIN32)
         if (s_raylibstate.hdc && s_raylibstate.glContext) {
@@ -569,6 +587,10 @@ namespace almondnamespace::raylibcontext
 #endif
 
         s_raylibstate.running = false;
+        s_raylibstate.width = 1;
+        s_raylibstate.height = 1;
+        s_raylibstate.virtualWidth = 1;
+        s_raylibstate.virtualHeight = 1;
 
         if (ctx) {
             ctx->hwnd = nullptr;

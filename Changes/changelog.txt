@@ -193,4 +193,5 @@
 - Ensured updater download failures print diagnostics on a fresh line, documented the release, and bumped the engine version to v0.62.1.
 - Documented that forced updater runs rehydrate the AlmondShell source tree, added Windows 11 guidance for running uncertified builds, and refreshed the README accordingly.
 - Seeded Raylib's viewport metrics during resize dispatch so atlas menus stay centred from the very first frame, documented the release, and bumped the engine version to v0.62.2.
+- Added a scissor pass to Raylib's fitted viewport so GUI sprites stay clipped, made the software renderer cleanup idempotent to stop duplicate shutdown logs, documented the release, and bumped the engine version to v0.62.3.
 

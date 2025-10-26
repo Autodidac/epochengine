@@ -45,6 +45,7 @@ Unsupported mixes:
 
 ## Change Log
 
+- **v0.62.3** – Noted the Raylib viewport scissor fix and the idempotent software renderer cleanup.
 - **v0.62.2** – Clarified that forcing the updater also downloads and expands the source tree so release binaries can bootstrap local development without a fresh clone.
 - **v0.62.0** – Documented the `--update`/`--force` flow so command-line runs can check for updates without automatically applying them.
 - **v0.58.2** – First publication of this guide in conjunction with the roadmap milestone for documenting configuration options.

@@ -73,6 +73,7 @@ namespace almondnamespace::raylibcontext
         unsigned int virtualWidth{ 400 };
         unsigned int virtualHeight{ 300 };
         bool running{ false };
+        bool cleanupIssued{ false };
 
         bool shouldClose = false; // Set to true when the window should close
         // Raylib manages window internally, but track width & height for consistency
