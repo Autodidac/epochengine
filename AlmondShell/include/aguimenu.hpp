@@ -342,6 +342,23 @@ namespace almondnamespace::menu
                 return { colBaseX[clampedCol], rowBaseY[flippedRow] };
             };
 
+            if (core::cli::trace_menu_button0_rect && totalItems > 0) {
+                const auto& slice0 = slicePairs.front().normal;
+                const auto pos0 = position_for_index(0);
+
+                static std::optional<std::array<int, 4>> loggedRect;
+                std::array<int, 4> rect{ pos0.first, pos0.second, slice0.width, slice0.height };
+                if (!loggedRect || *loggedRect != rect) {
+                    loggedRect = rect;
+                    std::cout << "[MenuOverlay] button0 target rect: x=" << rect[0]
+                              << " y=" << rect[1]
+                              << " w=" << rect[2]
+                              << " h=" << rect[3]
+                              << (flipVertical ? " (OpenGL flip)" : "")
+                              << '\n';
+                }
+            }
+
             int hover = -1;
             for (int i = 0; i < totalItems; ++i) {
                 const auto& slice = slicePairs[i].normal;
