@@ -10,6 +10,7 @@
 #include "asfmlcontext.hpp"
 #include "araylibcontext.hpp"
 #include "asoftrenderer_context.hpp"
+#include "acommandline.hpp"
 
 #include <stdexcept>
 #include <algorithm>
