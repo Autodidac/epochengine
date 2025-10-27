@@ -89,7 +89,9 @@
 // Don't include windows.h before Raylib big trouble
 #ifdef ALMOND_USING_RAYLIB
 #include <glad/glad.h>	// for GLAD - OpenGL loader
+#if defined(_WIN32)
 #include <GL/wglext.h>  // for WGL - OpenGL extensions WGL Loader
+#endif
 	// before raylib.h
 //	#define NOMINMAX
 //#define WIN32_LEAN_AND_MEAN

@@ -13,6 +13,18 @@ add_executable(updater
 )
 target_include_directories(updater PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/include)
 
+option(ALMOND_ENABLE_RAYLIB "Enable the Raylib backend" ON)
+
+if(ALMOND_ENABLE_RAYLIB)
+    target_compile_definitions(updater PRIVATE ALMOND_USING_RAYLIB)
+    if(WIN32)
+        target_link_libraries(updater PRIVATE opengl32)
+    else()
+        find_package(OpenGL REQUIRED)
+        target_link_libraries(updater PRIVATE OpenGL::GL)
+    endif()
+endif()
+
 if(MSVC)
     set(CMAKE_GENERATOR "Visual Studio 17 2022" CACHE STRING "Generator" FORCE)
 endif()

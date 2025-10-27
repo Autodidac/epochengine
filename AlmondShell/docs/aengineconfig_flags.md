@@ -37,6 +37,7 @@ Supported mixes:
 - **Default multi-backend** – SDL + Raylib contexts with OpenGL and software renderers enabled (`ALMOND_SINGLE_PARENT == 1`).
 - **Headless tooling** – Define `ALMOND_MAIN_HEADLESS` and keep renderer macros enabled when running asset generation or script compilation pipelines.
 - **Single-context builds** – Undefine either `ALMOND_USING_SDL` or `ALMOND_USING_RAYLIB` when targeting constrained platforms. At least one renderer macro must remain defined for the runtime to upload atlases.
+- **Raylib-only shells** – Leaving only `ALMOND_USING_RAYLIB` defined now automatically pulls in the Win32 WGL headers when targeting Windows and links against the appropriate OpenGL loader libraries (`opengl32` via MSBuild, `OpenGL::GL` in CMake). Ensure those SDK components are present when customising your generator presets.
 
 Unsupported mixes:
 
@@ -45,6 +46,7 @@ Unsupported mixes:
 
 ## Change Log
 
+- **v0.63.0** – Recorded that Raylib-only builds always include the Win32 WGL loader when available and require the platform OpenGL import library even if the OpenGL renderer macro is disabled.
 - **v0.62.5** – Logged that Raylib now caches its original WGL handles and only reacquires the context on demand so single-backend builds no longer fail to activate the GL context.
 - **v0.62.4** – Recorded that Raylib now seeds its fitted viewport from the live framebuffer during creation so docked GUIs align immediately.
 - **v0.62.3** – Noted the Raylib viewport scissor fix and the idempotent software renderer cleanup.
