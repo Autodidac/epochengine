@@ -46,7 +46,7 @@ namespace almondnamespace::raylibcontext
 
     struct RaylibState
     {
-#ifdef ALMOND_USING_WINMAIN
+#if defined(_WIN32)
         HWND hwnd = nullptr;
         HDC hdc = nullptr;
         HGLRC hglrc = nullptr;
@@ -56,6 +56,14 @@ namespace almondnamespace::raylibcontext
       //  WNDPROC oldWndProc = nullptr;
        // WNDPROC getOldWndProc() const noexcept { return oldWndProc; }
         HWND parent = nullptr;
+#else
+        void* hwnd = nullptr;
+        void* hdc = nullptr;
+        void* hglrc = nullptr;
+
+        void* glContext{}; // Store GL context created
+        bool ownsDC{ false };
+        void* parent = nullptr;
 #endif
 
         std::function<void(int, int)> onResize{};

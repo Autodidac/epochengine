@@ -68,6 +68,51 @@ extern "C" void CloseWindow(void);
 
 namespace almondnamespace::raylibcontext
 {
+#if defined(_WIN32)
+    using NativeWindowHandle = HWND;
+    using NativeDeviceContext = HDC;
+    using NativeGlContext = HGLRC;
+#else
+    using NativeWindowHandle = void*;
+    using NativeDeviceContext = void*;
+    using NativeGlContext = void*;
+#endif
+
+    namespace detail
+    {
+#if defined(_WIN32)
+        inline NativeDeviceContext current_dc() noexcept { return ::wglGetCurrentDC(); }
+        inline NativeGlContext current_context() noexcept { return ::wglGetCurrentContext(); }
+        inline bool make_current(NativeDeviceContext dc, NativeGlContext ctx) noexcept
+        {
+            if (!dc || !ctx) return false;
+            return ::wglMakeCurrent(dc, ctx) == TRUE;
+        }
+        inline void clear_current() noexcept { ::wglMakeCurrent(nullptr, nullptr); }
+#else
+        inline NativeDeviceContext current_dc() noexcept { return nullptr; }
+        inline NativeGlContext current_context() noexcept { return nullptr; }
+        inline bool make_current(NativeDeviceContext, NativeGlContext) noexcept { return true; }
+        inline void clear_current() noexcept {}
+#endif
+
+        inline bool contexts_match(NativeDeviceContext lhsDC,
+            NativeGlContext lhsCtx,
+            NativeDeviceContext rhsDC,
+            NativeGlContext rhsCtx) noexcept
+        {
+#if defined(_WIN32)
+            return lhsDC == rhsDC && lhsCtx == rhsCtx;
+#else
+            (void)lhsDC;
+            (void)lhsCtx;
+            (void)rhsDC;
+            (void)rhsCtx;
+            return true;
+#endif
+        }
+    } // namespace detail
+
     // Usually at the start of your program, before window creation:
     static almondnamespace::contextwindow::WindowData* g_raylibwindowContext;
 
@@ -324,7 +369,7 @@ namespace almondnamespace::raylibcontext
     // Initialize Raylib window and context
     // ──────────────────────────────────────────────
     inline bool raylib_initialize(std::shared_ptr<core::Context> ctx,
-        HWND parentWnd = nullptr,
+        NativeWindowHandle parentWnd = nullptr,
         unsigned int w = 800,
         unsigned int h = 600,
         std::function<void(int, int)> onResize = nullptr,
@@ -375,14 +420,19 @@ namespace almondnamespace::raylibcontext
         sync_framebuffer_size(ctx, /*notifyClient=*/false);
 
 #if defined(_WIN32)
-        s_raylibstate.hwnd = (HWND)GetWindowHandle();
+        s_raylibstate.hwnd = static_cast<HWND>(GetWindowHandle());
         s_raylibstate.ownsDC = false;
-        s_raylibstate.hdc = wglGetCurrentDC();
+        s_raylibstate.hdc = detail::current_dc();
         if (!s_raylibstate.hdc && s_raylibstate.hwnd) {
             s_raylibstate.hdc = GetDC(s_raylibstate.hwnd);
             s_raylibstate.ownsDC = (s_raylibstate.hdc != nullptr);
         }
-        s_raylibstate.glContext = wglGetCurrentContext();
+        s_raylibstate.glContext = detail::current_context();
+#else
+        s_raylibstate.hwnd = GetWindowHandle();
+        s_raylibstate.hdc = nullptr;
+        s_raylibstate.glContext = nullptr;
+        s_raylibstate.ownsDC = false;
 #endif
 
         if (ctx) {
@@ -441,6 +491,7 @@ namespace almondnamespace::raylibcontext
 
         // If docking into a parent, reparent + single hard resize pass
         if (s_raylibstate.parent) {
+#if defined(_WIN32)
             ::SetParent(s_raylibstate.hwnd, s_raylibstate.parent);
             ::ShowWindow(s_raylibstate.hwnd, SW_SHOW);
 
@@ -453,9 +504,7 @@ namespace almondnamespace::raylibcontext
             ex &= ~WS_EX_APPWINDOW;
             ::SetWindowLongPtr(s_raylibstate.hwnd, GWL_EXSTYLE, ex);
 
-#if defined(_WIN32)
             almondnamespace::core::MakeDockable(s_raylibstate.hwnd, s_raylibstate.parent);
-#endif
 
             if (!windowTitle.empty()) {
                 const std::wstring wideTitle(windowTitle.begin(), windowTitle.end());
@@ -473,6 +522,7 @@ namespace almondnamespace::raylibcontext
             sync_framebuffer_size(ctx, /*notifyClient=*/true);
             seed_viewport_from_framebuffer(ctx);
         }
+#endif
 
         s_raylibstate.cleanupIssued = false;
         s_raylibstate.running = true;
@@ -516,10 +566,11 @@ namespace almondnamespace::raylibcontext
 
 #if defined(_WIN32)
         if (s_raylibstate.hdc && s_raylibstate.glContext) {
-            const HDC currentDC = wglGetCurrentDC();
-            const HGLRC currentCtx = wglGetCurrentContext();
-            if (currentDC != s_raylibstate.hdc || currentCtx != s_raylibstate.glContext) {
-                if (!wglMakeCurrent(s_raylibstate.hdc, s_raylibstate.glContext)) {
+            const auto currentDC = detail::current_dc();
+            const auto currentCtx = detail::current_context();
+            if (!detail::contexts_match(currentDC, currentCtx,
+                s_raylibstate.hdc, s_raylibstate.glContext)) {
+                if (!detail::make_current(s_raylibstate.hdc, s_raylibstate.glContext)) {
                     s_raylibstate.running = false;
                     std::cerr << "[Raylib] Failed to make Raylib GL context current\n";
                     return true;
@@ -614,7 +665,7 @@ namespace almondnamespace::raylibcontext
 
 #if defined(_WIN32)
         if (s_raylibstate.hdc && s_raylibstate.glContext) {
-            wglMakeCurrent(nullptr, nullptr);
+            detail::clear_current();
         }
 #endif
 

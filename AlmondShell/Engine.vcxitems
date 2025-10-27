@@ -5,10 +5,16 @@
     <HasSharedItems>true</HasSharedItems>
     <ItemsProjectGuid>{b2f62625-abdc-43c1-9ac0-379c96b52a74}</ItemsProjectGuid>
   </PropertyGroup>
+  <PropertyGroup>
+    <AlmondUseRaylib Condition="'$(AlmondUseRaylib)'==''">true</AlmondUseRaylib>
+  </PropertyGroup>
   <ItemDefinitionGroup>
     <ClCompile>
       <AdditionalIncludeDirectories>%(AdditionalIncludeDirectories);$(MSBuildThisFileDirectory)</AdditionalIncludeDirectories>
     </ClCompile>
+    <Link>
+      <AdditionalDependencies Condition="'$(AlmondUseRaylib)'=='true'">%(AdditionalDependencies);opengl32.lib</AdditionalDependencies>
+    </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
     <ProjectCapability Include="SourceItemsFromImports" />
