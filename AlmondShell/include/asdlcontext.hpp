@@ -49,6 +49,7 @@ namespace almondnamespace::core { void MakeDockable(HWND hwnd, HWND parent); }
 #endif
 
 #include <algorithm>
+#include <memory>
 #include <stdexcept>
 #include <iostream>
 #include <string>
@@ -64,10 +65,64 @@ namespace almondnamespace::sdlcontext
         bool running = false;
         int width = 400;
         int height = 300;
+        int framebufferWidth = 400;
+        int framebufferHeight = 300;
+        int virtualWidth = 400;
+        int virtualHeight = 300;
         std::function<void(int, int)> onResize;
     };
-    
+
     inline SDLState sdlcontext;
+
+    inline void refresh_dimensions(const std::shared_ptr<core::Context>& ctx) noexcept
+    {
+        int logicalW = std::max(1, sdlcontext.width);
+        int logicalH = std::max(1, sdlcontext.height);
+
+        if (sdlcontext.window)
+        {
+            int windowW = 0;
+            int windowH = 0;
+            SDL_GetWindowSize(sdlcontext.window, &windowW, &windowH);
+            if (windowW > 0 && windowH > 0)
+            {
+                logicalW = windowW;
+                logicalH = windowH;
+            }
+        }
+
+        sdlcontext.width = logicalW;
+        sdlcontext.height = logicalH;
+        sdlcontext.virtualWidth = logicalW;
+        sdlcontext.virtualHeight = logicalH;
+
+        int fbW = logicalW;
+        int fbH = logicalH;
+        if (sdlcontext.renderer)
+        {
+            int renderW = 0;
+            int renderH = 0;
+            if (SDL_GetCurrentRenderOutputSize(sdlcontext.renderer, &renderW, &renderH) == 0
+                && renderW > 0 && renderH > 0)
+            {
+                fbW = renderW;
+                fbH = renderH;
+            }
+        }
+
+        sdlcontext.framebufferWidth = std::max(1, fbW);
+        sdlcontext.framebufferHeight = std::max(1, fbH);
+
+        if (ctx)
+        {
+            ctx->width = sdlcontext.width;
+            ctx->height = sdlcontext.height;
+            ctx->virtualWidth = sdlcontext.virtualWidth;
+            ctx->virtualHeight = sdlcontext.virtualHeight;
+            ctx->framebufferWidth = sdlcontext.framebufferWidth;
+            ctx->framebufferHeight = sdlcontext.framebufferHeight;
+        }
+    }
 
     inline bool sdl_initialize(std::shared_ptr<core::Context> ctx,
         HWND parentWnd = nullptr,
@@ -79,28 +134,38 @@ namespace almondnamespace::sdlcontext
         const int clampedWidth = std::max(1, w);
         const int clampedHeight = std::max(1, h);
 
+        sdlcontext.width = clampedWidth;
+        sdlcontext.height = clampedHeight;
+        sdlcontext.virtualWidth = clampedWidth;
+        sdlcontext.virtualHeight = clampedHeight;
+        sdlcontext.framebufferWidth = clampedWidth;
+        sdlcontext.framebufferHeight = clampedHeight;
+        sdlcontext.parent = parentWnd;
+
+        refresh_dimensions(ctx);
+
+        std::weak_ptr<core::Context> weakCtx = ctx;
         auto userResize = std::move(onResize);
-        sdlcontext.onResize = [userResize = std::move(userResize)](int width, int height) mutable {
-            const int safeWidth = std::max(1, width);
-            const int safeHeight = std::max(1, height);
-            sdlcontext.width = safeWidth;
-            sdlcontext.height = safeHeight;
+        sdlcontext.onResize = [weakCtx, userResize = std::move(userResize)](int width, int height) mutable {
+            sdlcontext.width = std::max(1, width);
+            sdlcontext.height = std::max(1, height);
+            sdlcontext.virtualWidth = sdlcontext.width;
+            sdlcontext.virtualHeight = sdlcontext.height;
+
             if (sdlcontext.window) {
-                SDL_SetWindowSize(sdlcontext.window, safeWidth, safeHeight);
+                SDL_SetWindowSize(sdlcontext.window, sdlcontext.width, sdlcontext.height);
             }
+
+            auto locked = weakCtx.lock();
+            refresh_dimensions(locked);
+
             if (userResize) {
-                userResize(safeWidth, safeHeight);
+                userResize(sdlcontext.framebufferWidth, sdlcontext.framebufferHeight);
             }
         };
 
-        sdlcontext.width = clampedWidth;
-        sdlcontext.height = clampedHeight;
-        sdlcontext.parent = parentWnd;
-
         if (ctx) {
             ctx->onResize = sdlcontext.onResize;
-            ctx->width = clampedWidth;
-            ctx->height = clampedHeight;
         }
 
         // SDL3 returns 0 on success, negative on failure.
@@ -160,8 +225,6 @@ namespace almondnamespace::sdlcontext
 
         if (ctx) {
             ctx->hwnd = sdlcontext.hwnd;
-            ctx->width = sdlcontext.width;
-            ctx->height = sdlcontext.height;
         }
 
         SDL_SetWindowTitle(sdlcontext.window, windowTitle.c_str());
@@ -177,6 +240,8 @@ namespace almondnamespace::sdlcontext
 
         init_renderer(sdlcontext.renderer);
         sdltextures::sdl_renderer = sdlcontext.renderer;
+
+        refresh_dimensions(ctx);
 
         if (sdlcontext.parent) {
             std::cout << "[SDL] Setting parent window: " << sdlcontext.parent << "\n";
@@ -320,24 +385,7 @@ namespace almondnamespace::sdlcontext
         Uint8 g = static_cast<Uint8>((0.5 + 0.5 * std::sin(t * 0.7 + 2.0)) * 255);
         Uint8 b = static_cast<Uint8>((0.5 + 0.5 * std::sin(t * 1.3 + 4.0)) * 255);
 
-        if (sdlcontext.renderer) {
-            int renderW = 0;
-            int renderH = 0;
-            if (SDL_GetCurrentRenderOutputSize(sdlcontext.renderer, &renderW, &renderH) == 0) {
-                if (renderW > 0 && renderH > 0) {
-                    sdlcontext.width = renderW;
-                    sdlcontext.height = renderH;
-                    if (ctx) {
-                        ctx->width = renderW;
-                        ctx->height = renderH;
-                    }
-                }
-            }
-        }
-        else if (ctx) {
-            ctx->width = sdlcontext.width;
-            ctx->height = sdlcontext.height;
-        }
+        refresh_dimensions(ctx);
 
         SDL_SetRenderDrawColor(sdl_renderer.renderer, r, g, b, 255);
         SDL_RenderClear(sdl_renderer.renderer);
@@ -446,30 +494,23 @@ namespace almondnamespace::sdlcontext
             SDL_SetWindowTitle(s_sdlstate.window.sdl_window, title.c_str());
 	}
 
-    inline std::pair<int,int> get_size() noexcept
+    inline std::pair<int, int> get_size() noexcept
     {
-        int w = 0;
-        int h = 0;
-        if (sdl_renderer.renderer) {
-            if (SDL_GetCurrentRenderOutputSize(sdl_renderer.renderer, &w, &h) != 0) {
-                w = 0;
-                h = 0;
-            }
-        }
-        else if (s_sdlstate.window.sdl_window) {
-            SDL_GetWindowSize(s_sdlstate.window.sdl_window, &w, &h);
+        int w = sdlcontext.width;
+        int h = sdlcontext.height;
+
+        if (sdlcontext.window)
+        {
+            SDL_GetWindowSize(sdlcontext.window, &w, &h);
         }
 
-        if (w <= 0 || h <= 0) {
-            w = sdlcontext.width;
-            h = sdlcontext.height;
-        }
-
-        return {w, h};
+        w = std::max(1, w);
+        h = std::max(1, h);
+        return { w, h };
     }
 
-    inline int sdl_get_width() noexcept { return get_size().first; }
-    inline int sdl_get_height() noexcept { return get_size().second; }
+    inline int sdl_get_width() noexcept { return std::max(1, sdlcontext.width); }
+    inline int sdl_get_height() noexcept { return std::max(1, sdlcontext.height); }
 
     inline bool SDLIsRunning(std::shared_ptr<core::Context> ctx) {
         return sdlcontext.running;
