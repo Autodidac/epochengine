@@ -254,11 +254,18 @@ namespace almondnamespace::raylibcontext
             s_raylibstate.logicalWidth = logicalW;
             s_raylibstate.logicalHeight = logicalH;
 
-            // Decide the virtual canvas
-            int refW = (core::cli::window_width > 0) ? core::cli::window_width : 1920;
-            int refH = (core::cli::window_height > 0) ? core::cli::window_height : 1080;
+            // Resolve the virtual canvas from framebuffer unless CLI overrides force it.
+            const unsigned int resolvedVirtualW = (core::cli::window_width > 0)
+                ? static_cast<unsigned int>(core::cli::window_width)
+                : safeFbW;
+            const unsigned int resolvedVirtualH = (core::cli::window_height > 0)
+                ? static_cast<unsigned int>(core::cli::window_height)
+                : safeFbH;
 
-            // Mirror VIRTUAL size into ctx for GUI/sprite math
+            const int refW = static_cast<int>(std::max(1u, resolvedVirtualW));
+            const int refH = static_cast<int>(std::max(1u, resolvedVirtualH));
+
+            // Mirror VIRTUAL size into ctx for GUI/sprite math and keep framebuffer/logical persisted.
             if (ctx) {
                 ctx->virtualWidth = refW;
                 ctx->virtualHeight = refH;
@@ -266,8 +273,8 @@ namespace almondnamespace::raylibcontext
                 ctx->height = refH;
             }
 
-            s_raylibstate.virtualWidth = static_cast<unsigned int>(std::max(1, refW));
-            s_raylibstate.virtualHeight = static_cast<unsigned int>(std::max(1, refH));
+            s_raylibstate.virtualWidth = resolvedVirtualW;
+            s_raylibstate.virtualHeight = resolvedVirtualH;
 
             // Seed the viewport fit immediately so the very next draw call uses
             // the correct logical-to-framebuffer transform instead of a 1×1
@@ -449,25 +456,16 @@ namespace almondnamespace::raylibcontext
                 }
 
                 const GuiFitViewport fit = s_raylibstate.lastViewport;
-                const float scale = (fit.scale > 0.0f) ? fit.scale : 1.0f;
-                const float invScale = (scale > 0.0f) ? (1.0f / scale) : 1.0f;
-
-                Vector2 offset = ::GetRenderOffset();
-                const Vector2 raw = ::GetMousePosition();
-
-                const float baseX = offset.x + static_cast<float>(fit.vpX);
-                const float baseY = offset.y + static_cast<float>(fit.vpY);
-                const float adjustedX = (raw.x - baseX) * invScale;
-                const float adjustedY = (raw.y - baseY) * invScale;
+                const Vector2 position = ::GetMousePosition();
 
                 const bool inside =
-                    (adjustedX >= 0.0f && adjustedY >= 0.0f &&
-                        adjustedX < static_cast<float>(fit.refW) &&
-                        adjustedY < static_cast<float>(fit.refH));
+                    (position.x >= 0.0f && position.y >= 0.0f &&
+                        position.x < static_cast<float>(fit.refW) &&
+                        position.y < static_cast<float>(fit.refH));
 
                 if (inside) {
-                    outX = static_cast<int>(std::lround(adjustedX));
-                    outY = static_cast<int>(std::lround(adjustedY));
+                    outX = static_cast<int>(std::lround(position.x));
+                    outY = static_cast<int>(std::lround(position.y));
                 }
                 else {
                     outX = -1;
@@ -475,12 +473,10 @@ namespace almondnamespace::raylibcontext
                 }
 
 #ifndef NDEBUG
-                const float viewportMaxX = baseX + static_cast<float>(fit.vpW);
-                const float viewportMaxY = baseY + static_cast<float>(fit.vpH);
-                const bool rawInside =
-                    (raw.x >= baseX && raw.x < viewportMaxX &&
-                        raw.y >= baseY && raw.y < viewportMaxY);
-                assert(rawInside == inside);
+                const unsigned int expectedW = s_raylibstate.virtualWidth;
+                const unsigned int expectedH = s_raylibstate.virtualHeight;
+                assert(static_cast<int>(expectedW) == fit.refW);
+                assert(static_cast<int>(expectedH) == fit.refH);
 #endif
 #else
                 outX = -1;
@@ -582,30 +578,51 @@ namespace almondnamespace::raylibcontext
         // ----- VIRTUAL FIT VIEWPORT + MOUSE MAPPING -----
         const int fbW = std::max(1, GetRenderWidth());
         const int fbH = std::max(1, GetRenderHeight());
-        const int refW = (core::cli::window_width > 0) ? core::cli::window_width : 1920;
-        const int refH = (core::cli::window_height > 0) ? core::cli::window_height : 1080;
+        const int refW = ctx ? std::max(1, ctx->width)
+            : static_cast<int>(std::max(1u, s_raylibstate.virtualWidth));
+        const int refH = ctx ? std::max(1, ctx->height)
+            : static_cast<int>(std::max(1u, s_raylibstate.virtualHeight));
 
-        // Ensure ctx continues to see VIRTUAL size
+        const GuiFitViewport fit = compute_fit_viewport(fbW, fbH, refW, refH);
+
+        // Persist resolved dimensions on the shared context
         if (ctx) {
+            ctx->framebufferWidth = fbW;
+            ctx->framebufferHeight = fbH;
             ctx->virtualWidth = refW;
             ctx->virtualHeight = refH;
             ctx->width = refW;
             ctx->height = refH;
-            ctx->framebufferWidth = fbW;
-            ctx->framebufferHeight = fbH;
         }
-
-        const GuiFitViewport fit = compute_fit_viewport(fbW, fbH, refW, refH);
 
         // Viewport for rendering (letterbox/pillarbox)
         s_raylibstate.lastViewport = fit;
         s_raylibstate.virtualWidth = static_cast<unsigned int>(std::max(1, refW));
         s_raylibstate.virtualHeight = static_cast<unsigned int>(std::max(1, refH));
 
-        // Mouse: leave raw coordinates in framebuffer space; ctx->get_mouse_position remaps.
+#ifndef NDEBUG
+        if (ctx) {
+            const bool viewportMismatch =
+                (ctx->width != fit.refW) || (ctx->height != fit.refH);
+            if (viewportMismatch) {
+                std::cerr << "[Raylib] Viewport mismatch: Context="
+                    << ctx->width << 'x' << ctx->height
+                    << " Fit=" << fit.refW << 'x' << fit.refH << "\n";
+            }
+            assert(!viewportMismatch);
+        }
+#endif
+
+        // Mouse scaling/offset must follow the viewport so GUI hit-testing aligns
 #if !defined(RAYLIB_NO_WINDOW)
-        ::SetMouseOffset(0, 0);
-        ::SetMouseScale(1.0f, 1.0f);
+        if (::IsWindowReady()) {
+            const Vector2 renderOffset = ::GetRenderOffset();
+            const int baseOffsetX = static_cast<int>(std::floor(renderOffset.x)) + fit.vpX;
+            const int baseOffsetY = static_cast<int>(std::floor(renderOffset.y)) + fit.vpY;
+            const float invScale = (fit.scale > 0.0f) ? (1.0f / fit.scale) : 1.0f;
+            ::SetMouseOffset(-baseOffsetX, -baseOffsetY);
+            ::SetMouseScale(invScale, invScale);
+        }
 #endif
         // -----------------------------------------------
 
