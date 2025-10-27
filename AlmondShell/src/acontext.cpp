@@ -30,6 +30,7 @@
 #include "acontext.hpp"
 #include "acontextwindow.hpp"
 #include "acontextmultiplexer.hpp"
+#include "adiagnostics.hpp"
 
 #ifdef ALMOND_USING_OPENGL
 #include "aopenglcontext.hpp"
@@ -159,6 +160,20 @@ namespace almondnamespace::core {
     bool Context::process_safe(std::shared_ptr<core::Context> ctx, CommandQueue& queue) {
         if (!process) return false;
         try {
+            if (ctx)
+            {
+                almond::diagnostics::ContextDimensionSnapshot snapshot{};
+                snapshot.contextId = ctx.get();
+                snapshot.type = ctx->type;
+                snapshot.backendName = ctx->backendName;
+                snapshot.logicalWidth = ctx->width;
+                snapshot.logicalHeight = ctx->height;
+                snapshot.framebufferWidth = ctx->framebufferWidth;
+                snapshot.framebufferHeight = ctx->framebufferHeight;
+                snapshot.virtualWidth = ctx->virtualWidth;
+                snapshot.virtualHeight = ctx->virtualHeight;
+                almond::diagnostics::log_context_dimensions_if_changed(snapshot);
+            }
             return process(ctx, queue);
         }
         catch (const std::exception& e) {

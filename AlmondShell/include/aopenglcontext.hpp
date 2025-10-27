@@ -296,6 +296,10 @@ namespace almondnamespace::openglcontext
         // -----------------------------------------------------------------
         ctx->width = static_cast<int>(w);
         ctx->height = static_cast<int>(h);
+        ctx->virtualWidth = ctx->width;
+        ctx->virtualHeight = ctx->height;
+        ctx->framebufferWidth = ctx->width;
+        ctx->framebufferHeight = ctx->height;
         glState.width = w;
         glState.height = h;
         ctx->onResize = std::move(onResize);
@@ -313,6 +317,24 @@ namespace almondnamespace::openglcontext
             throw std::runtime_error("[OpenGLContext] Failed to create child window");
 
         ShowWindow(glState.hwnd, SW_SHOW);
+
+        if (ctx && glState.hwnd)
+        {
+            RECT client{};
+            if (GetClientRect(glState.hwnd, &client))
+            {
+                const int logicalW = std::max<LONG>(1, client.right - client.left);
+                const int logicalH = std::max<LONG>(1, client.bottom - client.top);
+                ctx->width = logicalW;
+                ctx->height = logicalH;
+                ctx->virtualWidth = logicalW;
+                ctx->virtualHeight = logicalH;
+                ctx->framebufferWidth = logicalW;
+                ctx->framebufferHeight = logicalH;
+                glState.width = static_cast<unsigned int>(logicalW);
+                glState.height = static_cast<unsigned int>(logicalH);
+            }
+        }
 
         // Device context
         glState.hdc = GetDC(glState.hwnd);
@@ -413,7 +435,9 @@ namespace almondnamespace::openglcontext
         return std::max(1, core::cli::window_height);
     }
     inline void opengl_clear(std::shared_ptr<core::Context> ctx) {
-        glViewport(0, 0, ctx->width, ctx->height);
+        const int fbW = std::max(1, ctx ? ctx->framebufferWidth : 0);
+        const int fbH = std::max(1, ctx ? ctx->framebufferHeight : 0);
+        glViewport(0, 0, fbW, fbH);
         glClearColor(0.235f, 0.235f, 0.235f, 1.0f);
         glClear(GL_COLOR_BUFFER_BIT);
     }
@@ -426,8 +450,33 @@ namespace almondnamespace::openglcontext
         auto& backend = opengltextures::get_opengl_backend();
         auto& glState = backend.glState;
 
-        glState.width = static_cast<unsigned int>(std::max(1, ctx ? ctx->width : 0));
-        glState.height = static_cast<unsigned int>(std::max(1, ctx ? ctx->height : 0));
+        if (ctx && ctx->hwnd)
+        {
+            RECT client{};
+            if (GetClientRect(ctx->hwnd, &client))
+            {
+                const int logicalW = std::max<LONG>(1, client.right - client.left);
+                const int logicalH = std::max<LONG>(1, client.bottom - client.top);
+                ctx->width = logicalW;
+                ctx->height = logicalH;
+                ctx->virtualWidth = logicalW;
+                ctx->virtualHeight = logicalH;
+                ctx->framebufferWidth = logicalW;
+                ctx->framebufferHeight = logicalH;
+                glState.width = static_cast<unsigned int>(logicalW);
+                glState.height = static_cast<unsigned int>(logicalH);
+            }
+            else
+            {
+                glState.width = static_cast<unsigned int>(std::max(1, ctx->framebufferWidth));
+                glState.height = static_cast<unsigned int>(std::max(1, ctx->framebufferHeight));
+            }
+        }
+        else
+        {
+            glState.width = static_cast<unsigned int>(std::max(1, ctx ? ctx->framebufferWidth : 0));
+            glState.height = static_cast<unsigned int>(std::max(1, ctx ? ctx->framebufferHeight : 0));
+        }
 
         atlasmanager::process_pending_uploads(core::ContextType::OpenGL);
 

@@ -80,10 +80,26 @@ namespace almondnamespace::core
 #endif
         WindowData* windowData = nullptr;
 
+        // `width`/`height` track the active logical canvas that game/UI code
+        // should use for layout. They are the coordinates returned by
+        // `get_width_safe()`/`get_height_safe()` and match the virtual canvas
+        // when a backend exposes one. Backends that do not distinguish between
+        // logical and physical pixels should keep these in lock-step with the
+        // framebuffer dimensions.
         int width = 400;
         int height = 300;
+
+        // `framebufferWidth`/`framebufferHeight` report the most recent pixel
+        // size of the drawable surface. High-DPI backends (Raylib, SDL, etc.)
+        // should refresh these whenever they receive resize notifications so
+        // diagnostics and renderer code can reason about the physical target.
         int framebufferWidth = 400;
         int framebufferHeight = 300;
+
+        // `virtualWidth`/`virtualHeight` cache the design-time canvas that the
+        // logical coordinates map onto. When a backend supports virtualised
+        // rendering it can diverge from the framebuffer dimensions; otherwise
+        // these simply mirror the logical width/height.
         int virtualWidth = 400;
         int virtualHeight = 300;
         ContextType type = ContextType::Custom;
