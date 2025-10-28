@@ -128,9 +128,10 @@ namespace almondnamespace::core
             ContextType type);
         void RemoveWindow(HWND hwnd);
         void ArrangeDockedWindowsGrid();
+        void HandleResize(HWND hwnd, int width, int height);
         void StartRenderThreads();
 
-        void HandleResize(HWND hwnd, int width, int height);
+        //void HandleResize(HWND hwnd, int width, int height);
 
         HWND GetParentWindow() const { return parent; }
         const std::vector<std::unique_ptr<WindowData>>& GetWindows() const { return windows; }

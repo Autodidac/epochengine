@@ -684,7 +684,8 @@ namespace almondnamespace::core
         if (!hdc) hdc = GetDC(hwnd);
 
         // Only create GL context if this window is OpenGL
-        if (type == ContextType::OpenGL) {
+        if (type == ContextType::OpenGL) 
+        {
 #ifdef ALMOND_USING_OPENGL
             if (!glContext) {
                 SetupPixelFormat(hdc);
@@ -697,9 +698,30 @@ namespace almondnamespace::core
                     wglMakeCurrent(nullptr, nullptr);
                 }
             }
-#endif
+#endif 
         }
 
+        if (type == ContextType::RayLib)
+        {
+
+#ifdef ALMOND_USING_RAYLIB
+#ifndef ALMOND_USING_OPENGL
+
+            if (!glContext) {
+                SetupPixelFormat(hdc);
+                glContext = CreateSharedGLContext(hdc);
+
+                static bool gladInitialized = false;
+                if (!gladInitialized) {
+                    wglMakeCurrent(hdc, glContext);
+                    gladInitialized = gladLoadGL();
+                    wglMakeCurrent(nullptr, nullptr);
+                }
+            }
+#endif
+#endif
+        }
+        
         // Make window dockable if a parent is provided
         if (parent) MakeDockable(hwnd, parent);
 
