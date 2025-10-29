@@ -60,8 +60,8 @@
 #define ALMOND_USING_RAYLIB
 
 // Rendering Only backends
-//#define ALMOND_USING_SOFTWARE_RENDERER
-//#define ALMOND_USING_OPENGL
+#define ALMOND_USING_SOFTWARE_RENDERER
+#define ALMOND_USING_OPENGL
 //#define ALMOND_USING_VULKAN  // You must also set the context in the example
 //#define ALMOND_USING_DIRECTX  // Currently Not Supported In AlmondShell, See AlmondEngine...
 
@@ -80,7 +80,6 @@
 #define SFML_STATIC
 	#include <SFML/Graphics.hpp>
 #endif // ALMOND_USING_SFML
-
 
 #ifdef ALMOND_USING_WINMAIN
 #include "aframework.hpp"
