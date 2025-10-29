@@ -41,7 +41,7 @@ namespace almondnamespace::core::cli {
     inline bool window_height_overridden = false;
     inline int  menu_columns = 4;
     // Disabled by default so tracing must be explicitly opted into.
-    inline bool trace_menu_button0_rect = false;
+    inline bool trace_menu_button0_rect = true;
     inline std::filesystem::path exe_path;
 
     struct ParseResult
