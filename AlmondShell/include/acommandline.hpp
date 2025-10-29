@@ -37,6 +37,8 @@ namespace almondnamespace::core::cli {
     // ─── public, mutable knobs (inline globals) ────────────────────────
     inline int  window_width = DEFAULT_WINDOW_WIDTH;
     inline int  window_height = DEFAULT_WINDOW_HEIGHT;
+    inline bool window_width_overridden = false;
+    inline bool window_height_overridden = false;
     inline int  menu_columns = 4;
     // Disabled by default so tracing must be explicitly opted into.
     inline bool trace_menu_button0_rect = false;
@@ -59,6 +61,8 @@ namespace almondnamespace::core::cli {
         using namespace std::string_view_literals;
         ParseResult result{};
         trace_menu_button0_rect = false;
+        window_width_overridden = false;
+        window_height_overridden = false;
         if (argc < 1) {
             std::cerr << "No command-line arguments provided.\n";
             return result;
@@ -85,9 +89,11 @@ namespace almondnamespace::core::cli {
             }
             else if (arg == "--width"sv && i + 1 < argc) {
                 window_width = std::stoi(argv[++i]);
+                window_width_overridden = true;
             }
             else if (arg == "--height"sv && i + 1 < argc) {
                 window_height = std::stoi(argv[++i]);
+                window_height_overridden = true;
             }
             else if (arg == "--menu-columns"sv && i + 1 < argc) {
                 menu_columns = std::max(1, std::stoi(argv[++i]));

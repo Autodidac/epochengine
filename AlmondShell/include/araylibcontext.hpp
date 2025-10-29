@@ -137,9 +137,14 @@ namespace almondnamespace::raylibcontext
 
     inline void seed_viewport_from_framebuffer(const std::shared_ptr<core::Context>& ctx) noexcept
     {
-        int refW = (core::cli::window_width > 0) ? core::cli::window_width
+        const bool widthOverride = core::cli::window_width_overridden
+            && core::cli::window_width > 0;
+        const bool heightOverride = core::cli::window_height_overridden
+            && core::cli::window_height > 0;
+
+        int refW = widthOverride ? core::cli::window_width
             : static_cast<int>(s_raylibstate.virtualWidth);
-        int refH = (core::cli::window_height > 0) ? core::cli::window_height
+        int refH = heightOverride ? core::cli::window_height
             : static_cast<int>(s_raylibstate.virtualHeight);
 
         if (ctx) {
@@ -262,10 +267,15 @@ namespace almondnamespace::raylibcontext
             s_raylibstate.logicalHeight = logicalH;
 
             // Resolve the virtual canvas from framebuffer unless CLI overrides force it.
-            const unsigned int resolvedVirtualW = (core::cli::window_width > 0)
+            const bool widthOverride = core::cli::window_width_overridden
+                && core::cli::window_width > 0;
+            const bool heightOverride = core::cli::window_height_overridden
+                && core::cli::window_height > 0;
+
+            const unsigned int resolvedVirtualW = widthOverride
                 ? static_cast<unsigned int>(core::cli::window_width)
                 : safeFbW;
-            const unsigned int resolvedVirtualH = (core::cli::window_height > 0)
+            const unsigned int resolvedVirtualH = heightOverride
                 ? static_cast<unsigned int>(core::cli::window_height)
                 : safeFbH;
 
