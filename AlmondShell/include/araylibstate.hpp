@@ -81,6 +81,8 @@ namespace almondnamespace::raylibcontext
         unsigned int logicalHeight{ 300 };
         unsigned int virtualWidth{ 400 };
         unsigned int virtualHeight{ 300 };
+        unsigned int designWidth{ 0 };
+        unsigned int designHeight{ 0 };
         bool running{ false };
         bool cleanupIssued{ false };
 
