@@ -89,11 +89,85 @@ namespace almondnamespace::raylibcontext
             return ::wglMakeCurrent(dc, ctx) == TRUE;
         }
         inline void clear_current() noexcept { ::wglMakeCurrent(nullptr, nullptr); }
+
+        inline bool refresh_wgl_handles()
+        {
+            const auto currentWindow = static_cast<HWND>(GetWindowHandle());
+            const bool windowChanged = currentWindow && currentWindow != s_raylibstate.hwnd;
+
+            if (!windowChanged && s_raylibstate.hdc && s_raylibstate.glContext) {
+                if (make_current(s_raylibstate.hdc, s_raylibstate.glContext)) {
+                    return true;
+                }
+            }
+
+            const HWND previousWindow = s_raylibstate.hwnd;
+            const HDC previousDC = s_raylibstate.hdc;
+            const HGLRC previousContext = s_raylibstate.glContext;
+
+            if (s_raylibstate.ownsDC && s_raylibstate.hdc && s_raylibstate.hwnd) {
+                ::ReleaseDC(s_raylibstate.hwnd, s_raylibstate.hdc);
+            }
+
+            s_raylibstate.hwnd = currentWindow;
+            s_raylibstate.hdc = nullptr;
+            s_raylibstate.glContext = nullptr;
+            s_raylibstate.ownsDC = false;
+
+            if (!currentWindow) {
+                return false;
+            }
+
+            HDC candidateDC = ::GetDC(currentWindow);
+            if (!candidateDC) {
+                return false;
+            }
+
+            const HDC activeDC = current_dc();
+            if (activeDC && activeDC != candidateDC) {
+                ::ReleaseDC(currentWindow, candidateDC);
+                candidateDC = activeDC;
+                s_raylibstate.ownsDC = false;
+            }
+            else {
+                s_raylibstate.ownsDC = true;
+            }
+
+            const HGLRC ctx = current_context();
+            if (!ctx) {
+                if (s_raylibstate.ownsDC && candidateDC) {
+                    ::ReleaseDC(currentWindow, candidateDC);
+                }
+                s_raylibstate.ownsDC = false;
+                return false;
+            }
+
+            if (!make_current(candidateDC, ctx)) {
+                if (s_raylibstate.ownsDC && candidateDC) {
+                    ::ReleaseDC(currentWindow, candidateDC);
+                }
+                s_raylibstate.ownsDC = false;
+                return false;
+            }
+
+            s_raylibstate.hdc = candidateDC;
+            s_raylibstate.glContext = ctx;
+
+            if (currentWindow != previousWindow || candidateDC != previousDC
+                || ctx != previousContext) {
+                std::clog << "[Raylib] Refreshed GL handles (hwnd=" << s_raylibstate.hwnd
+                          << ", hdc=" << s_raylibstate.hdc
+                          << ", hglrc=" << s_raylibstate.glContext << ")\n";
+            }
+
+            return true;
+        }
 #else
         inline NativeDeviceContext current_dc() noexcept { return nullptr; }
         inline NativeGlContext current_context() noexcept { return nullptr; }
         inline bool make_current(NativeDeviceContext, NativeGlContext) noexcept { return true; }
         inline void clear_current() noexcept {}
+        inline bool refresh_wgl_handles() noexcept { return true; }
 #endif
 
         inline bool contexts_match(NativeDeviceContext lhsDC,
@@ -654,8 +728,6 @@ namespace almondnamespace::raylibcontext
             return true;
         }
 
-        atlasmanager::process_pending_uploads(core::ContextType::RayLib);
-
         // Observe current framebuffer size
         const unsigned int prevFbW = s_raylibstate.width;
         const unsigned int prevFbH = s_raylibstate.height;
@@ -689,18 +761,18 @@ namespace almondnamespace::raylibcontext
 
 #if defined(_WIN32)
         static bool reportedMissingContext = false;
+        static bool reportedMakeCurrentFailure = false;
+        if (!detail::refresh_wgl_handles()) {
+            if (!reportedMakeCurrentFailure) {
+                reportedMakeCurrentFailure = true;
+                std::cerr << "[Raylib] Failed to refresh/make Raylib GL context current; skipping frame\n";
+            }
+            return true;
+        }
+        reportedMakeCurrentFailure = false;
+
         if (s_raylibstate.hdc && s_raylibstate.glContext) {
             reportedMissingContext = false;
-            const auto currentDC = detail::current_dc();
-            const auto currentCtx = detail::current_context();
-            if (!detail::contexts_match(currentDC, currentCtx,
-                s_raylibstate.hdc, s_raylibstate.glContext)) {
-                if (!detail::make_current(s_raylibstate.hdc, s_raylibstate.glContext)) {
-                    s_raylibstate.running = false;
-                    std::cerr << "[Raylib] Failed to make Raylib GL context current\n";
-                    return true;
-                }
-            }
         }
         else {
             if (!reportedMissingContext) {
@@ -713,6 +785,8 @@ namespace almondnamespace::raylibcontext
 #endif
         }
 #endif
+
+        atlasmanager::process_pending_uploads(core::ContextType::RayLib);
 
         // ----- VIRTUAL FIT VIEWPORT + MOUSE MAPPING -----
         const int fbW = std::max(1, GetRenderWidth());
