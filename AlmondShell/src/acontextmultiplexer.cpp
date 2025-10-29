@@ -703,22 +703,23 @@ namespace almondnamespace::core
 
         if (type == ContextType::RayLib)
         {
-
-#ifdef ALMOND_USING_RAYLIB
-#ifndef ALMOND_USING_OPENGL
-
-            if (!glContext) {
+#if defined(_WIN32) && defined(ALMOND_USING_RAYLIB)
+            if (!glContext && hdc) {
                 SetupPixelFormat(hdc);
                 glContext = CreateSharedGLContext(hdc);
 
                 static bool gladInitialized = false;
                 if (!gladInitialized) {
-                    wglMakeCurrent(hdc, glContext);
-                    gladInitialized = gladLoadGL();
-                    wglMakeCurrent(nullptr, nullptr);
+                    if (wglMakeCurrent(hdc, glContext)) {
+                        gladInitialized = gladLoadGL();
+                        wglMakeCurrent(nullptr, nullptr);
+                    }
+                    else {
+                        std::cerr << "[Raylib] Failed to bind bootstrap GL context for hwnd="
+                            << hwnd << "\n";
+                    }
                 }
             }
-#endif
 #endif
         }
         
@@ -775,6 +776,22 @@ namespace almondnamespace::core
         winPtr->onResize = std::move(onResize);
         winPtr->context = ctx;  // <-- hook it up
         ctx->windowData = winPtr.get(); // set the back-pointer immediately
+
+#if defined(ALMOND_USING_RAYLIB)
+        if (type == ContextType::RayLib && ctx) {
+            if (ctx->hwnd) {
+                winPtr->hwnd = ctx->hwnd;
+            }
+#if defined(_WIN32)
+            if (ctx->hdc) {
+                winPtr->hdc = ctx->hdc;
+            }
+            if (ctx->hglrc) {
+                winPtr->glContext = ctx->hglrc;
+            }
+#endif
+        }
+#endif
 
         RECT rc{};
         GetClientRect(hwnd, &rc);
