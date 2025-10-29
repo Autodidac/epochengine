@@ -98,7 +98,9 @@ namespace almondnamespace::menu
             }
         }
 
-        void recompute_layout(std::shared_ptr<core::Context> ctx) {
+        void recompute_layout(std::shared_ptr<core::Context> ctx,
+            int widthPixels,
+            int heightPixels) {
             const int totalItems = static_cast<int>(slicePairs.size());
             if (totalItems == 0) {
                 cachedPositions.clear();
@@ -109,8 +111,12 @@ namespace almondnamespace::menu
                 return;
             }
 
-            cachedWidth = ctx->get_width_safe();
-            cachedHeight = ctx->get_height_safe();
+            int resolvedWidth = widthPixels;
+            int resolvedHeight = heightPixels;
+            if (resolvedWidth <= 0 && ctx) resolvedWidth = ctx->get_width_safe();
+            if (resolvedHeight <= 0 && ctx) resolvedHeight = ctx->get_height_safe();
+            cachedWidth = std::max(1, resolvedWidth);
+            cachedHeight = std::max(1, resolvedHeight);
 
             float maxItemWidth = 0.f;
             float maxItemHeight = 0.f;
@@ -268,7 +274,9 @@ namespace almondnamespace::menu
                 }
             }
 
-            recompute_layout(ctx);
+            const int currentWidth = ctx ? ctx->get_width_safe() : cachedWidth;
+            const int currentHeight = ctx ? ctx->get_height_safe() : cachedHeight;
+            recompute_layout(ctx, currentWidth, currentHeight);
 
             initialized = true;
             std::cout << "[Menu] Initialized " << slicePairs.size() << " entries\n";
@@ -277,8 +285,15 @@ namespace almondnamespace::menu
         std::optional<Choice> update_and_draw(std::shared_ptr<core::Context> ctx, core::WindowData* win) {
             if (!initialized) return std::nullopt;
 
-            if (ctx->get_width_safe() != cachedWidth || ctx->get_height_safe() != cachedHeight)
-                recompute_layout(ctx);
+            int currentWidth = ctx ? ctx->get_width_safe() : cachedWidth;
+            int currentHeight = ctx ? ctx->get_height_safe() : cachedHeight;
+            if (currentWidth <= 0 && cachedWidth > 0) currentWidth = cachedWidth;
+            if (currentHeight <= 0 && cachedHeight > 0) currentHeight = cachedHeight;
+            if (currentWidth <= 0) currentWidth = 1;
+            if (currentHeight <= 0) currentHeight = 1;
+
+            if (currentWidth != cachedWidth || currentHeight != cachedHeight)
+                recompute_layout(ctx, currentWidth, currentHeight);
 
             //input::poll_input();
 
