@@ -26,6 +26,7 @@
 
 
 
+#include <cstdint>   // uint32_t
 #include <functional> // for std::hash
 
 namespace almondnamespace::assets {
