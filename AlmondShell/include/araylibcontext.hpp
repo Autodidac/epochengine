@@ -161,14 +161,21 @@ namespace almondnamespace::raylibcontext
     }
 
     // --- Helper: apply size to Win32 child + raylib/GLFW (after docking) ---
-    inline void apply_native_resize(int w, int h, bool updateNativeWindow, bool updateRaylibWindow)
+    inline void apply_native_resize(int framebufferW,
+        int framebufferH,
+        int logicalW,
+        int logicalH,
+        bool updateNativeWindow,
+        bool updateRaylibWindow)
     {
-        const int W = std::max(1, w);
-        const int H = std::max(1, h);
+        const int clampedFbW = std::max(1, framebufferW);
+        const int clampedFbH = std::max(1, framebufferH);
+        const int clampedLogicalW = std::max(1, logicalW);
+        const int clampedLogicalH = std::max(1, logicalH);
 
 #if defined(_WIN32)
         if (updateNativeWindow && s_raylibstate.hwnd) {
-            ::SetWindowPos(s_raylibstate.hwnd, nullptr, 0, 0, W, H,
+            ::SetWindowPos(s_raylibstate.hwnd, nullptr, 0, 0, clampedFbW, clampedFbH,
                 SWP_NOZORDER | SWP_FRAMECHANGED | SWP_SHOWWINDOW);
         }
 #endif
@@ -176,7 +183,7 @@ namespace almondnamespace::raylibcontext
 #if !defined(RAYLIB_NO_WINDOW)
         if (updateRaylibWindow && ::IsWindowReady()) {
             // Let raylib manage DPI internally; pass physical-ish intent.
-            ::SetWindowSize(W, H);
+            ::SetWindowSize(clampedLogicalW, clampedLogicalH);
         }
 #endif
     }
@@ -316,13 +323,22 @@ namespace almondnamespace::raylibcontext
 #endif
 
             const bool updateNativeWindow = !nextSkipNativeApply && hasNativeParent;
-            const bool updateFramebuffer = !nextSkipNativeApply && (nextUpdateWindow || hasNativeParent);
+            const bool updateRaylibWindow = !nextSkipNativeApply && (nextUpdateWindow || hasNativeParent);
 
             if (!nextSkipNativeApply) {
-                apply_native_resize(static_cast<int>(safeFbW),
-                    static_cast<int>(safeFbH),
+                const int framebufferW = static_cast<int>(safeFbW);
+                const int framebufferH = static_cast<int>(safeFbH);
+                const int logicalWInt = static_cast<int>(std::max(1u, logicalW));
+                const int logicalHInt = static_cast<int>(std::max(1u, logicalH));
+                const int raylibTargetW = nextUpdateWindow ? logicalWInt : framebufferW;
+                const int raylibTargetH = nextUpdateWindow ? logicalHInt : framebufferH;
+
+                apply_native_resize(framebufferW,
+                    framebufferH,
+                    raylibTargetW,
+                    raylibTargetH,
                     updateNativeWindow,
-                    updateFramebuffer);
+                    updateRaylibWindow);
             }
 
             if (nextNotifyClient && s_raylibstate.clientOnResize) {
@@ -512,7 +528,7 @@ namespace almondnamespace::raylibcontext
             const int pw = std::max<LONG>(1, client.right - client.left);
             const int ph = std::max<LONG>(1, client.bottom - client.top);
 
-            apply_native_resize(pw, ph, /*native*/true, /*raylib*/true);
+            apply_native_resize(pw, ph, pw, ph, /*native*/true, /*raylib*/true);
 
             // Sync from real framebuffer
             sync_framebuffer_size(ctx, /*notifyClient=*/true);
@@ -553,11 +569,28 @@ namespace almondnamespace::raylibcontext
         const int rw = std::max(1, GetRenderWidth());
         const int rh = std::max(1, GetRenderHeight());
 
-        if ((unsigned)rw != prevFbW || (unsigned)rh != prevFbH) {
+#if !defined(RAYLIB_NO_WINDOW)
+        const bool windowReady = ::IsWindowReady();
+        const bool raylibReportedResize = windowReady && ::IsWindowResized();
+        const int sw = windowReady ? std::max(1, ::GetScreenWidth())
+            : static_cast<int>(s_raylibstate.logicalWidth);
+        const int sh = windowReady ? std::max(1, ::GetScreenHeight())
+            : static_cast<int>(s_raylibstate.logicalHeight);
+#else
+        const bool raylibReportedResize = false;
+        const int sw = static_cast<int>(s_raylibstate.logicalWidth);
+        const int sh = static_cast<int>(s_raylibstate.logicalHeight);
+#endif
+
+        const bool framebufferChanged = (unsigned)rw != prevFbW || (unsigned)rh != prevFbH;
+        const bool logicalChanged = (unsigned)std::max(1, sw) != s_raylibstate.logicalWidth
+            || (unsigned)std::max(1, sh) != s_raylibstate.logicalHeight;
+
+        if (raylibReportedResize || framebufferChanged || logicalChanged) {
             dispatch_resize(ctx, (unsigned)rw, (unsigned)rh,
-                /*updateRaylibWindow=*/false,
+                /*updateRaylibWindow=*/raylibReportedResize,
                 /*notifyClient=*/true,
-                /*skipNativeApply=*/true);
+                /*skipNativeApply=*/!raylibReportedResize);
         }
 
 #if defined(_WIN32)
