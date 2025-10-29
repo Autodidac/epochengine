@@ -272,12 +272,35 @@ namespace almondnamespace::raylibcontext
             const bool heightOverride = core::cli::window_height_overridden
                 && core::cli::window_height > 0;
 
-            const unsigned int resolvedVirtualW = widthOverride
+            const unsigned int overrideW = widthOverride
                 ? static_cast<unsigned int>(core::cli::window_width)
-                : safeFbW;
-            const unsigned int resolvedVirtualH = heightOverride
+                : 0u;
+            const unsigned int overrideH = heightOverride
                 ? static_cast<unsigned int>(core::cli::window_height)
-                : safeFbH;
+                : 0u;
+
+            if (s_raylibstate.designWidth == 0u) {
+                s_raylibstate.designWidth = (overrideW > 0u) ? overrideW : safeFbW;
+            }
+            if (s_raylibstate.designHeight == 0u) {
+                s_raylibstate.designHeight = (overrideH > 0u) ? overrideH : safeFbH;
+            }
+
+            const unsigned int resolvedVirtualW = (overrideW > 0u)
+                ? overrideW
+                : (s_raylibstate.designWidth > 0u ? s_raylibstate.designWidth : safeFbW);
+            const unsigned int resolvedVirtualH = (overrideH > 0u)
+                ? overrideH
+                : (s_raylibstate.designHeight > 0u ? s_raylibstate.designHeight : safeFbH);
+
+            if (core::cli::trace_raylib_design_metrics) {
+                std::cout << "[Trace][Raylib][Design] fb="
+                    << safeFbW << 'x' << safeFbH
+                    << " design=" << s_raylibstate.designWidth << 'x' << s_raylibstate.designHeight
+                    << " virtual=" << resolvedVirtualW << 'x' << resolvedVirtualH
+                    << (widthOverride || heightOverride ? " (CLI override)" : "")
+                    << '\n';
+            }
 
             const int refW = static_cast<int>(std::max(1u, resolvedVirtualW));
             const int refH = static_cast<int>(std::max(1u, resolvedVirtualH));
@@ -433,6 +456,25 @@ namespace almondnamespace::raylibcontext
                 }
             };
         if (ctx) ctx->onResize = s_raylibstate.onResize;
+
+        const bool widthOverride = core::cli::window_width_overridden
+            && core::cli::window_width > 0;
+        const bool heightOverride = core::cli::window_height_overridden
+            && core::cli::window_height > 0;
+
+        const unsigned int requestedDesignW = widthOverride
+            ? static_cast<unsigned int>(core::cli::window_width)
+            : clampedWidth;
+        const unsigned int requestedDesignH = heightOverride
+            ? static_cast<unsigned int>(core::cli::window_height)
+            : clampedHeight;
+
+        if (s_raylibstate.designWidth == 0u) {
+            s_raylibstate.designWidth = requestedDesignW;
+        }
+        if (s_raylibstate.designHeight == 0u) {
+            s_raylibstate.designHeight = requestedDesignH;
+        }
 
         // Seed sizes; treat given w/h as framebuffer pixels to start
         dispatch_resize(ctx, clampedWidth, clampedHeight, /*updateRaylibWindow=*/false, /*notifyClient=*/false);
@@ -675,10 +717,37 @@ namespace almondnamespace::raylibcontext
         // ----- VIRTUAL FIT VIEWPORT + MOUSE MAPPING -----
         const int fbW = std::max(1, GetRenderWidth());
         const int fbH = std::max(1, GetRenderHeight());
-        const int refW = ctx ? std::max(1, ctx->width)
-            : static_cast<int>(std::max(1u, s_raylibstate.virtualWidth));
-        const int refH = ctx ? std::max(1, ctx->height)
-            : static_cast<int>(std::max(1u, s_raylibstate.virtualHeight));
+
+        const unsigned int designFallbackW = (s_raylibstate.designWidth > 0u)
+            ? s_raylibstate.designWidth
+            : static_cast<unsigned int>(std::max(1, fbW));
+        const unsigned int designFallbackH = (s_raylibstate.designHeight > 0u)
+            ? s_raylibstate.designHeight
+            : static_cast<unsigned int>(std::max(1, fbH));
+
+        const unsigned int ctxVirtualW = (ctx && ctx->virtualWidth > 0)
+            ? static_cast<unsigned int>(ctx->virtualWidth)
+            : 0u;
+        const unsigned int ctxVirtualH = (ctx && ctx->virtualHeight > 0)
+            ? static_cast<unsigned int>(ctx->virtualHeight)
+            : 0u;
+
+        const unsigned int stateVirtualW = (s_raylibstate.virtualWidth > 0u)
+            ? s_raylibstate.virtualWidth
+            : 0u;
+        const unsigned int stateVirtualH = (s_raylibstate.virtualHeight > 0u)
+            ? s_raylibstate.virtualHeight
+            : 0u;
+
+        const unsigned int resolvedRefW = (ctxVirtualW > 0u)
+            ? ctxVirtualW
+            : (stateVirtualW > 0u ? stateVirtualW : designFallbackW);
+        const unsigned int resolvedRefH = (ctxVirtualH > 0u)
+            ? ctxVirtualH
+            : (stateVirtualH > 0u ? stateVirtualH : designFallbackH);
+
+        const int refW = static_cast<int>(std::max(1u, resolvedRefW));
+        const int refH = static_cast<int>(std::max(1u, resolvedRefH));
 
         const GuiFitViewport fit = compute_fit_viewport(fbW, fbH, refW, refH);
 
@@ -688,14 +757,14 @@ namespace almondnamespace::raylibcontext
             ctx->framebufferHeight = fbH;
             ctx->virtualWidth = refW;
             ctx->virtualHeight = refH;
-            ctx->width = refW;
-            ctx->height = refH;
+            ctx->width = fit.refW;
+            ctx->height = fit.refH;
         }
 
         // Viewport for rendering (letterbox/pillarbox)
         s_raylibstate.lastViewport = fit;
-        s_raylibstate.virtualWidth = static_cast<unsigned int>(std::max(1, refW));
-        s_raylibstate.virtualHeight = static_cast<unsigned int>(std::max(1, refH));
+        s_raylibstate.virtualWidth = static_cast<unsigned int>(std::max(1, fit.refW));
+        s_raylibstate.virtualHeight = static_cast<unsigned int>(std::max(1, fit.refH));
 
 #ifndef NDEBUG
         if (ctx) {

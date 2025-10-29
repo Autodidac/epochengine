@@ -42,6 +42,7 @@ namespace almondnamespace::core::cli {
     inline int  menu_columns = 4;
     // Disabled by default so tracing must be explicitly opted into.
     inline bool trace_menu_button0_rect = true;
+    inline bool trace_raylib_design_metrics = false;
     inline std::filesystem::path exe_path;
 
     struct ParseResult
@@ -61,6 +62,7 @@ namespace almondnamespace::core::cli {
         using namespace std::string_view_literals;
         ParseResult result{};
         trace_menu_button0_rect = false;
+        trace_raylib_design_metrics = false;
         window_width_overridden = false;
         window_height_overridden = false;
         if (argc < 1) {
@@ -81,6 +83,7 @@ namespace almondnamespace::core::cli {
                     "  --height <value>      Set window height\n"
                     "  --menu-columns <n>    Cap the menu grid at n columns (default 4)\n"
                     "  --trace-menu-button0  Log the target rect for menu button index 0\n"
+                    "  --trace-raylib-design Log framebuffer vs design canvas dimensions\n"
                     "  --update, -u          Check for a newer AlmondShell build\n"
                     "  --force               Apply the available update immediately\n";
             }
@@ -100,6 +103,9 @@ namespace almondnamespace::core::cli {
             }
             else if (arg == "--trace-menu-button0"sv) {
                 trace_menu_button0_rect = true;
+            }
+            else if (arg == "--trace-raylib-design"sv) {
+                trace_raylib_design_metrics = true;
             }
             else if (arg == "--update"sv || arg == "-u"sv) {
                 result.update_requested = true;
