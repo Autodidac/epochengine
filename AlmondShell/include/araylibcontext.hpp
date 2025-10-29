@@ -453,14 +453,56 @@ namespace almondnamespace::raylibcontext
         sync_framebuffer_size(ctx, /*notifyClient=*/false);
 
 #if defined(_WIN32)
+        const auto previousDC = detail::current_dc();
+        const auto previousContext = detail::current_context();
+
         s_raylibstate.hwnd = static_cast<HWND>(GetWindowHandle());
         s_raylibstate.ownsDC = false;
-        s_raylibstate.hdc = detail::current_dc();
+
+        s_raylibstate.hdc = previousDC;
         if (!s_raylibstate.hdc && s_raylibstate.hwnd) {
             s_raylibstate.hdc = GetDC(s_raylibstate.hwnd);
             s_raylibstate.ownsDC = (s_raylibstate.hdc != nullptr);
         }
-        s_raylibstate.glContext = detail::current_context();
+
+        s_raylibstate.glContext = previousContext;
+        if (!s_raylibstate.glContext) {
+            s_raylibstate.glContext = detail::current_context();
+        }
+
+        if (!s_raylibstate.hdc || !s_raylibstate.glContext) {
+            std::cerr << "[Raylib] Failed to acquire Win32 GL handles after InitWindow" << std::endl;
+            if (s_raylibstate.ownsDC && s_raylibstate.hdc && s_raylibstate.hwnd) {
+                ::ReleaseDC(s_raylibstate.hwnd, s_raylibstate.hdc);
+            }
+            s_raylibstate.hdc = nullptr;
+            s_raylibstate.glContext = nullptr;
+            s_raylibstate.ownsDC = false;
+            initialized = false;
+            return false;
+        }
+
+        if (!detail::make_current(s_raylibstate.hdc, s_raylibstate.glContext)) {
+            std::cerr << "[Raylib] Failed to make Raylib context current during initialization" << std::endl;
+            if (s_raylibstate.ownsDC && s_raylibstate.hdc && s_raylibstate.hwnd) {
+                ::ReleaseDC(s_raylibstate.hwnd, s_raylibstate.hdc);
+            }
+            s_raylibstate.hdc = nullptr;
+            s_raylibstate.glContext = nullptr;
+            s_raylibstate.ownsDC = false;
+            initialized = false;
+            return false;
+        }
+
+        if (!detail::contexts_match(previousDC, previousContext,
+            s_raylibstate.hdc, s_raylibstate.glContext)) {
+            if (previousDC && previousContext) {
+                detail::make_current(previousDC, previousContext);
+            }
+            else {
+                detail::clear_current();
+            }
+        }
 #else
         s_raylibstate.hwnd = GetWindowHandle();
         s_raylibstate.hdc = nullptr;
@@ -604,7 +646,9 @@ namespace almondnamespace::raylibcontext
         }
 
 #if defined(_WIN32)
+        static bool reportedMissingContext = false;
         if (s_raylibstate.hdc && s_raylibstate.glContext) {
+            reportedMissingContext = false;
             const auto currentDC = detail::current_dc();
             const auto currentCtx = detail::current_context();
             if (!detail::contexts_match(currentDC, currentCtx,
@@ -615,6 +659,16 @@ namespace almondnamespace::raylibcontext
                     return true;
                 }
             }
+        }
+        else {
+            if (!reportedMissingContext) {
+                reportedMissingContext = true;
+                std::cerr << "[Raylib] Render context became unavailable (hdc="
+                    << s_raylibstate.hdc << ", hglrc=" << s_raylibstate.glContext << ")\n";
+            }
+#ifndef NDEBUG
+            assert(false && "Raylib GL context lost");
+#endif
         }
 #endif
 
