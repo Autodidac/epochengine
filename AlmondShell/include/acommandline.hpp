@@ -38,7 +38,8 @@ namespace almondnamespace::core::cli {
     inline int  window_width = DEFAULT_WINDOW_WIDTH;
     inline int  window_height = DEFAULT_WINDOW_HEIGHT;
     inline int  menu_columns = 4;
-    inline bool trace_menu_button0_rect = true;
+    // Disabled by default so tracing must be explicitly opted into.
+    inline bool trace_menu_button0_rect = false;
     inline std::filesystem::path exe_path;
 
     struct ParseResult
@@ -57,6 +58,7 @@ namespace almondnamespace::core::cli {
     {
         using namespace std::string_view_literals;
         ParseResult result{};
+        trace_menu_button0_rect = false;
         if (argc < 1) {
             std::cerr << "No command-line arguments provided.\n";
             return result;
