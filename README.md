@@ -27,10 +27,10 @@ The runtime is designed for rapid iteration with hot-reloadable scripting, a sel
 
 ---
 
-## Current Snapshot (v0.62.5)
+## Current Snapshot (v0.62.6)
 
 - ✅ **Immediate GUI everywhere** – `agui.hpp` seeds a shared font atlas, now covers buttons, image buttons, editable text fields, text boxes, and a turnkey console overlay so every backend renders consistent tooling widgets out of the box.
-- ✅ **HiDPI-aware multi-context rendering** – Raylib now caches the exact WGL handles it boots with and only reacquires the context if another backend steals it, so standalone sessions no longer crash while still reseeding the fitted viewport from the live framebuffer, maintaining the scissor clamp added last cycle, and keeping SDL3 input remapping intact after DPI or window changes.
+- ✅ **Child-window scaling & context refresh prep** – The next Raylib pass finishes aligning docked child panes with the preserved design canvas while staging regression coverage that exercises context reacquisition, so upcoming smoke runs confirm the GL context stays bound after scaling and docking churn.
 - ✅ **Configurable menu layouts** – The runtime honours a `--menu-columns` cap to keep atlas-driven menus readable on constrained displays.
 - ✅ **Robust hot reload** – The scripting pipeline emits `ScriptLoadReport` diagnostics, prunes completed jobs, and waits synchronously so tooling observes a deterministic post-reload state.
 
