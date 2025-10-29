@@ -61,7 +61,7 @@
 
 // Rendering Only backends
 #define ALMOND_USING_SOFTWARE_RENDERER
-//#define ALMOND_USING_OPENGL
+#define ALMOND_USING_OPENGL
 //#define ALMOND_USING_VULKAN  // You must also set the context in the example
 //#define ALMOND_USING_DIRECTX  // Currently Not Supported In AlmondShell, See AlmondEngine...
 
