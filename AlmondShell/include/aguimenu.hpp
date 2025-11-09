@@ -32,15 +32,10 @@
 #include "acontextmultiplexer.hpp"
 #include "acommandline.hpp"
 #include "ainput.hpp"
-#include "aatlasmanager.hpp"
-#include "aimageloader.hpp"
-#include "aspriteregistry.hpp"
-#include "aspritepool.hpp"
-#include "aopengltextures.hpp"    // use draw_sprite directly
+#include "agui.hpp"
 
 #include <vector>
 #include <string>
-#include <span>
 #include <optional>
 #include <tuple>
 #include <algorithm>
@@ -51,29 +46,22 @@
 
 namespace almondnamespace::menu
 {
-    using almondnamespace::SpriteHandle;
-    using almondnamespace::spritepool::is_alive;
-    using almondnamespace::atlasmanager::registry;
-
     enum class Choice {
         Snake, Tetris, Pacman, Sokoban,
         Minesweep, Puzzle, Bejeweled, Fourty,
         Sandsim, Cellular, Settings, Exit
     };
 
-    struct SliceEntry {
-        std::string name;
-        int x, y, width, height;
-        SpriteHandle handle{};
+    struct ChoiceDescriptor {
+        Choice choice;
+        std::string label;
+        gui::Vec2 size;
     };
 
-    struct SlicePair { SliceEntry normal; SliceEntry hover; };
-
     struct MenuOverlay {
-        std::vector<SlicePair> slicePairs;
+        std::vector<ChoiceDescriptor> descriptors;
         size_t selection = 0;
         bool prevUp = false, prevDown = false, prevLeft = false, prevRight = false, prevEnter = false;
-        bool wasMousePressed = false;
         bool initialized = false;
 
         std::vector<std::pair<int, int>> cachedPositions; // x,y per item
@@ -84,8 +72,12 @@ namespace almondnamespace::menu
         int rows = 0;
         int maxColumns = ExpectedColumns;
 
+        float layoutOriginX = 0.0f;
+        float layoutOriginY = 0.0f;
+        float layoutWidth = 0.0f;
+        float layoutHeight = 0.0f;
+
         static constexpr int ExpectedColumns = 4;
-        static constexpr int ExpectedRowsPerHalf = 3;
 
         static constexpr float LayoutSpacing = 32.f;
 
@@ -101,13 +93,17 @@ namespace almondnamespace::menu
         void recompute_layout(std::shared_ptr<core::Context> ctx,
             int widthPixels,
             int heightPixels) {
-            const int totalItems = static_cast<int>(slicePairs.size());
+            const int totalItems = static_cast<int>(descriptors.size());
             if (totalItems == 0) {
                 cachedPositions.clear();
                 colWidths.clear();
                 rowHeights.clear();
                 columns = 1;
                 rows = 0;
+                layoutOriginX = 0.0f;
+                layoutOriginY = 0.0f;
+                layoutWidth = 0.0f;
+                layoutHeight = 0.0f;
                 return;
             }
 
@@ -120,9 +116,9 @@ namespace almondnamespace::menu
 
             float maxItemWidth = 0.f;
             float maxItemHeight = 0.f;
-            for (const auto& pair : slicePairs) {
-                maxItemWidth = std::max(maxItemWidth, float(pair.normal.width));
-                maxItemHeight = std::max(maxItemHeight, float(pair.normal.height));
+            for (const auto& descriptor : descriptors) {
+                maxItemWidth = std::max(maxItemWidth, descriptor.size.x);
+                maxItemHeight = std::max(maxItemHeight, descriptor.size.y);
             }
 
             const float spacing = LayoutSpacing;
@@ -145,9 +141,9 @@ namespace almondnamespace::menu
             for (int idx = 0; idx < totalItems; ++idx) {
                 const int row = idx / columns;
                 const int col = idx % columns;
-                const auto& slice = slicePairs[idx].normal;
-                colWidths[col] = std::max(colWidths[col], float(slice.width));
-                rowHeights[row] = std::max(rowHeights[row], float(slice.height));
+                const auto& descriptor = descriptors[idx];
+                colWidths[col] = std::max(colWidths[col], descriptor.size.x);
+                rowHeights[row] = std::max(rowHeights[row], descriptor.size.y);
             }
 
             float totalWidth = spacing * std::max(0, columns - 1);
@@ -157,6 +153,11 @@ namespace almondnamespace::menu
 
             const float baseX = std::max(0.f, (static_cast<float>(cachedWidth) - totalWidth) * 0.5f);
             const float baseY = std::max(0.f, (static_cast<float>(cachedHeight) - totalHeight) * 0.5f);
+
+            layoutOriginX = baseX;
+            layoutOriginY = baseY;
+            layoutWidth = totalWidth;
+            layoutHeight = totalHeight;
 
             cachedPositions.resize(totalItems);
             float yPos = baseY;
@@ -179,111 +180,40 @@ namespace almondnamespace::menu
         void initialize(std::shared_ptr<core::Context> ctx) {
             if (initialized) return;
 
-            spritepool::initialize(128);
-            spritepool::reset();
-
-            auto image = a_loadImage("assets/menu/menubuttons.tga");
-            if (image.pixels.empty())
-                throw std::runtime_error("Failed to load menu button image");
-
-            if (image.width <= 0 || image.height <= 0)
-                throw std::runtime_error("Menu button image has invalid dimensions");
-
-            if (image.height % 2 != 0)
-                throw std::runtime_error("Menu button image height must be divisible by 2");
-
-            if (!atlasmanager::create_atlas({
-                .name = "menubuttons",
-                .width = static_cast<u32>(image.width),
-                .height = static_cast<u32>(image.height),
-                .generate_mipmaps = false
-                })) throw std::runtime_error("Failed to create atlas in manager");
-
-            auto registrar = atlasmanager::get_registrar("menubuttons");
-            if (!registrar) throw std::runtime_error("Failed to get registrar");
-
-            registrar->atlas.pixel_data = std::move(image.pixels);
-            registrar->atlas.width = image.width;
-            registrar->atlas.height = image.height;
-
-            if (ctx->add_atlas_safe(registrar->atlas) == -1)
-                throw std::runtime_error("Failed to add atlas to context");
-
-            if (auto* win = ctx->windowData) {
-                win->commandQueue.enqueue([atlas = &registrar->atlas]() {
-                    atlasmanager::ensure_uploaded(*atlas);
-                });
-            }
-
             set_max_columns(core::cli::menu_columns);
 
-            constexpr int totalButtons = ExpectedColumns * ExpectedRowsPerHalf;
+            selection = 0;
+            prevUp = prevDown = prevLeft = prevRight = prevEnter = false;
 
-            const int halfHeight = image.height / 2;
-            const int spriteW = image.width / ExpectedColumns;
-            const int spriteH = halfHeight / ExpectedRowsPerHalf;
+            constexpr gui::Vec2 DefaultButtonSize{ 256.0f, 96.0f };
 
-            const std::array<std::string_view, totalButtons> buttonNames = {
-                "snake", "tetris", "pacman", "sokoban",
-                "minesweep", "puzzle", "match3", "2048",
-                "sandsim", "automata", "settings", "quit"
+            descriptors = {
+                { Choice::Snake, "Snake", DefaultButtonSize },
+                { Choice::Tetris, "Tetris", DefaultButtonSize },
+                { Choice::Pacman, "Pacman", DefaultButtonSize },
+                { Choice::Sokoban, "Sokoban", DefaultButtonSize },
+                { Choice::Minesweep, "Minesweep", DefaultButtonSize },
+                { Choice::Puzzle, "Puzzle", DefaultButtonSize },
+                { Choice::Bejeweled, "Bejeweled", DefaultButtonSize },
+                { Choice::Fourty, "2048", DefaultButtonSize },
+                { Choice::Sandsim, "Sand Sim", DefaultButtonSize },
+                { Choice::Cellular, "Cellular", DefaultButtonSize },
+                { Choice::Settings, "Settings", DefaultButtonSize },
+                { Choice::Exit, "Quit", DefaultButtonSize }
             };
-
-            slicePairs.clear();
-            slicePairs.reserve(buttonNames.size());
-
-            for (size_t idx = 0; idx < buttonNames.size(); ++idx) {
-                const int rowFromTop = static_cast<int>(idx) / ExpectedColumns;
-                const int colFromLeft = static_cast<int>(idx) % ExpectedColumns;
-
-                // The atlas is authored in row-major order from the top-left corner,
-                // matching the logical button ordering.  Preserve that layout so
-                // "Snake" appears in the top-left slot and "Quit" in the
-                // bottom-right slot across every backend.
-                const int row = rowFromTop;
-                const int col = colFromLeft;
-
-                const int normalX = col * spriteW;
-                const int normalY = row * spriteH;
-                const int hoverX = normalX;
-                const int hoverY = halfHeight + normalY;
-
-                SlicePair pair{
-                    .normal = { std::string(buttonNames[idx]) + "_normal", normalX, normalY, spriteW, spriteH },
-                    .hover = { std::string(buttonNames[idx]) + "_hover",  hoverX,  hoverY,  spriteW, spriteH }
-                };
-                slicePairs.emplace_back(std::move(pair));
-            }
-
-            std::vector<std::tuple<std::string, int, int, int, int>> sliceRects;
-            for (auto& pair : slicePairs) {
-                sliceRects.emplace_back(pair.normal.name, pair.normal.x, pair.normal.y, pair.normal.width, pair.normal.height);
-                sliceRects.emplace_back(pair.hover.name, pair.hover.x, pair.hover.y, pair.hover.width, pair.hover.height);
-            }
-
-            if (!registrar->register_atlas_sprites_by_custom_sizes(sliceRects))
-                throw std::runtime_error("Failed to register menu sprite slices");
-
-            for (auto& pair : slicePairs) {
-                for (auto* slice : { &pair.normal, &pair.hover }) {
-                    auto spriteOpt = registry.get(slice->name);
-                    if (!spriteOpt) throw std::runtime_error("Missing sprite handle: " + slice->name);
-                    slice->handle = std::get<0>(*spriteOpt);
-                    if (!is_alive(slice->handle))
-                        throw std::runtime_error("Invalid sprite handle after registration: " + slice->name);
-                }
-            }
 
             const int currentWidth = ctx ? ctx->get_width_safe() : cachedWidth;
             const int currentHeight = ctx ? ctx->get_height_safe() : cachedHeight;
             recompute_layout(ctx, currentWidth, currentHeight);
 
             initialized = true;
-            std::cout << "[Menu] Initialized " << slicePairs.size() << " entries\n";
+            std::cout << "[Menu] Initialized " << descriptors.size() << " entries\n";
         }
 
         std::optional<Choice> update_and_draw(std::shared_ptr<core::Context> ctx, core::WindowData* win) {
             if (!initialized) return std::nullopt;
+
+            std::ignore = win;
 
             int currentWidth = ctx ? ctx->get_width_safe() : cachedWidth;
             int currentHeight = ctx ? ctx->get_height_safe() : cachedHeight;
@@ -306,9 +236,12 @@ namespace almondnamespace::menu
             bool rightPressed = input::keyPressed.test(input::Key::Right);
             bool enterPressed = input::keyPressed.test(input::Key::Enter);
 
-            const int totalItems = int(slicePairs.size());
+            const int totalItems = int(descriptors.size());
             if (totalItems == 0 || cachedPositions.size() != static_cast<size_t>(totalItems))
                 return std::nullopt;
+
+            if (selection >= static_cast<size_t>(totalItems))
+                selection = static_cast<size_t>(totalItems - 1);
 
             const bool flipVertical = ctx && ctx->type == core::ContextType::OpenGL;
             std::vector<int> rowBaseY;
@@ -358,11 +291,16 @@ namespace almondnamespace::menu
             };
 
             if (core::cli::trace_menu_button0_rect && totalItems > 0) {
-                const auto& slice0 = slicePairs.front().normal;
+                const auto& firstDescriptor = descriptors.front();
                 const auto pos0 = position_for_index(0);
 
                 static std::optional<std::array<int, 4>> loggedRect;
-                std::array<int, 4> rect{ pos0.first, pos0.second, slice0.width, slice0.height };
+                std::array<int, 4> rect{
+                    pos0.first,
+                    pos0.second,
+                    static_cast<int>(std::round(firstDescriptor.size.x)),
+                    static_cast<int>(std::round(firstDescriptor.size.y))
+                };
                 if (!loggedRect || *loggedRect != rect) {
                     loggedRect = rect;
                     std::cout << "[MenuOverlay] button0 target rect: x=" << rect[0]
@@ -376,10 +314,12 @@ namespace almondnamespace::menu
 
             int hover = -1;
             for (int i = 0; i < totalItems; ++i) {
-                const auto& slice = slicePairs[i].normal;
+                const auto& descriptor = descriptors[i];
                 const auto pos = position_for_index(i);
-                if (mx >= pos.first && mx <= pos.first + slice.width &&
-                    my >= pos.second && my <= pos.second + slice.height) {
+                const int width = static_cast<int>(std::round(descriptor.size.x));
+                const int height = static_cast<int>(std::round(descriptor.size.y));
+                if (mx >= pos.first && mx <= pos.first + width &&
+                    my >= pos.second && my <= pos.second + height) {
                     hover = i;
                     break;
                 }
@@ -397,44 +337,48 @@ namespace almondnamespace::menu
             prevUp = upPressed; prevDown = downPressed;
             prevLeft = leftPressed; prevRight = rightPressed;
 
-            auto& atlasVec = atlasmanager::get_atlas_vector();
-            std::span<const TextureAtlas* const> atlasSpan(atlasVec.data(), atlasVec.size());
+            const gui::Vec2 mousePos{ static_cast<float>(mx), static_cast<float>(my) };
+            gui::begin_frame(ctx, 0.0f, mousePos, mouseLeftDown);
 
-            const int hoveredIndex = hover;
-            const std::weak_ptr<core::Context> ctxWeak = ctx;
+            const float windowPadding = LayoutSpacing * 0.5f;
+            const gui::Vec2 windowPos{
+                std::max(0.0f, layoutOriginX - windowPadding),
+                std::max(0.0f, layoutOriginY - windowPadding)
+            };
+            const gui::Vec2 windowSize{
+                layoutWidth + windowPadding * 2.0f,
+                layoutHeight + windowPadding * 2.0f
+            };
 
+            gui::begin_window("Main Menu", windowPos, windowSize);
+
+            std::optional<Choice> chosen{};
             for (int i = 0; i < totalItems; ++i) {
-                const bool isHighlighted = (i == selection) || (i == hoveredIndex);
-                const auto& slice = isHighlighted ? slicePairs[i].hover : slicePairs[i].normal;
-                if (!is_alive(slice.handle)) continue;
                 const auto pos = position_for_index(i);
+                gui::set_cursor({ static_cast<float>(pos.first), static_cast<float>(pos.second) });
 
-                win->commandQueue.enqueue([handle = slice.handle,
-                    ctxWeak,
-                    x = pos.first, y = pos.second,
-                    w = slice.width, h = slice.height]() {
-                        // build span fresh on render thread
-                        auto& atlasVecRT = atlasmanager::get_atlas_vector();
-                        std::span<const TextureAtlas* const> atlasSpanRT(atlasVecRT.data(), atlasVecRT.size());
+                std::string label = descriptors[i].label;
+                if (static_cast<size_t>(i) == selection) {
+                    label = "> " + label + " <";
+                }
 
-                        if (auto ctxLocked = ctxWeak.lock()) {
-                            ctxLocked->draw_sprite_safe(
-                                handle, atlasSpanRT,
-                                float(x), float(y),
-                                float(w), float(h)
-                            );
-                        }
-                    });
+                const bool activated = gui::button(label, descriptors[i].size);
+                if (activated) {
+                    selection = static_cast<size_t>(i);
+                    chosen = descriptors[i].choice;
+                }
             }
+
+            gui::end_window();
+            gui::end_frame();
 
             const bool triggeredByEnter = enterPressed && !prevEnter;
 
-            if (hover >= 0 && mouseLeftDown && !wasMousePressed) {
-                wasMousePressed = true;
+            if (chosen.has_value()) {
                 prevEnter = enterPressed;
-                return static_cast<Choice>(hover);
+                return chosen;
             }
-            wasMousePressed = mouseLeftDown;
+
             if (triggeredByEnter) {
                 prevEnter = enterPressed;
                 return static_cast<Choice>(selection);
@@ -445,11 +389,7 @@ namespace almondnamespace::menu
         }
 
         void cleanup() {
-            for (auto& pair : slicePairs) {
-                spritepool::free(pair.normal.handle);
-                spritepool::free(pair.hover.handle);
-            }
-            slicePairs.clear();
+            descriptors.clear();
             cachedPositions.clear();
             colWidths.clear();
             rowHeights.clear();
@@ -457,6 +397,12 @@ namespace almondnamespace::menu
             cachedHeight = -1;
             columns = 1;
             rows = 0;
+            layoutOriginX = 0.0f;
+            layoutOriginY = 0.0f;
+            layoutWidth = 0.0f;
+            layoutHeight = 0.0f;
+            selection = 0;
+            prevUp = prevDown = prevLeft = prevRight = prevEnter = false;
             initialized = false;
         }
     };
