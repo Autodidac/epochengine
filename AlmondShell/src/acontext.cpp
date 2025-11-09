@@ -234,6 +234,17 @@ namespace almondnamespace::core {
 #ifdef ALMOND_USING_DIRECTX
         case ContextType::DirectX: handle = directxtextures::load_atlas(atlas, atlas.get_index()); break;
 #endif
+        case ContextType::Software:
+        case ContextType::Custom:
+        case ContextType::None:
+        case ContextType::Noop: {
+            // CPU-only or placeholder contexts do not upload to a backend; return a
+            // stable, non-zero identifier derived from the atlas index so callers
+            // can treat the operation as successful.
+            const int atlasIndex = atlas.get_index();
+            handle = static_cast<uint32_t>(atlasIndex >= 0 ? atlasIndex + 1 : 1);
+            break;
+        }
         default:
             std::cerr << "[AddAtlasThunk] Unsupported context type\n";
             break;
