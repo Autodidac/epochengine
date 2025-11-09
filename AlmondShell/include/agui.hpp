@@ -30,6 +30,7 @@
 
 #include <cstddef>
 #include <cstdint>
+#include <memory>
 #include <span>
 #include <string>
 #include <string_view>
@@ -90,11 +91,14 @@ namespace almondnamespace::gui
 
     void push_input(const InputEvent& e) noexcept;
 
-    void begin_frame(core::Context& ctx, float dt, Vec2 mouse_pos, bool mouse_down) noexcept;
+    void begin_frame(std::shared_ptr<core::Context> ctx, float dt, Vec2 mouse_pos, bool mouse_down) noexcept;
     void end_frame() noexcept;
 
     void begin_window(std::string_view title, Vec2 position, Vec2 size) noexcept;
     void end_window() noexcept;
+
+    void set_cursor(Vec2 position) noexcept;
+    void advance_cursor(Vec2 delta) noexcept;
 
     [[nodiscard]] bool button(std::string_view label, Vec2 size) noexcept;
     [[nodiscard]] bool image_button(const almondnamespace::SpriteHandle& sprite, Vec2 size) noexcept;
@@ -150,6 +154,8 @@ namespace almondnamespace::ui
     using gui::edit_box;
     using gui::text_box;
     using gui::label;
+    using gui::set_cursor;
+    using gui::advance_cursor;
     using gui::ConsoleWindowOptions;
     using gui::ConsoleWindowResult;
     using gui::console_window;
