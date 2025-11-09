@@ -210,10 +210,19 @@ namespace almondnamespace::menu
             std::cout << "[Menu] Initialized " << descriptors.size() << " entries\n";
         }
 
-        std::optional<Choice> update_and_draw(std::shared_ptr<core::Context> ctx, core::WindowData* win) {
+        std::optional<Choice> update_and_draw(
+            std::shared_ptr<core::Context> ctx,
+            core::WindowData* win,
+            float dt,
+            bool upPressed,
+            bool downPressed,
+            bool leftPressed,
+            bool rightPressed,
+            bool enterPressed) {
             if (!initialized) return std::nullopt;
 
             std::ignore = win;
+            std::ignore = dt;
 
             int currentWidth = ctx ? ctx->get_width_safe() : cachedWidth;
             int currentHeight = ctx ? ctx->get_height_safe() : cachedHeight;
@@ -229,12 +238,6 @@ namespace almondnamespace::menu
 
             int mx = 0, my = 0;
             ctx->get_mouse_position_safe(mx, my);
-            bool mouseLeftDown = input::mouseDown.test(input::MouseButton::MouseLeft);
-            bool upPressed = input::keyPressed.test(input::Key::Up);
-            bool downPressed = input::keyPressed.test(input::Key::Down);
-            bool leftPressed = input::keyPressed.test(input::Key::Left);
-            bool rightPressed = input::keyPressed.test(input::Key::Right);
-            bool enterPressed = input::keyPressed.test(input::Key::Enter);
 
             const int totalItems = int(descriptors.size());
             if (totalItems == 0 || cachedPositions.size() != static_cast<size_t>(totalItems))
@@ -338,8 +341,6 @@ namespace almondnamespace::menu
             prevLeft = leftPressed; prevRight = rightPressed;
 
             const gui::Vec2 mousePos{ static_cast<float>(mx), static_cast<float>(my) };
-            gui::begin_frame(ctx, 0.0f, mousePos, mouseLeftDown);
-
             const float windowPadding = LayoutSpacing * 0.5f;
             const gui::Vec2 windowPos{
                 std::max(0.0f, layoutOriginX - windowPadding),
@@ -370,7 +371,6 @@ namespace almondnamespace::menu
             }
 
             gui::end_window();
-            gui::end_frame();
 
             const bool triggeredByEnter = enterPressed && !prevEnter;
 

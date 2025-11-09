@@ -257,6 +257,8 @@ namespace almondnamespace::core
                 };
                 init_menu();
         
+                std::unordered_map<almondnamespace::core::Context*, std::chrono::steady_clock::time_point> lastFrameTimes;
+
                 bool running = true;
         
                 // ---- Main loop ----
@@ -283,9 +285,18 @@ namespace almondnamespace::core
                                 win = mgr.findWindowByContext(ctx);
                             if (!win)
                                 return true; // window not ready yet
-        
+
                             bool ctxRunning = win->running;
-        
+
+                            const auto now = std::chrono::steady_clock::now();
+                            const auto rawCtx = ctx.get();
+                            float dtSeconds = 0.0f;
+                            auto [timeIt, inserted] = lastFrameTimes.emplace(rawCtx, now);
+                            if (!inserted) {
+                                dtSeconds = std::chrono::duration<float>(now - timeIt->second).count();
+                                timeIt->second = now;
+                            }
+
                             auto begin_scene = [&](auto makeScene, SceneID id) {
                                 auto clear_commands = [](const std::shared_ptr<almondnamespace::core::Context>& context) {
                                     if (context && context->windowData) {
@@ -312,7 +323,24 @@ namespace almondnamespace::core
                             // --- Scene dispatch ---
                             switch (g_sceneID) {
                             case SceneID::Menu: {
-                                if (auto choice = menu.update_and_draw(ctx, win)) {
+                                int mx = 0, my = 0;
+                                ctx->get_mouse_position_safe(mx, my);
+                                const almondnamespace::gui::Vec2 mousePos{
+                                    static_cast<float>(mx),
+                                    static_cast<float>(my)
+                                };
+                                const bool mouseLeftDown = almondnamespace::input::mouseDown.test(almondnamespace::input::MouseButton::MouseLeft);
+                                const bool upPressed = almondnamespace::input::keyPressed.test(almondnamespace::input::Key::Up);
+                                const bool downPressed = almondnamespace::input::keyPressed.test(almondnamespace::input::Key::Down);
+                                const bool leftPressed = almondnamespace::input::keyPressed.test(almondnamespace::input::Key::Left);
+                                const bool rightPressed = almondnamespace::input::keyPressed.test(almondnamespace::input::Key::Right);
+                                const bool enterPressed = almondnamespace::input::keyPressed.test(almondnamespace::input::Key::Enter);
+
+                                almondnamespace::gui::begin_frame(ctx, dtSeconds, mousePos, mouseLeftDown);
+                                auto choice = menu.update_and_draw(ctx, win, dtSeconds, upPressed, downPressed, leftPressed, rightPressed, enterPressed);
+                                almondnamespace::gui::end_frame();
+
+                                if (choice) {
                                     if (*choice == almondnamespace::menu::Choice::Snake) {
                                         begin_scene([] { return std::make_unique<almondnamespace::snake::SnakeScene>(); }, SceneID::Snake);
                                     }
@@ -378,6 +406,10 @@ namespace almondnamespace::core
                                 break;
                             }
         
+                            if (!ctxRunning) {
+                                lastFrameTimes.erase(rawCtx);
+                            }
+
                             return ctxRunning;
                             };
         
