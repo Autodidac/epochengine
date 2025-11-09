@@ -37,6 +37,7 @@
 #include <cstddef>
 #include <cstdint>
 #include <limits>
+#include <memory>
 #include <mutex>
 #include <stdexcept>
 #include <string>
@@ -183,6 +184,7 @@ namespace
 
     struct FrameState {
         // thread's active render context (must be set in begin_frame)
+        std::shared_ptr<core::Context> ctxShared{};
         core::Context* ctx = nullptr;
 
         Vec2 cursor{};
@@ -352,11 +354,34 @@ namespace
 
     void draw_sprite(const SpriteHandle& handle, float x, float y, float w, float h)
     {
-        if (!handle.is_valid() || !g_frame.ctx)
+        if (!handle.is_valid())
             return;
 
-        const auto& atlases = almondnamespace::atlasmanager::get_atlas_vector();
-        g_frame.ctx->draw_sprite_safe(handle, atlases, x, y, w, h);
+        core::Context* ctx = g_frame.ctx;
+        if (!ctx)
+            return;
+
+        bool queued = false;
+        if (ctx->windowData && g_frame.ctxShared) {
+            auto ctxShared = g_frame.ctxShared;
+            ctx->windowData->commandQueue.enqueue([ctxShared,
+                handle,
+                x,
+                y,
+                w,
+                h]() {
+                    if (!ctxShared)
+                        return;
+                    const auto& atlasesRT = almondnamespace::atlasmanager::get_atlas_vector();
+                    ctxShared->draw_sprite_safe(handle, atlasesRT, x, y, w, h);
+                });
+            queued = true;
+        }
+
+        if (!queued) {
+            const auto& atlases = almondnamespace::atlasmanager::get_atlas_vector();
+            ctx->draw_sprite_safe(handle, atlases, x, y, w, h);
+        }
     }
 
     [[nodiscard]] SpriteHandle glyph_handle(unsigned char ch) noexcept
@@ -499,23 +524,44 @@ namespace
         g_frame.insideWindow = false;
     }
 
+
 } // namespace
+
+void set_cursor(Vec2 position) noexcept
+{
+    if (!g_frame.insideWindow)
+        return;
+
+    g_frame.cursor = position;
+}
+
+void advance_cursor(Vec2 delta) noexcept
+{
+    if (!g_frame.insideWindow)
+        return;
+
+    g_frame.cursor += delta;
+}
 
 void push_input(const almondnamespace::gui::InputEvent& e) noexcept
 {
     g_pendingEvents.push_back(e);
 }
 
-void begin_frame(core::Context& ctx, float dt, Vec2 mouse_pos, bool mouse_down) noexcept
+void begin_frame(std::shared_ptr<core::Context> ctx, float dt, Vec2 mouse_pos, bool mouse_down) noexcept
 {
-    try {
-        ensure_backend_upload(ctx);
-    }
-    catch (...) {
-        // swallow: GUI is optional, avoid propagating exceptions across frames
+    core::Context* rawCtx = ctx.get();
+    if (rawCtx) {
+        try {
+            ensure_backend_upload(*rawCtx);
+        }
+        catch (...) {
+            // swallow: GUI is optional, avoid propagating exceptions across frames
+        }
     }
 
-    g_frame.ctx = &ctx;
+    g_frame.ctxShared = std::move(ctx);
+    g_frame.ctx = rawCtx;
     g_frame.deltaTime = dt;
 
     g_frame.caretTimer += dt;
@@ -562,6 +608,7 @@ void begin_frame(core::Context& ctx, float dt, Vec2 mouse_pos, bool mouse_down) 
 
 void end_frame() noexcept
 {
+    g_frame.ctxShared.reset();
     g_frame.ctx = nullptr;
     g_frame.insideWindow = false;
     g_frame.events.clear();
@@ -578,15 +625,15 @@ void begin_window(std::string_view title, Vec2 position, Vec2 size) noexcept
 
     g_frame.origin = position;
     g_frame.windowSize = size;
-    g_frame.cursor = { position.x + kContentPadding, position.y + kContentPadding };
     g_frame.insideWindow = true;
+    set_cursor({ position.x + kContentPadding, position.y + kContentPadding });
 
     draw_sprite(g_resources.windowBackground, position.x, position.y, size.x, size.y);
 
     const float titleHeight = g_resources.glyphHeight * kTitleScale;
     draw_text_line(title, position.x + kContentPadding, position.y + kContentPadding, kTitleScale);
 
-    g_frame.cursor.y = position.y + kContentPadding + titleHeight + kContentPadding;
+    advance_cursor({ 0.0f, titleHeight + kContentPadding });
 }
 
 void end_window() noexcept
@@ -617,7 +664,7 @@ bool button(std::string_view label, Vec2 size) noexcept
     const float textY = pos.y + std::max(0.0f, (height - textHeight) * 0.5f);
     draw_text_line(label, textX, textY, kFontScale);
 
-    g_frame.cursor.y += height + kContentPadding;
+    advance_cursor({ 0.0f, height + kContentPadding });
     return hovered && g_frame.justPressed;
 }
 
@@ -643,7 +690,7 @@ bool image_button(const SpriteHandle& sprite, Vec2 size) noexcept
         draw_sprite(sprite, pos.x, pos.y, width, height);
     }
 
-    g_frame.cursor.y += height + kContentPadding;
+    advance_cursor({ 0.0f, height + kContentPadding });
     return hovered && g_frame.justPressed;
 }
 
@@ -770,7 +817,7 @@ EditBoxResult edit_box(std::string& text, Vec2 size, std::size_t max_chars, bool
         draw_caret(caretX, caretY, caretHeight);
     }
 
-    g_frame.cursor.y += height + kContentPadding;
+    advance_cursor({ 0.0f, height + kContentPadding });
     return result;
 }
 
@@ -805,7 +852,7 @@ void text_box(std::string_view text, Vec2 size) noexcept
     draw_sprite(g_resources.panelBackground, pos.x, pos.y, width, height);
     draw_wrapped_text(text, pos.x + kBoxInnerPadding, pos.y + kBoxInnerPadding, contentWidth, kFontScale);
 
-    g_frame.cursor.y += height + kContentPadding;
+    advance_cursor({ 0.0f, height + kContentPadding });
 }
 
 ConsoleWindowResult console_window(const ConsoleWindowOptions& options) noexcept
@@ -849,7 +896,7 @@ ConsoleWindowResult console_window(const ConsoleWindowOptions& options) noexcept
         }
     }
 
-    g_frame.cursor.y = logPos.y + logHeight + kContentPadding;
+    set_cursor({ logPos.x, logPos.y + logHeight + kContentPadding });
 
     if (options.input) {
         const float fieldHeight = g_resources.glyphHeight * kFontScale + 2.0f * kBoxInnerPadding;
@@ -867,7 +914,7 @@ void label(std::string_view text) noexcept
         return;
 
     draw_text_line(text, g_frame.cursor.x, g_frame.cursor.y, kFontScale);
-    g_frame.cursor.y += g_resources.glyphHeight * kFontScale + kLineSpacing;
+    advance_cursor({ 0.0f, g_resources.glyphHeight * kFontScale + kLineSpacing });
 }
 
 float line_height() noexcept
