@@ -39,6 +39,7 @@
 #include <limits>
 #include <memory>
 #include <mutex>
+#include <optional>
 #include <stdexcept>
 #include <string>
 #include <string_view>
@@ -197,6 +198,8 @@ namespace
         bool justReleased = false;
         bool insideWindow = false;
         bool justPressed = false;
+
+        std::optional<WidgetBounds> lastButtonBounds{};
 
         float deltaTime = 0.0f;
         float caretTimer = 0.0f;
@@ -522,6 +525,7 @@ namespace
         g_frame.origin = {};
         g_frame.windowSize = {};
         g_frame.insideWindow = false;
+        g_frame.lastButtonBounds.reset();
     }
 
 
@@ -664,6 +668,7 @@ bool button(std::string_view label, Vec2 size) noexcept
     const float textY = pos.y + std::max(0.0f, (height - textHeight) * 0.5f);
     draw_text_line(label, textX, textY, kFontScale);
 
+    g_frame.lastButtonBounds = WidgetBounds{ pos, { width, height } };
     advance_cursor({ 0.0f, height + kContentPadding });
     return hovered && g_frame.justPressed;
 }
@@ -690,6 +695,7 @@ bool image_button(const SpriteHandle& sprite, Vec2 size) noexcept
         draw_sprite(sprite, pos.x, pos.y, width, height);
     }
 
+    g_frame.lastButtonBounds = WidgetBounds{ pos, { width, height } };
     advance_cursor({ 0.0f, height + kContentPadding });
     return hovered && g_frame.justPressed;
 }
@@ -939,4 +945,10 @@ float glyph_width() noexcept
     return g_resources.glyphWidth * kFontScale;
 }
 
+std::optional<WidgetBounds> last_button_bounds() noexcept
+{
+    return g_frame.lastButtonBounds;
+}
+
 } // namespace almondnamespace::gui
+

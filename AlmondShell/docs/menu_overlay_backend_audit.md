@@ -55,5 +55,5 @@ mismatches relative to the software renderer baseline.
 - [x] Confirm that hit-testing uses the same scaled coordinates Raylib hands back
       after `SetMouseScale` to avoid menu hover mismatches.【F:AlmondShell/include/araylibcontext.hpp†L411-L430】【F:AlmondShell/include/araylibcontextinput.hpp†L105-L132】
 
-Verification: Launch `--renderer=raylib --scene=fit_canvas --trace-menu-button0`, dock the pane, and confirm the logged button rectangle matches the design-canvas dimensions while pointer hover events trigger without offset after resizing and context reacquisition.
+Verification: Launch `--renderer=raylib --scene=fit_canvas --trace-menu-button0`, dock the pane, and confirm the logged GUI bounds for button 0 match the design-canvas dimensions reported by the immediate-mode layer while pointer hover events trigger without offset after resizing and context reacquisition.
 

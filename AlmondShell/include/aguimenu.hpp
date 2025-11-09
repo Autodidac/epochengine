@@ -41,8 +41,10 @@
 #include <algorithm>
 #include <array>
 #include <cmath>
+#include <iomanip>
 #include <iostream>
 #include <memory>
+#include <sstream>
 
 namespace almondnamespace::menu
 {
@@ -293,28 +295,6 @@ namespace almondnamespace::menu
                 return { colBaseX[clampedCol], rowBaseY[flippedRow] };
             };
 
-            if (core::cli::trace_menu_button0_rect && totalItems > 0) {
-                const auto& firstDescriptor = descriptors.front();
-                const auto pos0 = position_for_index(0);
-
-                static std::optional<std::array<int, 4>> loggedRect;
-                std::array<int, 4> rect{
-                    pos0.first,
-                    pos0.second,
-                    static_cast<int>(std::round(firstDescriptor.size.x)),
-                    static_cast<int>(std::round(firstDescriptor.size.y))
-                };
-                if (!loggedRect || *loggedRect != rect) {
-                    loggedRect = rect;
-                    std::cout << "[MenuOverlay] button0 target rect: x=" << rect[0]
-                              << " y=" << rect[1]
-                              << " w=" << rect[2]
-                              << " h=" << rect[3]
-                              << (flipVertical ? " (OpenGL flip)" : "")
-                              << '\n';
-                }
-            }
-
             int hover = -1;
             for (int i = 0; i < totalItems; ++i) {
                 const auto& descriptor = descriptors[i];
@@ -364,6 +344,46 @@ namespace almondnamespace::menu
                 }
 
                 const bool activated = gui::button(label, descriptors[i].size);
+                if (core::cli::trace_menu_button0_rect && i == 0) {
+                    if (auto bounds = gui::last_button_bounds()) {
+                        std::array<float, 4> rect{
+                            bounds->position.x,
+                            bounds->position.y,
+                            bounds->size.x,
+                            bounds->size.y
+                        };
+                        static std::array<float, 4> loggedRect{};
+                        static bool hasLogged = false;
+                        auto approx_equal = [](float a, float b) {
+                            return std::fabs(a - b) <= 0.5f;
+                        };
+                        bool changed = !hasLogged;
+                        if (!changed) {
+                            for (size_t idx = 0; idx < rect.size(); ++idx) {
+                                if (!approx_equal(rect[idx], loggedRect[idx])) {
+                                    changed = true;
+                                    break;
+                                }
+                            }
+                        }
+                        if (changed) {
+                            loggedRect = rect;
+                            hasLogged = true;
+                            std::ostringstream oss;
+                            oss.setf(std::ios::fixed, std::ios::floatfield);
+                            oss << std::setprecision(2)
+                                << "[MenuOverlay] button0 GUI bounds: x=" << rect[0]
+                                << " y=" << rect[1]
+                                << " w=" << rect[2]
+                                << " h=" << rect[3];
+                            if (flipVertical) {
+                                oss << " (OpenGL input flip)";
+                            }
+                            oss << '\n';
+                            std::cout << oss.str();
+                        }
+                    }
+                }
                 if (activated) {
                     selection = static_cast<size_t>(i);
                     chosen = descriptors[i].choice;

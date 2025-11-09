@@ -31,6 +31,7 @@
 #include <cstddef>
 #include <cstdint>
 #include <memory>
+#include <optional>
 #include <span>
 #include <string>
 #include <string_view>
@@ -102,6 +103,13 @@ namespace almondnamespace::gui
 
     [[nodiscard]] bool button(std::string_view label, Vec2 size) noexcept;
     [[nodiscard]] bool image_button(const almondnamespace::SpriteHandle& sprite, Vec2 size) noexcept;
+
+    struct WidgetBounds {
+        Vec2 position{};
+        Vec2 size{};
+    };
+
+    [[nodiscard]] std::optional<WidgetBounds> last_button_bounds() noexcept;
 
     struct EditBoxResult {
         bool active = false;
