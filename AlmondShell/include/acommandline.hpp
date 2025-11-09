@@ -82,7 +82,7 @@ namespace almondnamespace::core::cli {
                     "  --width  <value>      Set window width\n"
                     "  --height <value>      Set window height\n"
                     "  --menu-columns <n>    Cap the menu grid at n columns (default 4)\n"
-                    "  --trace-menu-button0  Log the target rect for menu button index 0\n"
+                    "  --trace-menu-button0  Log GUI bounds for menu button index 0\n"
                     "  --trace-raylib-design Log framebuffer vs design canvas dimensions\n"
                     "  --update, -u          Check for a newer AlmondShell build\n"
                     "  --force               Apply the available update immediately\n";

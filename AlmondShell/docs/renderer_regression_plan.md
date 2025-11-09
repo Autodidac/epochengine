@@ -15,8 +15,9 @@ mind when auditing backend behaviour:
    context getters must track the actual pixel space that `draw_sprite_safe`
    renders into.【F:AlmondShell/include/aguimenu.hpp†L101-L170】
 2. The cached positions produced during layout are reused for both hit-testing
-   and the render-thread sprite enqueues inside `update_and_draw`, meaning any
-   backend scaling must keep those coordinate systems in lockstep.【F:AlmondShell/include/aguimenu.hpp†L277-L395】
+   and the GUI cursor placement before each `gui::button` call in
+   `update_and_draw`, so backend scaling still has to keep layout coordinates
+   aligned with the GUI draw pass.【F:AlmondShell/include/aguimenu.hpp†L277-L395】
 3. `update_and_draw` compares `ctx->get_mouse_position_safe()` against the same
    rectangles it submits to `draw_sprite_safe`, so pointer coordinates have to
    arrive already translated into the sprite grid (with the OpenGL flip handled
@@ -53,18 +54,19 @@ performed for OpenGL and Raylib immediately after the first resize.
 4. **Artifact review** – add a checklist to the QA portal referencing these
    captures with links and pass/fail toggles per backend run.
 
-### Menu overlay rect trace checklist
+### Menu overlay GUI bounds trace checklist
 
-Menu smoke scenes now emit the menu button 0 target rectangle when launched with
-`--trace-menu-button0`. Capture the log line below for each backend as part of
-the smoke workflow to verify coordinate consistency.
+Menu smoke scenes now emit the GUI-computed bounds for menu button 0 when
+launched with `--trace-menu-button0`. Capture the log line below for each backend
+as part of the smoke workflow to verify that layout, GUI drawing, and input all
+share the same coordinate space after the refactor.
 
 | Backend | Command (from `AlmondShell` root after building) | Expected log snippet |
 |---------|--------------------------------------------------|----------------------|
-| OpenGL | `./Bin/GCC-Debug/cmakeapp1/cmakeapp1 --renderer=opengl --scene=dockstress --trace-menu-button0` | `[MenuOverlay] button0 target rect: x=272 y=632 w=320 h=120 (OpenGL flip)` |
-| SDL | `./Bin/GCC-Debug/cmakeapp1/cmakeapp1 --renderer=sdl --scene=menu_rainbow --trace-menu-button0` | `[MenuOverlay] button0 target rect: x=272 y=328 w=320 h=120` |
-| Raylib | `./Bin/GCC-Debug/cmakeapp1/cmakeapp1 --renderer=raylib --scene=fit_canvas --trace-menu-button0` | `[MenuOverlay] button0 target rect: x=272 y=328 w=320 h=120` |
-| Software | `./Bin/GCC-Debug/cmakeapp1/cmakeapp1 --renderer=software --scene=cpu_quad --trace-menu-button0` | `[MenuOverlay] button0 target rect: x=272 y=328 w=320 h=120` |
+| OpenGL | `./Bin/GCC-Debug/cmakeapp1/cmakeapp1 --renderer=opengl --scene=dockstress --trace-menu-button0` | `[MenuOverlay] button0 GUI bounds: x=272.00 y=632.00 w=320.00 h=120.00 (OpenGL input flip)` |
+| SDL | `./Bin/GCC-Debug/cmakeapp1/cmakeapp1 --renderer=sdl --scene=menu_rainbow --trace-menu-button0` | `[MenuOverlay] button0 GUI bounds: x=272.00 y=328.00 w=320.00 h=120.00` |
+| Raylib | `./Bin/GCC-Debug/cmakeapp1/cmakeapp1 --renderer=raylib --scene=fit_canvas --trace-menu-button0` | `[MenuOverlay] button0 GUI bounds: x=272.00 y=328.00 w=320.00 h=120.00` |
+| Software | `./Bin/GCC-Debug/cmakeapp1/cmakeapp1 --renderer=software --scene=cpu_quad --trace-menu-button0` | `[MenuOverlay] button0 GUI bounds: x=272.00 y=328.00 w=320.00 h=120.00` |
 
 Archive the stdout snippet alongside the per-backend screenshots so future
 regression runs can diff the coordinates without rerunning the scenes.
