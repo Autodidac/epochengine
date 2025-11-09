@@ -28,6 +28,7 @@
 
 #include "aatlasmanager.hpp"
 #include "acontext.hpp"
+#include "awindowdata.hpp"
 #include "aspritepool.hpp"
 #include "aspriteregistry.hpp"
 #include "atexture.hpp"
