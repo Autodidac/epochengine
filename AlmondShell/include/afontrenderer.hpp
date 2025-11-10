@@ -27,7 +27,8 @@
 #include "aplatform.hpp"
 // #include "aassetsystem.hpp" // uncomment when asset system is ready
 #include "aatlastexture.hpp"
-#include "arenderer.hpp"
+#include "aatlasmanager.hpp"
+#include "aspritehandle.hpp"
 #include "agui.hpp"
 
 #include <iostream>
@@ -37,6 +38,12 @@
 #include <unordered_map>
 #include <utility>
 #include <vector>
+#include <span>
+
+namespace almondnamespace::core
+{
+    struct Context;
+}
 
 namespace almondnamespace::font
 {
@@ -52,6 +59,7 @@ namespace almondnamespace::font
         ui::vec2 size_px{};     // Glyph pixel size
         ui::vec2 offset_px{};   // Offset from baseline in pixels
         float advance{};        // Cursor advance in pixels after rendering this glyph
+        SpriteHandle handle{};  // Sprite handle for rendering this glyph slice
     };
 
     struct FontAsset
@@ -61,6 +69,7 @@ namespace almondnamespace::font
 
         std::unordered_map<char32_t, Glyph> glyphs;
         AtlasEntry atlas; // lightweight handle to the glyph atlas texture
+        int atlas_index = -1;
     };
 
     class FontRenderer
@@ -92,12 +101,22 @@ namespace almondnamespace::font
             raw_texture.name = name;
 
             static std::mutex atlas_mutex;
-            static almondnamespace::TextureAtlas atlas = almondnamespace::TextureAtlas::create({
-                .name = "font_atlas",
+            const std::string atlas_name = "font_atlas";
+            almondnamespace::atlasmanager::create_atlas({
+                .name = atlas_name,
                 .width = 2048,
                 .height = 2048,
                 .generate_mipmaps = false
                 });
+
+            auto* registrar = almondnamespace::atlasmanager::get_registrar(atlas_name);
+            if (!registrar)
+            {
+                std::cerr << "[FontRenderer] Missing registrar for atlas '" << atlas_name << "'\n";
+                return false;
+            }
+
+            TextureAtlas& atlas = registrar->atlas;
 
             std::optional<AtlasEntry> maybe_entry;
             {
@@ -112,37 +131,72 @@ namespace almondnamespace::font
             }
 
             const AtlasEntry& atlas_entry = *maybe_entry;
-            const float inv_atlas_width = atlas.width > 0 ? 1.0f / static_cast<float>(atlas.width) : 0.0f;
-            const float inv_atlas_height = atlas.height > 0 ? 1.0f / static_cast<float>(atlas.height) : 0.0f;
+            const float inv_entry_width = atlas_entry.region.width > 0 ?
+                1.0f / static_cast<float>(atlas_entry.region.width) : 0.0f;
+            const float inv_entry_height = atlas_entry.region.height > 0 ?
+                1.0f / static_cast<float>(atlas_entry.region.height) : 0.0f;
+            const float entry_uv_width = atlas_entry.region.uv_width();
+            const float entry_uv_height = atlas_entry.region.uv_height();
 
             for (auto& [codepoint, baked] : baked_glyphs)
             {
                 Glyph glyph = std::move(baked.glyph);
 
-                const float glyph_left = static_cast<float>(atlas_entry.region.x + baked.x0);
-                const float glyph_top = static_cast<float>(atlas_entry.region.y + baked.y0);
-                const float glyph_right = static_cast<float>(atlas_entry.region.x + baked.x1);
-                const float glyph_bottom = static_cast<float>(atlas_entry.region.y + baked.y1);
+                const float u0 = atlas_entry.region.u1
+                    + static_cast<float>(baked.x0) * inv_entry_width * entry_uv_width;
+                const float v0 = atlas_entry.region.v1
+                    + static_cast<float>(baked.y0) * inv_entry_height * entry_uv_height;
+                const float u1 = atlas_entry.region.u1
+                    + static_cast<float>(baked.x1) * inv_entry_width * entry_uv_width;
+                const float v1 = atlas_entry.region.v1
+                    + static_cast<float>(baked.y1) * inv_entry_height * entry_uv_height;
 
-                glyph.uv.top_left = {
-                    glyph_left * inv_atlas_width,
-                    1.0f - glyph_top * inv_atlas_height
-                };
-                glyph.uv.bottom_right = {
-                    glyph_right * inv_atlas_width,
-                    1.0f - glyph_bottom * inv_atlas_height
-                };
+                glyph.uv.top_left = { u0, v0 };
+                glyph.uv.bottom_right = { u1, v1 };
+
+                const int glyph_width = baked.x1 - baked.x0;
+                const int glyph_height = baked.y1 - baked.y0;
+
+                if (glyph_width > 0 && glyph_height > 0)
+                {
+                    const int slice_x = static_cast<int>(atlas_entry.region.x) + baked.x0;
+                    const int slice_y = static_cast<int>(atlas_entry.region.y) + baked.y0;
+                    const std::string glyph_name = name + "_pt" + std::to_string(size_pt)
+                        + "_cp" + std::to_string(static_cast<uint32_t>(codepoint));
+
+                    std::optional<AtlasEntry> glyph_entry;
+                    {
+                        std::lock_guard<std::mutex> lock(atlas_mutex);
+                        glyph_entry = atlas.add_slice_entry(glyph_name, slice_x, slice_y, glyph_width, glyph_height);
+                    }
+
+                    if (glyph_entry)
+                    {
+                        glyph.handle = SpriteHandle{
+                            static_cast<uint32_t>(glyph_entry->index),
+                            0u,
+                            static_cast<uint32_t>(atlas.get_index()),
+                            static_cast<uint32_t>(glyph_entry->index)
+                        };
+                    }
+                }
                 asset.glyphs.emplace(codepoint, std::move(glyph));
             }
 
             asset.atlas = atlas_entry;
+            asset.atlas_index = atlas.get_index();
+            almondnamespace::atlasmanager::ensure_uploaded(atlas);
             loaded_fonts_.emplace(name, std::move(asset));
             return true;
         }
 
 
-        // Render UTF-32 text at pixel coordinates in screen space
-        void render_text(const std::string& font_name, const std::u32string& text, ui::vec2 pos_px) const
+        // Render UTF-32 text at pixel coordinates in screen space using an explicit atlas span
+        void render_text(core::Context& ctx,
+            std::span<const TextureAtlas* const> atlases,
+            const std::string& font_name,
+            const std::u32string& text,
+            ui::vec2 pos_px) const
         {
             auto it = loaded_fonts_.find(font_name);
             if (it == loaded_fonts_.end())
@@ -161,19 +215,31 @@ namespace almondnamespace::font
                 }
 
                 const Glyph& g = glyph_it->second;
-                ui::vec2 top_left = cursor + g.offset_px;
-                ui::vec2 bottom_right = top_left + g.size_px;
+                if (!g.handle.is_valid())
+                {
+                    cursor.x += g.advance;
+                    continue;
+                }
 
-                almondnamespace::Renderer::submit_quad(
-                    top_left,
-                    bottom_right,
-                    font.atlas.name,
-                    g.uv.top_left,
-                    g.uv.bottom_right
-                );
+                ui::vec2 top_left = cursor + g.offset_px;
+                ctx.draw_sprite_safe(g.handle, atlases, top_left.x, top_left.y, g.size_px.x, g.size_px.y);
 
                 cursor.x += g.advance;
             }
+        }
+
+        // Convenience overload that gathers atlases from the global atlas manager
+        void render_text(core::Context& ctx,
+            const std::string& font_name,
+            const std::u32string& text,
+            ui::vec2 pos_px) const
+        {
+            const auto& atlas_vec = almondnamespace::atlasmanager::get_atlas_vector();
+            if (atlas_vec.empty())
+                return;
+
+            std::span<const TextureAtlas* const> atlas_span(atlas_vec.data(), atlas_vec.size());
+            render_text(ctx, atlas_span, font_name, text, pos_px);
         }
 
     private:
@@ -194,4 +260,4 @@ namespace almondnamespace::font
         std::unordered_map<std::string, FontAsset> loaded_fonts_{};
     };
 
-} // namespace almond::font
+} // namespace almondnamespace::font
