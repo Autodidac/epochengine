@@ -211,6 +211,7 @@
     <ClCompile Include="$(MSBuildThisFileDirectory)src\aeditor.cpp" />
     <ClCompile Include="$(MSBuildThisFileDirectory)src\aengine.cpp" />
     <ClCompile Include="$(MSBuildThisFileDirectory)src\afilewatch.cpp" />
+    <ClCompile Include="$(MSBuildThisFileDirectory)src\afontrenderer.cpp" />
     <ClCompile Include="$(MSBuildThisFileDirectory)src\ascriptingsystem.cpp" />
     <ClCompile Include="$(MSBuildThisFileDirectory)src\agui.cpp" />
     <ClCompile Include="$(MSBuildThisFileDirectory)src\scripts\editor_launcher.ascript.cpp">
