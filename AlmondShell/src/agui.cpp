@@ -120,16 +120,30 @@ namespace
 
     [[nodiscard]] std::filesystem::path find_default_font_path()
     {
-        char* envBuf = nullptr;
-        size_t len = 0;
-
-        if (_dupenv_s(&envBuf, &len, "ALMOND_GUI_FONT_PATH") == 0 && envBuf)
+        auto resolve_env_font_path = []() -> std::filesystem::path
         {
-            std::filesystem::path envPath{ envBuf };
-            free(envBuf);
+#if defined(_WIN32)
+            char* envBuf = nullptr;
+            size_t len = 0;
 
+            if (_dupenv_s(&envBuf, &len, "ALMOND_GUI_FONT_PATH") == 0 && envBuf)
+            {
+                std::filesystem::path envPath{ envBuf };
+                free(envBuf);
+                return envPath;
+            }
+            return {};
+#else
+            if (const char* envValue = std::getenv("ALMOND_GUI_FONT_PATH"))
+                return std::filesystem::path{ envValue };
+            return {};
+#endif
+        };
+
+        if (std::filesystem::path envPath = resolve_env_font_path(); !envPath.empty())
+        {
             std::error_code ec;
-            if (!envPath.empty() && std::filesystem::exists(envPath, ec))
+            if (std::filesystem::exists(envPath, ec))
                 return envPath;
         }
 
