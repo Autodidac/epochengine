@@ -1,5 +1,12 @@
+
+#include "pch.h"
+
+#include "aplatform.hpp"
+#include "aengineconfig.hpp"
+
 #include "../include/afontrenderer.hpp"
 
+#define STB_TRUETYPE_IMPLEMENTATION
 #include "stb/stb_truetype.h"
 
 #include <algorithm>
@@ -135,8 +142,8 @@ namespace almondnamespace::font
         int max_y1 = 0;
         for (const auto& packed : packed_chars)
         {
-            max_x1 = std::max(max_x1, packed.x1);
-            max_y1 = std::max(max_y1, packed.y1);
+            max_x1 = std::max(max_x1, static_cast<int>(packed.x1));
+            max_y1 = std::max(max_y1, static_cast<int>(packed.y1));
         }
 
         if (max_x1 <= 0 || max_y1 <= 0)

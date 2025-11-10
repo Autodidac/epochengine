@@ -26,6 +26,7 @@
 
 #include "aplatform.hpp"
 // #include "aassetsystem.hpp" // uncomment when asset system is ready
+#include "acontext.hpp"
 #include "aatlastexture.hpp"
 #include "aatlasmanager.hpp"
 #include "aspritehandle.hpp"

@@ -120,24 +120,28 @@ namespace
 
     [[nodiscard]] std::filesystem::path find_default_font_path()
     {
-        if (const char* overridePath = std::getenv("ALMOND_GUI_FONT_PATH"))
+        char* envBuf = nullptr;
+        size_t len = 0;
+
+        if (_dupenv_s(&envBuf, &len, "ALMOND_GUI_FONT_PATH") == 0 && envBuf)
         {
-            std::filesystem::path envPath{ overridePath };
+            std::filesystem::path envPath{ envBuf };
+            free(envBuf);
+
             std::error_code ec;
             if (!envPath.empty() && std::filesystem::exists(envPath, ec))
                 return envPath;
         }
 
         const std::array<std::filesystem::path, 5> relativeCandidates{
-            std::filesystem::path{ kDefaultFontFile },
-            std::filesystem::path{ "assets/fonts" } / kDefaultFontFile,
-            std::filesystem::path{ "Fonts" } / kDefaultFontFile,
-            std::filesystem::path{ "AlmondShell/assets/fonts" } / kDefaultFontFile,
-            std::filesystem::path{ "../AlmondShell/assets/fonts" } / kDefaultFontFile,
+            std::filesystem::path{kDefaultFontFile},
+            std::filesystem::path{"assets/fonts"} / kDefaultFontFile,
+            std::filesystem::path{"Fonts"} / kDefaultFontFile,
+            std::filesystem::path{"AlmondShell/assets/fonts"} / kDefaultFontFile,
+            std::filesystem::path{"../AlmondShell/assets/fonts"} / kDefaultFontFile,
         };
 
-        const auto try_with_root = [&](const std::filesystem::path& root) -> std::filesystem::path
-        {
+        const auto try_with_root = [&](const std::filesystem::path& root) -> std::filesystem::path {
             for (const auto& rel : relativeCandidates)
             {
                 std::filesystem::path candidate = root.empty() ? rel : (root / rel);
@@ -146,7 +150,7 @@ namespace
                     return candidate;
             }
             return {};
-        };
+            };
 
         if (auto path = try_with_root({}); !path.empty())
             return path;
@@ -267,12 +271,12 @@ namespace
     static_assert(std::is_same_v<decltype(g_frame.ctx), core::Context*>,
         "FrameState must carry core::Context* ctx");
 
-    constexpr const char* kAtlasName = "__agui_builtin";
-    constexpr float kContentPadding = 8.0f;
-    constexpr float kFontScale = 1.0f;
-    constexpr float kTitleScale = 1.4f;
-    constexpr float kBoxInnerPadding = 6.0f;
-    constexpr float kCaretBlinkPeriod = 1.0f;
+    //constexpr const char* kAtlasName = "__agui_builtin";
+    //constexpr float kContentPadding = 8.0f;
+    //constexpr float kFontScale = 1.0f;
+    //constexpr float kTitleScale = 1.4f;
+    //constexpr float kBoxInnerPadding = 6.0f;
+    //constexpr float kCaretBlinkPeriod = 1.0f;
 
     [[nodiscard]] std::vector<std::uint8_t> make_solid_pixels(std::uint8_t r, std::uint8_t g, std::uint8_t b, std::uint8_t a, std::uint32_t w, std::uint32_t h)
     {
