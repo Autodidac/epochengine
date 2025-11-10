@@ -54,7 +54,7 @@ namespace almondnamespace::sdltextures
         u32 height = 0;
     };
 
-    inline std::atomic_uint8_t s_generation{ 0 };
+    inline std::atomic_uint8_t s_generation{ 1 };
     inline std::atomic_uint32_t s_dumpSerial{ 0 };
 
     inline SDL_Renderer* sdl_renderer = nullptr; // Must be set by your engine

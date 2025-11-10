@@ -102,7 +102,7 @@ namespace almondnamespace::opengltextures
    // using almondnamespace::openglcontext::s_openglstate;
     using Handle = uint32_t;
 
-    inline std::atomic_uint8_t s_generation{ 0 };
+    inline std::atomic_uint8_t s_generation{ 1 };
     inline std::atomic_uint32_t s_dumpSerial{ 0 };
 
     [[nodiscard]]

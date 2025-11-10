@@ -98,7 +98,7 @@ namespace almondnamespace::raylibtextures
         return *data;
     }
 
-    inline std::atomic_uint8_t s_generation{ 0 };
+    inline std::atomic_uint8_t s_generation{ 1 };
     inline std::atomic_uint32_t s_dumpSerial{ 0 };
 
     [[nodiscard]]

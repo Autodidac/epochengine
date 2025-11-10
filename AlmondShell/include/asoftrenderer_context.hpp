@@ -332,14 +332,36 @@ namespace almondnamespace::anativecontext
                 if (srcIndex + 3 >= atlas->pixel_data.size()) continue;
 
                 const uint8_t* src = atlas->pixel_data.data() + srcIndex;
-                const uint32_t color = (uint32_t(src[3]) << 24)
-                    | (uint32_t(src[0]) << 16)
-                    | (uint32_t(src[1]) << 8)
-                    | uint32_t(src[2]);
+                const uint8_t srcA = src[3];
+                if (srcA == 0)
+                    continue;
 
-                s_softrendererstate.framebuffer[
-                    static_cast<size_t>(py) * static_cast<size_t>(s_softrendererstate.width)
-                        + static_cast<size_t>(px)] = color;
+                const size_t dstIndex = static_cast<size_t>(py) * static_cast<size_t>(s_softrendererstate.width)
+                    + static_cast<size_t>(px);
+
+                const uint32_t dst = s_softrendererstate.framebuffer[dstIndex];
+
+                const float alpha = static_cast<float>(srcA) / 255.0f;
+                const float invAlpha = 1.0f - alpha;
+
+                const uint8_t dstR = static_cast<uint8_t>((dst >> 16) & 0xFF);
+                const uint8_t dstG = static_cast<uint8_t>((dst >> 8) & 0xFF);
+                const uint8_t dstB = static_cast<uint8_t>(dst & 0xFF);
+                const uint8_t dstA = static_cast<uint8_t>((dst >> 24) & 0xFF);
+
+                const float outR = std::clamp(src[0] * alpha + dstR * invAlpha, 0.0f, 255.0f);
+                const float outG = std::clamp(src[1] * alpha + dstG * invAlpha, 0.0f, 255.0f);
+                const float outB = std::clamp(src[2] * alpha + dstB * invAlpha, 0.0f, 255.0f);
+                const float dstAlpha = static_cast<float>(dstA) / 255.0f;
+                const float outAlphaNorm = std::clamp(alpha + dstAlpha * invAlpha, 0.0f, 1.0f);
+                const float outA = outAlphaNorm * 255.0f;
+
+                const uint32_t packed = (static_cast<uint32_t>(outA + 0.5f) << 24)
+                    | (static_cast<uint32_t>(outR + 0.5f) << 16)
+                    | (static_cast<uint32_t>(outG + 0.5f) << 8)
+                    | static_cast<uint32_t>(outB + 0.5f);
+
+                s_softrendererstate.framebuffer[dstIndex] = packed;
             }
         }
     }
