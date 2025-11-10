@@ -106,6 +106,9 @@
     <Filter Include="Header Files\core\scripting\cpp">
       <UniqueIdentifier>{f299a200-e310-4b2f-92e8-1124a79c7f5a}</UniqueIdentifier>
     </Filter>
+    <Filter Include="Header Files\core\backbone\textures\font">
+      <UniqueIdentifier>{35df767e-1400-4d17-9843-a2d7f58a6997}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="$(MSBuildThisFileDirectory)include\almondengine.hpp">
@@ -330,9 +333,6 @@
     <ClInclude Include="$(MSBuildThisFileDirectory)include\amipmapatlas.hpp">
       <Filter>Header Files\core\backbone\textures\atlas</Filter>
     </ClInclude>
-    <ClInclude Include="$(MSBuildThisFileDirectory)include\afontrenderer.hpp">
-      <Filter>Header Files\core\backbone\textures\atlas</Filter>
-    </ClInclude>
     <ClInclude Include="$(MSBuildThisFileDirectory)include\anet.hpp">
       <Filter>Header Files\core\networking</Filter>
     </ClInclude>
@@ -461,6 +461,9 @@
     </ClInclude>
     <ClInclude Include="$(MSBuildThisFileDirectory)include\acompiler.hpp">
       <Filter>Header Files\core\scripting\cpp</Filter>
+    </ClInclude>
+    <ClInclude Include="$(MSBuildThisFileDirectory)include\afontrenderer.hpp">
+      <Filter>Header Files\core\backbone\textures\font</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>

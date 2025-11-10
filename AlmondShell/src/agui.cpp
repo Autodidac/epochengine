@@ -69,7 +69,7 @@ namespace
     constexpr float kCaretBlinkPeriod = 1.0f;
     constexpr int kTabSpaces = 4;
     constexpr const char* kDefaultFontName = "__agui_default_font";
-    constexpr const char* kDefaultFontFile = "RobotoMono-Regular.ttf";
+    constexpr const char* kDefaultFontFile = "Roboto-Regular.ttf";
 
     struct GuiFontCache
     {
