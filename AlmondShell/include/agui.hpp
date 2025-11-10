@@ -54,7 +54,7 @@ namespace almondnamespace::gui
             return Vec2{x + other.x, y + other.y};
         }
 
-        [[nodiscard]] constexpr Vec2& operator+=(const Vec2& other) noexcept
+        constexpr Vec2& operator+=(const Vec2& other) noexcept
         {
             x += other.x;
             y += other.y;
