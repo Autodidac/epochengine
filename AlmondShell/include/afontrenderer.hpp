@@ -83,6 +83,20 @@ namespace almondnamespace::font
         AtlasEntry atlas; // lightweight handle to the glyph atlas texture
         int atlas_index = -1;
         FontMetrics metrics{};
+        std::unordered_map<std::uint64_t, float> kerningPairs{};
+
+        [[nodiscard]] float get_kerning(char32_t left, char32_t right) const noexcept
+        {
+            if (kerningPairs.empty())
+                return 0.0f;
+
+            const std::uint64_t key = (static_cast<std::uint64_t>(left) << 32)
+                | static_cast<std::uint64_t>(right);
+            const auto it = kerningPairs.find(key);
+            if (it == kerningPairs.end())
+                return 0.0f;
+            return it->second;
+        }
     };
 
     class FontRenderer
@@ -100,7 +114,9 @@ namespace almondnamespace::font
             Texture raw_texture{};
             FontMetrics metrics{};
 
-            if (!load_and_bake_font(ttf_path, size_pt, baked_glyphs, metrics, raw_texture))
+            std::unordered_map<std::uint64_t, float> kerning_pairs{};
+
+            if (!load_and_bake_font(ttf_path, size_pt, baked_glyphs, metrics, kerning_pairs, raw_texture))
             {
                 std::cerr << "[FontRenderer] Failed to bake font '" << name << "' from '" << ttf_path << "'\n";
                 return false;
@@ -223,6 +239,7 @@ namespace almondnamespace::font
             asset.atlas = atlas_entry;
             asset.atlas_index = atlas.get_index();
             asset.metrics = metrics;
+            asset.kerningPairs = std::move(kerning_pairs);
             almondnamespace::atlasmanager::ensure_uploaded(atlas);
             loaded_fonts_.emplace(name, std::move(asset));
             return true;
@@ -302,6 +319,7 @@ namespace almondnamespace::font
             float size_pt,
             std::vector<std::pair<char32_t, BakedGlyph>>& out_glyphs,
             FontMetrics& out_metrics,
+            std::unordered_map<std::uint64_t, float>& out_kerning,
             Texture& out_texture);
 
         std::unordered_map<std::string, FontAsset> loaded_fonts_{};

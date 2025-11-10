@@ -71,7 +71,7 @@ namespace almondnamespace::sfmlcontext
 
     inline std::unordered_map<const TextureAtlas*, AtlasGPU, TextureAtlasPtrHash, TextureAtlasPtrEqual> sfml_gpu_atlases;
 
-    inline std::atomic_uint8_t s_generation{ 0 };
+    inline std::atomic_uint8_t s_generation{ 1 };
     inline std::atomic_uint32_t s_dumpSerial{ 0 };
 
     [[nodiscard]]

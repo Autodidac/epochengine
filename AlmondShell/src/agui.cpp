@@ -495,6 +495,33 @@ namespace
         return g_resources.font.fallbackGlyph;
     }
 
+    [[nodiscard]] std::optional<unsigned char> next_drawable_char(std::string_view text, std::size_t index) noexcept
+    {
+        if (index >= text.size())
+            return std::nullopt;
+
+        for (std::size_t i = index + 1; i < text.size(); ++i)
+        {
+            const char next = text[i];
+            if (next == '\n')
+                return std::nullopt;
+            return static_cast<unsigned char>(next);
+        }
+
+        return std::nullopt;
+    }
+
+    [[nodiscard]] float kerning_adjust(unsigned char left, unsigned char right, float scale) noexcept
+    {
+        if (!g_resources.font.asset)
+            return 0.0f;
+
+        const float kern = g_resources.font.asset->get_kerning(left, right);
+        if (kern == 0.0f)
+            return 0.0f;
+        return kern * scale;
+    }
+
     [[nodiscard]] float glyph_advance(unsigned char ch, float scale) noexcept
     {
         if (ch == '\t')
@@ -509,19 +536,31 @@ namespace
         return 8.0f * scale;
     }
 
+    [[nodiscard]] float glyph_advance_with_kerning(unsigned char ch,
+        std::optional<unsigned char> next,
+        float scale) noexcept
+    {
+        float advance = glyph_advance(ch, scale);
+        if (next)
+            advance += kerning_adjust(ch, *next, scale);
+        return advance;
+    }
+
     [[nodiscard]] float measure_text_width(std::string_view text, float scale) noexcept
     {
         float current = 0.0f;
         float maxWidth = 0.0f;
-        for (char ch : text)
+        for (std::size_t i = 0; i < text.size(); ++i)
         {
+            const char ch = text[i];
             if (ch == '\n')
             {
                 maxWidth = std::max(maxWidth, current);
                 current = 0.0f;
                 continue;
             }
-            current += glyph_advance(static_cast<unsigned char>(ch), scale);
+            const auto next = next_drawable_char(text, i);
+            current += glyph_advance_with_kerning(static_cast<unsigned char>(ch), next, scale);
         }
         return std::max(maxWidth, current);
     }
@@ -535,14 +574,16 @@ namespace
 
         std::size_t lines = 1;
         float penX = 0.0f;
-        for (char ch : text) {
+        for (std::size_t i = 0; i < text.size(); ++i) {
+            const char ch = text[i];
             if (ch == '\n') {
                 ++lines;
                 penX = 0.0f;
                 continue;
             }
 
-            const float advance = glyph_advance(static_cast<unsigned char>(ch), scale);
+            const auto next = next_drawable_char(text, i);
+            const float advance = glyph_advance_with_kerning(static_cast<unsigned char>(ch), next, scale);
             if (penX + advance > effectiveWidth + 0.001f) {
                 ++lines;
                 penX = 0.0f;
@@ -563,14 +604,16 @@ namespace
         float penX = x;
         float baseline = y + baseline_offset(scale);
 
-        for (char ch : text) {
+        for (std::size_t i = 0; i < text.size(); ++i) {
+            const char ch = text[i];
             if (ch == '\n') {
                 penX = x;
                 baseline += lineAdvance;
                 continue;
             }
 
-            const float advance = glyph_advance(static_cast<unsigned char>(ch), scale);
+            const auto next = next_drawable_char(text, i);
+            const float advance = glyph_advance_with_kerning(static_cast<unsigned char>(ch), next, scale);
             if (penX + advance > x + effectiveWidth + 0.001f) {
                 penX = x;
                 baseline += lineAdvance;
@@ -598,7 +641,8 @@ namespace
         float baseline = y + ascent;
         std::size_t lines = 1;
 
-        for (char ch : text) {
+        for (std::size_t i = 0; i < text.size(); ++i) {
+            const char ch = text[i];
             if (ch == '\n') {
                 penX = x;
                 baseline += lineAdvance;
@@ -606,7 +650,8 @@ namespace
                 continue;
             }
 
-            const float advance = glyph_advance(static_cast<unsigned char>(ch), scale);
+            const auto next = next_drawable_char(text, i);
+            const float advance = glyph_advance_with_kerning(static_cast<unsigned char>(ch), next, scale);
             if (penX + advance > x + effectiveWidth + 0.001f) {
                 penX = x;
                 baseline += lineAdvance;
@@ -645,7 +690,8 @@ namespace
         float baseline = y + baseline_offset(scale);
         const float lineAdvance = line_advance_amount(scale);
 
-        for (char ch : text) {
+        for (std::size_t i = 0; i < text.size(); ++i) {
+            const char ch = text[i];
             if (ch == '\n') {
                 penX = g_frame.origin.x + kContentPadding;
                 baseline += lineAdvance;
@@ -662,7 +708,8 @@ namespace
                 }
             }
 
-            penX += glyph_advance(static_cast<unsigned char>(ch), scale);
+            const auto next = next_drawable_char(text, i);
+            penX += glyph_advance_with_kerning(static_cast<unsigned char>(ch), next, scale);
         }
     }
 

@@ -43,9 +43,11 @@ namespace almondnamespace::font
         float size_pt,
         std::vector<std::pair<char32_t, BakedGlyph>>& out_glyphs,
         FontMetrics& out_metrics,
+        std::unordered_map<std::uint64_t, float>& out_kerning,
         Texture& out_texture)
     {
         out_glyphs.clear();
+        out_kerning.clear();
         out_texture.clear();
         out_texture.channels = 4;
         out_texture.name = ttf_path;
@@ -207,6 +209,27 @@ namespace almondnamespace::font
             }
 
             packed_offset += static_cast<std::size_t>(glyph_count);
+        }
+
+        if (!out_glyphs.empty())
+        {
+            out_kerning.reserve(out_glyphs.size() * 4);
+            for (const auto& [left_cp, _] : out_glyphs)
+            {
+                for (const auto& [right_cp, __] : out_glyphs)
+                {
+                    const int kern = stbtt_GetCodepointKernAdvance(&font,
+                        static_cast<int>(left_cp),
+                        static_cast<int>(right_cp));
+                    if (kern == 0)
+                        continue;
+
+                    const float kern_px = static_cast<float>(kern) * scale;
+                    const std::uint64_t key = (static_cast<std::uint64_t>(left_cp) << 32)
+                        | static_cast<std::uint64_t>(right_cp);
+                    out_kerning[key] = kern_px;
+                }
+            }
         }
 
         return true;
