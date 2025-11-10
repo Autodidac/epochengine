@@ -162,7 +162,6 @@
     <ClInclude Include="$(MSBuildThisFileDirectory)include\atypes.hpp" />
     <ClInclude Include="$(MSBuildThisFileDirectory)include\atypesposix.hpp" />
     <ClInclude Include="$(MSBuildThisFileDirectory)include\atypeswin32.hpp" />
-    <ClInclude Include="$(MSBuildThisFileDirectory)include\aui.hpp" />
     <ClInclude Include="$(MSBuildThisFileDirectory)include\aupdateconfig.hpp" />
     <ClInclude Include="$(MSBuildThisFileDirectory)include\aupdatesystem.hpp" />
     <ClInclude Include="$(MSBuildThisFileDirectory)include\autilities.hpp" />

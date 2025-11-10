@@ -165,9 +165,6 @@
     <ClInclude Include="$(MSBuildThisFileDirectory)include\agui.hpp">
       <Filter>Header Files\core\backbone\userinterface</Filter>
     </ClInclude>
-    <ClInclude Include="$(MSBuildThisFileDirectory)include\aui.hpp">
-      <Filter>Header Files\core\backbone\userinterface</Filter>
-    </ClInclude>
     <ClInclude Include="$(MSBuildThisFileDirectory)include\aengine.hpp">
       <Filter>Header Files\core</Filter>
     </ClInclude>
