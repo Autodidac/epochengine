@@ -31,6 +31,7 @@
 #include "aatlasmanager.hpp"
 #include "aspritehandle.hpp"
 #include "agui.hpp"
+#include "stb/stb_truetype.h"
 
 #include <iostream>
 #include <mutex>
@@ -83,6 +84,10 @@ namespace almondnamespace::font
         AtlasEntry atlas; // lightweight handle to the glyph atlas texture
         int atlas_index = -1;
         FontMetrics metrics{};
+        std::vector<unsigned char> fontData{};
+        stbtt_fontinfo fontInfo{};
+        float pixelScale = 1.0f;
+        bool hasKerning = false;
     };
 
     class FontRenderer
@@ -99,8 +104,12 @@ namespace almondnamespace::font
             std::vector<std::pair<char32_t, BakedGlyph>> baked_glyphs{};
             Texture raw_texture{};
             FontMetrics metrics{};
+            std::vector<unsigned char> font_buffer{};
+            int font_offset = 0;
+            float pixel_scale = 1.0f;
 
-            if (!load_and_bake_font(ttf_path, size_pt, baked_glyphs, metrics, raw_texture))
+            if (!load_and_bake_font(ttf_path, size_pt, baked_glyphs, metrics, raw_texture,
+                font_buffer, font_offset, pixel_scale))
             {
                 std::cerr << "[FontRenderer] Failed to bake font '" << name << "' from '" << ttf_path << "'\n";
                 return false;
@@ -113,6 +122,7 @@ namespace almondnamespace::font
             }
 
             raw_texture.name = name;
+            asset.pixelScale = pixel_scale;
 
             static std::mutex atlas_mutex;
             const std::string atlas_name = "font_atlas";
@@ -223,6 +233,19 @@ namespace almondnamespace::font
             asset.atlas = atlas_entry;
             asset.atlas_index = atlas.get_index();
             asset.metrics = metrics;
+            asset.fontData = std::move(font_buffer);
+            if (!asset.fontData.empty())
+            {
+                if (!stbtt_InitFont(&asset.fontInfo, asset.fontData.data(), font_offset))
+                {
+                    std::cerr << "[FontRenderer] Failed to initialise kerning data for '" << name << "'\n";
+                    asset.fontData.clear();
+                }
+                else
+                {
+                    asset.hasKerning = stbtt_GetKerningTableLength(&asset.fontInfo) > 0;
+                }
+            }
             almondnamespace::atlasmanager::ensure_uploaded(atlas);
             loaded_fonts_.emplace(name, std::move(asset));
             return true;
@@ -302,7 +325,10 @@ namespace almondnamespace::font
             float size_pt,
             std::vector<std::pair<char32_t, BakedGlyph>>& out_glyphs,
             FontMetrics& out_metrics,
-            Texture& out_texture);
+            Texture& out_texture,
+            std::vector<unsigned char>& out_font_buffer,
+            int& out_font_offset,
+            float& out_pixel_scale);
 
         std::unordered_map<std::string, FontAsset> loaded_fonts_{};
     };

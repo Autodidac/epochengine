@@ -43,13 +43,19 @@ namespace almondnamespace::font
         float size_pt,
         std::vector<std::pair<char32_t, BakedGlyph>>& out_glyphs,
         FontMetrics& out_metrics,
-        Texture& out_texture)
+        Texture& out_texture,
+        std::vector<unsigned char>& out_font_buffer,
+        int& out_font_offset,
+        float& out_pixel_scale)
     {
         out_glyphs.clear();
         out_texture.clear();
         out_texture.channels = 4;
         out_texture.name = ttf_path;
         out_metrics = FontMetrics{};
+        out_font_buffer.clear();
+        out_font_offset = 0;
+        out_pixel_scale = 1.0f;
 
         if (size_pt <= 0.0f)
         {
@@ -57,24 +63,26 @@ namespace almondnamespace::font
             return false;
         }
 
-        auto font_buffer = read_file_binary(ttf_path);
-        if (font_buffer.empty())
+        out_font_buffer = read_file_binary(ttf_path);
+        if (out_font_buffer.empty())
         {
             std::cerr << "[FontRenderer] Unable to read font file '" << ttf_path << "'\n";
             return false;
         }
 
-        int font_offset = stbtt_GetFontOffsetForIndex(font_buffer.data(), 0);
-        if (font_offset < 0)
+        out_font_offset = stbtt_GetFontOffsetForIndex(out_font_buffer.data(), 0);
+        if (out_font_offset < 0)
         {
             std::cerr << "[FontRenderer] Invalid font offset for '" << ttf_path << "'\n";
+            out_font_buffer.clear();
             return false;
         }
 
         stbtt_fontinfo font{};
-        if (!stbtt_InitFont(&font, font_buffer.data(), font_offset))
+        if (!stbtt_InitFont(&font, out_font_buffer.data(), out_font_offset))
         {
             std::cerr << "[FontRenderer] Failed to initialise font info for '" << ttf_path << "'\n";
+            out_font_buffer.clear();
             return false;
         }
 
@@ -83,6 +91,7 @@ namespace almondnamespace::font
         int raw_line_gap = 0;
         stbtt_GetFontVMetrics(&font, &raw_ascent, &raw_descent, &raw_line_gap);
         const float scale = stbtt_ScaleForPixelHeight(&font, size_pt);
+        out_pixel_scale = scale;
         out_metrics.ascent = static_cast<float>(raw_ascent) * scale;
         out_metrics.descent = static_cast<float>(-raw_descent) * scale;
         out_metrics.lineGap = static_cast<float>(raw_line_gap) * scale;
@@ -129,7 +138,7 @@ namespace almondnamespace::font
             packed_offset += static_cast<std::size_t>(glyph_count);
         }
 
-        if (!stbtt_PackFontRanges(&pack_context, font_buffer.data(), 0, pack_ranges.data(), static_cast<int>(pack_ranges.size())))
+        if (!stbtt_PackFontRanges(&pack_context, out_font_buffer.data(), 0, pack_ranges.data(), static_cast<int>(pack_ranges.size())))
         {
             stbtt_PackEnd(&pack_context);
             std::cerr << "[FontRenderer] Failed to pack glyph ranges for font '" << ttf_path << "'\n";

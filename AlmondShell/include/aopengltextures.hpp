@@ -49,6 +49,7 @@
 #include <unordered_map>
 #include <mutex>
 #include <algorithm>
+#include <stdexcept>
 
 namespace almondnamespace::opengltextures
 {
@@ -169,8 +170,7 @@ namespace almondnamespace::opengltextures
             }
         }
         if (!oglData) {
-            std::cerr << "[UploadAtlas] OpenGL backendData not initialized!\n";
-            return;
+            throw std::runtime_error("[UploadAtlas] OpenGL backendData not initialized");
         }
         auto& glState = oglData->glState;
 
@@ -182,69 +182,76 @@ namespace almondnamespace::opengltextures
 
         // Ensure we have a current GL context
         HGLRC oldCtx = wglGetCurrentContext();
+        bool restoreContext = false;
         if (!oldCtx) {
             if (!glState.hdc || !glState.hglrc) {
-                std::cerr << "[UploadAtlas] No current GL context and no state to make one!\n";
-                return;
+                throw std::runtime_error("[UploadAtlas] No current GL context and no valid handles");
             }
             if (!wglMakeCurrent(glState.hdc, glState.hglrc)) {
-                std::cerr << "[UploadAtlas] Failed to make GL context current for upload\n";
-                return;
+                throw std::runtime_error("[UploadAtlas] Failed to make GL context current for upload");
             }
+            restoreContext = true;
         }
 
-        std::lock_guard<std::mutex> gpuLock(oglData->gpuMutex);
-        auto& gpu = oglData->gpu_atlases[&atlas];
+        auto releaseContext = [&]() noexcept {
+            if (restoreContext) {
+                wglMakeCurrent(nullptr, nullptr);
+            }
+        };
 
-        if (!gpu.textureHandle) {
-            glGenTextures(1, &gpu.textureHandle);
+        try {
+            std::lock_guard<std::mutex> gpuLock(oglData->gpuMutex);
+            auto& gpu = oglData->gpu_atlases[&atlas];
+
             if (!gpu.textureHandle) {
-                std::cerr << "[OpenGL] Failed to generate texture for atlas: "
-                    << atlas.name << "\n";
+                glGenTextures(1, &gpu.textureHandle);
+                if (!gpu.textureHandle) {
+                    throw std::runtime_error("[OpenGL] Failed to generate texture handle for atlas");
+                }
+            }
+
+            if (gpu.version == atlas.version && gpu.textureHandle != 0) {
+                releaseContext();
                 return;
             }
-        }
 
-        if (gpu.version == atlas.version) {
-            std::cerr << "[UploadAtlas] SKIPPING upload for '" << atlas.name
-                << "' version = " << atlas.version << "\n";
-            return;
-        }
+            glBindTexture(GL_TEXTURE_2D, gpu.textureHandle);
 
-        glBindTexture(GL_TEXTURE_2D, gpu.textureHandle);
-
-        if (gpu.width != atlas.width || gpu.height != atlas.height) {
+            if (gpu.width != atlas.width || gpu.height != atlas.height) {
 #ifdef GL_ARB_texture_storage
-            glTexStorage2D(GL_TEXTURE_2D, 1, GL_RGBA8, atlas.width, atlas.height);
+                glTexStorage2D(GL_TEXTURE_2D, 1, GL_RGBA8, atlas.width, atlas.height);
 #else
-            glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA8,
-                atlas.width, atlas.height,
-                0, GL_RGBA, GL_UNSIGNED_BYTE, nullptr);
+                glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA8,
+                    atlas.width, atlas.height,
+                    0, GL_RGBA, GL_UNSIGNED_BYTE, nullptr);
 #endif
-            gpu.width = atlas.width;
-            gpu.height = atlas.height;
+                gpu.width = atlas.width;
+                gpu.height = atlas.height;
+            }
+
+            glTexSubImage2D(GL_TEXTURE_2D, 0, 0, 0,
+                atlas.width, atlas.height,
+                GL_RGBA, GL_UNSIGNED_BYTE,
+                atlas.pixel_data.data());
+
+            glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+            glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+            glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
+            glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
+
+            gpu.version = atlas.version;
+
+            glBindTexture(GL_TEXTURE_2D, 0);
+
+            std::cerr << "[OpenGL] Uploaded atlas '" << atlas.name
+                << "' (tex id " << gpu.textureHandle << ")\n";
+        }
+        catch (...) {
+            releaseContext();
+            throw;
         }
 
-        glTexSubImage2D(GL_TEXTURE_2D, 0, 0, 0,
-            atlas.width, atlas.height,
-            GL_RGBA, GL_UNSIGNED_BYTE,
-            atlas.pixel_data.data());
-
-        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
-        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
-        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
-        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
-
-        gpu.version = atlas.version;
-
-        glBindTexture(GL_TEXTURE_2D, 0);
-
-        std::cerr << "[OpenGL] Uploaded atlas '" << atlas.name
-            << "' (tex id " << gpu.textureHandle << ")\n";
-
-        if (!oldCtx) {
-            wglMakeCurrent(nullptr, nullptr);
-        }
+        releaseContext();
     }
 
     inline void ensure_uploaded(const TextureAtlas& atlas)
@@ -276,12 +283,14 @@ namespace almondnamespace::opengltextures
 
 
     inline void clear_gpu_atlases() noexcept {
-        for (auto& [_, gpu] : opengl_gpu_atlases) {
+        auto& backend = get_opengl_backend();
+        std::lock_guard<std::mutex> lock(backend.gpuMutex);
+        for (auto& [_, gpu] : backend.gpu_atlases) {
             if (gpu.textureHandle) {
                 glDeleteTextures(1, &gpu.textureHandle);
             }
         }
-        opengl_gpu_atlases.clear();
+        backend.gpu_atlases.clear();
         s_generation.fetch_add(1, std::memory_order_relaxed);
     }
 

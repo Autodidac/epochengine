@@ -332,14 +332,46 @@ namespace almondnamespace::anativecontext
                 if (srcIndex + 3 >= atlas->pixel_data.size()) continue;
 
                 const uint8_t* src = atlas->pixel_data.data() + srcIndex;
-                const uint32_t color = (uint32_t(src[3]) << 24)
-                    | (uint32_t(src[0]) << 16)
-                    | (uint32_t(src[1]) << 8)
-                    | uint32_t(src[2]);
+                const uint8_t srcA = src[3];
+                if (srcA == 0)
+                    continue;
 
-                s_softrendererstate.framebuffer[
+                const uint8_t srcR = src[0];
+                const uint8_t srcG = src[1];
+                const uint8_t srcB = src[2];
+
+                const size_t dstIndex =
                     static_cast<size_t>(py) * static_cast<size_t>(s_softrendererstate.width)
-                        + static_cast<size_t>(px)] = color;
+                    + static_cast<size_t>(px);
+
+                uint32_t& dstPixel = s_softrendererstate.framebuffer[dstIndex];
+                const uint8_t dstA = static_cast<uint8_t>((dstPixel >> 24) & 0xFFu);
+                const uint8_t dstR = static_cast<uint8_t>((dstPixel >> 16) & 0xFFu);
+                const uint8_t dstG = static_cast<uint8_t>((dstPixel >> 8) & 0xFFu);
+                const uint8_t dstB = static_cast<uint8_t>(dstPixel & 0xFFu);
+
+                if (srcA == 255) {
+                    dstPixel = (uint32_t(255) << 24)
+                        | (uint32_t(srcR) << 16)
+                        | (uint32_t(srcG) << 8)
+                        | uint32_t(srcB);
+                    continue;
+                }
+
+                const uint32_t invA = 255u - static_cast<uint32_t>(srcA);
+                const uint8_t outA = static_cast<uint8_t>(std::min<uint32_t>(255u,
+                    static_cast<uint32_t>(srcA) + (static_cast<uint32_t>(dstA) * invA) / 255u));
+                const uint8_t outR = static_cast<uint8_t>((static_cast<uint32_t>(srcR) * srcA
+                    + static_cast<uint32_t>(dstR) * invA) / 255u);
+                const uint8_t outG = static_cast<uint8_t>((static_cast<uint32_t>(srcG) * srcA
+                    + static_cast<uint32_t>(dstG) * invA) / 255u);
+                const uint8_t outB = static_cast<uint8_t>((static_cast<uint32_t>(srcB) * srcA
+                    + static_cast<uint32_t>(dstB) * invA) / 255u);
+
+                dstPixel = (uint32_t(outA) << 24)
+                    | (uint32_t(outR) << 16)
+                    | (uint32_t(outG) << 8)
+                    | uint32_t(outB);
             }
         }
     }

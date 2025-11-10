@@ -37,6 +37,7 @@
 #include "aatlasmanager.hpp"
 #include "arobusttime.hpp"      // RobustTime
 #include "ainput.hpp"
+#include <exception>
 
 #include "aopengltextures.hpp" // ensure_uploaded, AtlasGPU, gpu_atlases 
 
@@ -524,8 +525,15 @@ namespace almondnamespace::openglcontext
         }
 
         for (const TextureAtlas* atlas : atlasesToReload) {
-            if (atlas)
+            if (!atlas)
+                continue;
+            try {
                 opengltextures::upload_atlas_to_gpu(*atlas);
+            }
+            catch (const std::exception& e) {
+                std::cerr << "[OpenGL] Failed to reload atlas '" << atlas->name
+                    << "': " << e.what() << "\n";
+            }
         }
 
         // ─── Time & events ──────────────────────────────────────────────────────
