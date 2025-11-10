@@ -35,12 +35,14 @@ namespace almondnamespace::font
     bool FontRenderer::load_and_bake_font(const std::string& ttf_path,
         float size_pt,
         std::vector<std::pair<char32_t, BakedGlyph>>& out_glyphs,
+        FontMetrics& out_metrics,
         Texture& out_texture)
     {
         out_glyphs.clear();
         out_texture.clear();
         out_texture.channels = 4;
         out_texture.name = ttf_path;
+        out_metrics = FontMetrics{};
 
         if (size_pt <= 0.0f)
         {
@@ -68,6 +70,16 @@ namespace almondnamespace::font
             std::cerr << "[FontRenderer] Failed to initialise font info for '" << ttf_path << "'\n";
             return false;
         }
+
+        int raw_ascent = 0;
+        int raw_descent = 0;
+        int raw_line_gap = 0;
+        stbtt_GetFontVMetrics(&font, &raw_ascent, &raw_descent, &raw_line_gap);
+        const float scale = stbtt_ScaleForPixelHeight(&font, size_pt);
+        out_metrics.ascent = static_cast<float>(raw_ascent) * scale;
+        out_metrics.descent = static_cast<float>(-raw_descent) * scale;
+        out_metrics.lineGap = static_cast<float>(raw_line_gap) * scale;
+        out_metrics.lineHeight = out_metrics.ascent + out_metrics.descent + out_metrics.lineGap;
 
         constexpr int pack_width = 1024;
         constexpr int pack_height = 1024;
@@ -177,6 +189,12 @@ namespace almondnamespace::font
                 baked.y0 = packed.y0;
                 baked.x1 = packed.x1;
                 baked.y1 = packed.y1;
+
+                out_metrics.maxAdvance = std::max(out_metrics.maxAdvance, baked.glyph.advance);
+                if (first_codepoint + glyph_index == 32)
+                {
+                    out_metrics.spaceAdvance = baked.glyph.advance;
+                }
 
                 out_glyphs.emplace_back(static_cast<char32_t>(first_codepoint + glyph_index), std::move(baked));
             }

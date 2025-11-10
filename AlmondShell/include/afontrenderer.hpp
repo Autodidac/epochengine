@@ -47,6 +47,17 @@ namespace almondnamespace::core
 
 namespace almondnamespace::font
 {
+    struct FontMetrics
+    {
+        float ascent = 0.0f;
+        float descent = 0.0f;
+        float lineGap = 0.0f;
+        float lineHeight = 0.0f;
+        float averageAdvance = 0.0f;
+        float maxAdvance = 0.0f;
+        float spaceAdvance = 0.0f;
+    };
+
     struct UVRect
     {
         ui::vec2 top_left{};
@@ -70,6 +81,7 @@ namespace almondnamespace::font
         std::unordered_map<char32_t, Glyph> glyphs;
         AtlasEntry atlas; // lightweight handle to the glyph atlas texture
         int atlas_index = -1;
+        FontMetrics metrics{};
     };
 
     class FontRenderer
@@ -85,8 +97,9 @@ namespace almondnamespace::font
 
             std::vector<std::pair<char32_t, BakedGlyph>> baked_glyphs{};
             Texture raw_texture{};
+            FontMetrics metrics{};
 
-            if (!load_and_bake_font(ttf_path, size_pt, baked_glyphs, raw_texture))
+            if (!load_and_bake_font(ttf_path, size_pt, baked_glyphs, metrics, raw_texture))
             {
                 std::cerr << "[FontRenderer] Failed to bake font '" << name << "' from '" << ttf_path << "'\n";
                 return false;
@@ -138,6 +151,10 @@ namespace almondnamespace::font
             const float entry_uv_width = atlas_entry.region.uv_width();
             const float entry_uv_height = atlas_entry.region.uv_height();
 
+            float total_advance = 0.0f;
+            std::size_t advance_count = 0;
+            float max_advance = 0.0f;
+
             for (auto& [codepoint, baked] : baked_glyphs)
             {
                 Glyph glyph = std::move(baked.glyph);
@@ -181,13 +198,41 @@ namespace almondnamespace::font
                     }
                 }
                 asset.glyphs.emplace(codepoint, std::move(glyph));
+
+                const Glyph& stored_glyph = asset.glyphs.at(codepoint);
+                total_advance += stored_glyph.advance;
+                max_advance = std::max(max_advance, stored_glyph.advance);
+                ++advance_count;
+                if (codepoint == U' ')
+                {
+                    metrics.spaceAdvance = stored_glyph.advance;
+                }
+            }
+
+            if (advance_count > 0)
+            {
+                metrics.averageAdvance = total_advance / static_cast<float>(advance_count);
+            }
+            metrics.maxAdvance = std::max(metrics.maxAdvance, max_advance);
+            if (metrics.spaceAdvance <= 0.0f)
+            {
+                metrics.spaceAdvance = metrics.averageAdvance;
             }
 
             asset.atlas = atlas_entry;
             asset.atlas_index = atlas.get_index();
+            asset.metrics = metrics;
             almondnamespace::atlasmanager::ensure_uploaded(atlas);
             loaded_fonts_.emplace(name, std::move(asset));
             return true;
+        }
+
+        [[nodiscard]] const FontAsset* get_font(const std::string& name) const noexcept
+        {
+            auto it = loaded_fonts_.find(name);
+            if (it == loaded_fonts_.end())
+                return nullptr;
+            return &it->second;
         }
 
 
@@ -255,6 +300,7 @@ namespace almondnamespace::font
         bool load_and_bake_font(const std::string& ttf_path,
             float size_pt,
             std::vector<std::pair<char32_t, BakedGlyph>>& out_glyphs,
+            FontMetrics& out_metrics,
             Texture& out_texture);
 
         std::unordered_map<std::string, FontAsset> loaded_fonts_{};

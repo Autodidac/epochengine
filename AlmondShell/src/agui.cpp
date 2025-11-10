@@ -32,11 +32,15 @@
 #include "aspritepool.hpp"
 #include "aspriteregistry.hpp"
 #include "atexture.hpp"
+#include "afontrenderer.hpp"
 
 #include <algorithm>
 #include <array>
+#include <cstdlib>
 #include <cstddef>
 #include <cstdint>
+#include <filesystem>
+#include <iostream>
 #include <limits>
 #include <memory>
 #include <mutex>
@@ -44,7 +48,7 @@
 #include <stdexcept>
 #include <string>
 #include <string_view>
-#include <unordered_set>
+#include <unordered_map>
 #include <vector>
 
 namespace almondnamespace::gui
@@ -56,108 +60,30 @@ namespace
     using EventType = almondnamespace::gui::EventType;
     using InputEvent = ::almondnamespace::gui::InputEvent;
 
-    // ASCII glyphs 0x20-0x7F from the public domain font8x8_basic set by Daniel Hepper.
-    constexpr std::array<std::array<std::uint8_t, 8>, 96> kFont8x8Basic = { {
-        { 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00 }, // space
-        { 0x18, 0x3C, 0x3C, 0x18, 0x18, 0x00, 0x18, 0x00 }, // !
-        { 0x36, 0x36, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00 }, // "
-        { 0x36, 0x36, 0x7F, 0x36, 0x7F, 0x36, 0x36, 0x00 }, // #
-        { 0x0C, 0x3E, 0x03, 0x1E, 0x30, 0x1F, 0x0C, 0x00 }, // $
-        { 0x00, 0x63, 0x33, 0x18, 0x0C, 0x66, 0x63, 0x00 }, // %
-        { 0x1C, 0x36, 0x1C, 0x6E, 0x3B, 0x33, 0x6E, 0x00 }, // &
-        { 0x06, 0x06, 0x03, 0x00, 0x00, 0x00, 0x00, 0x00 }, // '
-        { 0x18, 0x0C, 0x06, 0x06, 0x06, 0x0C, 0x18, 0x00 }, // (
-        { 0x06, 0x0C, 0x18, 0x18, 0x18, 0x0C, 0x06, 0x00 }, // )
-        { 0x00, 0x66, 0x3C, 0xFF, 0x3C, 0x66, 0x00, 0x00 }, // *
-        { 0x00, 0x0C, 0x0C, 0x3F, 0x0C, 0x0C, 0x00, 0x00 }, // +
-        { 0x00, 0x00, 0x00, 0x00, 0x00, 0x0C, 0x0C, 0x06 }, // ,
-        { 0x00, 0x00, 0x00, 0x3F, 0x00, 0x00, 0x00, 0x00 }, // -
-        { 0x00, 0x00, 0x00, 0x00, 0x00, 0x0C, 0x0C, 0x00 }, // .
-        { 0x60, 0x30, 0x18, 0x0C, 0x06, 0x03, 0x01, 0x00 }, // /
-        { 0x3E, 0x63, 0x73, 0x7B, 0x6F, 0x67, 0x3E, 0x00 }, // 0
-        { 0x0C, 0x0E, 0x0C, 0x0C, 0x0C, 0x0C, 0x3F, 0x00 }, // 1
-        { 0x1E, 0x33, 0x30, 0x1C, 0x06, 0x33, 0x3F, 0x00 }, // 2
-        { 0x1E, 0x33, 0x30, 0x1C, 0x30, 0x33, 0x1E, 0x00 }, // 3
-        { 0x38, 0x3C, 0x36, 0x33, 0x7F, 0x30, 0x78, 0x00 }, // 4
-        { 0x3F, 0x03, 0x1F, 0x30, 0x30, 0x33, 0x1E, 0x00 }, // 5
-        { 0x1C, 0x06, 0x03, 0x1F, 0x33, 0x33, 0x1E, 0x00 }, // 6
-        { 0x3F, 0x33, 0x30, 0x18, 0x0C, 0x0C, 0x0C, 0x00 }, // 7
-        { 0x1E, 0x33, 0x33, 0x1E, 0x33, 0x33, 0x1E, 0x00 }, // 8
-        { 0x1E, 0x33, 0x33, 0x3E, 0x30, 0x18, 0x0E, 0x00 }, // 9
-        { 0x00, 0x0C, 0x0C, 0x00, 0x00, 0x0C, 0x0C, 0x00 }, // :
-        { 0x00, 0x0C, 0x0C, 0x00, 0x00, 0x0C, 0x0C, 0x06 }, // ;
-        { 0x18, 0x0C, 0x06, 0x03, 0x06, 0x0C, 0x18, 0x00 }, // <
-        { 0x00, 0x00, 0x3F, 0x00, 0x00, 0x3F, 0x00, 0x00 }, // =
-        { 0x06, 0x0C, 0x18, 0x30, 0x18, 0x0C, 0x06, 0x00 }, // >
-        { 0x1E, 0x33, 0x30, 0x18, 0x0C, 0x00, 0x0C, 0x00 }, // ?
-        { 0x3E, 0x63, 0x7B, 0x7B, 0x7B, 0x03, 0x1E, 0x00 }, // @
-        { 0x0C, 0x1E, 0x33, 0x33, 0x3F, 0x33, 0x33, 0x00 }, // A
-        { 0x3F, 0x66, 0x66, 0x3E, 0x66, 0x66, 0x3F, 0x00 }, // B
-        { 0x3C, 0x66, 0x03, 0x03, 0x03, 0x66, 0x3C, 0x00 }, // C
-        { 0x1F, 0x36, 0x66, 0x66, 0x66, 0x36, 0x1F, 0x00 }, // D
-        { 0x7F, 0x46, 0x16, 0x1E, 0x16, 0x46, 0x7F, 0x00 }, // E
-        { 0x7F, 0x46, 0x16, 0x1E, 0x16, 0x06, 0x0F, 0x00 }, // F
-        { 0x3C, 0x66, 0x03, 0x03, 0x73, 0x66, 0x7C, 0x00 }, // G
-        { 0x33, 0x33, 0x33, 0x3F, 0x33, 0x33, 0x33, 0x00 }, // H
-        { 0x1E, 0x0C, 0x0C, 0x0C, 0x0C, 0x0C, 0x1E, 0x00 }, // I
-        { 0x78, 0x30, 0x30, 0x30, 0x33, 0x33, 0x1E, 0x00 }, // J
-        { 0x67, 0x66, 0x36, 0x1E, 0x36, 0x66, 0x67, 0x00 }, // K
-        { 0x0F, 0x06, 0x06, 0x06, 0x46, 0x66, 0x7F, 0x00 }, // L
-        { 0x63, 0x77, 0x7F, 0x7F, 0x6B, 0x63, 0x63, 0x00 }, // M
-        { 0x63, 0x67, 0x6F, 0x7B, 0x73, 0x63, 0x63, 0x00 }, // N
-        { 0x1C, 0x36, 0x63, 0x63, 0x63, 0x36, 0x1C, 0x00 }, // O
-        { 0x3F, 0x66, 0x66, 0x3E, 0x06, 0x06, 0x0F, 0x00 }, // P
-        { 0x1E, 0x33, 0x33, 0x33, 0x3B, 0x1E, 0x38, 0x00 }, // Q
-        { 0x3F, 0x66, 0x66, 0x3E, 0x36, 0x66, 0x67, 0x00 }, // R
-        { 0x1E, 0x33, 0x07, 0x0E, 0x38, 0x33, 0x1E, 0x00 }, // S
-        { 0x3F, 0x2D, 0x0C, 0x0C, 0x0C, 0x0C, 0x1E, 0x00 }, // T
-        { 0x33, 0x33, 0x33, 0x33, 0x33, 0x33, 0x3F, 0x00 }, // U
-        { 0x33, 0x33, 0x33, 0x33, 0x33, 0x1E, 0x0C, 0x00 }, // V
-        { 0x63, 0x63, 0x63, 0x6B, 0x7F, 0x77, 0x63, 0x00 }, // W
-        { 0x63, 0x63, 0x36, 0x1C, 0x1C, 0x36, 0x63, 0x00 }, // X
-        { 0x33, 0x33, 0x33, 0x1E, 0x0C, 0x0C, 0x1E, 0x00 }, // Y
-        { 0x7F, 0x63, 0x31, 0x18, 0x4C, 0x66, 0x7F, 0x00 }, // Z
-        { 0x1E, 0x06, 0x06, 0x06, 0x06, 0x06, 0x1E, 0x00 }, // [
-        { 0x03, 0x06, 0x0C, 0x18, 0x30, 0x60, 0x40, 0x00 }, // \
+    constexpr const char* kAtlasName = "__agui_builtin";
+    constexpr float kContentPadding = 8.0f;
+    constexpr float kDefaultFontSizePt = 18.0f;
+    constexpr float kFontScale = 1.0f;
+    constexpr float kTitleScale = 1.4f;
+    constexpr float kBoxInnerPadding = 6.0f;
+    constexpr float kCaretBlinkPeriod = 1.0f;
+    constexpr int kTabSpaces = 4;
+    constexpr const char* kDefaultFontName = "__agui_default_font";
+    constexpr const char* kDefaultFontFile = "RobotoMono-Regular.ttf";
 
-        { 0x1E, 0x18, 0x18, 0x18, 0x18, 0x18, 0x1E, 0x00 }, // ]
-        { 0x08, 0x1C, 0x36, 0x63, 0x00, 0x00, 0x00, 0x00 }, // ^
-        { 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0xFF }, // _
-        { 0x0C, 0x0C, 0x18, 0x00, 0x00, 0x00, 0x00, 0x00 }, // `
-        { 0x00, 0x00, 0x1E, 0x30, 0x3E, 0x33, 0x6E, 0x00 }, // a
-        { 0x07, 0x06, 0x06, 0x3E, 0x66, 0x66, 0x3B, 0x00 }, // b
-        { 0x00, 0x00, 0x1E, 0x33, 0x03, 0x33, 0x1E, 0x00 }, // c
-        { 0x38, 0x30, 0x30, 0x3E, 0x33, 0x33, 0x6E, 0x00 }, // d
-        { 0x00, 0x00, 0x1E, 0x33, 0x3F, 0x03, 0x1E, 0x00 }, // e
-        { 0x1C, 0x36, 0x06, 0x0F, 0x06, 0x06, 0x0F, 0x00 }, // f
-        { 0x00, 0x00, 0x6E, 0x33, 0x33, 0x3E, 0x30, 0x1F }, // g
-        { 0x07, 0x06, 0x36, 0x6E, 0x66, 0x66, 0x67, 0x00 }, // h
-        { 0x0C, 0x00, 0x0E, 0x0C, 0x0C, 0x0C, 0x1E, 0x00 }, // i
-        { 0x30, 0x00, 0x30, 0x30, 0x30, 0x33, 0x33, 0x1E }, // j
-        { 0x07, 0x06, 0x66, 0x36, 0x1E, 0x36, 0x67, 0x00 }, // k
-        { 0x0E, 0x0C, 0x0C, 0x0C, 0x0C, 0x0C, 0x1E, 0x00 }, // l
-        { 0x00, 0x00, 0x33, 0x7F, 0x7F, 0x6B, 0x63, 0x00 }, // m
-        { 0x00, 0x00, 0x1F, 0x33, 0x33, 0x33, 0x33, 0x00 }, // n
-        { 0x00, 0x00, 0x1E, 0x33, 0x33, 0x33, 0x1E, 0x00 }, // o
-        { 0x00, 0x00, 0x3B, 0x66, 0x66, 0x3E, 0x06, 0x0F }, // p
-        { 0x00, 0x00, 0x6E, 0x33, 0x33, 0x3E, 0x30, 0x78 }, // q
-        { 0x00, 0x00, 0x3B, 0x6E, 0x66, 0x06, 0x0F, 0x00 }, // r
-        { 0x00, 0x00, 0x3E, 0x03, 0x1E, 0x30, 0x1F, 0x00 }, // s
-        { 0x08, 0x0C, 0x3E, 0x0C, 0x0C, 0x2C, 0x18, 0x00 }, // t
-        { 0x00, 0x00, 0x33, 0x33, 0x33, 0x33, 0x6E, 0x00 }, // u
-        { 0x00, 0x00, 0x33, 0x33, 0x33, 0x1E, 0x0C, 0x00 }, // v
-        { 0x00, 0x00, 0x63, 0x6B, 0x7F, 0x7F, 0x36, 0x00 }, // w
-        { 0x00, 0x00, 0x63, 0x36, 0x1C, 0x36, 0x63, 0x00 }, // x
-        { 0x00, 0x00, 0x33, 0x33, 0x33, 0x3E, 0x30, 0x1F }, // y
-        { 0x00, 0x00, 0x3F, 0x19, 0x0C, 0x26, 0x3F, 0x00 }, // z
-        { 0x38, 0x0C, 0x0C, 0x07, 0x0C, 0x0C, 0x38, 0x00 }, // {
-        { 0x18, 0x18, 0x18, 0x00, 0x18, 0x18, 0x18, 0x00 }, // |
-        { 0x07, 0x0C, 0x0C, 0x38, 0x0C, 0x0C, 0x07, 0x00 }, // }
-        { 0x6E, 0x3B, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00 }, // ~
-        { 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00 }  // DEL
-    } };
+    struct GuiFontCache
+    {
+        std::string fontName = kDefaultFontName;
+        float fontSizePt = kDefaultFontSizePt;
+        const font::FontAsset* asset = nullptr;
+        const TextureAtlas* atlas = nullptr;
+        font::FontMetrics metrics{};
+        std::array<const font::Glyph*, 256> glyphLookup{};
+        const font::Glyph* fallbackGlyph = nullptr;
+    };
 
-    struct GuiResources {
+    struct GuiResources
+    {
         bool atlasBuilt = false;
         TextureAtlas* atlas = nullptr;
         SpriteHandle windowBackground{};
@@ -168,21 +94,145 @@ namespace
         SpriteHandle textFieldActive{};
         SpriteHandle panelBackground{};
         SpriteHandle consoleBackground{};
-        std::array<SpriteHandle, 96> glyphs{};
-        float glyphWidth = 8.0f;
-        float glyphHeight = 8.0f;
+        GuiFontCache font{};
+        font::FontRenderer fontRenderer{};
     };
 
     GuiResources g_resources{};
     std::mutex g_resourceMutex;
 
-    struct PtrHash {
-        size_t operator()(const void* p) const noexcept {
+    struct PtrHash
+    {
+        size_t operator()(const void* p) const noexcept
+        {
             return std::hash<const void*>{}(p);
         }
     };
-    static std::unordered_set<const void*, PtrHash> g_uploadedContexts;
+
+    struct UploadState
+    {
+        bool guiAtlasUploaded = false;
+        bool fontAtlasUploaded = false;
+    };
+
+    static std::unordered_map<const void*, UploadState, PtrHash> g_uploadedContexts;
     static std::mutex g_uploadMutex;
+
+    [[nodiscard]] std::filesystem::path find_default_font_path()
+    {
+        if (const char* overridePath = std::getenv("ALMOND_GUI_FONT_PATH"))
+        {
+            std::filesystem::path envPath{ overridePath };
+            std::error_code ec;
+            if (!envPath.empty() && std::filesystem::exists(envPath, ec))
+                return envPath;
+        }
+
+        const std::array<std::filesystem::path, 5> relativeCandidates{
+            std::filesystem::path{ kDefaultFontFile },
+            std::filesystem::path{ "assets/fonts" } / kDefaultFontFile,
+            std::filesystem::path{ "Fonts" } / kDefaultFontFile,
+            std::filesystem::path{ "AlmondShell/assets/fonts" } / kDefaultFontFile,
+            std::filesystem::path{ "../AlmondShell/assets/fonts" } / kDefaultFontFile,
+        };
+
+        const auto try_with_root = [&](const std::filesystem::path& root) -> std::filesystem::path
+        {
+            for (const auto& rel : relativeCandidates)
+            {
+                std::filesystem::path candidate = root.empty() ? rel : (root / rel);
+                std::error_code ec;
+                if (!candidate.empty() && std::filesystem::exists(candidate, ec))
+                    return candidate;
+            }
+            return {};
+        };
+
+        if (auto path = try_with_root({}); !path.empty())
+            return path;
+
+        const std::filesystem::path cwd = std::filesystem::current_path();
+        if (auto path = try_with_root(cwd); !path.empty())
+            return path;
+
+        const std::filesystem::path parent = cwd.parent_path();
+        if (!parent.empty())
+        {
+            if (auto path = try_with_root(parent); !path.empty())
+                return path;
+        }
+
+        return {};
+    }
+
+    void populate_font_lookup(GuiFontCache& font)
+    {
+        font.glyphLookup.fill(nullptr);
+        font.fallbackGlyph = nullptr;
+
+        if (!font.asset)
+            return;
+
+        for (const auto& [codepoint, glyph] : font.asset->glyphs)
+        {
+            if (codepoint < static_cast<char32_t>(font.glyphLookup.size()))
+            {
+                font.glyphLookup[static_cast<std::size_t>(codepoint)] = &glyph;
+            }
+        }
+
+        auto setFallback = [&](unsigned char ch)
+        {
+            if (ch < font.glyphLookup.size() && font.glyphLookup[ch])
+                font.fallbackGlyph = font.glyphLookup[ch];
+        };
+
+        setFallback(static_cast<unsigned char>('?'));
+        if (!font.fallbackGlyph)
+            setFallback(static_cast<unsigned char>(' '));
+        if (!font.fallbackGlyph && !font.asset->glyphs.empty())
+            font.fallbackGlyph = &font.asset->glyphs.begin()->second;
+    }
+
+    void ensure_font_loaded_locked()
+    {
+        if (g_resources.font.asset)
+            return;
+
+        const std::filesystem::path fontPath = find_default_font_path();
+        if (fontPath.empty())
+        {
+            std::cerr << "[agui] Unable to locate GUI font '" << kDefaultFontFile << "'\n";
+            return;
+        }
+
+        if (!g_resources.fontRenderer.load_font(g_resources.font.fontName, fontPath.string(), g_resources.font.fontSizePt))
+        {
+            std::cerr << "[agui] Failed to load GUI font from '" << fontPath.string() << "'\n";
+            return;
+        }
+
+        g_resources.font.asset = g_resources.fontRenderer.get_font(g_resources.font.fontName);
+        if (!g_resources.font.asset)
+        {
+            std::cerr << "[agui] Font renderer returned no asset for '" << g_resources.font.fontName << "'\n";
+            return;
+        }
+
+        g_resources.font.metrics = g_resources.font.asset->metrics;
+        populate_font_lookup(g_resources.font);
+
+        const auto& atlasVec = almondnamespace::atlasmanager::get_atlas_vector();
+        if (g_resources.font.asset->atlas_index >= 0 &&
+            static_cast<std::size_t>(g_resources.font.asset->atlas_index) < atlasVec.size())
+        {
+            g_resources.font.atlas = atlasVec[g_resources.font.asset->atlas_index];
+            if (g_resources.font.atlas)
+            {
+                almondnamespace::atlasmanager::ensure_uploaded(*g_resources.font.atlas);
+            }
+        }
+    }
 
     struct FrameState {
         // thread's active render context (must be set in begin_frame)
@@ -219,9 +269,8 @@ namespace
 
     constexpr const char* kAtlasName = "__agui_builtin";
     constexpr float kContentPadding = 8.0f;
-    constexpr float kLineSpacing = 4.0f;
-    constexpr float kFontScale = 2.0f;
-    constexpr float kTitleScale = 2.5f;
+    constexpr float kFontScale = 1.0f;
+    constexpr float kTitleScale = 1.4f;
     constexpr float kBoxInnerPadding = 6.0f;
     constexpr float kCaretBlinkPeriod = 1.0f;
 
@@ -233,25 +282,6 @@ namespace
             pixels[idx + 1] = g;
             pixels[idx + 2] = b;
             pixels[idx + 3] = a;
-        }
-        return pixels;
-    }
-
-    [[nodiscard]] std::vector<std::uint8_t> make_glyph_pixels(const std::array<std::uint8_t, 8>& glyph)
-    {
-        constexpr std::uint32_t w = 8;
-        constexpr std::uint32_t h = 8;
-        std::vector<std::uint8_t> pixels(w * h * 4, 0);
-        for (std::uint32_t row = 0; row < h; ++row) {
-            const std::uint8_t bits = glyph[row];
-            for (std::uint32_t col = 0; col < w; ++col) {
-                const bool on = (bits >> col) & 0x1u;
-                const std::size_t index = static_cast<std::size_t>(row) * w * 4 + col * 4;
-                pixels[index + 0] = 255;
-                pixels[index + 1] = 255;
-                pixels[index + 2] = 255;
-                pixels[index + 3] = on ? 255 : 0;
-            }
         }
         return pixels;
     }
@@ -294,66 +324,71 @@ namespace
     void ensure_resources()
     {
         std::scoped_lock lock(g_resourceMutex);
-        if (g_resources.atlasBuilt)
-            return;
-
-        auto atlasIt = almondnamespace::atlasmanager::atlas_map.find(kAtlasName);
-        if (atlasIt == almondnamespace::atlasmanager::atlas_map.end()) {
-            almondnamespace::atlasmanager::create_atlas({
-                .name = kAtlasName,
-                .width = 512,
-                .height = 512,
-                .generate_mipmaps = false
-            });
-            atlasIt = almondnamespace::atlasmanager::atlas_map.find(kAtlasName);
+        if (!g_resources.atlasBuilt)
+        {
+            auto atlasIt = almondnamespace::atlasmanager::atlas_map.find(kAtlasName);
             if (atlasIt == almondnamespace::atlasmanager::atlas_map.end()) {
-                throw std::runtime_error("[agui] Unable to create GUI atlas");
+                almondnamespace::atlasmanager::create_atlas({
+                    .name = kAtlasName,
+                    .width = 512,
+                    .height = 512,
+                    .generate_mipmaps = false
+                });
+                atlasIt = almondnamespace::atlasmanager::atlas_map.find(kAtlasName);
+                if (atlasIt == almondnamespace::atlasmanager::atlas_map.end()) {
+                    throw std::runtime_error("[agui] Unable to create GUI atlas");
+                }
             }
+
+            TextureAtlas& atlas = atlasIt->second;
+            g_resources.atlas = &atlas;
+
+            g_resources.windowBackground = add_sprite(atlas, "__agui/window_bg",
+                make_solid_pixels(0x33, 0x35, 0x38, 0xFF, 8, 8), 8, 8);
+            g_resources.buttonNormal = add_sprite(atlas, "__agui/button_normal",
+                make_solid_pixels(0x5B, 0x5F, 0x66, 0xFF, 8, 8), 8, 8);
+            g_resources.buttonHover = add_sprite(atlas, "__agui/button_hover",
+                make_solid_pixels(0x76, 0x7C, 0x85, 0xFF, 8, 8), 8, 8);
+            g_resources.buttonActive = add_sprite(atlas, "__agui/button_active",
+                make_solid_pixels(0x94, 0x9A, 0xA3, 0xFF, 8, 8), 8, 8);
+            g_resources.textField = add_sprite(atlas, "__agui/text_field",
+                make_solid_pixels(0x2B, 0x2E, 0x33, 0xFF, 8, 8), 8, 8);
+            g_resources.textFieldActive = add_sprite(atlas, "__agui/text_field_active",
+                make_solid_pixels(0x3A, 0x3E, 0x45, 0xFF, 8, 8), 8, 8);
+            g_resources.panelBackground = add_sprite(atlas, "__agui/panel_bg",
+                make_solid_pixels(0x27, 0x29, 0x2E, 0xFF, 8, 8), 8, 8);
+            g_resources.consoleBackground = add_sprite(atlas, "__agui/console_bg",
+                make_solid_pixels(0x1F, 0x21, 0x26, 0xFF, 8, 8), 8, 8);
+
+            g_resources.atlasBuilt = true;
         }
 
-        TextureAtlas& atlas = atlasIt->second;
-        g_resources.atlas = &atlas;
-
-        g_resources.windowBackground = add_sprite(atlas, "__agui/window_bg",
-            make_solid_pixels(0x33, 0x35, 0x38, 0xFF, 8, 8), 8, 8);
-        g_resources.buttonNormal = add_sprite(atlas, "__agui/button_normal",
-            make_solid_pixels(0x5B, 0x5F, 0x66, 0xFF, 8, 8), 8, 8);
-        g_resources.buttonHover = add_sprite(atlas, "__agui/button_hover",
-            make_solid_pixels(0x76, 0x7C, 0x85, 0xFF, 8, 8), 8, 8);
-        g_resources.buttonActive = add_sprite(atlas, "__agui/button_active",
-            make_solid_pixels(0x94, 0x9A, 0xA3, 0xFF, 8, 8), 8, 8);
-        g_resources.textField = add_sprite(atlas, "__agui/text_field",
-            make_solid_pixels(0x2B, 0x2E, 0x33, 0xFF, 8, 8), 8, 8);
-        g_resources.textFieldActive = add_sprite(atlas, "__agui/text_field_active",
-            make_solid_pixels(0x3A, 0x3E, 0x45, 0xFF, 8, 8), 8, 8);
-        g_resources.panelBackground = add_sprite(atlas, "__agui/panel_bg",
-            make_solid_pixels(0x27, 0x29, 0x2E, 0xFF, 8, 8), 8, 8);
-        g_resources.consoleBackground = add_sprite(atlas, "__agui/console_bg",
-            make_solid_pixels(0x1F, 0x21, 0x26, 0xFF, 8, 8), 8, 8);
-
-        for (std::size_t i = 0; i < kFont8x8Basic.size(); ++i) {
-            const int codepoint = static_cast<int>(i) + 32;
-            const std::string name = "__agui/glyph_" + std::to_string(codepoint);
-            auto pixels = make_glyph_pixels(kFont8x8Basic[i]);
-            g_resources.glyphs[i] = add_sprite(atlas, name, pixels, 8, 8);
-        }
-
-        g_resources.atlasBuilt = true;
+        ensure_font_loaded_locked();
     }
 
     void ensure_backend_upload(core::Context& ctx)
     {
         ensure_resources();
-        if (!g_resources.atlas) return;
-
         std::scoped_lock lock(g_uploadMutex);
-        if (g_uploadedContexts.contains(&ctx)) return;
+        auto& state = g_uploadedContexts[&ctx];
 
-        const std::uint32_t handle = ctx.add_atlas_safe(*g_resources.atlas);
-        if (handle == 0) {
-            throw std::runtime_error("[agui] Failed to upload GUI atlas for this context");
+        if (!state.guiAtlasUploaded && g_resources.atlas)
+        {
+            const std::uint32_t handle = ctx.add_atlas_safe(*g_resources.atlas);
+            if (handle == 0) {
+                throw std::runtime_error("[agui] Failed to upload GUI atlas for this context");
+            }
+            state.guiAtlasUploaded = true;
         }
-        g_uploadedContexts.insert(&ctx);
+
+        if (!state.fontAtlasUploaded && g_resources.font.atlas)
+        {
+            const std::uint32_t handle = ctx.add_atlas_safe(*g_resources.font.atlas);
+            if (handle != 0)
+            {
+                state.fontAtlasUploaded = true;
+            }
+        }
     }
 
     void draw_sprite(const SpriteHandle& handle, float x, float y, float w, float h)
@@ -388,25 +423,97 @@ namespace
         }
     }
 
-    [[nodiscard]] SpriteHandle glyph_handle(unsigned char ch) noexcept
-    {
-        if (ch >= 32 && ch < 128) {
-            return g_resources.glyphs[ch - 32];
-        }
-        return g_resources.glyphs['?' - 32];
-    }
-
     [[nodiscard]] bool point_in_rect(Vec2 point, float x, float y, float w, float h) noexcept
     {
         return (point.x >= x && point.x <= x + w && point.y >= y && point.y <= y + h);
     }
 
+    [[nodiscard]] float base_line_height(float scale) noexcept
+    {
+        const auto& metrics = g_resources.font.metrics;
+        if (metrics.ascent > 0.0f || metrics.descent > 0.0f)
+            return (metrics.ascent + metrics.descent) * scale;
+        return 8.0f * scale;
+    }
+
+    [[nodiscard]] float line_advance_amount(float scale) noexcept
+    {
+        const auto& metrics = g_resources.font.metrics;
+        if (metrics.ascent > 0.0f || metrics.descent > 0.0f || metrics.lineGap > 0.0f)
+            return (metrics.ascent + metrics.descent + metrics.lineGap) * scale;
+        return base_line_height(scale);
+    }
+
+    [[nodiscard]] float baseline_offset(float scale) noexcept
+    {
+        const auto& metrics = g_resources.font.metrics;
+        if (metrics.ascent > 0.0f)
+            return metrics.ascent * scale;
+        return base_line_height(scale);
+    }
+
+    [[nodiscard]] float space_advance(float scale) noexcept
+    {
+        if (g_resources.font.metrics.spaceAdvance > 0.0f)
+            return g_resources.font.metrics.spaceAdvance * scale;
+        if (const auto* glyph = g_resources.font.glyphLookup[static_cast<unsigned char>(' ')])
+            return glyph->advance * scale;
+        if (g_resources.font.metrics.averageAdvance > 0.0f)
+            return g_resources.font.metrics.averageAdvance * scale;
+        return 8.0f * scale;
+    }
+
+    [[nodiscard]] const font::Glyph* lookup_glyph(unsigned char ch) noexcept
+    {
+        if (!g_resources.font.asset)
+            return nullptr;
+
+        if (ch < g_resources.font.glyphLookup.size())
+        {
+            if (const auto* glyph = g_resources.font.glyphLookup[ch])
+                return glyph;
+        }
+
+        return g_resources.font.fallbackGlyph;
+    }
+
+    [[nodiscard]] float glyph_advance(unsigned char ch, float scale) noexcept
+    {
+        if (ch == '\t')
+            return space_advance(scale) * static_cast<float>(kTabSpaces);
+
+        if (const auto* glyph = lookup_glyph(ch))
+            return glyph->advance * scale;
+
+        if (g_resources.font.metrics.averageAdvance > 0.0f)
+            return g_resources.font.metrics.averageAdvance * scale;
+
+        return 8.0f * scale;
+    }
+
+    [[nodiscard]] float measure_text_width(std::string_view text, float scale) noexcept
+    {
+        float current = 0.0f;
+        float maxWidth = 0.0f;
+        for (char ch : text)
+        {
+            if (ch == '\n')
+            {
+                maxWidth = std::max(maxWidth, current);
+                current = 0.0f;
+                continue;
+            }
+            current += glyph_advance(static_cast<unsigned char>(ch), scale);
+        }
+        return std::max(maxWidth, current);
+    }
+
     [[nodiscard]] float measure_wrapped_text_height(std::string_view text, float width, float scale) noexcept
     {
         ensure_resources();
-        const float glyphW = g_resources.glyphWidth * scale;
-        const float glyphH = g_resources.glyphHeight * scale;
-        const float effectiveWidth = std::max(glyphW, width);
+        const float effectiveWidth = std::max(space_advance(scale), width);
+        const float lineAdvance = line_advance_amount(scale);
+        const float baseHeight = base_line_height(scale);
 
         std::size_t lines = 1;
         float penX = 0.0f;
@@ -417,106 +524,127 @@ namespace
                 continue;
             }
 
-            if (penX + glyphW > effectiveWidth + 0.001f) {
+            const float advance = glyph_advance(static_cast<unsigned char>(ch), scale);
+            if (penX + advance > effectiveWidth + 0.001f) {
                 ++lines;
                 penX = 0.0f;
             }
 
-            penX += glyphW;
+            penX += advance;
         }
 
-        const float totalHeight = static_cast<float>(lines) * glyphH + static_cast<float>(lines - 1) * kLineSpacing;
-        return std::max(glyphH, totalHeight);
+        const float totalHeight = baseHeight + static_cast<float>(lines - 1) * lineAdvance;
+        return std::max(baseHeight, totalHeight);
     }
 
     [[nodiscard]] almondnamespace::gui::Vec2 compute_caret_position(std::string_view text, float x, float y, float width, float scale) noexcept
     {
         ensure_resources();
-        const float glyphW = g_resources.glyphWidth * scale;
-        const float glyphH = g_resources.glyphHeight * scale;
-        const float effectiveWidth = std::max(glyphW, width);
-
-        float startX = x;
+        const float effectiveWidth = std::max(space_advance(scale), width);
+        const float lineAdvance = line_advance_amount(scale);
         float penX = x;
-        float penY = y;
+        float baseline = y + baseline_offset(scale);
 
         for (char ch : text) {
             if (ch == '\n') {
-                penX = startX;
-                penY += glyphH + kLineSpacing;
+                penX = x;
+                baseline += lineAdvance;
                 continue;
             }
 
-            if (penX + glyphW > startX + effectiveWidth + 0.001f) {
-                penX = startX;
-                penY += glyphH + kLineSpacing;
+            const float advance = glyph_advance(static_cast<unsigned char>(ch), scale);
+            if (penX + advance > x + effectiveWidth + 0.001f) {
+                penX = x;
+                baseline += lineAdvance;
             }
 
-            penX += glyphW;
+            penX += advance;
         }
 
-        return {penX, penY};
+        const float caretTop = baseline - baseline_offset(scale);
+        return { penX, caretTop };
     }
 
     float draw_wrapped_text(std::string_view text, float x, float y, float width, float scale)
     {
         ensure_resources();
-        if (!g_frame.ctx)
+        if (!g_frame.ctx || !g_resources.font.asset)
             return 0.0f;
 
-        const float glyphW = g_resources.glyphWidth * scale;
-        const float glyphH = g_resources.glyphHeight * scale;
-        const float effectiveWidth = std::max(glyphW, width);
+        const float effectiveWidth = std::max(space_advance(scale), width);
+        const float lineAdvance = line_advance_amount(scale);
+        const float ascent = baseline_offset(scale);
+        const float baseHeight = base_line_height(scale);
 
-        const float startX = x;
         float penX = x;
-        float penY = y;
+        float baseline = y + ascent;
+        std::size_t lines = 1;
 
         for (char ch : text) {
             if (ch == '\n') {
-                penX = startX;
-                penY += glyphH + kLineSpacing;
+                penX = x;
+                baseline += lineAdvance;
+                ++lines;
                 continue;
             }
 
-            if (penX + glyphW > startX + effectiveWidth + 0.001f) {
-                penX = startX;
-                penY += glyphH + kLineSpacing;
+            const float advance = glyph_advance(static_cast<unsigned char>(ch), scale);
+            if (penX + advance > x + effectiveWidth + 0.001f) {
+                penX = x;
+                baseline += lineAdvance;
+                ++lines;
             }
 
-            const SpriteHandle handle = glyph_handle(static_cast<unsigned char>(ch));
-            draw_sprite(handle, penX, penY, glyphW, glyphH);
-            penX += glyphW;
+            if (const auto* glyph = lookup_glyph(static_cast<unsigned char>(ch))) {
+                if (glyph->handle.is_valid()) {
+                    const float drawW = glyph->size_px.x * scale;
+                    const float drawH = glyph->size_px.y * scale;
+                    const float offsetX = glyph->offset_px.x * scale;
+                    const float offsetY = glyph->offset_px.y * scale;
+                    draw_sprite(glyph->handle, penX + offsetX, baseline + offsetY, drawW, drawH);
+                }
+            }
+
+            penX += advance;
         }
 
-        return (penY - y) + glyphH;
+        return baseHeight + static_cast<float>(lines - 1) * lineAdvance;
     }
 
     void draw_caret(float x, float y, float height)
     {
-        const float caretWidth = std::max(1.0f, g_resources.glyphWidth * kFontScale * 0.1f);
+        const float caretWidth = std::max(1.0f, space_advance(kFontScale) * 0.1f);
         draw_sprite(g_resources.buttonActive, x, y, caretWidth, height);
     }
 
     void draw_text_line(std::string_view text, float x, float y, float scale)
     {
         ensure_resources();
-        if (!g_frame.ctx)
+        if (!g_frame.ctx || !g_resources.font.asset)
             return;
 
-        const float glyphW = g_resources.glyphWidth * scale;
-        const float glyphH = g_resources.glyphHeight * scale;
+        float penX = x;
+        float baseline = y + baseline_offset(scale);
+        const float lineAdvance = line_advance_amount(scale);
 
         for (char ch : text) {
             if (ch == '\n') {
-                y += glyphH + kLineSpacing;
-                x = g_frame.origin.x + kContentPadding;
+                penX = g_frame.origin.x + kContentPadding;
+                baseline += lineAdvance;
                 continue;
             }
 
-            const SpriteHandle handle = glyph_handle(static_cast<unsigned char>(ch));
-            draw_sprite(handle, x, y, glyphW, glyphH);
-            x += glyphW;
+            if (const auto* glyph = lookup_glyph(static_cast<unsigned char>(ch))) {
+                if (glyph->handle.is_valid()) {
+                    const float drawW = glyph->size_px.x * scale;
+                    const float drawH = glyph->size_px.y * scale;
+                    const float offsetX = glyph->offset_px.x * scale;
+                    const float offsetY = glyph->offset_px.y * scale;
+                    draw_sprite(glyph->handle, penX + offsetX, baseline + offsetY, drawW, drawH);
+                }
+            }
+
+            penX += glyph_advance(static_cast<unsigned char>(ch), scale);
         }
     }
 
@@ -635,7 +763,7 @@ void begin_window(std::string_view title, Vec2 position, Vec2 size) noexcept
 
     draw_sprite(g_resources.windowBackground, position.x, position.y, size.x, size.y);
 
-    const float titleHeight = g_resources.glyphHeight * kTitleScale;
+    const float titleHeight = base_line_height(kTitleScale);
     draw_text_line(title, position.x + kContentPadding, position.y + kContentPadding, kTitleScale);
 
     advance_cursor({ 0.0f, titleHeight + kContentPadding });
@@ -652,8 +780,10 @@ bool button(std::string_view label, Vec2 size) noexcept
         return false;
 
     const Vec2 pos = g_frame.cursor;
-    const float width = std::max<float>(static_cast<float>(size.x), g_resources.glyphWidth * kFontScale + 2.0f * kContentPadding);
-    const float height = std::max<float>(static_cast<float>(size.y), g_resources.glyphHeight * kFontScale + 2.0f * kContentPadding);
+    const float baseHeight = base_line_height(kFontScale);
+    const float minWidth = space_advance(kFontScale) + 2.0f * kContentPadding;
+    const float width = std::max<float>(static_cast<float>(size.x), minWidth);
+    const float height = std::max<float>(static_cast<float>(size.y), baseHeight + 2.0f * kContentPadding);
 
     const bool hovered = point_in_rect(g_frame.mousePos, pos.x, pos.y, width, height);
 
@@ -663,8 +793,8 @@ bool button(std::string_view label, Vec2 size) noexcept
 
     draw_sprite(background, pos.x, pos.y, width, height);
 
-    const float textWidth = static_cast<float>(label.size()) * g_resources.glyphWidth * kFontScale;
-    const float textHeight = g_resources.glyphHeight * kFontScale;
+    const float textWidth = measure_text_width(label, kFontScale);
+    const float textHeight = baseHeight;
     const float textX = pos.x + std::max(0.0f, (width - textWidth) * 0.5f);
     const float textY = pos.y + std::max(0.0f, (height - textHeight) * 0.5f);
     draw_text_line(label, textX, textY, kFontScale);
@@ -682,7 +812,7 @@ bool image_button(const SpriteHandle& sprite, Vec2 size) noexcept
     ensure_resources();
 
     const Vec2 pos = g_frame.cursor;
-    const float minSize = g_resources.glyphHeight * kFontScale * 2.0f;
+    const float minSize = base_line_height(kFontScale) * 2.0f;
     const float width = std::max<float>(static_cast<float>(size.x), minSize);
     const float height = std::max<float>(static_cast<float>(size.y), minSize);
 
@@ -710,8 +840,9 @@ EditBoxResult edit_box(std::string& text, Vec2 size, std::size_t max_chars, bool
     ensure_resources();
 
     const Vec2 pos = g_frame.cursor;
-    const float minWidth = g_resources.glyphWidth * kFontScale * 4.0f;
-    const float minHeight = g_resources.glyphHeight * kFontScale + 2.0f * kBoxInnerPadding;
+    const float baseHeight = base_line_height(kFontScale);
+    const float minWidth = space_advance(kFontScale) * 4.0f;
+    const float minHeight = baseHeight + 2.0f * kBoxInnerPadding;
     const float width = std::max<float>(static_cast<float>(size.x), minWidth);
     const float height = std::max<float>(static_cast<float>(size.y), minHeight);
 
@@ -812,11 +943,11 @@ EditBoxResult edit_box(std::string& text, Vec2 size, std::size_t max_chars, bool
     if (active && g_frame.caretVisible) {
         const Vec2 caret = multiline
             ? compute_caret_position(text, textX, textY, contentWidth, kFontScale)
-            : Vec2{ textX + static_cast<float>(text.size()) * g_resources.glyphWidth * kFontScale, textY };
+            : Vec2{ textX + measure_text_width(text, kFontScale), textY };
 
         const float caretHeight = multiline
-            ? std::min(contentHeight, g_resources.glyphHeight * kFontScale)
-            : g_resources.glyphHeight * kFontScale;
+            ? std::min(contentHeight, baseHeight)
+            : baseHeight;
 
         const float caretRight = textX + std::max(1.0f, contentWidth) - 1.0f;
         const float caretX = std::clamp(caret.x, textX, caretRight);
@@ -836,10 +967,11 @@ void text_box(std::string_view text, Vec2 size) noexcept
     ensure_resources();
 
     const Vec2 pos = g_frame.cursor;
-    const float minWidth = g_resources.glyphWidth * kFontScale * 4.0f;
+    const float baseHeight = base_line_height(kFontScale);
+    const float minWidth = space_advance(kFontScale) * 4.0f;
     float width = static_cast<float>(size.x);
     if (width <= 0.0f) {
-        const float estimated = static_cast<float>(text.size()) * g_resources.glyphWidth * kFontScale + 2.0f * kBoxInnerPadding;
+        const float estimated = measure_text_width(text, kFontScale) + 2.0f * kBoxInnerPadding;
         width = std::max(minWidth, estimated);
     }
     else {
@@ -853,7 +985,7 @@ void text_box(std::string_view text, Vec2 size) noexcept
         height = textHeight + 2.0f * kBoxInnerPadding;
     }
     else {
-        height = std::max(height, g_resources.glyphHeight * kFontScale + 2.0f * kBoxInnerPadding);
+        height = std::max(height, baseHeight + 2.0f * kBoxInnerPadding);
     }
 
     draw_sprite(g_resources.panelBackground, pos.x, pos.y, width, height);
@@ -877,7 +1009,7 @@ ConsoleWindowResult console_window(const ConsoleWindowOptions& options) noexcept
     ensure_resources();
 
     const float availableWidth = std::max(0.0f, options.size.x - 2.0f * kContentPadding);
-    const float logHeight = std::max(0.0f, options.size.y - 3.0f * kContentPadding - (g_resources.glyphHeight * kFontScale));
+    const float logHeight = std::max(0.0f, options.size.y - 3.0f * kContentPadding - base_line_height(kFontScale));
     const Vec2 logPos = g_frame.cursor;
 
     if (availableWidth > 0.0f && logHeight > 0.0f) {
@@ -896,7 +1028,8 @@ ConsoleWindowResult console_window(const ConsoleWindowOptions& options) noexcept
         for (std::size_t i = start; i < count; ++i) {
             const std::string& line = options.lines[i];
             const float drawn = draw_wrapped_text(line, logPos.x + kBoxInnerPadding, penY, contentWidth, kFontScale);
-            penY += drawn + kLineSpacing;
+            const float paragraphGap = std::max(0.0f, line_advance_amount(kFontScale) - base_line_height(kFontScale));
+            penY += drawn + paragraphGap;
             if (penY > maxY) {
                 break;
             }
@@ -906,7 +1039,7 @@ ConsoleWindowResult console_window(const ConsoleWindowOptions& options) noexcept
     set_cursor({ logPos.x, logPos.y + logHeight + kContentPadding });
 
     if (options.input) {
-        const float fieldHeight = g_resources.glyphHeight * kFontScale + 2.0f * kBoxInnerPadding;
+        const float fieldHeight = base_line_height(kFontScale) + 2.0f * kBoxInnerPadding;
         Vec2 inputSize{ availableWidth, fieldHeight };
         result.input = edit_box(*options.input, inputSize, options.max_input_chars, options.multiline_input);
     }
@@ -921,7 +1054,7 @@ void label(std::string_view text) noexcept
         return;
 
     draw_text_line(text, g_frame.cursor.x, g_frame.cursor.y, kFontScale);
-    advance_cursor({ 0.0f, g_resources.glyphHeight * kFontScale + kLineSpacing });
+    advance_cursor({ 0.0f, line_advance_amount(kFontScale) });
 }
 
 float line_height() noexcept
@@ -932,7 +1065,7 @@ float line_height() noexcept
     catch (...) {
         return 16.0f;
     }
-    return g_resources.glyphHeight * kFontScale + kLineSpacing;
+    return line_advance_amount(kFontScale);
 }
 
 float glyph_width() noexcept
@@ -943,7 +1076,7 @@ float glyph_width() noexcept
     catch (...) {
         return 8.0f * kFontScale;
     }
-    return g_resources.glyphWidth * kFontScale;
+    return space_advance(kFontScale);
 }
 
 std::optional<WidgetBounds> last_button_bounds() noexcept
