@@ -151,10 +151,13 @@ namespace almondnamespace
             //    std::cerr << "[ERROR] Failed to extract source archive.\n";
             //}
 
+#if defined(_WIN32)
             std::string extract_command = "cmd.exe /C \"\"" + SEVEN_ZIP_LOCAL_BINARY() + "\" x \"" + archive_file + "\" -o\"" + destination + "\" -y\"";
-
-            //std::string extract_command = "\"" + config::SEVEN_ZIP_LOCAL_BINARY + "\" x \"" + archive_file + "\" -o\"" + destination + "\" -y";
             return system(extract_command.c_str()) == 0;
+#else
+            std::string extract_command = "7z x \"" + archive_file + "\" -o\"" + destination + "\" -y";
+            return system(extract_command.c_str()) == 0;
+#endif
         }
 
         // ⚙ **Setup LLVM + Clang**
@@ -194,7 +197,12 @@ namespace almondnamespace
             }
 
             // ✅ First Attempt: Extract using 7-Zip
-            std::string extract_command = "\"\"" + SEVEN_ZIP_LOCAL_BINARY() + "\" x \"" + llvm_zip + "\" -o\"" + temp_tools_dir + "\" -y\"";
+            std::string extract_command;
+#if defined(_WIN32)
+            extract_command = "\"\"" + SEVEN_ZIP_LOCAL_BINARY() + "\" x \"" + llvm_zip + "\" -o\"" + temp_tools_dir + "\" -y\"";
+#else
+            extract_command = "7z x \"" + llvm_zip + "\" -o\"" + temp_tools_dir + "\" -y";
+#endif
             if (system(extract_command.c_str()) != 0) {
                 std::cerr << "[WARNING] 7-Zip extraction failed! Falling back to (very slow) PowerShell, you may want to restart and try again...\n";
 
@@ -224,24 +232,31 @@ namespace almondnamespace
                 std::cerr << "[ERROR] LLVM + Clang compilation failed! Falling back to precompiled binary...\n";
 
                 // ✅ Download precompiled binary as a fallback
+#if defined(_WIN32)
                 if (!download_file(LLVM_EXE_URL(), "llvm_installer.exe")) {
                     std::cerr << "[ERROR] Failed to download precompiled LLVM binary!\n";
                     return false;
                 }
 
                 std::cout << "[INFO] Installing LLVM binary...\n";
-#if defined(_WIN32)
                 std::string install_command = "llvm_installer.exe /S";
-#elif defined(__linux__)
-                std::string install_command = "sudo apt install -y clang";
-#elif defined(__APPLE__)
-                std::string install_command = "brew install llvm";
-#endif
-
                 if (system(install_command.c_str()) != 0) {
                     std::cerr << "[ERROR] Failed to install precompiled LLVM binary!\n";
                     return false;
                 }
+#elif defined(__linux__)
+                std::string install_command = "sudo apt install -y clang";
+                if (system(install_command.c_str()) != 0) {
+                    std::cerr << "[ERROR] Failed to install precompiled LLVM binary!\n";
+                    return false;
+                }
+#elif defined(__APPLE__)
+                std::string install_command = "brew install llvm";
+                if (system(install_command.c_str()) != 0) {
+                    std::cerr << "[ERROR] Failed to install precompiled LLVM binary!\n";
+                    return false;
+                }
+#endif
             }
 
             std::cout << "[INFO] LLVM + Clang installed successfully!\n";

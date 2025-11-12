@@ -194,12 +194,19 @@
 #define PlaySoundW Raylib_PlaySoundW
 #include <raylib.h>
 #undef CloseWindow
+#undef Raylib_CloseWindow
 #undef ShowCursor
+#undef Raylib_ShowCursor
 #undef DrawTextW
+#undef Raylib_DrawTextW
 #undef DrawTextExW
+#undef Raylib_DrawTextExW
 #undef LoadImageW
+#undef Raylib_LoadImageW
 #undef Rectangle
+#undef Raylib_Rectangle
 #undef PlaySoundW
+#undef Raylib_PlaySoundW
 	// Optionally include raylib extensions
 	//#include <rcore.hpp> // for raylib core functions
 	

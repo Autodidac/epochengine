@@ -142,8 +142,12 @@ namespace almondnamespace::platform
                 case Button5:
                     almondnamespace::input::handle_mouse_wheel(-1);
                     break;
+#ifdef Button6
                 case Button6:
+#endif
+#ifdef Button7
                 case Button7:
+#endif
                     break; // Horizontal scroll not yet surfaced
                 default:
                 {
