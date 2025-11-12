@@ -104,9 +104,10 @@ namespace almondnamespace
         inline std::string SEVEN_ZIP_BINARY = "7z.exe";
         //inline std::string SEVEN_ZIP_INSTALL_CMD() { return "7z_installer.exe /S"; } // this was for the msi
 #elif defined(__linux__)
-        inline std::string SEVEN_ZIP_SOURCE_URL{ return GITHUB_BASE() + "ip7z/7zip/archive/refs/tags/" + SEVEN_ZIP_VERSION + "/7z" + SEVEN_ZIP_VERSION_NAMETAG + "-linux-x64.tar.xz"; } //7z2409-linux-x64.tar.xz
+        inline std::string SEVEN_ZIP_SOURCE_URL() { return GITHUB_BASE() + "ip7z/7zip/archive/refs/tags/" + SEVEN_ZIP_VERSION + "/7z" + SEVEN_ZIP_VERSION_NAMETAG + "-linux-x64.tar.xz"; } //7z2409-linux-x64.tar.xz
+        inline std::string SEVEN_ZIP_LOCAL_BINARY() { return "/usr/bin/7z"; }
         inline std::string SEVEN_ZIP_BINARY = "7z";
-        inline std::string SEVEN_ZIP_INSTALL_CMD() { return "sudo apt-get install -y 7z2409-linux-x64"; }
+        inline std::string SEVEN_ZIP_INSTALL_CMD() { return "sudo apt-get install -y p7zip-full"; }
 #elif defined(__APPLE__)
         inline std::string SEVEN_ZIP_SOURCE_URL() { return GITHUB_BASE() + "ip7z/7zip/releases/latest/download/" + SEVEN_ZIP_VERSION + "/p7zip-mac.tar.gz"; } //releases/download/24.09/7z2409-mac.tar.xz
         inline std::string SEVEN_ZIP_BINARY = "7z";

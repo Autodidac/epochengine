@@ -35,6 +35,10 @@
 #include <utility>       // std::move
 #include <vector>
 
+#ifdef KeyPress
+#undef KeyPress
+#endif
+
 namespace almondnamespace::events {
 
     // ─── Event definitions ─────────────────────────────────────────────

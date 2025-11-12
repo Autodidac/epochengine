@@ -36,6 +36,10 @@
 #include <string>
 #include <string_view>
 
+#ifdef None
+#undef None
+#endif
+
 namespace almondnamespace::core {
     struct Context;
 }
