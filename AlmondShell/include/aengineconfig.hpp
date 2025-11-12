@@ -88,6 +88,7 @@
 // Don't include windows.h before Raylib big trouble
 #ifdef ALMOND_USING_RAYLIB
 #include <glad/glad.h>	// for GLAD - OpenGL loader
+
 #if defined(_WIN32)
 #include <GL/wglext.h>  // for WGL - OpenGL extensions WGL Loader
 #endif
@@ -190,6 +191,7 @@
 #define DrawTextW Raylib_DrawTextW
 #define DrawTextExW Raylib_DrawTextExW
 #define Rectangle Raylib_Rectangle
+#define PlaySoundW Raylib_PlaySoundW
 #include <raylib.h>
 #undef CloseWindow
 #undef ShowCursor
@@ -197,6 +199,10 @@
 #undef DrawTextExW
 #undef LoadImageW
 #undef Rectangle
+#undef PlaySoundW
+	// Optionally include raylib extensions
+	//#include <rcore.hpp> // for raylib core functions
+	
 //#include <raymath.h> // for raylib math functions
 	//#include <rtext.hpp> // for raylib text functions
 	//#include <rtextures.hpp> // for raylib texture functions

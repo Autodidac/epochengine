@@ -108,7 +108,7 @@ namespace almondnamespace::core
         // these simply mirror the logical width/height.
         int virtualWidth = 400;
         int virtualHeight = 300;
-        ContextType type = Custom;
+        ContextType type = almondnamespace::core::ContextType::Custom;
         std::string backendName;
 
         // --- Backend function pointers ---
