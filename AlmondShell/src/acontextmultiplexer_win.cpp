@@ -122,8 +122,8 @@ namespace almondnamespace::core
                 return;
             }
 
-            width = std::max<LONG>(1, client.right - client.left);
-            height = std::max<LONG>(1, client.bottom - client.top);
+            width = (std::max)(static_cast<LONG>(1), client.right - client.left);
+            height = (std::max)(static_cast<LONG>(1), client.bottom - client.top);
         }
 
         //std::string NarrowCopy(const std::wstring& wide)
@@ -476,7 +476,7 @@ namespace almondnamespace::core
                 }
             }
 
-            const size_t n = std::min(created.size(), ctxs.size());
+            const size_t n = (std::min)(created.size(), ctxs.size());
             for (size_t i = 0; i < n; ++i) {
                 HWND hwnd = created[i];
                 auto* w = findWindowByHWND(hwnd);
@@ -488,8 +488,8 @@ namespace almondnamespace::core
                 RECT rc{};
                 if (parent) GetClientRect(parent, &rc);
                 else GetClientRect(hwnd, &rc);
-                int width = std::max<LONG>(1, rc.right - rc.left);
-                int height = std::max<LONG>(1, rc.bottom - rc.top);
+                int width = static_cast<int>((std::max)(static_cast<LONG>(1), rc.right - rc.left));
+                int height = static_cast<int>((std::max)(static_cast<LONG>(1), rc.bottom - rc.top));
 
                 ResolveClientSize(hwnd, width, height);
                 ctx->width = width;
@@ -560,8 +560,8 @@ namespace almondnamespace::core
 
                     RECT client{};
                     if (::GetClientRect(actualHwnd, &client)) {
-                        const int actualWidth = std::max<LONG>(1, client.right - client.left);
-                        const int actualHeight = std::max<LONG>(1, client.bottom - client.top);
+                        const int actualWidth = static_cast<int>((std::max)(static_cast<LONG>(1), client.right - client.left));
+                        const int actualHeight = static_cast<int>((std::max)(static_cast<LONG>(1), client.bottom - client.top));
                         w->width = actualWidth;
                         w->height = actualHeight;
                         ctx->width = actualWidth;
@@ -795,8 +795,8 @@ namespace almondnamespace::core
 
         RECT rc{};
         GetClientRect(hwnd, &rc);
-        const int width = std::max<LONG>(1, rc.right - rc.left);
-        const int height = std::max<LONG>(1, rc.bottom - rc.top);
+        const int width = static_cast<int>((std::max)(static_cast<LONG>(1), rc.right - rc.left));
+        const int height = static_cast<int>((std::max)(static_cast<LONG>(1), rc.bottom - rc.top));
         ctx->width = width;
         ctx->height = height;
         winPtr->width = width;
@@ -827,8 +827,8 @@ namespace almondnamespace::core
     {
         if (!hwnd) return;
 
-        int clampedWidth = std::max(1, width);
-        int clampedHeight = std::max(1, height);
+        int clampedWidth = (std::max)(1, width);
+        int clampedHeight = (std::max)(1, height);
         ResolveClientSize(hwnd, clampedWidth, clampedHeight);
 
         std::function<void(int, int)> resizeCallback;
@@ -1015,8 +1015,8 @@ namespace almondnamespace::core
         int clientW = rcClient.right - rcClient.left;
         int clientH = rcClient.bottom - rcClient.top;
 
-        int cw = std::max(1, clientW / cols);
-        int ch = std::max(1, clientH / rows);
+        int cw = (std::max)(1, clientW / cols);
+        int ch = (std::max)(1, clientH / rows);
 
         // Place each child in its cell
         for (size_t i = 0; i < windows.size(); ++i) {
@@ -1272,8 +1272,8 @@ namespace almondnamespace::core
                 if (!mgr) {
                     break;
                 }
-                int width = std::max(1, static_cast<int>(LOWORD(lParam)));
-                int height = std::max(1, static_cast<int>(HIWORD(lParam)));
+                int width = (std::max)(1, static_cast<int>(LOWORD(lParam)));
+                int height = (std::max)(1, static_cast<int>(HIWORD(lParam)));
                 mgr->HandleResize(hwnd, width, height);
                 return 0;
             }

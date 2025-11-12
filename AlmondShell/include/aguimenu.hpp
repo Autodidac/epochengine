@@ -113,29 +113,29 @@ namespace almondnamespace::menu
             int resolvedHeight = heightPixels;
             if (resolvedWidth <= 0 && ctx) resolvedWidth = ctx->get_width_safe();
             if (resolvedHeight <= 0 && ctx) resolvedHeight = ctx->get_height_safe();
-            cachedWidth = std::max(1, resolvedWidth);
-            cachedHeight = std::max(1, resolvedHeight);
+            cachedWidth = (std::max)(1, resolvedWidth);
+            cachedHeight = (std::max)(1, resolvedHeight);
 
             float maxItemWidth = 0.f;
             float maxItemHeight = 0.f;
             for (const auto& descriptor : descriptors) {
-                maxItemWidth = std::max(maxItemWidth, descriptor.size.x);
-                maxItemHeight = std::max(maxItemHeight, descriptor.size.y);
+                maxItemWidth = (std::max)(maxItemWidth, descriptor.size.x);
+                maxItemHeight = (std::max)(maxItemHeight, descriptor.size.y);
             }
 
             const float spacing = LayoutSpacing;
             int computedCols = totalItems;
             if (maxItemWidth > 0.f) {
-                const float availableWidth = static_cast<float>(std::max(1, cachedWidth));
+                const float availableWidth = static_cast<float>((std::max)(1, cachedWidth));
                 const float denom = maxItemWidth + spacing;
                 if (denom > 0.f) {
                     computedCols = static_cast<int>(std::floor((availableWidth + spacing) / denom));
                     computedCols = std::clamp(computedCols, 1, totalItems);
                 }
             }
-            const int maxAllowed = std::max(1, std::min(totalItems, maxColumns));
-            computedCols = std::min(computedCols, maxAllowed);
-            columns = std::max(1, computedCols);
+            const int maxAllowed = (std::max)(1, (std::min)(totalItems, maxColumns));
+            computedCols = (std::min)(computedCols, maxAllowed);
+            columns = (std::max)(1, computedCols);
             rows = (totalItems + columns - 1) / columns;
 
             colWidths.assign(columns, 0.f);
@@ -144,17 +144,17 @@ namespace almondnamespace::menu
                 const int row = idx / columns;
                 const int col = idx % columns;
                 const auto& descriptor = descriptors[idx];
-                colWidths[col] = std::max(colWidths[col], descriptor.size.x);
-                rowHeights[row] = std::max(rowHeights[row], descriptor.size.y);
+                colWidths[col] = (std::max)(colWidths[col], descriptor.size.x);
+                rowHeights[row] = (std::max)(rowHeights[row], descriptor.size.y);
             }
 
-            float totalWidth = spacing * std::max(0, columns - 1);
+            float totalWidth = spacing * (std::max)(0, columns - 1);
             for (float w : colWidths) totalWidth += w;
-            float totalHeight = spacing * std::max(0, rows - 1);
+            float totalHeight = spacing * (std::max)(0, rows - 1);
             for (float h : rowHeights) totalHeight += h;
 
-            const float baseX = std::max(0.f, (static_cast<float>(cachedWidth) - totalWidth) * 0.5f);
-            const float baseY = std::max(0.f, (static_cast<float>(cachedHeight) - totalHeight) * 0.5f);
+            const float baseX = (std::max)(0.f, (static_cast<float>(cachedWidth) - totalWidth) * 0.5f);
+            const float baseY = (std::max)(0.f, (static_cast<float>(cachedHeight) - totalHeight) * 0.5f);
 
             layoutOriginX = baseX;
             layoutOriginY = baseY;
@@ -253,7 +253,7 @@ namespace almondnamespace::menu
             std::vector<int> colBaseX;
 
             if (flipVertical) {
-                rowBaseY.resize(std::max(1, rows));
+                rowBaseY.resize((std::max)(1, rows));
                 for (int r = 0; r < rows; ++r) {
                     const int idx = r * columns;
                     if (idx < totalItems) {
@@ -267,7 +267,7 @@ namespace almondnamespace::menu
                     }
                 }
 
-                colBaseX.resize(std::max(1, columns));
+                colBaseX.resize((std::max)(1, columns));
                 for (int c = 0; c < columns; ++c) {
                     if (c < totalItems) {
                         colBaseX[c] = cachedPositions[c].first;
@@ -308,8 +308,8 @@ namespace almondnamespace::menu
                 }
             }
 
-            const int cols = std::max(1, columns);
-            const int rowsLocal = std::max(1, rows);
+            const int cols = (std::max)(1, columns);
+            const int rowsLocal = (std::max)(1, rows);
 
             if (leftPressed && !prevLeft) selection = (selection == 0) ? totalItems - 1 : selection - 1;
             if (rightPressed && !prevRight) selection = (selection + 1) % totalItems;
@@ -323,8 +323,8 @@ namespace almondnamespace::menu
             const gui::Vec2 mousePos{ static_cast<float>(mx), static_cast<float>(my) };
             const float windowPadding = LayoutSpacing * 0.5f;
             const gui::Vec2 windowPos{
-                std::max(0.0f, layoutOriginX - windowPadding),
-                std::max(0.0f, layoutOriginY - windowPadding)
+                (std::max)(0.0f, layoutOriginX - windowPadding),
+                (std::max)(0.0f, layoutOriginY - windowPadding)
             };
             const gui::Vec2 windowSize{
                 layoutWidth + windowPadding * 2.0f,

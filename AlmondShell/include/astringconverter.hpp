@@ -23,7 +23,7 @@ namespace almondnamespace::text
         int written = ::WideCharToMultiByte(CP_UTF8, WC_ERR_INVALID_CHARS,
             wide.data(), static_cast<int>(wide.size()),
             out.data(), size, nullptr, nullptr);
-        if (written != size) out.resize(static_cast<size_t>(std::max(written, 0)));
+        if (written != size) out.resize(static_cast<size_t>((std::max)(written, 0)));
         return out;
     }
 
@@ -39,7 +39,7 @@ namespace almondnamespace::text
         int written = ::MultiByteToWideChar(CP_UTF8, MB_ERR_INVALID_CHARS,
             utf8.data(), static_cast<int>(utf8.size()),
             out.data(), size);
-        if (written != size) out.resize(static_cast<size_t>(std::max(written, 0)));
+        if (written != size) out.resize(static_cast<size_t>((std::max)(written, 0)));
         return out;
     }
 #else

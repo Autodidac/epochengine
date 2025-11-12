@@ -99,7 +99,7 @@ namespace almondnamespace::core::cli {
                 window_height_overridden = true;
             }
             else if (arg == "--menu-columns"sv && i + 1 < argc) {
-                menu_columns = std::max(1, std::stoi(argv[++i]));
+                menu_columns = (std::max)(1, std::stoi(argv[++i]));
             }
             else if (arg == "--trace-menu-button0"sv) {
                 trace_menu_button0_rect = true;

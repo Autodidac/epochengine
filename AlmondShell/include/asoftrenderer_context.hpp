@@ -66,8 +66,8 @@ namespace almondnamespace::anativecontext
     {
         auto& sr = s_softrendererstate;
 
-        const int clampedWidth = std::max(1, width);
-        const int clampedHeight = std::max(1, height);
+        const int clampedWidth = (std::max)(1, width);
+        const int clampedHeight = (std::max)(1, height);
         const size_t requiredSize = static_cast<size_t>(clampedWidth) * static_cast<size_t>(clampedHeight);
 
         // Fast no-op if nothing changed
@@ -216,8 +216,8 @@ namespace almondnamespace::anativecontext
 
         for (int y = 0; y < softstate.height; ++y) {
             for (int x = 0; x < softstate.width; ++x) {
-                const float u = float(x) / float(std::max(1, softstate.width));
-                const float v = float(y) / float(std::max(1, softstate.height));
+                const float u = float(x) / float((std::max)(1, softstate.width));
+                const float v = float(y) / float((std::max)(1, softstate.height));
 
                 const int texX = static_cast<int>(u * float(w - 1));
                 const int texY = static_cast<int>(v * float(h - 1));
@@ -288,12 +288,12 @@ namespace almondnamespace::anativecontext
         if (widthNormalized) {
             if (drawX >= 0.f && drawX <= 1.f)
                 drawX *= static_cast<float>(sr.width);
-            drawWidth = std::max(drawWidth * static_cast<float>(sr.width), 1.0f);
+            drawWidth = (std::max)(drawWidth * static_cast<float>(sr.width), 1.0f);
         }
         if (heightNormalized) {
             if (drawY >= 0.f && drawY <= 1.f)
                 drawY *= static_cast<float>(sr.height);
-            drawHeight = std::max(drawHeight * static_cast<float>(sr.height), 1.0f);
+            drawHeight = (std::max)(drawHeight * static_cast<float>(sr.height), 1.0f);
         }
 
         if (drawWidth <= 0.f) drawWidth = static_cast<float>(region.width);
@@ -301,19 +301,19 @@ namespace almondnamespace::anativecontext
 
         const int destX = static_cast<int>(std::floor(drawX));
         const int destY = static_cast<int>(std::floor(drawY));
-        const int destW = std::max(1, static_cast<int>(std::lround(drawWidth)));
-        const int destH = std::max(1, static_cast<int>(std::lround(drawHeight)));
+        const int destW = (std::max)(1, static_cast<int>(std::lround(drawWidth)));
+        const int destH = (std::max)(1, static_cast<int>(std::lround(drawHeight)));
 
-        const int clipX0 = std::max(0, destX);
-        const int clipY0 = std::max(0, destY);
-        const int clipX1 = std::min(sr.width, destX + destW);
-        const int clipY1 = std::min(sr.height, destY + destH);
+        const int clipX0 = (std::max)(0, destX);
+        const int clipY0 = (std::max)(0, destY);
+        const int clipX1 = (std::min)(sr.width, destX + destW);
+        const int clipY1 = (std::min)(sr.height, destY + destH);
         if (clipX0 >= clipX1 || clipY0 >= clipY1) {
             return;
         }
 
-        const int srcW = static_cast<int>(std::max<uint32_t>(1u, region.width));
-        const int srcH = static_cast<int>(std::max<uint32_t>(1u, region.height));
+        const int srcW = static_cast<int>((std::max)(1u, region.width));
+        const int srcH = static_cast<int>((std::max)(1u, region.height));
         const float invDestW = 1.0f / static_cast<float>(destW);
         const float invDestH = 1.0f / static_cast<float>(destH);
 
@@ -374,7 +374,7 @@ namespace almondnamespace::anativecontext
         atlasmanager::process_pending_uploads(core::ContextType::Software);
 
         const size_t expectedSize =
-            static_cast<size_t>(std::max(1, sr.width)) * static_cast<size_t>(std::max(1, sr.height));
+            static_cast<size_t>((std::max)(1, sr.width)) * static_cast<size_t>((std::max)(1, sr.height));
         if (sr.framebuffer.size() != expectedSize) {
             resize_framebuffer(sr.width, sr.height);
         }

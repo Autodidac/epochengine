@@ -330,7 +330,7 @@ namespace almondnamespace::core
                 }
             }
 
-            const size_t limit = std::min(created.size(), contexts.size());
+            const size_t limit = (std::min)(created.size(), contexts.size());
             for (size_t i = 0; i < limit; ++i)
             {
                 ::Window win = created[i];
@@ -352,7 +352,7 @@ namespace almondnamespace::core
                 XWindowAttributes attrs{};
                 if (XGetWindowAttributes(display, win, &attrs))
                 {
-                    UpdateContextDimensions(*ctx, *window, std::max(1, attrs.width), std::max(1, attrs.height));
+                    UpdateContextDimensions(*ctx, *window, (std::max)(1, attrs.width), (std::max)(1, attrs.height));
                 }
                 else
                 {
@@ -613,7 +613,7 @@ namespace almondnamespace::core
         XWindowAttributes attrs{};
         if (XGetWindowAttributes(localDisplay, window, &attrs))
         {
-            UpdateContextDimensions(*ctx, *winPtr, std::max(1, attrs.width), std::max(1, attrs.height));
+            UpdateContextDimensions(*ctx, *winPtr, (std::max)(1, attrs.width), (std::max)(1, attrs.height));
         }
         else
         {
@@ -703,8 +703,8 @@ namespace almondnamespace::core
             return;
         }
 
-        const int clampedWidth = std::max(1, width);
-        const int clampedHeight = std::max(1, height);
+        const int clampedWidth = (std::max)(1, width);
+        const int clampedHeight = (std::max)(1, height);
 
         std::function<void(int, int)> resizeCallback;
         WindowData* window = nullptr;

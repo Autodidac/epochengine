@@ -68,7 +68,7 @@ namespace almondnamespace::codeinspector {
         bool has_pragma_once = false;
         bool has_ifndef_guard = false;
 
-        for (size_t i = 0; i < std::min(lines.size(), max_search_lines); ++i) {
+        for (size_t i = 0; i < (std::min)(lines.size(), max_search_lines); ++i) {
             std::string_view line = lines[i];
 
             if (line.find("#pragma once") != std::string_view::npos) {

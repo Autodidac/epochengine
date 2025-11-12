@@ -239,8 +239,8 @@ namespace almondnamespace::game2048
             auto& atlasVec = atlasmanager::get_atlas_vector();
             std::span<const TextureAtlas* const> atlasSpan(atlasVec.data(), atlasVec.size());
 
-            const float cellW = float(std::max(1, ctx->get_width_safe())) / GRID_W;
-            const float cellH = float(std::max(1, ctx->get_height_safe())) / GRID_H;
+            const float cellW = float((std::max)(1, ctx->get_width_safe())) / GRID_W;
+            const float cellH = float((std::max)(1, ctx->get_height_safe())) / GRID_H;
 
             for (int y = 0; y < GRID_H; ++y) {
                 for (int x = 0; x < GRID_W; ++x) {

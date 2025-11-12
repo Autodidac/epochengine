@@ -312,14 +312,14 @@ namespace almondnamespace::sdltextures
         const bool xNormalized = drawX >= 0.f && drawX <= 1.f;
         const bool yNormalized = drawY >= 0.f && drawY <= 1.f;
 
-        const float baseWidth = static_cast<float>(std::max(1, viewport.w));
-        const float baseHeight = static_cast<float>(std::max(1, viewport.h));
+        const float baseWidth = static_cast<float>((std::max)(1, viewport.w));
+        const float baseHeight = static_cast<float>((std::max)(1, viewport.h));
 
         if (widthNormalized) {
-            drawWidth = std::max(drawWidth * baseWidth, 1.0f);
+            drawWidth = (std::max)(drawWidth * baseWidth, 1.0f);
         }
         if (heightNormalized) {
-            drawHeight = std::max(drawHeight * baseHeight, 1.0f);
+            drawHeight = (std::max)(drawHeight * baseHeight, 1.0f);
         }
 
         if (xNormalized) {
