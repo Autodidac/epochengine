@@ -105,9 +105,11 @@ namespace almondnamespace::sdlcontext::state
             window.set_size(w, h);
         }
 
+#if defined(_WIN32)
         HWND hwnd() const noexcept { return window.hwnd; }
         HDC hdc() const noexcept { return window.hdc; }
         HGLRC glrc() const noexcept { return window.glrc; }
+#endif
         SDL_Window* sdl_window() const noexcept { return window.sdl_window; }
     };
 
