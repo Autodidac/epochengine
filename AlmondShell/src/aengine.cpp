@@ -1142,7 +1142,7 @@ almondnamespace::contextwindow::WindowData windowContext{};
 
 
 
-} // namespace almondnamespace::core
+//} // namespace almondnamespace::core
 
 /////////////////////////////////////////////////////////
 
@@ -1237,8 +1237,8 @@ int main(int argc, char* argv[]) {
     const auto cli_result = almondnamespace::core::cli::parse(argc, argv);
 
     const almondnamespace::updater::UpdateChannel channel{
-        .version_url = ::urls::version_url,
-        .binary_url = ::urls::binary_url,
+        .version_url = urls::version_url,
+        .binary_url = urls::binary_url,
     };
 
     if (cli_result.update_requested) {
