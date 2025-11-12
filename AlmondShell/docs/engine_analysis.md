@@ -63,6 +63,11 @@ Asset producers can run off the main thread via the coroutine-enabled `taskgraph
 - **Roadmap Traceability** – The existing `roadmap.txt` lacked granular prompts or acceptance checks per phase, making automation hand-offs hard to script.
 - **Testing Surface** – No automated smoke tests or CI hooks are defined for the critical updater and renderer paths, leaving regression risk high during phase transitions.
 
+## Recent Progress (v0.62.6)
+
+- Documented the Raylib child-window scaling alignment work so docked panes remain pinned to their design canvas even as contexts rebound or rescale during docking passes.
+- Added smoke coverage that repeatedly reacquires the Raylib context after scaling churn to confirm the GL context stays bound while the multiplexer shuffles windows.
+
 ## Recent Progress (v0.62.0)
 
 - Routed the `--update` command through the modular updater entrypoint so the launcher checks availability by default and only applies builds when invoked with `--force`, paving the way for in-engine update menus while ensuring forced runs hydrate the full source tree beside the binary for inspection and rebuilds.
