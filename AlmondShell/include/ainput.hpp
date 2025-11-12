@@ -400,7 +400,7 @@ inline constexpr uint16_t map_key_to_linux(Key k) {
         case Key::LeftControl: return 37; case Key::RightControl: return 105;
         case Key::LeftAlt: return 64; case Key::RightAlt: return 108;
 
-        case Key::PrintScreen: return 107; case Key::Help: return 118; case Key::Function: return 0; // no standard Linux keycode
+        case Key::PrintScreen: return 107;
 
         default: return 0; // unknown
     }
@@ -611,8 +611,7 @@ inline Key map_keysym_to_key(KeySym sym) noexcept
     case XK_bracketleft: return Key::LeftBracket;
     case XK_backslash: return Key::Backslash;
     case XK_bracketright: return Key::RightBracket;
-    case XK_grave:
-    case XK_quoteleft: return Key::GraveAccent;
+    case XK_grave: return Key::GraveAccent;
 
     case XK_Escape: return Key::Escape;
     case XK_Return: return Key::Enter;
