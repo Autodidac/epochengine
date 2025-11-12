@@ -37,6 +37,7 @@
 #elif defined(__linux__)
     #include <X11/Xlib.h>
     #include <X11/Xutil.h>
+    #include <X11/keysym.h>
     #include <X11/extensions/XInput2.h>
 #endif
 
@@ -515,84 +516,238 @@ inline void poll_input() // macOS input polling
 }
 
 #elif defined(__linux__)
-// map keys to almondnamespace::input::Key enums,
-// update bitsets accordingly.
-inline void poll_input(Display * display, Window window) // Linux input polling via X11/XInput2
+
+inline void get_mouse_position(int& x, int& y)
 {
-    if (!can_poll_on_this_thread()) {
+    extern Display* global_display;
+    extern ::Window global_window;
+
+    Display* display = global_display;
+    ::Window window = global_window;
+
+    if (!display || window == 0)
+    {
+        x = -1;
+        y = -1;
+        return;
+    }
+
+    Window root{};
+    Window child{};
+    int rootX = 0;
+    int rootY = 0;
+    int winX = 0;
+    int winY = 0;
+    unsigned int mask = 0;
+
+    if (XQueryPointer(display, window, &root, &child, &rootX, &rootY, &winX, &winY, &mask))
+    {
+        XWindowAttributes attrs{};
+        if (XGetWindowAttributes(display, window, &attrs))
+        {
+            if (winX < 0 || winY < 0 || winX >= attrs.width || winY >= attrs.height)
+            {
+                x = -1;
+                y = -1;
+            }
+            else
+            {
+                x = winX;
+                y = winY;
+            }
+        }
+        else
+        {
+            x = winX;
+            y = winY;
+        }
+
+        mouseX.store(x, std::memory_order_relaxed);
+        mouseY.store(y, std::memory_order_relaxed);
+        set_mouse_coords_are_global(false);
+    }
+    else
+    {
+        x = -1;
+        y = -1;
+    }
+}
+
+inline Key map_keysym_to_key(KeySym sym) noexcept
+{
+    if (sym >= XK_a && sym <= XK_z)
+    {
+        return static_cast<Key>(Key::A + (sym - XK_a));
+    }
+    if (sym >= XK_A && sym <= XK_Z)
+    {
+        return static_cast<Key>(Key::A + (sym - XK_A));
+    }
+    if (sym >= XK_0 && sym <= XK_9)
+    {
+        return static_cast<Key>(Key::Num0 + (sym - XK_0));
+    }
+
+    if (sym >= XK_F1 && sym <= XK_F24)
+    {
+        return static_cast<Key>(Key::F1 + (sym - XK_F1));
+    }
+
+    if (sym >= XK_KP_0 && sym <= XK_KP_9)
+    {
+        return static_cast<Key>(Key::KP0 + (sym - XK_KP_0));
+    }
+
+    switch (sym)
+    {
+    case XK_space: return Key::Space;
+    case XK_apostrophe: return Key::Apostrophe;
+    case XK_comma: return Key::Comma;
+    case XK_minus: return Key::Minus;
+    case XK_period: return Key::Period;
+    case XK_slash: return Key::Slash;
+    case XK_semicolon: return Key::Semicolon;
+    case XK_equal: return Key::Equal;
+    case XK_bracketleft: return Key::LeftBracket;
+    case XK_backslash: return Key::Backslash;
+    case XK_bracketright: return Key::RightBracket;
+    case XK_grave:
+    case XK_quoteleft: return Key::GraveAccent;
+
+    case XK_Escape: return Key::Escape;
+    case XK_Return: return Key::Enter;
+    case XK_Tab:
+    case XK_ISO_Left_Tab: return Key::Tab;
+    case XK_BackSpace: return Key::Backspace;
+
+    case XK_Insert: return Key::Insert;
+    case XK_Delete: return Key::Delete;
+    case XK_Home: return Key::Home;
+    case XK_End: return Key::End;
+    case XK_Page_Up: return Key::PageUp;
+    case XK_Page_Down: return Key::PageDown;
+
+    case XK_Left: return Key::Left;
+    case XK_Right: return Key::Right;
+    case XK_Up: return Key::Up;
+    case XK_Down: return Key::Down;
+
+    case XK_Caps_Lock: return Key::CapsLock;
+    case XK_Num_Lock: return Key::NumLock;
+    case XK_Scroll_Lock: return Key::ScrollLock;
+    case XK_Print: return Key::PrintScreen;
+    case XK_Pause: return Key::Pause;
+
+    case XK_Shift_L: return Key::LeftShift;
+    case XK_Shift_R: return Key::RightShift;
+    case XK_Control_L: return Key::LeftControl;
+    case XK_Control_R: return Key::RightControl;
+    case XK_Alt_L: return Key::LeftAlt;
+    case XK_Alt_R:
+    case XK_ISO_Level3_Shift: return Key::RightAlt;
+    case XK_Super_L:
+    case XK_Meta_L: return Key::LeftSuper;
+    case XK_Super_R:
+    case XK_Meta_R: return Key::RightSuper;
+    case XK_Menu: return Key::Menu;
+
+    case XK_KP_Decimal: return Key::KPDecimal;
+    case XK_KP_Divide: return Key::KPDivide;
+    case XK_KP_Multiply: return Key::KPMultiply;
+    case XK_KP_Subtract: return Key::KPSubtract;
+    case XK_KP_Add: return Key::KPAdd;
+    case XK_KP_Enter: return Key::KPEnter;
+    case XK_KP_Equal: return Key::KPEqual;
+
+    default:
+        return Key::Unknown;
+    }
+}
+
+inline MouseButton map_button_to_mousebutton(unsigned int button) noexcept
+{
+    switch (button)
+    {
+    case Button1: return MouseButton::MouseLeft;
+    case Button3: return MouseButton::MouseRight;
+    case Button2: return MouseButton::MouseMiddle;
+    case 8: return MouseButton::MouseButton4;
+    case 9: return MouseButton::MouseButton5;
+    case 10: return MouseButton::MouseButton6;
+    case 11: return MouseButton::MouseButton7;
+    case 12: return MouseButton::MouseButton8;
+    default: return MouseButton::MouseCount;
+    }
+}
+
+inline void handle_key_event(Key key, bool pressed)
+{
+    if (key == Key::Unknown)
+    {
         return;
     }
 
     std::unique_lock<std::shared_mutex> lock(g_inputMutex);
+    const size_t idx = static_cast<size_t>(key);
+    const bool wasDown = keyDown.test(idx);
+    keyDown.set(idx, pressed);
+    if (pressed && !wasDown)
+    {
+        keyPressed.set(idx);
+    }
+    else if (!pressed)
+    {
+        keyPressed.reset(idx);
+    }
+}
 
-    previous_keys = current_keys;
-    previous_mouse = current_mouse;
+inline void handle_mouse_button_event(MouseButton button, bool pressed)
+{
+    if (button == MouseButton::MouseCount)
+    {
+        return;
+    }
 
+    std::unique_lock<std::shared_mutex> lock(g_inputMutex);
+    const size_t idx = static_cast<size_t>(button);
+    const bool wasDown = mouseDown.test(idx);
+    mouseDown.set(idx, pressed);
+    if (pressed && !wasDown)
+    {
+        mousePressed.set(idx);
+    }
+    else if (!pressed)
+    {
+        mousePressed.reset(idx);
+    }
+}
+
+inline void handle_mouse_motion(int x, int y, bool coordsAreGlobal)
+{
+    {
+        std::unique_lock<std::shared_mutex> lock(g_inputMutex);
+        mouseX.store(x, std::memory_order_relaxed);
+        mouseY.store(y, std::memory_order_relaxed);
+    }
+    set_mouse_coords_are_global(coordsAreGlobal);
+}
+
+inline void handle_mouse_wheel(int delta)
+{
+    mouseWheel.fetch_add(delta, std::memory_order_relaxed);
+}
+
+inline void poll_input(Display* /*display*/, ::Window /*window*/)
+{
+    if (!can_poll_on_this_thread())
+    {
+        return;
+    }
+
+    std::unique_lock<std::shared_mutex> lock(g_inputMutex);
     keyPressed.reset();
     mousePressed.reset();
     mouseWheel.store(0, std::memory_order_relaxed);
-
-    while (XPending(display)) {
-        XEvent event;
-        XNextEvent(display, &event);
-
-        switch (event.type)
-        {
-            case KeyPress:
-            {
-                KeySym keysym = XLookupKeysym(&event.xkey, 0);
-                Key key = map_keysym_to_key(keysym);
-                if (key != Key::Unknown)
-                {
-                    if (!keyDown[key]) keyPressed[key] = true;
-                    keyDown[key] = true;
-                }
-                break;
-            }
-            case KeyRelease:
-            {
-                KeySym keysym = XLookupKeysym(&event.xkey, 0);
-                Key key = map_keysym_to_key(keysym);
-                if (key != Key::Unknown)
-                {
-                    keyDown[key] = false;
-                    keyPressed[key] = false;
-                }
-                break;
-            }
-            case ButtonPress:
-            {
-                int button = event.xbutton.button;
-                MouseButton mb = map_button_to_mousebutton(button);
-                if (mb != MouseButton::Count)
-                {
-                    if (!mouseDown[mb]) mousePressed[mb] = true;
-                    mouseDown[mb] = true;
-                }
-                if (button == 4) mouseWheel.fetch_add(1, std::memory_order_relaxed);      // scroll up
-                else if (button == 5) mouseWheel.fetch_sub(1, std::memory_order_relaxed); // scroll down
-                break;
-            }
-            case ButtonRelease:
-            {
-                int button = event.xbutton.button;
-                MouseButton mb = map_button_to_mousebutton(button);
-                if (mb != MouseButton::Count)
-                {
-                    mouseDown[mb] = false;
-                    mousePressed[mb] = false;
-                }
-                break;
-            }
-            case MotionNotify:
-            {
-                mouseX.store(event.xmotion.x, std::memory_order_relaxed);
-                mouseY.store(event.xmotion.y, std::memory_order_relaxed);
-                set_mouse_coords_are_global(false);
-                break;
-            }
-        }
-    }
 }
 #endif
 

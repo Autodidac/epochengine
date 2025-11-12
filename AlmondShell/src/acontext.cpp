@@ -110,6 +110,28 @@ namespace
             y = -1;
         }
     }
+#elif defined(__linux__)
+    void ClampMouseToClientRectIfNeeded(const std::shared_ptr<almondnamespace::core::Context>& ctx, int& x, int& y) noexcept
+    {
+        if (!ctx)
+        {
+            return;
+        }
+
+        if (almondnamespace::input::are_mouse_coords_global())
+        {
+            return;
+        }
+
+        const int width = std::max(1, ctx->width);
+        const int height = std::max(1, ctx->height);
+
+        if (x < 0 || y < 0 || x >= width || y >= height)
+        {
+            x = -1;
+            y = -1;
+        }
+    }
 #else
     void ClampMouseToClientRectIfNeeded(const std::shared_ptr<almondnamespace::core::Context>&, int&, int&) noexcept {}
 #endif

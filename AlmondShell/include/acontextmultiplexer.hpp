@@ -244,6 +244,9 @@ namespace almondnamespace::core
 
         inline static thread_local std::shared_ptr<core::Context> currentContext{};
         inline static MultiContextManager* s_activeInstance = nullptr;
+
+        friend MultiContextManager* GetActiveMultiContextManager() noexcept;
+        friend void HandleX11Configure(::Window window, int width, int height);
     };
 #else
     class MultiContextManager
@@ -286,6 +289,11 @@ namespace almondnamespace::core
         inline static const std::vector<std::unique_ptr<WindowData>> s_emptyWindows{};
         inline static thread_local std::shared_ptr<core::Context> s_currentContext{};
     };
+#endif
+
+#if defined(__linux__)
+    MultiContextManager* GetActiveMultiContextManager() noexcept;
+    void HandleX11Configure(::Window window, int width, int height);
 #endif
 
 } // namespace almondnamespace::core
