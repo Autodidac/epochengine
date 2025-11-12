@@ -32,7 +32,14 @@
 #if defined(_WIN32)
 #    include <windows.h>
 #elif defined(__linux__)
+// X11 defines a typedef named `Font` that clashes with the global `Font`
+// type exported by raylib. Raylib is included from aengineconfig.hpp before
+// we reach this point, so temporarily remap the X11 `Font` symbol while the
+// header is processed to avoid the conflicting typedef.
+#    pragma push_macro("Font")
+#    define Font almondshell_X11Font
 #    include <X11/Xlib.h>
+#    pragma pop_macro("Font")
 #    include <GL/glx.h>
 #endif
 
