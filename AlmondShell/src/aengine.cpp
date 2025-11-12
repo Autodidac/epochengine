@@ -574,7 +574,7 @@ namespace almondnamespace::core
         //}
     }
 
-#ifdef ALMOND_USING_WINMAIN
+#if defined(_WIN32) && defined(ALMOND_USING_WINMAIN)
     //struct Window {
     //    HWND hwnd{};
     //    HDC hdc{};
@@ -1797,6 +1797,8 @@ almondnamespace::contextwindow::WindowData windowContext{};
 //}
 //
 //
+} // namespace almondnamespace::core
+
 /////////////////////////////////////////////////////////
 
 // this basically just leaves ninja.zip when commented out, but will be configured better in the future
@@ -1819,6 +1821,7 @@ namespace urls {
     const std::string binary_url = github_base + owner + repo + "/releases/latest/download/updater.exe";
 }
 
+#if defined(_WIN32)
 //// Now ALWAYS define WinMain so the linker will find it
 int APIENTRY wWinMain(_In_ HINSTANCE hInstance,
     _In_opt_ HINSTANCE hPrevInstance,
@@ -1874,13 +1877,15 @@ int APIENTRY wWinMain(_In_ HINSTANCE hInstance,
 
     return almondnamespace::core::RunEngineMainLoopInternal(hInstance, SW_SHOWNORMAL);
 }
-#endif
+#endif // defined(_WIN32)
+
+#endif // defined(_WIN32) && defined(ALMOND_USING_WINMAIN)
 
 // -----------------------------------------------------------------------------
 // Cross-platform Automatic Entry Point
 // -----------------------------------------------------------------------------
 int main(int argc, char* argv[]) {
-#ifdef ALMOND_USING_WINMAIN
+#if defined(_WIN32) && defined(ALMOND_USING_WINMAIN)
     LPWSTR pCommandLine = GetCommandLineW();
     return wWinMain(GetModuleHandle(NULL), NULL, pCommandLine, SW_SHOWNORMAL);
 #else
@@ -1897,9 +1902,9 @@ int main(int argc, char* argv[]) {
     }
 
 
-    core::StartEngine(); // Replace with actual engine logic
+    almondnamespace::core::StartEngine(); // Replace with actual engine logic
     return 0;
-    
+
 #endif
 
 }

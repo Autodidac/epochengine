@@ -701,8 +701,8 @@ namespace almondnamespace::raylibcontext
             // Sync from real framebuffer
             sync_framebuffer_size(ctx, /*notifyClient=*/true);
             seed_viewport_from_framebuffer(ctx);
-        }
 #endif
+        }
 
         s_raylibstate.cleanupIssued = false;
         s_raylibstate.running = true;

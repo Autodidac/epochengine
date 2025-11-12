@@ -33,6 +33,7 @@
 #include "aatlastexture.hpp"
 #include "aimageloader.hpp"
 #include "atexture.hpp"
+#include "asdlstate.hpp"
 
 #include <atomic>
 #include <filesystem>
@@ -245,8 +246,8 @@ namespace almondnamespace::sdltextures
             return;
         }
 
-        const int w = s_sdlstate.window.width;
-        const int h = s_sdlstate.window.height;
+        const int w = sdlcontext::state::s_sdlstate.window.width;
+        const int h = sdlcontext::state::s_sdlstate.window.height;
         if (w == 0 || h == 0) {
             std::cerr << "[SDL_DrawSprite] ERROR: Window dimensions are zero.\n";
             return;
