@@ -1,48 +1,65 @@
 #!/bin/bash
-# Usage: ./build.sh [gcc|clang] [Debug|Release]
+# Usage: ./build.sh [gcc|clang] [Debug|Release] [-- cmake args]
 
-# Set the installation prefix (this remains the same across build and install)
-INSTALL_PREFIX="${PWD}/built"
+set -euo pipefail
 
-# Select compiler and assign a friendly name for the build folder
-if [ "$1" == "gcc" ]; then
-  COMPILER_C="gcc"
-  COMPILER_CXX="g++"
-  COMPILER_NAME="GCC"
-elif [ "$1" == "clang" ]; then
-  COMPILER_C="clang"
-  COMPILER_CXX="clang++"
-  COMPILER_NAME="Clang"
-else
-  echo "Usage: $0 [gcc|clang] [Debug|Release]"
+if [[ $# -lt 1 ]]; then
+  echo "Usage: $0 [gcc|clang] [Debug|Release] [-- cmake args]" >&2
   exit 1
 fi
 
-# Set build type (default to Debug if not provided)
-if [ -z "$2" ]; then
-  BUILD_TYPE="Debug"
+COMPILER_CHOICE=$1
+shift
+
+if [[ $# -gt 0 && $1 != "--" ]]; then
+  BUILD_TYPE=$1
+  shift
 else
-  BUILD_TYPE="$2"
+  BUILD_TYPE=Debug
 fi
 
-# Define the build directory including both compiler and build type
+if [[ $# -gt 0 && $1 == "--" ]]; then
+  shift
+  EXTRA_CMAKE_ARGS=("$@")
+else
+  EXTRA_CMAKE_ARGS=()
+fi
+
+case "$COMPILER_CHOICE" in
+  gcc)
+    COMPILER_C="gcc"
+    COMPILER_CXX="g++"
+    COMPILER_NAME="GCC"
+    ;;
+  clang)
+    COMPILER_C="clang"
+    COMPILER_CXX="clang++"
+    COMPILER_NAME="Clang"
+    ;;
+  *)
+    echo "Unsupported compiler '$COMPILER_CHOICE'. Use 'gcc' or 'clang'." >&2
+    exit 1
+    ;;
+esac
+
+INSTALL_PREFIX="${PWD}/built"
 BUILD_DIR="Bin/${COMPILER_NAME}-${BUILD_TYPE}"
 
-# Create the build and install directories if they don't exist
-mkdir -p "$BUILD_DIR"
-mkdir -p "$INSTALL_PREFIX"
-
-# Configure the project to ensure the build directory has generated files
-cmake -S . -B "$BUILD_DIR" \
-  -DCMAKE_BUILD_TYPE="$BUILD_TYPE" \
-  -DCMAKE_C_COMPILER="$COMPILER_C" \
-  -DCMAKE_CXX_COMPILER="$COMPILER_CXX" \
+cmake_args=(
+  -S .
+  -B "$BUILD_DIR"
+  -DCMAKE_BUILD_TYPE="$BUILD_TYPE"
+  -DCMAKE_C_COMPILER="$COMPILER_C"
+  -DCMAKE_CXX_COMPILER="$COMPILER_CXX"
   -DCMAKE_INSTALL_PREFIX="$INSTALL_PREFIX"
+)
 
-# Build the project (verbose output)
+cmake_args+=("${EXTRA_CMAKE_ARGS[@]}")
+
+cmake "${cmake_args[@]}"
+
 cmake --build "$BUILD_DIR" --verbose
 
-# Generate documentation if Doxygen is available
 if cmake -LA -N "$BUILD_DIR" | grep -q "DOXYGEN_FOUND:BOOL=1"; then
   echo "Generating AlmondShell API documentation..."
   if cmake --build "$BUILD_DIR" --target docs; then
