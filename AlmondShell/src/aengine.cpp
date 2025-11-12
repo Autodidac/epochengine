@@ -24,6 +24,7 @@
 // aengine.cpp
 #include "pch.h"
 
+#include "aplatform.hpp"
 #include "aengineconfig.hpp"   // All ENGINE-specific includes
 
 #include "aengine.hpp"
@@ -86,13 +87,6 @@
 //#define ALMOND_USING_DOCKING 1  // Enable docking features
 //#define ALMOND_SHARED_CONTEXT 1
 //#endif
-
-#ifndef ALMOND_MAIN_HEADLESS
-#include <shellscalingapi.h>  // For GetDpiForMonitor
-#pragma comment(lib, "Shcore.lib")
-#include <CommCtrl.h>
-#pragma comment(lib, "comctl32.lib")
-#endif // !ALMOND_MAIN_HEADLESS
 
 namespace cli = almondnamespace::core::cli;
 

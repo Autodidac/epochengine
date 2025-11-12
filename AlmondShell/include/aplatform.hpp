@@ -56,3 +56,12 @@
 #else
 #define ALECALLCONV __stdcall
 #endif
+
+#ifdef _WIN32
+#ifndef ALMOND_MAIN_HEADLESS
+#include <shellscalingapi.h>  // For GetDpiForMonitor
+#pragma comment(lib, "Shcore.lib")
+#include <CommCtrl.h>
+#pragma comment(lib, "comctl32.lib")
+#endif // !ALMOND_MAIN_HEADLESS
+#endif

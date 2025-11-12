@@ -41,6 +41,7 @@ build/
 build_gcc/
 vcpkg_installed/
 bin/*
+Bin/*
 .vs/
 backup/
 app1/
@@ -69,3 +70,7 @@ AlmondShell/examples/ConsoleApplication1/atlases/__agui_builtin_0_0.ppm
 AlmondShell/examples/ConsoleApplication1/atlases/font_atlas_1_1.ppm
 
 AlmondShell/examples/ConsoleApplication1/atlases/font_atlas_1_2.ppm
+
+*.cmake
+
+*.bin

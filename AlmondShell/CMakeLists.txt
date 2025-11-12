@@ -66,9 +66,6 @@ if(glm_FOUND)
     target_link_libraries(almondshell PRIVATE glm::glm)
 endif()
 
-find_package(ZLIB REQUIRED)
-target_link_libraries(almondshell PRIVATE ZLIB::ZLIB)
-
 find_package(fmt CONFIG QUIET)
 if(fmt_FOUND)
     target_link_libraries(almondshell PRIVATE fmt::fmt)
