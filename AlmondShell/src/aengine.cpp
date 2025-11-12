@@ -1142,7 +1142,7 @@ almondnamespace::contextwindow::WindowData windowContext{};
 
 
 
-//} // namespace almondnamespace::core
+} // namespace almondnamespace::core
 
 /////////////////////////////////////////////////////////
 
