@@ -43,7 +43,7 @@ inline constexpr int DEFAULT_WINDOW_HEIGHT = 1080;
 //inline constexpr int DEFAULT_WINDOW_WIDTH = 4096;
 //inline constexpr int DEFAULT_WINDOW_HEIGHT = 2160;
 
-#ifdef ALMOND_USING_WINMAIN
+#if defined(_WIN32) && defined(ALMOND_USING_WINMAIN)
 
 // Max string length for title and class name
 #define MAX_LOADSTRING 100
@@ -58,5 +58,7 @@ namespace almondnamespace::core
 }
 
 #endif
+#if defined(_WIN32)
 HWND InitWindowInstance(HINSTANCE hInstance, int nCmdShow, LPCWSTR szWindowClass, LPCWSTR szTitle, int32_t windowWidth, int32_t windowHeight);
+#endif
 
