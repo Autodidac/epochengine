@@ -25,6 +25,7 @@
 #pragma once
 
 #include "aengineconfig.hpp"   // All ENGINE-specific includes
+#include "ainput.hpp"
 
 #if defined(_WIN32)
     #include "aframework.hpp"
@@ -32,6 +33,12 @@
     #import <Cocoa/Cocoa.h>   // compile as ObjC++
 #elif defined(__linux__)
     #include <X11/Xlib.h>      // ensure you link -lX11
+#if defined(__linux__)
+namespace almondnamespace::core
+{
+    void HandleX11Configure(::Window window, int width, int height);
+}
+#endif
 #elif defined(__ANDROID__)
     #include <android_native_app_glue.h>
 #elif defined(__EMSCRIPTEN__)
@@ -84,18 +91,126 @@ namespace almondnamespace::platform
 #elif defined(__linux__)
         extern Display* global_display;  // defined in your linux_context.cpp
         extern ::Window global_window;
+
+        namespace core = almondnamespace::core;
+
+        if (global_display)
+        {
+            almondnamespace::input::poll_input(global_display, global_window);
+        }
+        else
+        {
+            almondnamespace::input::poll_input(nullptr, 0);
+        }
+
+        bool keepRunning = true;
+
         while (global_display && XPending(global_display)) {
             XEvent ev;
             XNextEvent(global_display, &ev);
-            if (ev.type == ClientMessage) {
-                return false;
+
+            switch (ev.type)
+            {
+            case ClientMessage:
+                keepRunning = false;
+                break;
+
+            case KeyPress:
+            {
+                KeySym sym = XLookupKeysym(&ev.xkey, 0);
+                auto key = almondnamespace::input::map_keysym_to_key(sym);
+                almondnamespace::input::handle_key_event(key, true);
+                break;
             }
-            // TODO: feed events into almondnamespace::input bitsets
+            case KeyRelease:
+            {
+                KeySym sym = XLookupKeysym(&ev.xkey, 0);
+                auto key = almondnamespace::input::map_keysym_to_key(sym);
+                almondnamespace::input::handle_key_event(key, false);
+                break;
+            }
+
+            case ButtonPress:
+            {
+                almondnamespace::input::handle_mouse_motion(ev.xbutton.x, ev.xbutton.y, false);
+
+                switch (ev.xbutton.button)
+                {
+                case Button4:
+                    almondnamespace::input::handle_mouse_wheel(1);
+                    break;
+                case Button5:
+                    almondnamespace::input::handle_mouse_wheel(-1);
+                    break;
+                case Button6:
+                case Button7:
+                    break; // Horizontal scroll not yet surfaced
+                default:
+                {
+                    auto btn = almondnamespace::input::map_button_to_mousebutton(ev.xbutton.button);
+                    almondnamespace::input::handle_mouse_button_event(btn, true);
+                    break;
+                }
+                }
+                break;
+            }
+            case ButtonRelease:
+            {
+                almondnamespace::input::handle_mouse_motion(ev.xbutton.x, ev.xbutton.y, false);
+
+                auto btn = almondnamespace::input::map_button_to_mousebutton(ev.xbutton.button);
+                almondnamespace::input::handle_mouse_button_event(btn, false);
+                break;
+            }
+
+            case MotionNotify:
+                almondnamespace::input::handle_mouse_motion(ev.xmotion.x, ev.xmotion.y, false);
+                break;
+
+            case EnterNotify:
+                global_window = ev.xcrossing.window;
+                almondnamespace::input::handle_mouse_motion(ev.xcrossing.x, ev.xcrossing.y, false);
+                break;
+
+            case LeaveNotify:
+                if (global_window == ev.xcrossing.window)
+                {
+                    almondnamespace::input::handle_mouse_motion(-1, -1, false);
+                }
+                break;
+
+            case FocusIn:
+                global_window = ev.xfocus.window;
+                break;
+
+            case FocusOut:
+                if (global_window == ev.xfocus.window)
+                {
+                    global_window = 0;
+                }
+                break;
+
+            case DestroyNotify:
+                if (global_window == ev.xdestroywindow.window)
+                {
+                    global_window = 0;
+                }
+                break;
+
+            case ConfigureNotify:
+                core::HandleX11Configure(ev.xconfigure.window, ev.xconfigure.width, ev.xconfigure.height);
+                break;
+
+            case MappingNotify:
+                XRefreshKeyboardMapping(&ev.xmapping);
+                break;
+
+            default:
+                break;
+            }
         }
 
-        almondnamespace::input::poll_input(global_display, global_window);
-
-        return true;
+        return keepRunning;
 
 #elif defined(__ANDROID__)
         extern struct android_app* global_android_app;

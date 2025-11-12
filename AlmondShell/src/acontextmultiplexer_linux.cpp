@@ -21,6 +21,20 @@ Display* global_display = nullptr;
 
 namespace almondnamespace::core
 {
+    MultiContextManager* GetActiveMultiContextManager() noexcept
+    {
+        return MultiContextManager::s_activeInstance;
+    }
+
+    void HandleX11Configure(::Window window, int width, int height)
+    {
+        if (auto* mgr = GetActiveMultiContextManager())
+        {
+            HWND hwnd = reinterpret_cast<HWND>(static_cast<uintptr_t>(window));
+            mgr->HandleResize(hwnd, width, height);
+        }
+    }
+
     namespace
     {
         constexpr int kDefaultWidth = 800;
