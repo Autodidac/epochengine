@@ -43,6 +43,16 @@
 #define _WIN32_WINNT 0x0A00
 #endif
 
+#if defined(_WIN32)
+#    ifndef WIN32_LEAN_AND_MEAN
+#        define WIN32_LEAN_AND_MEAN
+#    endif
+#    ifdef _WINSOCKAPI_
+#        undef _WINSOCKAPI_
+#    endif
+#    include <winsock2.h>
+#endif
+
 #include <asio.hpp>
 
 #include <variant>
