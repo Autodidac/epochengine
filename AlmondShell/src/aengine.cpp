@@ -60,10 +60,10 @@
 #include "atetrislike.hpp"
 #include "asandsim.hpp"
 
-#include "araylibcontext.hpp"
 #include "asdlcontext.hpp"
 #include "asfmlcontext.hpp"
 #include "asoftrenderer_context.hpp"
+#include "araylibcontext.hpp"
 
 // STL
 #include <filesystem>
@@ -1889,7 +1889,7 @@ int main(int argc, char* argv[]) {
     LPWSTR pCommandLine = GetCommandLineW();
     return wWinMain(GetModuleHandle(NULL), NULL, pCommandLine, SW_SHOWNORMAL);
 #else
-    const auto cli_result = cli::parse(argc, argv);
+    const auto cli_result = almondnamespace::cli::parse(argc, argv);
 
     const almondnamespace::updater::UpdateChannel channel{
         .version_url = urls::version_url,

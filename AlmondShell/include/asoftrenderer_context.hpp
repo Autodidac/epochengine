@@ -44,11 +44,12 @@
 #include <vector>
 #include <algorithm>
 #include <atomic>
-#undef max
 
-#ifdef _WIN32
-#include <windows.h>
-#endif
+// #undef max
+
+// #ifdef _WIN32
+// #include <windows.h>
+// #endif
 
 namespace almondnamespace::anativecontext
 {
