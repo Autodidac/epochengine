@@ -22,6 +22,10 @@
  *                                                            *
  **************************************************************/
 #pragma once
+
+#include "aplatform.hpp"
+#include "aengineconfig.hpp"
+
  // anet.hpp — Hybrid transport shim for Almond / Epoch Engine
  //
  // • Default: SteamNetworkingSockets (relay, P2P, NAT punch, QUIC)
@@ -43,15 +47,17 @@
 #define _WIN32_WINNT 0x0A00
 #endif
 
-#if defined(_WIN32)
-#    ifndef WIN32_LEAN_AND_MEAN
-#        define WIN32_LEAN_AND_MEAN
-#    endif
-#    ifdef _WINSOCKAPI_
-#        undef _WINSOCKAPI_
-#    endif
-#    include <winsock2.h>
-#endif
+//#if defined(_WIN32)
+//#  ifndef WIN32_LEAN_AND_MEAN
+//#    define WIN32_LEAN_AND_MEAN
+//#  endif
+//#  ifndef _WINSOCKAPI_
+//#    define _WINSOCKAPI_ // stop <winsock.h>
+//#  endif
+//#  include <winsock2.h>
+//#  include <ws2tcpip.h>
+//#  include <windows.h>
+//#endif
 
 #include <asio.hpp>
 

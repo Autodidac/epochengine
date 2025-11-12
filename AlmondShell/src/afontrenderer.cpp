@@ -4,7 +4,7 @@
 #include "aplatform.hpp"
 #include "aengineconfig.hpp"
 
-#include "../include/afontrenderer.hpp"
+#include "afontrenderer.hpp"
 
 #define STB_TRUETYPE_IMPLEMENTATION
 #include "stb/stb_truetype.h"

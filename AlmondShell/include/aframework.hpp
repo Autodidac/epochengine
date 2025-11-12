@@ -32,6 +32,7 @@
 #ifndef NOMINMAX
 #define NOMINMAX
 #endif
+
 //#define NOUSER
 #include <windows.h>
 #include <windowsx.h>         // for GET_X_LPARAM / GET_Y_LPARAM
@@ -44,6 +45,11 @@
 //#include <minwindef.h>
 
     #define WIN32_LEAN_AND_MEAN
+
+#ifndef _WINSOCKAPI_
+#define _WINSOCKAPI_
+#endif
+
     #include <windows.h>
     #include <windowsx.h>         // for GET_X_LPARAM / GET_Y_LPARAM
 #undef Rectangle

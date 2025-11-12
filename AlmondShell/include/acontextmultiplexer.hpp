@@ -32,11 +32,11 @@
 #include "awindowdata.hpp"
 
 #if defined(_WIN32)
-#    include <windows.h>
-#    include <windowsx.h>
-#    include <shellapi.h>
-#    include <commctrl.h>
-#    pragma comment(lib, "comctl32.lib")
+//#    include <windows.h>
+//#    include <windowsx.h>
+//#    include <shellapi.h>
+//#    include <commctrl.h>
+//#    pragma comment(lib, "comctl32.lib")
 #else
 #    include <cstdint>
 struct POINT { long x{}; long y{}; };

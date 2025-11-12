@@ -24,6 +24,8 @@
 #include "pch.h"
 
 #include "aplatform.hpp"          // must be first
+#include "aengineconfig.hpp"      // all ENGINE-specific includes
+
 #include "aeditor.hpp"
 #include "agui.hpp"
 #include "afilewatch.hpp"

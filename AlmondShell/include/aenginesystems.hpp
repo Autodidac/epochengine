@@ -25,7 +25,7 @@
 
 #include "aplatform.hpp"
 #include "ampmcboundedqueue.hpp"   // Lock‑free MPMCQueue<T>
-#include "anet.hpp"                // for poll()
+//#include "anet.hpp"                // for poll()
 
 #include <span>
 #include <atomic>
@@ -141,7 +141,7 @@ namespace almondnamespace
 
         void await_suspend(std::coroutine_handle<> h) const noexcept {
             scheduler_enqueue([h]() {
-                net::poll(); // from anet.hpp
+              //  net::poll(); // from anet.hpp
                 h.resume();
                 });
         }
