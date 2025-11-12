@@ -200,7 +200,15 @@ cmake --build --preset x64-release
 
 ### Linux (Clang/GCC + Ninja)
 
+Ensure [vcpkg](https://vcpkg.io/) is bootstrapped and either export `VCPKG_ROOT` or place the `vcpkg` executable on your `PATH` so the build can enter manifest mode automatically.
+
 ```bash
+# Helper script (detects vcpkg and enables manifest mode)
+export VCPKG_ROOT=/path/to/vcpkg   # optional when vcpkg is already on PATH
+./AlmondShell/build.sh gcc Release
+
+# Or drive CMake directly with the presets
+export VCPKG_ROOT=/path/to/vcpkg
 cmake --preset Ninja-Release
 cmake --build --preset Ninja-Release
 ```

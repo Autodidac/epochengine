@@ -3,6 +3,8 @@
 
 set -euo pipefail
 
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+
 if [[ $# -lt 1 ]]; then
   echo "Usage: $0 [gcc|clang] [Debug|Release] [-- cmake args]" >&2
   exit 1
@@ -42,6 +44,58 @@ case "$COMPILER_CHOICE" in
     ;;
 esac
 
+detect_vcpkg_root() {
+  if [[ -n "${VCPKG_ROOT:-}" && -f "${VCPKG_ROOT}/scripts/buildsystems/vcpkg.cmake" ]]; then
+    printf '%s\n' "${VCPKG_ROOT}"
+    return 0
+  fi
+
+  local candidate
+
+  candidate="${SCRIPT_DIR}/../vcpkg"
+  if [[ -f "${candidate}/scripts/buildsystems/vcpkg.cmake" ]]; then
+    printf '%s\n' "${candidate}"
+    return 0
+  fi
+
+  if command -v vcpkg >/dev/null 2>&1; then
+    local executable
+    executable="$(command -v vcpkg)"
+
+    if command -v realpath >/dev/null 2>&1; then
+      executable="$(realpath "$executable")"
+    elif command -v readlink >/dev/null 2>&1; then
+      executable="$(readlink -f "$executable" 2>/dev/null || echo "$executable")"
+    fi
+
+    candidate="$(cd "$(dirname "$executable")" && pwd)"
+    if [[ -f "${candidate}/scripts/buildsystems/vcpkg.cmake" ]]; then
+      printf '%s\n' "${candidate}"
+      return 0
+    fi
+  fi
+
+  return 1
+}
+
+if ! VCPKG_ROOT="$(detect_vcpkg_root)"; then
+  echo "vcpkg installation not found." >&2
+  echo "Set VCPKG_ROOT to the root of your vcpkg checkout or install vcpkg and ensure it is on your PATH." >&2
+  exit 1
+fi
+
+export VCPKG_ROOT
+
+VCPKG_TOOLCHAIN_FILE="${VCPKG_ROOT}/scripts/buildsystems/vcpkg.cmake"
+if [[ ! -f "${VCPKG_TOOLCHAIN_FILE}" ]]; then
+  echo "Unable to locate vcpkg toolchain file at '${VCPKG_TOOLCHAIN_FILE}'." >&2
+  exit 1
+fi
+
+if [[ -z "${VCPKG_FEATURE_FLAGS:-}" ]]; then
+  export VCPKG_FEATURE_FLAGS=manifests
+fi
+
 INSTALL_PREFIX="${PWD}/built"
 BUILD_DIR="Bin/${COMPILER_NAME}-${BUILD_TYPE}"
 
@@ -52,6 +106,7 @@ cmake_args=(
   -DCMAKE_C_COMPILER="$COMPILER_C"
   -DCMAKE_CXX_COMPILER="$COMPILER_CXX"
   -DCMAKE_INSTALL_PREFIX="$INSTALL_PREFIX"
+  -DCMAKE_TOOLCHAIN_FILE="$VCPKG_TOOLCHAIN_FILE"
 )
 
 cmake_args+=("${EXTRA_CMAKE_ARGS[@]}")
