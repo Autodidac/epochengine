@@ -109,6 +109,9 @@
     <Filter Include="Header Files\core\backbone\textures\font">
       <UniqueIdentifier>{35df767e-1400-4d17-9843-a2d7f58a6997}</UniqueIdentifier>
     </Filter>
+    <Filter Include="Source Files\crossplatform">
+      <UniqueIdentifier>{81d9dae6-2dbe-49b5-8539-cbdf46301748}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="$(MSBuildThisFileDirectory)include\almondengine.hpp">
@@ -519,16 +522,16 @@
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="$(MSBuildThisFileDirectory)src\acontextmultiplexer_linux.cpp">
-      <Filter>Source Files</Filter>
+      <Filter>Source Files\crossplatform</Filter>
     </ClCompile>
     <ClCompile Include="$(MSBuildThisFileDirectory)src\acontextmultiplexer_win.cpp">
-      <Filter>Source Files</Filter>
+      <Filter>Source Files\crossplatform</Filter>
     </ClCompile>
     <ClCompile Include="$(MSBuildThisFileDirectory)src\aopenglplatform_linux.cpp">
-      <Filter>Source Files</Filter>
+      <Filter>Source Files\crossplatform</Filter>
     </ClCompile>
     <ClCompile Include="$(MSBuildThisFileDirectory)src\aopenglplatform_win.cpp">
-      <Filter>Source Files</Filter>
+      <Filter>Source Files\crossplatform</Filter>
     </ClCompile>
   </ItemGroup>
 </Project>
