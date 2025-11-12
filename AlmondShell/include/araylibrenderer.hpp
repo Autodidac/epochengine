@@ -141,8 +141,8 @@ namespace almondnamespace::raylibcontext
         Raylib_Rectangle src{ (float)r.x, (float)r.y, (float)r.width, (float)r.height };
 
         const GuiFitViewport fit = s_raylibstate.lastViewport;
-        const float viewportWidth = (float)std::max(1, fit.vpW);
-        const float viewportHeight = (float)std::max(1, fit.vpH);
+        const float viewportWidth = (float)(std::max)(1, fit.vpW);
+        const float viewportHeight = (float)(std::max)(1, fit.vpH);
         const float viewportScale = (fit.scale > 0.0f) ? fit.scale : 1.0f;
 
 #if !defined(RAYLIB_NO_WINDOW)

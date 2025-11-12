@@ -214,8 +214,8 @@ namespace almondnamespace::core
                     unsigned int mask = 0;
 
                     if (XQueryPointer(display, target, &root, &child, &rootX, &rootY, &winX, &winY, &mask)) {
-                        const int widthClamp = std::max(1, width);
-                        const int heightClamp = std::max(1, height);
+                        const int widthClamp = (std::max)(1, width);
+                        const int heightClamp = (std::max)(1, height);
                         if (winX < 0 || winY < 0 || winX >= widthClamp || winY >= heightClamp) {
                             x = -1;
                             y = -1;

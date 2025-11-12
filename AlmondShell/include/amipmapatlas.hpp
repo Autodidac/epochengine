@@ -64,7 +64,7 @@ namespace almondnamespace
         }
 
         static int calculate_mip_levels(int w, int h) {
-            return static_cast<int>(std::floor(std::log2(std::max(w, h)))) + 1;
+            return static_cast<int>(std::floor(std::log2((std::max)(w, h)))) + 1;
         }
 
         void clear() noexcept {
@@ -81,8 +81,8 @@ namespace almondnamespace
 
             for (std::size_t i = 0; i < mip_chain.size(); ++i) {
                 levels.push_back({ currentW, currentH, mip_chain[i] });
-                currentW = std::max(1, currentW / 2);
-                currentH = std::max(1, currentH / 2);
+                currentW = (std::max)(1, currentW / 2);
+                currentH = (std::max)(1, currentH / 2);
             }
 
             int id = static_cast<int>(entries.size());

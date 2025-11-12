@@ -218,7 +218,7 @@ namespace almondnamespace::font
 
                 const Glyph& stored_glyph = asset.glyphs.at(codepoint);
                 total_advance += stored_glyph.advance;
-                max_advance = std::max(max_advance, stored_glyph.advance);
+                max_advance = (std::max)(max_advance, stored_glyph.advance);
                 ++advance_count;
                 if (codepoint == U' ')
                 {
@@ -230,7 +230,7 @@ namespace almondnamespace::font
             {
                 metrics.averageAdvance = total_advance / static_cast<float>(advance_count);
             }
-            metrics.maxAdvance = std::max(metrics.maxAdvance, max_advance);
+            metrics.maxAdvance = (std::max)(metrics.maxAdvance, max_advance);
             if (metrics.spaceAdvance <= 0.0f)
             {
                 metrics.spaceAdvance = metrics.averageAdvance;

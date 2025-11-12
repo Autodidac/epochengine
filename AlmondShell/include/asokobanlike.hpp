@@ -139,8 +139,8 @@ namespace almondnamespace::sokoban
             auto& atlasVec = atlasmanager::get_atlas_vector();
             std::span<const TextureAtlas* const> atlasSpan(atlasVec.data(), atlasVec.size());
 
-            const float cw = float(std::max(1, ctx->get_width_safe())) / GRID_W;
-            const float ch = float(std::max(1, ctx->get_height_safe())) / GRID_H;
+            const float cw = float((std::max)(1, ctx->get_width_safe())) / GRID_W;
+            const float ch = float((std::max)(1, ctx->get_height_safe())) / GRID_H;
 
             for (int y = 0; y < GRID_H; ++y) {
                 for (int x = 0; x < GRID_W; ++x) {

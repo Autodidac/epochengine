@@ -102,8 +102,8 @@ namespace
             return;
         }
 
-        const int width = std::max<LONG>(1, rc.right - rc.left);
-        const int height = std::max<LONG>(1, rc.bottom - rc.top);
+        const int width = static_cast<int>((std::max)(static_cast<LONG>(1), rc.right - rc.left));
+        const int height = static_cast<int>((std::max)(static_cast<LONG>(1), rc.bottom - rc.top));
 
         if (x < 0 || y < 0 || x >= width || y >= height) {
             x = -1;
@@ -123,8 +123,8 @@ namespace
             return;
         }
 
-        const int width = std::max(1, ctx->width);
-        const int height = std::max(1, ctx->height);
+        const int width = (std::max)(1, ctx->width);
+        const int height = (std::max)(1, ctx->height);
 
         if (x < 0 || y < 0 || x >= width || y >= height)
         {

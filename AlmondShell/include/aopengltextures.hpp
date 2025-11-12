@@ -363,13 +363,13 @@ namespace almondnamespace::opengltextures
         }
         if (w <= 0 || h <= 0) {
             if (auto ctx = core::MultiContextManager::GetCurrent()) {
-                w = std::max(1, ctx->get_width_safe());
-                h = std::max(1, ctx->get_height_safe());
+                w = (std::max)(1, ctx->get_width_safe());
+                h = (std::max)(1, ctx->get_height_safe());
             }
         }
         if (w <= 0 || h <= 0) {
-            w = std::max(1, core::cli::window_width);
-            h = std::max(1, core::cli::window_height);
+            w = (std::max)(1, core::cli::window_width);
+            h = (std::max)(1, core::cli::window_height);
         }
         if (w <= 0 || h <= 0) {
             std::cerr << "[DrawSprite] ERROR: Unable to resolve window dimensions.\n";
@@ -444,8 +444,8 @@ namespace almondnamespace::opengltextures
         const bool widthNormalized = width > 0.f && width <= 1.f;
         const bool heightNormalized = height > 0.f && height <= 1.f;
 
-        float drawWidth = widthNormalized ? std::max(width * float(w), 1.0f) : width;
-        float drawHeight = heightNormalized ? std::max(height * float(h), 1.0f) : height;
+        float drawWidth = widthNormalized ? (std::max)(width * float(w), 1.0f) : width;
+        float drawHeight = heightNormalized ? (std::max)(height * float(h), 1.0f) : height;
 
         float drawX = (widthNormalized && x >= 0.f && x <= 1.f)
             ? x * float(w)

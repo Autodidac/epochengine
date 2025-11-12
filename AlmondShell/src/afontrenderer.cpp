@@ -144,8 +144,8 @@ namespace almondnamespace::font
         int max_y1 = 0;
         for (const auto& packed : packed_chars)
         {
-            max_x1 = std::max(max_x1, static_cast<int>(packed.x1));
-            max_y1 = std::max(max_y1, static_cast<int>(packed.y1));
+            max_x1 = (std::max)(max_x1, static_cast<int>(packed.x1));
+            max_y1 = (std::max)(max_y1, static_cast<int>(packed.y1));
         }
 
         if (max_x1 <= 0 || max_y1 <= 0)
@@ -154,8 +154,8 @@ namespace almondnamespace::font
             return false;
         }
 
-        max_x1 = std::min(max_x1, pack_width);
-        max_y1 = std::min(max_y1, pack_height);
+        max_x1 = (std::min)(max_x1, pack_width);
+        max_y1 = (std::min)(max_y1, pack_height);
 
         out_texture.width = static_cast<std::uint32_t>(max_x1);
         out_texture.height = static_cast<std::uint32_t>(max_y1);
@@ -199,7 +199,7 @@ namespace almondnamespace::font
                 baked.x1 = packed.x1;
                 baked.y1 = packed.y1;
 
-                out_metrics.maxAdvance = std::max(out_metrics.maxAdvance, baked.glyph.advance);
+                out_metrics.maxAdvance = (std::max)(out_metrics.maxAdvance, baked.glyph.advance);
                 if (first_codepoint + glyph_index == 32)
                 {
                     out_metrics.spaceAdvance = baked.glyph.advance;

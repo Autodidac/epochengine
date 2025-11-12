@@ -373,8 +373,8 @@ namespace almondnamespace::openglcontext
             RECT client{};
             if (GetClientRect(glState.hwnd, &client))
             {
-                const int logicalW = std::max<LONG>(1, client.right - client.left);
-                const int logicalH = std::max<LONG>(1, client.bottom - client.top);
+                const int logicalW = static_cast<int>((std::max)(static_cast<LONG>(1), client.right - client.left));
+                const int logicalH = static_cast<int>((std::max)(static_cast<LONG>(1), client.bottom - client.top));
                 ctx->width = logicalW;
                 ctx->height = logicalH;
                 ctx->virtualWidth = logicalW;
@@ -543,8 +543,8 @@ namespace almondnamespace::openglcontext
         XWindowAttributes attrs{};
         if (XGetWindowAttributes(display, window, &attrs))
         {
-            ctx->width = std::max(1, attrs.width);
-            ctx->height = std::max(1, attrs.height);
+            ctx->width = (std::max)(1, attrs.width);
+            ctx->height = (std::max)(1, attrs.height);
             ctx->virtualWidth = ctx->width;
             ctx->virtualHeight = ctx->height;
             ctx->framebufferWidth = ctx->width;
@@ -648,7 +648,7 @@ namespace almondnamespace::openglcontext
 #if defined(_WIN32)
         RECT r{ 0, 0, 0, 0 };
         if (backend.glState.hwnd && GetClientRect(backend.glState.hwnd, &r)) {
-            backend.glState.width = static_cast<unsigned int>(std::max<LONG>(1, r.right - r.left));
+            backend.glState.width = static_cast<unsigned int>((std::max)(static_cast<LONG>(1), r.right - r.left));
             return static_cast<int>(backend.glState.width);
         }
 #else
@@ -656,14 +656,14 @@ namespace almondnamespace::openglcontext
             return static_cast<int>(backend.glState.width);
         }
 #endif
-        return std::max(1, core::cli::window_width);
+        return (std::max)(1, core::cli::window_width);
     }
     inline int  opengl_get_height() {
         auto& backend = opengltextures::get_opengl_backend();
 #if defined(_WIN32)
         RECT r{ 0, 0, 0, 0 };
         if (backend.glState.hwnd && GetClientRect(backend.glState.hwnd, &r)) {
-            backend.glState.height = static_cast<unsigned int>(std::max<LONG>(1, r.bottom - r.top));
+            backend.glState.height = static_cast<unsigned int>((std::max)(static_cast<LONG>(1), r.bottom - r.top));
             return static_cast<int>(backend.glState.height);
         }
 #else
@@ -671,11 +671,11 @@ namespace almondnamespace::openglcontext
             return static_cast<int>(backend.glState.height);
         }
 #endif
-        return std::max(1, core::cli::window_height);
+        return (std::max)(1, core::cli::window_height);
     }
     inline void opengl_clear(std::shared_ptr<core::Context> ctx) {
-        const int fbW = std::max(1, ctx ? ctx->framebufferWidth : 0);
-        const int fbH = std::max(1, ctx ? ctx->framebufferHeight : 0);
+        const int fbW = (std::max)(1, ctx ? ctx->framebufferWidth : 0);
+        const int fbH = (std::max)(1, ctx ? ctx->framebufferHeight : 0);
         glViewport(0, 0, fbW, fbH);
         glClearColor(0.235f, 0.235f, 0.235f, 1.0f);
         glClear(GL_COLOR_BUFFER_BIT);
@@ -695,8 +695,8 @@ namespace almondnamespace::openglcontext
             RECT client{};
             if (GetClientRect(ctx->hwnd, &client))
             {
-                const int logicalW = std::max<LONG>(1, client.right - client.left);
-                const int logicalH = std::max<LONG>(1, client.bottom - client.top);
+                const int logicalW = static_cast<int>((std::max)(static_cast<LONG>(1), client.right - client.left));
+                const int logicalH = static_cast<int>((std::max)(static_cast<LONG>(1), client.bottom - client.top));
                 ctx->width = logicalW;
                 ctx->height = logicalH;
                 ctx->virtualWidth = logicalW;
@@ -708,14 +708,14 @@ namespace almondnamespace::openglcontext
             }
             else
             {
-                glState.width = static_cast<unsigned int>(std::max(1, ctx->framebufferWidth));
-                glState.height = static_cast<unsigned int>(std::max(1, ctx->framebufferHeight));
+                glState.width = static_cast<unsigned int>((std::max)(1, ctx->framebufferWidth));
+                glState.height = static_cast<unsigned int>((std::max)(1, ctx->framebufferHeight));
             }
         }
         else
         {
-            glState.width = static_cast<unsigned int>(std::max(1, ctx ? ctx->framebufferWidth : 0));
-            glState.height = static_cast<unsigned int>(std::max(1, ctx ? ctx->framebufferHeight : 0));
+            glState.width = static_cast<unsigned int>((std::max)(1, ctx ? ctx->framebufferWidth : 0));
+            glState.height = static_cast<unsigned int>((std::max)(1, ctx ? ctx->framebufferHeight : 0));
         }
 #elif defined(__linux__)
         if (ctx && ctx->hwnd && glState.display)
@@ -723,8 +723,8 @@ namespace almondnamespace::openglcontext
             XWindowAttributes attrs{};
             if (XGetWindowAttributes(glState.display, detail::to_xwindow(ctx->hwnd), &attrs))
             {
-                ctx->width = std::max(1, attrs.width);
-                ctx->height = std::max(1, attrs.height);
+                ctx->width = (std::max)(1, attrs.width);
+                ctx->height = (std::max)(1, attrs.height);
                 ctx->virtualWidth = ctx->width;
                 ctx->virtualHeight = ctx->height;
                 ctx->framebufferWidth = ctx->width;
@@ -734,18 +734,18 @@ namespace almondnamespace::openglcontext
             }
             else
             {
-                glState.width = static_cast<unsigned int>(std::max(1, ctx->framebufferWidth));
-                glState.height = static_cast<unsigned int>(std::max(1, ctx->framebufferHeight));
+                glState.width = static_cast<unsigned int>((std::max)(1, ctx->framebufferWidth));
+                glState.height = static_cast<unsigned int>((std::max)(1, ctx->framebufferHeight));
             }
         }
         else
         {
-            glState.width = static_cast<unsigned int>(std::max(1, ctx ? ctx->framebufferWidth : 0));
-            glState.height = static_cast<unsigned int>(std::max(1, ctx ? ctx->framebufferHeight : 0));
+            glState.width = static_cast<unsigned int>((std::max)(1, ctx ? ctx->framebufferWidth : 0));
+            glState.height = static_cast<unsigned int>((std::max)(1, ctx ? ctx->framebufferHeight : 0));
         }
 #else
-        glState.width = static_cast<unsigned int>(std::max(1, ctx ? ctx->framebufferWidth : 0));
-        glState.height = static_cast<unsigned int>(std::max(1, ctx ? ctx->framebufferHeight : 0));
+        glState.width = static_cast<unsigned int>((std::max)(1, ctx ? ctx->framebufferWidth : 0));
+        glState.height = static_cast<unsigned int>((std::max)(1, ctx ? ctx->framebufferHeight : 0));
 #endif
 
         atlasmanager::process_pending_uploads(core::ContextType::OpenGL);

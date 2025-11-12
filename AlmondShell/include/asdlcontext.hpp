@@ -76,8 +76,8 @@ namespace almondnamespace::sdlcontext
 
     inline void refresh_dimensions(const std::shared_ptr<core::Context>& ctx) noexcept
     {
-        int logicalW = std::max(1, sdlcontext.width);
-        int logicalH = std::max(1, sdlcontext.height);
+        int logicalW = (std::max)(1, sdlcontext.width);
+        int logicalH = (std::max)(1, sdlcontext.height);
 
         if (sdlcontext.window)
         {
@@ -110,8 +110,8 @@ namespace almondnamespace::sdlcontext
             }
         }
 
-        sdlcontext.framebufferWidth = std::max(1, fbW);
-        sdlcontext.framebufferHeight = std::max(1, fbH);
+        sdlcontext.framebufferWidth = (std::max)(1, fbW);
+        sdlcontext.framebufferHeight = (std::max)(1, fbH);
 
         if (ctx)
         {
@@ -131,8 +131,8 @@ namespace almondnamespace::sdlcontext
         std::function<void(int, int)> onResize = nullptr,
         std::string windowTitle = {})
     {
-        const int clampedWidth = std::max(1, w);
-        const int clampedHeight = std::max(1, h);
+        const int clampedWidth = (std::max)(1, w);
+        const int clampedHeight = (std::max)(1, h);
 
         sdlcontext.width = clampedWidth;
         sdlcontext.height = clampedHeight;
@@ -147,8 +147,8 @@ namespace almondnamespace::sdlcontext
         std::weak_ptr<core::Context> weakCtx = ctx;
         auto userResize = std::move(onResize);
         sdlcontext.onResize = [weakCtx, userResize = std::move(userResize)](int width, int height) mutable {
-            sdlcontext.width = std::max(1, width);
-            sdlcontext.height = std::max(1, height);
+            sdlcontext.width = (std::max)(1, width);
+            sdlcontext.height = (std::max)(1, height);
             sdlcontext.virtualWidth = sdlcontext.width;
             sdlcontext.virtualHeight = sdlcontext.height;
 
@@ -263,8 +263,8 @@ namespace almondnamespace::sdlcontext
 
             RECT client{};
             GetClientRect(sdlcontext.parent, &client);
-            const int width = std::max<LONG>(1, client.right - client.left);
-            const int height = std::max<LONG>(1, client.bottom - client.top);
+            const int width = static_cast<int>((std::max)(static_cast<LONG>(1), client.right - client.left));
+            const int height = static_cast<int>((std::max)(static_cast<LONG>(1), client.bottom - client.top));
 
             sdlcontext.width = width;
             sdlcontext.height = height;
@@ -504,13 +504,13 @@ namespace almondnamespace::sdlcontext
             SDL_GetWindowSize(sdlcontext.window, &w, &h);
         }
 
-        w = std::max(1, w);
-        h = std::max(1, h);
+        w = (std::max)(1, w);
+        h = (std::max)(1, h);
         return { w, h };
     }
 
-    inline int sdl_get_width() noexcept { return std::max(1, sdlcontext.width); }
-    inline int sdl_get_height() noexcept { return std::max(1, sdlcontext.height); }
+    inline int sdl_get_width() noexcept { return (std::max)(1, sdlcontext.width); }
+    inline int sdl_get_height() noexcept { return (std::max)(1, sdlcontext.height); }
 
     inline bool SDLIsRunning(std::shared_ptr<core::Context> ctx) {
         return sdlcontext.running;

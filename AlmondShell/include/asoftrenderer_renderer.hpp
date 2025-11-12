@@ -163,10 +163,10 @@ namespace almondnamespace::anativecontext
 
             Vec3 p0 = project(v0), p1 = project(v1), p2 = project(v2);
 
-            int minX = std::max(0, int(std::floor(std::min({ p0.x,p1.x,p2.x }))));
-            int maxX = std::min(fb.width - 1, int(std::ceil(std::max({ p0.x,p1.x,p2.x }))));
-            int minY = std::max(0, int(std::floor(std::min({ p0.y,p1.y,p2.y }))));
-            int maxY = std::min(fb.height - 1, int(std::ceil(std::max({ p0.y,p1.y,p2.y }))));
+            int minX = (std::max)(0, int(std::floor((std::min)({ p0.x,p1.x,p2.x }))));
+            int maxX = (std::min)(fb.width - 1, int(std::ceil((std::max)({ p0.x,p1.x,p2.x }))));
+            int minY = (std::max)(0, int(std::floor((std::min)({ p0.y,p1.y,p2.y }))));
+            int maxY = (std::min)(fb.height - 1, int(std::ceil((std::max)({ p0.y,p1.y,p2.y }))));
 
             auto edge = [](const Vec3& a, const Vec3& b, float x, float y) {return (b.x - a.x) * (y - a.y) - (b.y - a.y) * (x - a.x); };
             float area = edge(p0, p1, p2.x, p2.y); if (std::fabs(area) < 1e-6f) return;

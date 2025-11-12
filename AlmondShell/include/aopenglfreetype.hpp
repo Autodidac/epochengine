@@ -149,7 +149,7 @@ namespace almondnamespace::openglcontext {
             glTexSubImage2D(GL_TEXTURE_2D, 0, xOffset, yOffset, glyph->bitmap.width, glyph->bitmap.rows,
                 GL_RED, GL_UNSIGNED_BYTE, glyph->bitmap.buffer);
 
-            rowHeight = std::max(rowHeight, static_cast<int>(glyph->bitmap.rows));
+            rowHeight = (std::max)(rowHeight, static_cast<int>(glyph->bitmap.rows));
 
             Character character = {
                 0,  // textureID is unused here; textureAtlas handles this globally

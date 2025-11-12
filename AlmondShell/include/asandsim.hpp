@@ -71,8 +71,8 @@ namespace almondnamespace::sandsim
 
             int mx = 0, my = 0;
             ctx->get_mouse_position_safe(mx, my);
-            const int w = std::max(1, ctx->get_width_safe());
-            const int h = std::max(1, ctx->get_height_safe());
+            const int w = (std::max)(1, ctx->get_width_safe());
+            const int h = (std::max)(1, ctx->get_height_safe());
 
             const float sx = W / float(w);
             const float sy = H / float(h);

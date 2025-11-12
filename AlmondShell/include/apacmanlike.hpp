@@ -127,8 +127,8 @@ namespace almondnamespace::pacman
             auto& atlasVec = atlasmanager::get_atlas_vector();
             std::span<const TextureAtlas* const> atlasSpan(atlasVec.data(), atlasVec.size());
 
-            const float cw = float(std::max(1, ctx->get_width_safe())) / GRID_W;
-            const float ch = float(std::max(1, ctx->get_height_safe())) / GRID_H;
+            const float cw = float((std::max)(1, ctx->get_width_safe())) / GRID_W;
+            const float ch = float((std::max)(1, ctx->get_height_safe())) / GRID_H;
 
             auto draw_grid = [&](SpriteHandle handle, auto pred) {
                 if (!spritepool::is_alive(handle))

@@ -555,20 +555,20 @@ namespace
             const char ch = text[i];
             if (ch == '\n')
             {
-                maxWidth = std::max(maxWidth, current);
+                maxWidth = (std::max)(maxWidth, current);
                 current = 0.0f;
                 continue;
             }
             const auto next = next_drawable_char(text, i);
             current += glyph_advance_with_kerning(static_cast<unsigned char>(ch), next, scale);
         }
-        return std::max(maxWidth, current);
+        return (std::max)(maxWidth, current);
     }
 
     [[nodiscard]] float measure_wrapped_text_height(std::string_view text, float width, float scale) noexcept
     {
         ensure_resources();
-        const float effectiveWidth = std::max(space_advance(scale), width);
+        const float effectiveWidth = (std::max)(space_advance(scale), width);
         const float lineAdvance = line_advance_amount(scale);
         const float baseHeight = base_line_height(scale);
 
@@ -593,13 +593,13 @@ namespace
         }
 
         const float totalHeight = baseHeight + static_cast<float>(lines - 1) * lineAdvance;
-        return std::max(baseHeight, totalHeight);
+        return (std::max)(baseHeight, totalHeight);
     }
 
     [[nodiscard]] almondnamespace::gui::Vec2 compute_caret_position(std::string_view text, float x, float y, float width, float scale) noexcept
     {
         ensure_resources();
-        const float effectiveWidth = std::max(space_advance(scale), width);
+        const float effectiveWidth = (std::max)(space_advance(scale), width);
         const float lineAdvance = line_advance_amount(scale);
         float penX = x;
         float baseline = y + baseline_offset(scale);
@@ -632,7 +632,7 @@ namespace
         if (!g_frame.ctx || !g_resources.font.asset)
             return 0.0f;
 
-        const float effectiveWidth = std::max(space_advance(scale), width);
+        const float effectiveWidth = (std::max)(space_advance(scale), width);
         const float lineAdvance = line_advance_amount(scale);
         const float ascent = baseline_offset(scale);
         const float baseHeight = base_line_height(scale);
@@ -676,7 +676,7 @@ namespace
 
     void draw_caret(float x, float y, float height)
     {
-        const float caretWidth = std::max(1.0f, space_advance(kFontScale) * 0.1f);
+        const float caretWidth = (std::max)(1.0f, space_advance(kFontScale) * 0.1f);
         draw_sprite(g_resources.buttonActive, x, y, caretWidth, height);
     }
 
@@ -847,8 +847,8 @@ bool button(std::string_view label, Vec2 size) noexcept
     const Vec2 pos = g_frame.cursor;
     const float baseHeight = base_line_height(kFontScale);
     const float minWidth = space_advance(kFontScale) + 2.0f * kContentPadding;
-    const float width = std::max<float>(static_cast<float>(size.x), minWidth);
-    const float height = std::max<float>(static_cast<float>(size.y), baseHeight + 2.0f * kContentPadding);
+    const float width = (std::max)(static_cast<float>(size.x), minWidth);
+    const float height = (std::max)(static_cast<float>(size.y), baseHeight + 2.0f * kContentPadding);
 
     const bool hovered = point_in_rect(g_frame.mousePos, pos.x, pos.y, width, height);
 
@@ -860,8 +860,8 @@ bool button(std::string_view label, Vec2 size) noexcept
 
     const float textWidth = measure_text_width(label, kFontScale);
     const float textHeight = baseHeight;
-    const float textX = pos.x + std::max(0.0f, (width - textWidth) * 0.5f);
-    const float textY = pos.y + std::max(0.0f, (height - textHeight) * 0.5f);
+    const float textX = pos.x + (std::max)(0.0f, (width - textWidth) * 0.5f);
+    const float textY = pos.y + (std::max)(0.0f, (height - textHeight) * 0.5f);
     draw_text_line(label, textX, textY, kFontScale);
 
     g_frame.lastButtonBounds = WidgetBounds{ pos, { width, height } };
@@ -878,8 +878,8 @@ bool image_button(const SpriteHandle& sprite, Vec2 size) noexcept
 
     const Vec2 pos = g_frame.cursor;
     const float minSize = base_line_height(kFontScale) * 2.0f;
-    const float width = std::max<float>(static_cast<float>(size.x), minSize);
-    const float height = std::max<float>(static_cast<float>(size.y), minSize);
+    const float width = (std::max)(static_cast<float>(size.x), minSize);
+    const float height = (std::max)(static_cast<float>(size.y), minSize);
 
     const bool hovered = point_in_rect(g_frame.mousePos, pos.x, pos.y, width, height);
     const SpriteHandle background = hovered
@@ -908,8 +908,8 @@ EditBoxResult edit_box(std::string& text, Vec2 size, std::size_t max_chars, bool
     const float baseHeight = base_line_height(kFontScale);
     const float minWidth = space_advance(kFontScale) * 4.0f;
     const float minHeight = baseHeight + 2.0f * kBoxInnerPadding;
-    const float width = std::max<float>(static_cast<float>(size.x), minWidth);
-    const float height = std::max<float>(static_cast<float>(size.y), minHeight);
+    const float width = (std::max)(static_cast<float>(size.x), minWidth);
+    const float height = (std::max)(static_cast<float>(size.y), minHeight);
 
     const bool hovered = point_in_rect(g_frame.mousePos, pos.x, pos.y, width, height);
     const void* id = static_cast<const void*>(&text);
@@ -935,8 +935,8 @@ EditBoxResult edit_box(std::string& text, Vec2 size, std::size_t max_chars, bool
     const SpriteHandle background = active ? g_resources.textFieldActive : g_resources.textField;
     draw_sprite(background, pos.x, pos.y, width, height);
 
-    const float contentWidth = std::max(1.0f, width - 2.0f * kBoxInnerPadding);
-    const float contentHeight = std::max(1.0f, height - 2.0f * kBoxInnerPadding);
+    const float contentWidth = (std::max)(1.0f, width - 2.0f * kBoxInnerPadding);
+    const float contentHeight = (std::max)(1.0f, height - 2.0f * kBoxInnerPadding);
     const float textX = pos.x + kBoxInnerPadding;
     const float textY = pos.y + kBoxInnerPadding;
 
@@ -1011,12 +1011,12 @@ EditBoxResult edit_box(std::string& text, Vec2 size, std::size_t max_chars, bool
             : Vec2{ textX + measure_text_width(text, kFontScale), textY };
 
         const float caretHeight = multiline
-            ? std::min(contentHeight, baseHeight)
+            ? (std::min)(contentHeight, baseHeight)
             : baseHeight;
 
-        const float caretRight = textX + std::max(1.0f, contentWidth) - 1.0f;
+        const float caretRight = textX + (std::max)(1.0f, contentWidth) - 1.0f;
         const float caretX = std::clamp(caret.x, textX, caretRight);
-        const float caretY = std::clamp(caret.y, textY, textY + std::max(0.0f, contentHeight - caretHeight));
+        const float caretY = std::clamp(caret.y, textY, textY + (std::max)(0.0f, contentHeight - caretHeight));
         draw_caret(caretX, caretY, caretHeight);
     }
 
@@ -1037,20 +1037,20 @@ void text_box(std::string_view text, Vec2 size) noexcept
     float width = static_cast<float>(size.x);
     if (width <= 0.0f) {
         const float estimated = measure_text_width(text, kFontScale) + 2.0f * kBoxInnerPadding;
-        width = std::max(minWidth, estimated);
+        width = (std::max)(minWidth, estimated);
     }
     else {
-        width = std::max(width, minWidth);
+        width = (std::max)(width, minWidth);
     }
 
-    const float contentWidth = std::max(1.0f, width - 2.0f * kBoxInnerPadding);
+    const float contentWidth = (std::max)(1.0f, width - 2.0f * kBoxInnerPadding);
     float height = static_cast<float>(size.y);
     if (height <= 0.0f) {
         const float textHeight = measure_wrapped_text_height(text, contentWidth, kFontScale);
         height = textHeight + 2.0f * kBoxInnerPadding;
     }
     else {
-        height = std::max(height, baseHeight + 2.0f * kBoxInnerPadding);
+        height = (std::max)(height, baseHeight + 2.0f * kBoxInnerPadding);
     }
 
     draw_sprite(g_resources.panelBackground, pos.x, pos.y, width, height);
@@ -1073,17 +1073,17 @@ ConsoleWindowResult console_window(const ConsoleWindowOptions& options) noexcept
 
     ensure_resources();
 
-    const float availableWidth = std::max(0.0f, options.size.x - 2.0f * kContentPadding);
-    const float logHeight = std::max(0.0f, options.size.y - 3.0f * kContentPadding - base_line_height(kFontScale));
+    const float availableWidth = (std::max)(0.0f, options.size.x - 2.0f * kContentPadding);
+    const float logHeight = (std::max)(0.0f, options.size.y - 3.0f * kContentPadding - base_line_height(kFontScale));
     const Vec2 logPos = g_frame.cursor;
 
     if (availableWidth > 0.0f && logHeight > 0.0f) {
         draw_sprite(g_resources.consoleBackground, logPos.x, logPos.y, availableWidth, logHeight);
     }
 
-    const float contentWidth = std::max(1.0f, availableWidth - 2.0f * kBoxInnerPadding);
+    const float contentWidth = (std::max)(1.0f, availableWidth - 2.0f * kBoxInnerPadding);
     float penY = logPos.y + kBoxInnerPadding;
-    const float maxY = logPos.y + std::max(0.0f, logHeight - kBoxInnerPadding);
+    const float maxY = logPos.y + (std::max)(0.0f, logHeight - kBoxInnerPadding);
 
     if (!options.lines.empty() && logHeight > 0.0f) {
         const std::size_t count = options.lines.size();
@@ -1093,7 +1093,7 @@ ConsoleWindowResult console_window(const ConsoleWindowOptions& options) noexcept
         for (std::size_t i = start; i < count; ++i) {
             const std::string& line = options.lines[i];
             const float drawn = draw_wrapped_text(line, logPos.x + kBoxInnerPadding, penY, contentWidth, kFontScale);
-            const float paragraphGap = std::max(0.0f, line_advance_amount(kFontScale) - base_line_height(kFontScale));
+            const float paragraphGap = (std::max)(0.0f, line_advance_amount(kFontScale) - base_line_height(kFontScale));
             penY += drawn + paragraphGap;
             if (penY > maxY) {
                 break;

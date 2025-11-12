@@ -106,8 +106,8 @@ namespace almondnamespace::sfmlcontext
 
             RECT client{};
             GetClientRect(sfmlcontext.parent, &client);
-            const int width = std::max<LONG>(1, client.right - client.left);
-            const int height = std::max<LONG>(1, client.bottom - client.top);
+            const int width = static_cast<int>((std::max)(static_cast<LONG>(1), client.right - client.left));
+            const int height = static_cast<int>((std::max)(static_cast<LONG>(1), client.bottom - client.top));
 
             sfmlcontext.width = width;
             sfmlcontext.height = height;
