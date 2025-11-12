@@ -63,10 +63,10 @@ Asset producers can run off the main thread via the coroutine-enabled `taskgraph
 - **Roadmap Traceability** – The existing `roadmap.txt` lacked granular prompts or acceptance checks per phase, making automation hand-offs hard to script.
 - **Testing Surface** – No automated smoke tests or CI hooks are defined for the critical updater and renderer paths, leaving regression risk high during phase transitions.
 
-## Recent Progress (v0.62.6)
+## Recent Progress (v0.62.7)
 
-- Documented the Raylib child-window scaling alignment work so docked panes remain pinned to their design canvas even as contexts rebound or rescale during docking passes.
-- Added smoke coverage that repeatedly reacquires the Raylib context after scaling churn to confirm the GL context stays bound while the multiplexer shuffles windows.
+- Scoped the OpenGL renderer's global state usage to the shared `openglcontext::OpenGL4State`, fixing the missing `s_openglstate` symbol that previously broke quad rendering builds.
+- Updated the README snapshot and changelog to record the OpenGL renderer fix and the associated documentation sweep.
 
 ## Recent Progress (v0.62.0)
 
