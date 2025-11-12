@@ -34,6 +34,7 @@
 //#include "awindowdata.hpp"      // WindowData
 #include "acontexttype.hpp"     // ContextType enum
 
+#include <algorithm>
 #include <map>
 #include <memory>
 #include <vector>
@@ -44,6 +45,11 @@
 #include <mutex>
 #include <queue>
 #include <shared_mutex>
+
+#if defined(__linux__)
+extern Display* global_display;
+extern ::Window global_window;
+#endif
 
 namespace almondnamespace::core
 {
@@ -187,6 +193,41 @@ namespace almondnamespace::core
                     else {
                         x = pt.x;
                         y = pt.y;
+                    }
+                }
+                else {
+                    x = -1;
+                    y = -1;
+                }
+            }
+#elif defined(__linux__)
+            if (hwnd && input::are_mouse_coords_global()) {
+                Display* display = global_display;
+                ::Window target = static_cast<::Window>(reinterpret_cast<uintptr_t>(hwnd));
+                if (display && target != 0) {
+                    Window root{};
+                    Window child{};
+                    int rootX = 0;
+                    int rootY = 0;
+                    int winX = 0;
+                    int winY = 0;
+                    unsigned int mask = 0;
+
+                    if (XQueryPointer(display, target, &root, &child, &rootX, &rootY, &winX, &winY, &mask)) {
+                        const int widthClamp = std::max(1, width);
+                        const int heightClamp = std::max(1, height);
+                        if (winX < 0 || winY < 0 || winX >= widthClamp || winY >= heightClamp) {
+                            x = -1;
+                            y = -1;
+                        }
+                        else {
+                            x = winX;
+                            y = winY;
+                        }
+                    }
+                    else {
+                        x = -1;
+                        y = -1;
                     }
                 }
                 else {

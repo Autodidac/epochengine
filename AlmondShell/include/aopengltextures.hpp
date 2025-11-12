@@ -30,15 +30,19 @@
 
 #ifdef ALMOND_USING_OPENGL
 
+#include "aopenglplatform.hpp"
+#include "aopenglcontext.hpp"
+#include "aopenglstate.hpp"
+
 #include "acontext.hpp"
 #include "acontextmultiplexer.hpp"
-#include "aopenglstate.hpp"
 #include "aatlasmanager.hpp"
 #include "aatlastexture.hpp"
 #include "aimageloader.hpp"
 #include "atexture.hpp"
 #include "aspritehandle.hpp"
 #include "acommandline.hpp"
+
 
 #include <atomic>
 #include <format>
@@ -52,7 +56,24 @@
 
 namespace almondnamespace::opengltextures
 {
-    struct AtlasGPU 
+    namespace detail
+    {
+        inline almondnamespace::openglcontext::PlatformGL::PlatformGLContext to_platform_context(const openglcontext::OpenGL4State& state) noexcept
+        {
+            almondnamespace::openglcontext::PlatformGL::PlatformGLContext ctx{};
+#if defined(_WIN32)
+            ctx.device = state.hdc;
+            ctx.context = state.hglrc;
+#elif defined(__linux__)
+            ctx.display = state.display;
+            ctx.drawable = state.drawable ? state.drawable : state.window;
+            ctx.context = state.glxContext;
+#endif
+            return ctx;
+        }
+    }
+
+    struct AtlasGPU
     {
         GLuint textureHandle = 0;
         u64 version = static_cast<u64>(-1);  // force mismatch on first compare
@@ -75,7 +96,7 @@ namespace almondnamespace::opengltextures
     inline std::unordered_map<const TextureAtlas*, AtlasGPU, TextureAtlasPtrHash, TextureAtlasPtrEqual> opengl_gpu_atlases;
 
     // forward declare OpenGL4State to avoid pulling in aopenglcontext here
-    namespace openglcontext { struct OpenGL4State; }
+    //namespace openglcontext { struct OpenGL4State; }
     struct BackendData {
         std::unordered_map<const TextureAtlas*, AtlasGPU,
             TextureAtlasPtrHash, TextureAtlasPtrEqual> gpu_atlases;
@@ -180,17 +201,11 @@ namespace almondnamespace::opengltextures
             const_cast<TextureAtlas&>(atlas).rebuild_pixels();
         }
 
-        // Ensure we have a current GL context
-        HGLRC oldCtx = wglGetCurrentContext();
-        if (!oldCtx) {
-            if (!glState.hdc || !glState.hglrc) {
-                std::cerr << "[UploadAtlas] No current GL context and no state to make one!\n";
-                return;
-            }
-            if (!wglMakeCurrent(glState.hdc, glState.hglrc)) {
-                std::cerr << "[UploadAtlas] Failed to make GL context current for upload\n";
-                return;
-            }
+        const auto platformCtx = detail::to_platform_context(glState);
+        almondnamespace::openglcontext::PlatformGL::ScopedContext contextGuard;
+        if (!contextGuard.set(platformCtx)) {
+            std::cerr << "[UploadAtlas] Failed to activate GL context for upload\n";
+            return;
         }
 
         std::lock_guard<std::mutex> gpuLock(oglData->gpuMutex);
@@ -241,10 +256,6 @@ namespace almondnamespace::opengltextures
 
         std::cerr << "[OpenGL] Uploaded atlas '" << atlas.name
             << "' (tex id " << gpu.textureHandle << ")\n";
-
-        if (!oldCtx) {
-            wglMakeCurrent(nullptr, nullptr);
-        }
     }
 
     inline void ensure_uploaded(const TextureAtlas& atlas)

@@ -27,6 +27,12 @@
 #include "aplatform.hpp"
 #include "aengineconfig.hpp"    // brings in <windows.h>, <glad/glad.h>, etc.
 #include "arobusttime.hpp"  // your time namespace
+#include "aopenglplatform.hpp"
+
+#if defined(__linux__)
+#    include <X11/Xlib.h>
+#    include <GL/glx.h>
+#endif
 
 #include <array>
 #include <bitset>
@@ -54,6 +60,19 @@ namespace almondnamespace::openglcontext
         unsigned int height{ 300 };
 
         bool running{ false };
+#elif defined(__linux__)
+        ::Window window = 0;
+        GLXDrawable drawable = 0;
+        Display* display = nullptr;
+        GLXContext glxContext = nullptr;
+        GLXFBConfig fbConfig = nullptr;
+        Colormap colormap = 0;
+        bool ownsDisplay = false;
+        bool ownsWindow = false;
+        bool ownsContext = false;
+        bool ownsColormap = false;
+        unsigned int width{ 400 };
+        unsigned int height{ 300 };
 #endif
         struct MouseState {
             std::array<bool, 5> down{};

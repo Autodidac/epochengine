@@ -9,7 +9,6 @@ set(CMAKE_CXX_EXTENSIONS OFF)
 set(ALMONDSHELL_SOURCES
     src/aengine.cpp
     src/acontext.cpp
-    src/acontextmultiplexer.cpp
     src/aeditor.cpp
     src/agui.cpp
     src/afontrenderer.cpp
@@ -21,7 +20,14 @@ set(ALMONDSHELL_SOURCES
 
 if(WIN32)
     list(APPEND ALMONDSHELL_SOURCES
+        src/acontextmultiplexer_win.cpp
+        src/aopenglplatform_win.cpp
         src/WinResource.rc
+    )
+elseif(UNIX AND NOT APPLE)
+    list(APPEND ALMONDSHELL_SOURCES
+        src/acontextmultiplexer_linux.cpp
+        src/aopenglplatform_linux.cpp
     )
 endif()
 
@@ -80,7 +86,16 @@ find_package(Threads REQUIRED)
 target_link_libraries(almondshell PRIVATE Threads::Threads)
 
 if(UNIX AND NOT APPLE)
-    target_link_libraries(almondshell PRIVATE dl m)
+    find_package(X11 REQUIRED)
+    if(X11_INCLUDE_DIR)
+        target_include_directories(almondshell PRIVATE ${X11_INCLUDE_DIR})
+    endif()
+    target_link_libraries(almondshell PRIVATE dl m X11::X11 GL)
+    if(TARGET X11::Xrandr)
+        target_link_libraries(almondshell PRIVATE X11::Xrandr)
+    elseif(X11_Xrandr_LIB)
+        target_link_libraries(almondshell PRIVATE ${X11_Xrandr_LIB})
+    endif()
 endif()
 
 find_package(Doxygen QUIET)

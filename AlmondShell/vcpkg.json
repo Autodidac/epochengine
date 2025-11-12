@@ -8,6 +8,15 @@
     "opengl",
     "raylib",
     "sdl3",
-    "sdl3-image"
+    "sdl3-image",
+    "zlib",
+    {
+      "name": "libx11",
+      "platform": "linux"
+    },
+    {
+      "name": "libxrandr",
+      "platform": "linux"
+    }
   ]
 }

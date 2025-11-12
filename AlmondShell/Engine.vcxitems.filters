@@ -465,6 +465,12 @@
     <ClInclude Include="$(MSBuildThisFileDirectory)include\afontrenderer.hpp">
       <Filter>Header Files\core\backbone\textures\font</Filter>
     </ClInclude>
+    <ClInclude Include="$(MSBuildThisFileDirectory)include\aopenglplatform.hpp">
+      <Filter>Header Files\core\backbone\external\context\opengl</Filter>
+    </ClInclude>
+    <ClInclude Include="$(MSBuildThisFileDirectory)include\aopenglbillboards.hpp">
+      <Filter>Header Files\core\backbone\external\context\opengl</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <Image Include="$(MSBuildThisFileDirectory)src\icon.ico">
@@ -509,10 +515,19 @@
     <ClCompile Include="$(MSBuildThisFileDirectory)src\ascriptingsystem.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="$(MSBuildThisFileDirectory)src\acontextmultiplexer.cpp">
+    <ClCompile Include="$(MSBuildThisFileDirectory)src\updater_bootstrap.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="$(MSBuildThisFileDirectory)src\updater_bootstrap.cpp">
+    <ClCompile Include="$(MSBuildThisFileDirectory)src\acontextmultiplexer_linux.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="$(MSBuildThisFileDirectory)src\acontextmultiplexer_win.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="$(MSBuildThisFileDirectory)src\aopenglplatform_linux.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="$(MSBuildThisFileDirectory)src\aopenglplatform_win.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>
