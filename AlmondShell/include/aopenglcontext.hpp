@@ -476,7 +476,7 @@ namespace almondnamespace::openglcontext
             GLX_BLUE_SIZE, 8,
             GLX_ALPHA_SIZE, 8,
             GLX_DEPTH_SIZE, 24,
-            None
+            0
         };
 
         GLXFBConfig* configs = glXChooseFBConfig(display, screen, visualAttribs, &fbCount);
