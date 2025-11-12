@@ -8,6 +8,10 @@
 
 #include "pch.h"
 
+#include "aplatform.hpp"
+#include "aengineconfig.hpp"
+//#include "aopenglplatform.hpp"
+
 #include "acontextmultiplexer.hpp"
 #include "astringconverter.hpp"
 

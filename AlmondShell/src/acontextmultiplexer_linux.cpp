@@ -1,6 +1,6 @@
-#if defined(__linux__)
 
 #include "pch.h"
+#if defined(__linux__)
 
 #include "acontextmultiplexer.hpp"
 #include "acontext.hpp"
