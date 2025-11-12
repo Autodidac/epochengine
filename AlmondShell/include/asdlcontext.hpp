@@ -390,13 +390,13 @@ namespace almondnamespace::sdlcontext
         double t = almondnamespace::time::elapsed(*bgTimer); // seconds
 
         // smooth rainbow values
-        Uint8 r = static_cast<Uint8>((0.5 + 0.5 * std::sin(t * 1.0)) * 255);
-        Uint8 g = static_cast<Uint8>((0.5 + 0.5 * std::sin(t * 0.7 + 2.0)) * 255);
-        Uint8 b = static_cast<Uint8>((0.5 + 0.5 * std::sin(t * 1.3 + 4.0)) * 255);
+        // Uint8 r = static_cast<Uint8>((0.5 + 0.5 * std::min(t * 1.0)) * 255);
+        // Uint8 g = static_cast<Uint8>((0.5 + 0.5 * std::min(t * 0.7 + 2.0)) * 255);
+        // Uint8 b = static_cast<Uint8>((0.5 + 0.5 * std::min(t * 1.3 + 4.0)) * 255);
 
         refresh_dimensions(ctx);
 
-        SDL_SetRenderDrawColor(sdl_renderer.renderer, r, g, b, 255);
+        SDL_SetRenderDrawColor(sdl_renderer.renderer, 124, 0, 255, 255);
         SDL_RenderClear(sdl_renderer.renderer);
 
         queue.drain();

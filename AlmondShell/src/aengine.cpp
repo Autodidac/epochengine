@@ -430,8 +430,7 @@ namespace almondnamespace::core
                         }
                         if (!anyAlive) {
                             std::cout << "[Engine] All contexts for backend "
-                                << int(type) << " closed.
-";
+                                << int(type) << " closed.";
                         }
         #endif
                     }
@@ -573,33 +572,8 @@ namespace almondnamespace::core
             RunEngine();
         //}
     }
+} // namespace almondnamespace::core
 
-#if defined(_WIN32) && defined(ALMOND_USING_WINMAIN)
-    //struct Window {
-    //    HWND hwnd{};
-    //    HDC hdc{};
-    //    HGLRC context{};
-    //   // GLuint texture{};
-    //    bool running{ true };
-    //    Window() = default;
-    //    Window(const Window&) = delete;
-    //    Window& operator=(const Window&) = delete;
-    //    Window(Window&&) = default;
-    //    Window& operator=(Window&&) = default;
-    //};
-    //struct App {
-    //    HWND parent{};
-    //    HWND child{};
-    //    HDC parentDC{};
-    //    HDC childDC{};
-    //    HGLRC sharedContext{};
-    //    bool running{ true };
-    //    std::vector<std::unique_ptr<Window>> dockedWindows;
-    //    std::vector<std::unique_ptr<Window>> floatingWindows;
-    //};
-
-    //inline std::atomic<bool> g_windowRunning{ true };
-    //inline App g_app;
 
     struct TextureUploadTask
     {
@@ -628,108 +602,8 @@ namespace almondnamespace::core
 
     inline std::vector<std::unique_ptr<TextureUploadQueue>> uploadQueues;
 
-    // --- Docking logic ---
-    //struct DragState
-    //{
-    //    bool dragging = false;
-    //    POINT clickPos{};
-    //};
-   // inline std::unordered_map<HWND, DragState> dragStates;
+#if defined(_WIN32) && defined(ALMOND_USING_WINMAIN)
 
-    //void DetachWindow(HWND hwndChild) {
-    //    // 1. Get child rect relative to parent BEFORE messing with styles
-    //    RECT childRect;
-    //    GetWindowRect(hwndChild, &childRect);
-    //    HWND hwndParent = GetParent(hwndChild);
-    //    if (hwndParent) {
-    //        POINT tl = { childRect.left, childRect.top };
-    //        POINT br = { childRect.right, childRect.bottom };
-    //        ScreenToClient(hwndParent, &tl);
-    //        ScreenToClient(hwndParent, &br);
-    //        RECT clientRelative = { tl.x, tl.y, br.x, br.y };
-
-    //        // 2. Blackout the child window in its own DC
-    //        HDC hdcChild = GetDC(hwndChild);
-    //        RECT localRect;
-    //        GetClientRect(hwndChild, &localRect);
-    //       // HBRUSH blackBrush = (HBRUSH)GetStockObject(BLACK_BRUSH);
-    //       // FillRect(hdcChild, &localRect, blackBrush);
-    //        ReleaseDC(hwndChild, hdcChild);
-
-    //        // 3. Immediately invalidate the region on the parent
-    //        InvalidateRect(hwndParent, &clientRelative, TRUE);
-    //    }
-
-    //    // 4. Hide & reparent
-    //    ShowWindow(hwndChild, SW_HIDE);
-
-
-    //    LONG_PTR style = GetWindowLongPtr(hwndChild, GWL_STYLE);
-    //    style &= ~WS_CHILD;
-    //    style |= WS_OVERLAPPEDWINDOW | WS_VISIBLE;
-    //    SetWindowLongPtr(hwndChild, GWL_STYLE, style);
-    //    SetParent(hwndChild, nullptr);
-
-    //    // Remove from docked list:
-    //    auto& docked = almondnamespace::core::g_app.dockedWindows;
-    //    auto it = std::find_if(docked.begin(), docked.end(),
-    //        [hwndChild](const auto& win) { return win->hwnd == hwndChild; });
-    //    if (it != docked.end()) {
-    //        almondnamespace::core::g_app.floatingWindows.push_back(std::move(*it));
-    //        docked.erase(it);
-    //    }
-
-    //    // 5. Drop it on the grid
-    //    POINT cursorPos;
-    //    GetCursorPos(&cursorPos);
-    //    constexpr int width = 400, height = 300, gridSize = 50;
-    //    int x = (cursorPos.x / gridSize) * gridSize;
-    //    int y = (cursorPos.y / gridSize) * gridSize;
-    //    SetWindowPos(hwndChild, HWND_TOP, x, y, width, height, SWP_FRAMECHANGED | SWP_SHOWWINDOW);
-
-    //    // 6. Force parent repaint
-    //    if (hwndParent) {
-    //        UpdateWindow(hwndParent);
-    //    }
-    //}
-
-    //void TryDockWindow(HWND hwndChild, HWND hwndParent) {
-
-    //    // Remove from floating:
-    //    auto& floating = almondnamespace::core::g_app.floatingWindows;
-    //    auto it = std::find_if(floating.begin(), floating.end(),
-    //        [hwndChild](const auto& win) { return win->hwnd == hwndChild; });
-    //    if (it != floating.end()) {
-    //        almondnamespace::core::g_app.dockedWindows.push_back(std::move(*it));
-    //        floating.erase(it);
-    //    }
-    //    POINT cursor;
-    //    GetCursorPos(&cursor);
-    //    RECT parentRect;
-    //    GetWindowRect(hwndParent, &parentRect);
-    //    if (PtInRect(&parentRect, cursor)) {
-    //        LONG_PTR style = GetWindowLongPtr(hwndChild, GWL_STYLE);
-    //        style &= ~WS_OVERLAPPEDWINDOW;
-    //        style |= WS_CHILD | WS_VISIBLE;
-    //        SetWindowLongPtr(hwndChild, GWL_STYLE, style);
-    //        SetParent(hwndChild, hwndParent);
-    //        SetWindowPos(hwndChild, nullptr, 0, 0, 400, 300, SWP_FRAMECHANGED | SWP_SHOWWINDOW);
-
-
-    //        // Trigger rearrangement of docked windows
-    //        RECT rc;
-    //        GetClientRect(hwndParent, &rc);
-    //        PostMessage(hwndParent, WM_SIZE, 0, MAKELPARAM(rc.right - rc.left, rc.bottom - rc.top));
-    //    }
-    //}
-
-    //inline void RefreshDockLayout() {
-    //    if (g_app.parent) {
-    //        RECT rc;
-    //        GetClientRect(g_app.parent, &rc);
-    //        PostMessage(g_app.parent, WM_SIZE, 0, MAKELPARAM(rc.right - rc.left, rc.bottom - rc.top));
-    //    }
-    //}
 
     void PromoteToTopLevel(HWND hwnd) {
         LONG_PTR style = GetWindowLongPtr(hwnd, GWL_STYLE);
@@ -744,358 +618,8 @@ namespace almondnamespace::core
             SWP_FRAMECHANGED | SWP_SHOWWINDOW);
         ShowWindow(hwnd, SW_SHOW);
     }
-    // --- Window procs ---
-    //LRESULT CALLBACK ParentProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam) {
-    //    switch (uMsg) {
-    //    case WM_SIZE: {
-    //        int w = LOWORD(lParam), h = HIWORD(lParam);
-    //        int numWindows = static_cast<int>(g_app.dockedWindows.size());
-    //        int cols = 1, rows = 1;
-    //        while (cols * rows < numWindows) {
-    //            if (cols <= rows) ++cols; else ++rows;
-    //        }
-    //        int cw = w / cols;
-    //        int ch = h / rows;
-    //        for (int i = 0; i < numWindows; ++i) {
-    //            int col = i % cols;
-    //            int row = i / cols;
-    //            auto& win = g_app.dockedWindows[i];
-    //            LONG_PTR style = GetWindowLongPtr(win->hwnd, GWL_STYLE);
-    //            if (style & WS_CHILD) {
-    //                SetWindowPos(win->hwnd, nullptr, col * cw, row * ch, cw, ch,
-    //                    SWP_NOZORDER | SWP_NOACTIVATE | SWP_SHOWWINDOW);
-    //            }
-    //        }
-    //        return 0;
-    //    }
-
-    //    case WM_PAINT: {
-    //        PAINTSTRUCT ps;
-    //        HDC hdc = BeginPaint(hwnd, &ps);
-
-    //        // Fill the whole client area with a dark brush
-    //        HBRUSH brush = CreateSolidBrush(RGB(20, 20, 20));  // Or GetStockObject(BLACK_BRUSH)
-    //        FillRect(hdc, &ps.rcPaint, brush);
-    //        DeleteObject(brush);
-
-    //        EndPaint(hwnd, &ps);
-    //        return 0;
-    //    }
-
-    //    case WM_CLOSE:
-    //        // g_windowRunning = false;
-    //        DestroyWindow(hwnd);
-    //        return 0;
-
-    //    case WM_DESTROY:
-    //        PostQuitMessage(0);
-    //        return 0;
-    //    }
-
-    //    return DefWindowProc(hwnd, uMsg, wParam, lParam);
-    //}
-
-    //LRESULT CALLBACK WindowProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam) {
-    //    switch (uMsg) {
-    //    case WM_LBUTTONDOWN: {
-    //        SetCapture(hwnd);
-    //        POINTS pts = MAKEPOINTS(lParam);
-    //        dragStates[hwnd] = DragState{ false, {pts.x, pts.y} };
-    //        return 0;
-    //    }
-
-    //    case WM_MOUSEMOVE: {
-    //        if (GetCapture() == hwnd) {
-    //            POINTS pts = MAKEPOINTS(lParam);
-    //            DragState& state = dragStates[hwnd];
-    //            if (!state.dragging) {
-    //                int dx = pts.x - state.lastMousePos.x;
-    //                int dy = pts.y - state.lastMousePos.y;
-    //                if ((dx * dx + dy * dy) > 9) { // threshold 3 pixels squared
-    //                    PromoteToTopLevel(hwnd);
-    //                    DetachWindow(hwnd);
-    //                    RefreshDockLayout();
-
-    //                    state.dragging = true;
-    //                }
-    //            }
-
-    //            if (state.dragging) {
-    //                POINT cursorPos;
-    //                GetCursorPos(&cursorPos);
-    //                // Offset the window so mouse grabs near top-left corner
-    //                SetWindowPos(hwnd, nullptr, cursorPos.x - 50, cursorPos.y - 15, 0, 0,
-    //                    SWP_NOSIZE | SWP_NOZORDER | SWP_NOACTIVATE);
-    //            }
-    //        }
-    //        return 0;
-    //    }
-    //    case WM_LBUTTONUP: {
-    //        if (GetCapture() == hwnd) {
-    //            ReleaseCapture();
-    //            DragState& state = dragStates[hwnd];
-    //            if (state.dragging && g_app.parent) {
-    //                TryDockWindow(hwnd, g_app.parent);
-    //                RefreshDockLayout();
-    //                state.dragging = false;
-    //            }
-    //        }
-    //        return 0;
-    //    }
-    //    case WM_CLOSE:
-
-    //        DestroyWindow(hwnd);
-    //        return 0;
-    //    case WM_DESTROY:
-    //        if (hwnd == g_app.parent) {
-    //            // Only post quit message if main window is destroyed
-    //            // This allows child windows to be closed without quitting the app
-    //            PostQuitMessage(0);
-    //        }
-    //        return 0;
-    //    }
-    //    return DefWindowProc(hwnd, uMsg, wParam, lParam);
-    //}
-
-    //// --- Helper funcs ---
-    //HWND create_invisible_dummy_window(HINSTANCE hi, const wchar_t* className) {
-    //    DWORD exStyle = WS_EX_TOOLWINDOW; // Prevent taskbar icon
-    //    DWORD style = WS_POPUP;            // No border, no titlebar
-
-    //    HWND hwnd = CreateWindowEx(
-    //        exStyle,
-    //        className,
-    //        L"Dummy",
-    //        style,
-    //        CW_USEDEFAULT, CW_USEDEFAULT, 1, 1,
-    //        nullptr, nullptr, hi, nullptr);
-
-    //    if (!hwnd) {
-    //        std::cerr << "Failed to create invisible dummy window\n";
-    //        return nullptr;
-    //    }
-
-    //    // Do NOT ShowWindow(hwnd, ...) or just SW_HIDE to be safe
-    //    ShowWindow(hwnd, SW_HIDE);
-
-    //    return hwnd;
-    //}
-
-    //bool register_classes(HINSTANCE hi, const wchar_t* parentName, const wchar_t* windowName) {
-    //    WNDCLASS wc{};
-    //    wc.hInstance = hi;
-    //    wc.hCursor = LoadCursor(nullptr, IDC_ARROW);
-
-    //    wc.lpfnWndProc = MultiContextManager::ParentProc;
-    //    wc.lpszClassName = parentName;
-    //    if (!RegisterClass(&wc)) {
-    //        std::cerr << "Failed to register parent window class\n";
-    //        return false;
-    //    }
-
-    //    wc.lpfnWndProc = MultiContextManager::ChildProc;
-    //    wc.lpszClassName = windowName;
-    //    if (!RegisterClass(&wc)) {
-    //        std::cerr << "Failed to register child window class\n";
-    //        return false;
-    //    }
-    //    return true;
-    //}
-
-    //HWND create_window(HINSTANCE hi, int x, int y, int w, int h, const wchar_t* cname, const wchar_t* title, HWND parent) {
-    //    DWORD style = (parent) ? (WS_CHILD | WS_VISIBLE | WS_BORDER) : (WS_OVERLAPPEDWINDOW | WS_VISIBLE);
-    //    HWND hwnd = CreateWindowEx(0, cname, title, style, x, y, w, h, parent, nullptr, hi, nullptr);
-    //    if (!hwnd) {
-    //        std::wcerr << L"Failed to create window: " << title << L"\n";
-    //        return nullptr;
-    //    }
-    //    ShowWindow(hwnd, SW_SHOW);
-    //    UpdateWindow(hwnd);
-    //    return hwnd;
-    //}
-
-    //HGLRC make_context(HDC hdc, HGLRC shared = nullptr) {
-    //    PIXELFORMATDESCRIPTOR pfd{};
-    //    pfd.nSize = sizeof pfd;
-    //    pfd.nVersion = 1;
-    //    pfd.dwFlags = PFD_DRAW_TO_WINDOW | PFD_SUPPORT_OPENGL | PFD_DOUBLEBUFFER;
-    //    pfd.iPixelType = PFD_TYPE_RGBA;
-    //    pfd.cColorBits = 32;
-    //    pfd.cDepthBits = 24;
-    //    pfd.iLayerType = PFD_MAIN_PLANE;
-
-    //    int pf = ChoosePixelFormat(hdc, &pfd);
-    //    if (!pf) return nullptr;
-    //    if (!SetPixelFormat(hdc, pf, &pfd)) return nullptr;
-
-    //    HGLRC ctx = wglCreateContext(hdc);
-    //    if (ctx && shared) {
-    //        if (!wglShareLists(shared, ctx)) {
-    //            std::cerr << "wglShareLists failed\n";
-    //        }
-    //    }
-    //    return ctx;
-    //}
-
-    //// --- Window procs ---
-    //LRESULT CALLBACK ParentProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam) {
-    //    switch (uMsg) {
-    //   case WM_SIZE:
-    //    {
-    //        //HWND hwndRaylib = /* retrieve from your context */;
-    //        //RECT rc;
-    //        //GetClientRect(hwnd, &rc);
-    //        //SetWindowPos(hwnd, nullptr, rc.left, rc.top, rc.right - rc.left, rc.bottom - rc.top,
-    //        //    SWP_NOZORDER | SWP_NOACTIVATE | SWP_SHOWWINDOW);
-
-    //    //           POINT cursor;
-    //    //GetCursorPos(&cursor);
-
-    //    //RECT parentRect;
-    //    //GetWindowRect(hwndParent, &parentRect);
-    //    ////if (PtInRect(&parentRect, cursor)) {
-    //    //LONG_PTR style = GetWindowLongPtr(hwndChild, GWL_STYLE);
-    //    //style &= ~WS_OVERLAPPED;
-    //    //style |= WS_CHILD | WS_VISIBLE;
-    //    //SetWindowLongPtr(hwndChild, GWL_STYLE, style);
-    //    //SetParent(hwndChild, hwndParent);
-    //    //SetWindowPos(hwndChild, nullptr, 0, 0, core::cli::window_width, core::cli::window_height, SWP_FRAMECHANGED | SWP_SHOWWINDOW);
-
-    //    //RECT rc;
-    //    //GetClientRect(hwndParent, &rc);
-    //    //PostMessage(hwndParent, WM_SIZE, 0, MAKELPARAM(rc.right - rc.left, rc.bottom - rc.top));
 
 
-    //       int w = LOWORD(lParam), h = HIWORD(lParam);
-    //       int numWindows = static_cast<int>(g_app.dockedWindows.size());
-    //       int cols = 1, rows = 1;
-    //       while (cols * rows < numWindows) {
-    //           if (cols <= rows) ++cols; else ++rows;
-    //       }
-    //       int cw = w / cols;
-    //       int ch = h / rows;
-    //       for (int i = 0; i < numWindows; ++i) {
-    //           int col = i % cols;
-    //           int row = i / cols;
-    //           auto& win = g_app.dockedWindows[i];
-    //           LONG_PTR style = GetWindowLongPtr(win->hwnd, GWL_STYLE);
-    //           if (style & WS_CHILD) {
-    //               SetWindowPos(win->hwnd, nullptr, col * cw, row * ch, cw, ch,
-    //                   SWP_NOZORDER | SWP_NOACTIVATE | SWP_SHOWWINDOW);
-    //           }
-    //       }
-    //        return 0;
-    //    }
-
-    //    case WM_PAINT: {
-    //        //PAINTSTRUCT ps;
-    //        //HDC hdc = BeginPaint(hwnd, &ps);
-
-    //        //// Fill the whole client area with a dark brush
-    //        //HBRUSH brush = CreateSolidBrush(RGB(20, 20, 20));  // Or GetStockObject(BLACK_BRUSH)
-    //        //FillRect(hdc, &ps.rcPaint, brush);
-    //        //DeleteObject(brush);
-
-    //        //EndPaint(hwnd, &ps);
-    //        return 0;
-    //    }
-
-    //    case WM_CLOSE:
-    //        // g_windowRunning = false;
-    //        DestroyWindow(hwnd);
-    //        return 0;
-
-    //    case WM_DESTROY:
-    //        PostQuitMessage(0);
-    //        return 0;
-    //    }
-
-    //    return DefWindowProc(hwnd, uMsg, wParam, lParam);
-    //}
-
-    //LRESULT CALLBACK WindowProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam) {
-    //    switch (uMsg) {
-    //    case WM_LBUTTONDOWN: {
-    //        SetCapture(hwnd);
-    //        POINTS pts = MAKEPOINTS(lParam);
-    //        dragStates[hwnd] = DragState{ false, {pts.x, pts.y} };
-    //        return 0;
-    //    }
-
-    //    case WM_MOUSEMOVE: {
-    //        if (GetCapture() == hwnd) {
-    //            POINTS pts = MAKEPOINTS(lParam);
-    //            DragState& state = dragStates[hwnd];
-    //            if (!state.dragging) {
-    //                int dx = pts.x - state.clickPos.x;
-    //                int dy = pts.y - state.clickPos.y;
-    //                if ((dx * dx + dy * dy) > 9) { // threshold 3 pixels squared
-    //                    PromoteToTopLevel(hwnd);
-    //                    DetachWindow(hwnd);
-    //                    RefreshDockLayout();
-
-    //                    state.dragging = true;
-    //                }
-    //            }
-
-    //            if (state.dragging) {
-    //                POINT cursorPos;
-    //                GetCursorPos(&cursorPos);
-    //                // Offset the window so mouse grabs near top-left corner
-    //                SetWindowPos(hwnd, nullptr, cursorPos.x - 50, cursorPos.y - 15, 0, 0,
-    //                    SWP_NOSIZE | SWP_NOZORDER | SWP_NOACTIVATE);
-    //            }
-    //        }
-    //        return 0;
-    //    }
-    //    case WM_LBUTTONUP: {
-    //        if (GetCapture() == hwnd) {
-    //            ReleaseCapture();
-    //            DragState& state = dragStates[hwnd];
-    //            if (state.dragging && g_app.parent) {
-    //                TryDockWindow(hwnd, g_app.parent);
-    //                RefreshDockLayout();
-    //                state.dragging = false;
-    //            }
-    //        }
-    //        return 0;
-    //    }
-    //    case WM_CLOSE:
-
-    //        DestroyWindow(hwnd);
-    //        return 0;
-    //    case WM_DESTROY:
-    //        if (hwnd == g_app.parent) {
-    //            // Only post quit message if main window is destroyed
-    //            // This allows child windows to be closed without quitting the app
-    //            PostQuitMessage(0);
-    //        }
-    //        return 0;
-    //    }
-    //    return DefWindowProc(hwnd, uMsg, wParam, lParam);
-    //}
-
-//bool register_classes(HINSTANCE hi, const wchar_t* parentName, const wchar_t* windowName) {
-//    WNDCLASSW wc = {};
-//    wc.hInstance = hi;
-//    wc.hCursor = LoadCursor(nullptr, IDC_ARROW);
-//    wc.hbrBackground = (HBRUSH)(COLOR_WINDOW + 1);
-//    wc.hIcon = LoadIcon(nullptr, IDI_APPLICATION);
-//
-//    wc.lpfnWndProc = ParentProc;
-//    wc.lpszClassName = parentName;
-//    if (!RegisterClassW(&wc)) {
-//        std::cerr << "Failed to register parent window class\n";
-//        return false;
-//    }
-//
-//    wc.lpfnWndProc = WindowProc;
-//    wc.lpszClassName = windowName;
-//    if (!RegisterClassW(&wc)) {
-//        std::cerr << "Failed to register child window class\n";
-//        return false;
-//    }
-//    return true;
 //}
 
 
@@ -1112,7 +636,7 @@ namespace almondnamespace::core
         FreeConsole(); // if you somehow still have one
 #endif
     }
-
+ 
     //HWND create_window(HINSTANCE hInstance, int x, int y, int w, int h, const wchar_t* cname, const wchar_t* title, HWND parent) {
     //    DWORD style = (parent) ? (WS_CHILD | WS_VISIBLE | WS_BORDER | WS_CLIPSIBLINGS | WS_CLIPCHILDREN) : (WS_OVERLAPPEDWINDOW | WS_VISIBLE);
     //    HWND hwnd = CreateWindowEx(0, cname, title, style, x, y, w, h, parent, nullptr, hInstance, nullptr);
@@ -1124,7 +648,7 @@ namespace almondnamespace::core
     //    UpdateWindow(hwnd);
     //    return hwnd;
     //}
-}
+//}
 
 // Tell the linker which subsystem to use:
 #ifdef NDEBUG     // in Release
@@ -1140,10 +664,8 @@ WCHAR szWindowClass[MAX_LOADSTRING] = L"SampleWindowClass";
 
 almondnamespace::contextwindow::WindowData windowContext{};
 
-
-
-//} // namespace almondnamespace::core
-
+  #endif // defined(_WIN32) && defined(ALMOND_USING_WINMAIN)
+ 
 /////////////////////////////////////////////////////////
 
 // this basically just leaves ninja.zip when commented out, but will be configured better in the future
@@ -1165,6 +687,8 @@ namespace urls {
     //const std::string source_url = github_base + owner + repo + "/archive/refs/heads/main.zip";
     const std::string binary_url = github_base + owner + repo + "/releases/latest/download/updater.exe";
 }
+
+
 
 #if defined(_WIN32)
 //// Now ALWAYS define WinMain so the linker will find it
@@ -1202,8 +726,8 @@ int APIENTRY wWinMain(_In_ HINSTANCE hInstance,
         const auto cli_result = almondnamespace::core::cli::parse(argc, argv);
 
         const almondnamespace::updater::UpdateChannel channel{
-            .version_url = ::urls::version_url,
-            .binary_url = ::urls::binary_url,
+            .version_url = urls::version_url,
+            .binary_url = urls::binary_url,
         };
 
         if (cli_result.update_requested) {
@@ -1224,24 +748,27 @@ int APIENTRY wWinMain(_In_ HINSTANCE hInstance,
 }
 #endif // defined(_WIN32)
 
-#endif // defined(_WIN32) && defined(ALMOND_USING_WINMAIN)
 
 // -----------------------------------------------------------------------------
 // Cross-platform Automatic Entry Point
 // -----------------------------------------------------------------------------
-int main(int argc, char* argv[]) {
+int main(int argc, char* argv[]) 
+{
 #if defined(_WIN32) && defined(ALMOND_USING_WINMAIN)
     LPWSTR pCommandLine = GetCommandLineW();
     return wWinMain(GetModuleHandle(NULL), NULL, pCommandLine, SW_SHOWNORMAL);
+}
 #else
     const auto cli_result = almondnamespace::core::cli::parse(argc, argv);
 
-    const almondnamespace::updater::UpdateChannel channel{
+    const almondnamespace::updater::UpdateChannel channel
+    {
         .version_url = urls::version_url,
         .binary_url = urls::binary_url,
     };
 
-    if (cli_result.update_requested) {
+    if (cli_result.update_requested) 
+    {
         const auto update_result = almondnamespace::updater::run_update_command(channel, cli_result.force_update);
         return update_result.exit_code;
     }
@@ -1249,7 +776,9 @@ int main(int argc, char* argv[]) {
 
     almondnamespace::core::StartEngine(); // Replace with actual engine logic
     return 0;
-
+//}
 #endif
+
+
 
 }
