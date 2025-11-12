@@ -6,7 +6,8 @@
       "hidden": true,
       "generator": "Ninja",
       "cacheVariables": {
-        "CMAKE_TOOLCHAIN_FILE": "$env{VCPKG_ROOT}/scripts/buildsystems/vcpkg.cmake"
+        "CMAKE_TOOLCHAIN_FILE": "$env{VCPKG_ROOT}/scripts/buildsystems/vcpkg.cmake",
+        "VCPKG_FEATURE_FLAGS": "manifests"
       }
     },
     {
@@ -18,9 +19,6 @@
       "installDir": "${sourceDir}/bin/install/${presetName}",
       "cacheVariables": {
         "CMAKE_BUILD_TYPE": "Debug"
-      },
-      "environment": {
-        "VCPKG_ROOT": "/home/dude/Documents/repos/vcpkg"
       },
       "condition": {
         "type": "equals",
@@ -51,9 +49,6 @@
       "cacheVariables": {
         "CMAKE_BUILD_TYPE": "Debug"
       },
-      "environment": {
-        "VCPKG_ROOT": "/home/dude/Documents/repos/vcpkg"
-      },
       "condition": {
         "type": "equals",
         "lhs": "${hostSystemName}",
@@ -83,10 +78,6 @@
       "cacheVariables": {
         "CMAKE_C_COMPILER": "cl.exe",
         "CMAKE_CXX_COMPILER": "cl.exe"
-      },
-      "environment": {
-        "VCPKG_ROOT": "C:/Users/me/source/repos/vcpkg",
-        "VCPKG_ROOT": "./bin/x64-release/vcpkg_installed"
       },
       "condition": {
         "type": "equals",
