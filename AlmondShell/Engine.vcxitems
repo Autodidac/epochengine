@@ -206,7 +206,8 @@
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">false</ExcludedFromBuild>
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|x64'">false</ExcludedFromBuild>
     </ClCompile>
-    <ClCompile Include="$(MSBuildThisFileDirectory)src\acontextmultiplexer.cpp" />
+    <ClCompile Include="$(MSBuildThisFileDirectory)src\acontextmultiplexer_linux.cpp" />
+    <ClCompile Include="$(MSBuildThisFileDirectory)src\acontextmultiplexer_win.cpp" />
     <ClCompile Include="$(MSBuildThisFileDirectory)src\aeditor.cpp" />
     <ClCompile Include="$(MSBuildThisFileDirectory)src\aengine.cpp" />
     <ClCompile Include="$(MSBuildThisFileDirectory)src\afilewatch.cpp" />

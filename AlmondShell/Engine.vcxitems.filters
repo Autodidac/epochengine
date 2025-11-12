@@ -509,10 +509,13 @@
     <ClCompile Include="$(MSBuildThisFileDirectory)src\ascriptingsystem.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="$(MSBuildThisFileDirectory)src\acontextmultiplexer.cpp">
+    <ClCompile Include="$(MSBuildThisFileDirectory)src\updater_bootstrap.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="$(MSBuildThisFileDirectory)src\updater_bootstrap.cpp">
+    <ClCompile Include="$(MSBuildThisFileDirectory)src\acontextmultiplexer_linux.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="$(MSBuildThisFileDirectory)src\acontextmultiplexer_win.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>
