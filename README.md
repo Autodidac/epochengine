@@ -18,12 +18,48 @@ The runtime is designed for rapid iteration with hot-reloadable scripting, a sel
 
 ## Architectural Pillars
 
-- 🧱 **Static Linking First**  
+- 🧱 **Static Linking First**
   AlmondShell's runtime is delivered as a fully static target, ensuring deterministic deployment, predictable performance, and portability across distribution channels.
-- 📚 **Header-Only Core**  
+- 📚 **Header-Only Core**
   The primary engine modules live in headers so they can be inlined, composed, and consumed without linker gymnastics, unlocking rapid iteration for integrators.
-- 🧠 **Functional Flow**  
+- 🧠 **Functional Flow**
   Systems are composed in a functional style that favours pure interfaces and immutable data where possible, simplifying reasoning about complex runtime state.
+
+---
+
+## Runtime Flow
+
+The multi-context runtime spins up several cooperating systems during process startup. The following diagram walks through how the engine bootstrap seeds backend prototypes, clones contexts, and dispatches render threads. For a deeper, annotated breakdown see [`AlmondShell/docs/engine_analysis.md`](AlmondShell/docs/engine_analysis.md).
+
+```mermaid
+sequenceDiagram
+    participant Bootstrap as Engine Bootstrap
+    participant Manager as MultiContextManager
+    participant Prototype as Backend Prototype
+    participant Window as WindowData
+    participant Worker as Render Thread
+
+    Bootstrap->>Manager: Initialize()
+    Manager->>Manager: Register window classes & parent
+    Manager->>Prototype: InitializeAllContexts()
+    Manager->>Window: make_backend_windows()
+    Window-->>Prototype: CloneContext()
+    Manager->>Worker: spawn RenderLoop(Window)
+    Worker->>Prototype: process_safe(context, queue)
+    Worker-->>Window: Drain command queue
+```
+
+Resizes, atlas uploads, and render-thread callbacks are orchestrated through the multiplexer so every backend stays in sync. The flowchart below summarises how Win32 resize messages travel through shared `Context`/`WindowData` state before landing in backend-specific handlers. Refer to the engine analysis document for exhaustive call-site notes and per-backend nuances.
+
+```mermaid
+flowchart LR
+    WM_SIZE[Win32 WM_SIZE] --> HandleResize{HandleResize Dispatch}
+    HandleResize --> UpdateShared[Update WindowData & Context dimensions]
+    UpdateShared --> QueueResize[Enqueue resize callback]
+    QueueResize --> RenderThread[RenderLoop drains CommandQueue]
+    RenderThread --> BackendResize[Backend resize handler]
+    BackendResize --> AtlasCheck[atlasmanager::process_pending_uploads]
+```
 
 ---
 
