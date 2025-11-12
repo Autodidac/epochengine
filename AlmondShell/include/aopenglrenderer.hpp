@@ -96,16 +96,18 @@ namespace almondnamespace::openglrenderer
 
     inline void draw_debug_outline() noexcept
     {
-        glUseProgram(s_openglstate.shader);
+        auto& glState = almondnamespace::openglcontext::s_openglstate;
 
-        if (s_openglstate.uUVRegionLoc >= 0)
-            glUniform4f(s_openglstate.uUVRegionLoc, 0, 0, 1, 1);
+        glUseProgram(glState.shader);
 
-        if (s_openglstate.uTransformLoc >= 0)
-            glUniform4f(s_openglstate.uTransformLoc, -1, -1, 2, 2);
+        if (glState.uUVRegionLoc >= 0)
+            glUniform4f(glState.uUVRegionLoc, 0, 0, 1, 1);
+
+        if (glState.uTransformLoc >= 0)
+            glUniform4f(glState.uTransformLoc, -1, -1, 2, 2);
 
         glBindTexture(GL_TEXTURE_2D, 0);
-        glBindVertexArray(s_openglstate.vao);
+        glBindVertexArray(glState.vao);
 
         glDisable(GL_DEPTH_TEST);
         glDisable(GL_BLEND);
@@ -249,11 +251,13 @@ namespace almondnamespace::openglrenderer
 
 
     inline void draw_quad(const openglcontext::Quad& quad, GLuint texture) {
-        glUseProgram(s_openglstate.shader);
+        auto& glState = almondnamespace::openglcontext::s_openglstate;
+
+        glUseProgram(glState.shader);
 
         // Set UV region for full quad (if needed)
-        if (s_openglstate.uUVRegionLoc >= 0)
-            glUniform4f(s_openglstate.uUVRegionLoc, 0.f, 0.f, 1.f, 1.f);
+        if (glState.uUVRegionLoc >= 0)
+            glUniform4f(glState.uUVRegionLoc, 0.f, 0.f, 1.f, 1.f);
 
         // Bind texture explicitly
         glActiveTexture(GL_TEXTURE0);

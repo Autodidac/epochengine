@@ -63,10 +63,11 @@ flowchart LR
 
 ---
 
-## Current Snapshot (v0.62.6)
+## Current Snapshot (v0.62.7)
 
 - ✅ **Immediate GUI everywhere** – `agui.hpp` seeds a shared font atlas, now covers buttons, image buttons, editable text fields, text boxes, and a turnkey console overlay so every backend renders consistent tooling widgets out of the box.
 - ✅ **Child-window scaling & context refresh coverage** – Raylib docked child panes now stay aligned with the preserved design canvas while new smoke coverage exercises context reacquisition, keeping the GL context bound after scaling and docking churn.
+- ✅ **OpenGL renderer state fix** – The in-engine OpenGL renderer now scopes its global state correctly when drawing quads and debug outlines, unblocking builds that failed due to missing `s_openglstate` symbols.
 - ✅ **Configurable menu layouts** – The runtime honours a `--menu-columns` cap to keep atlas-driven menus readable on constrained displays.
 - ✅ **Robust hot reload** – The scripting pipeline emits `ScriptLoadReport` diagnostics, prunes completed jobs, and waits synchronously so tooling observes a deterministic post-reload state.
 
