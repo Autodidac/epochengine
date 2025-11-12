@@ -99,10 +99,15 @@ namespace almondnamespace::anativecontext
 
         resize_framebuffer(static_cast<int>(w), static_cast<int>(h));
         s_softrendererstate.running = true;
-        s_softrendererstate.parent = parentWnd ? parentWnd : ctx->hwnd;
         s_softrendererstate.onResize = std::move(onResize);   // this is the *client* callback
+
+#ifdef _WIN32
+        s_softrendererstate.parent = parentWnd ? parentWnd : ctx->hwnd;
         s_softrendererstate.hwnd = ctx->hwnd;
         s_softrendererstate.hdc = ctx->hdc;
+#else
+        (void)parentWnd;
+#endif
 
         // Backend-owned resize handler. Do NOT call ctx->onResize from inside this callback.
         // Guard against reentrancy so clients can safely trigger additional layout work.

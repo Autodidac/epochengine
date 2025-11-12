@@ -205,7 +205,8 @@ namespace almondnamespace::sdlcontext
             return false;
         }
 
-        // Retrieve HWND from window properties
+        // Retrieve native window handle from SDL on Windows platforms
+#if defined(_WIN32)
         SDL_PropertiesID windowProps = SDL_GetWindowProperties(sdlcontext.window);
         if (!windowProps) {
             std::cerr << "[SDL] SDL_GetWindowProperties failed: " << SDL_GetError() << "\n";
@@ -226,6 +227,12 @@ namespace almondnamespace::sdlcontext
         if (ctx) {
             ctx->hwnd = sdlcontext.hwnd;
         }
+#else
+        (void)parentWnd;
+        if (ctx) {
+            ctx->hwnd = nullptr;
+        }
+#endif
 
         SDL_SetWindowTitle(sdlcontext.window, windowTitle.c_str());
 
@@ -243,22 +250,23 @@ namespace almondnamespace::sdlcontext
 
         refresh_dimensions(ctx);
 
+#if defined(_WIN32)
         if (sdlcontext.parent) {
             std::cout << "[SDL] Setting parent window: " << sdlcontext.parent << "\n";
-            SetParent(hwnd, sdlcontext.parent);
+            SetParent(sdlcontext.hwnd, sdlcontext.parent);
 
-            LONG_PTR style = GetWindowLongPtr(hwnd, GWL_STYLE);
+            LONG_PTR style = GetWindowLongPtr(sdlcontext.hwnd, GWL_STYLE);
             style &= ~WS_OVERLAPPEDWINDOW;
             style |= WS_CHILD | WS_VISIBLE;
-            SetWindowLongPtr(hwnd, GWL_STYLE, style);
+            SetWindowLongPtr(sdlcontext.hwnd, GWL_STYLE, style);
 
 #if defined(_WIN32)
-            almondnamespace::core::MakeDockable(hwnd, sdlcontext.parent);
+            almondnamespace::core::MakeDockable(sdlcontext.hwnd, sdlcontext.parent);
 #endif
 
             if (!windowTitle.empty()) {
                 const std::wstring wideTitle(windowTitle.begin(), windowTitle.end());
-                SetWindowTextW(hwnd, wideTitle.c_str());
+                SetWindowTextW(sdlcontext.hwnd, wideTitle.c_str());
             }
 
             RECT client{};
@@ -279,6 +287,7 @@ namespace almondnamespace::sdlcontext
 
             PostMessage(sdlcontext.parent, WM_SIZE, 0, MAKELPARAM(width, height));
         }
+#endif
         // SDL_SetRenderDrawColor(ctx.renderer, 0, 0, 0, SDL_ALPHA_OPAQUE);
         SDL_ShowWindow(sdlcontext.window);
         sdlcontext.running = true;
