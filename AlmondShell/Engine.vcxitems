@@ -97,8 +97,10 @@
     </ClInclude>
     <ClInclude Include="$(MSBuildThisFileDirectory)include\anet.hpp" />
     <ClInclude Include="$(MSBuildThisFileDirectory)include\anoopcontext.hpp" />
+    <ClInclude Include="$(MSBuildThisFileDirectory)include\aopenglbillboards.hpp" />
     <ClInclude Include="$(MSBuildThisFileDirectory)include\aopenglcontext.hpp" />
     <ClInclude Include="$(MSBuildThisFileDirectory)include\aopenglfreetype.hpp" />
+    <ClInclude Include="$(MSBuildThisFileDirectory)include\aopenglplatform.hpp" />
     <ClInclude Include="$(MSBuildThisFileDirectory)include\aopenglquad.hpp" />
     <ClInclude Include="$(MSBuildThisFileDirectory)include\aopenglrenderer.hpp" />
     <ClInclude Include="$(MSBuildThisFileDirectory)include\aopenglstate.hpp" />
@@ -212,6 +214,8 @@
     <ClCompile Include="$(MSBuildThisFileDirectory)src\aengine.cpp" />
     <ClCompile Include="$(MSBuildThisFileDirectory)src\afilewatch.cpp" />
     <ClCompile Include="$(MSBuildThisFileDirectory)src\afontrenderer.cpp" />
+    <ClCompile Include="$(MSBuildThisFileDirectory)src\aopenglplatform_linux.cpp" />
+    <ClCompile Include="$(MSBuildThisFileDirectory)src\aopenglplatform_win.cpp" />
     <ClCompile Include="$(MSBuildThisFileDirectory)src\ascriptingsystem.cpp" />
     <ClCompile Include="$(MSBuildThisFileDirectory)src\agui.cpp" />
     <ClCompile Include="$(MSBuildThisFileDirectory)src\scripts\editor_launcher.ascript.cpp">

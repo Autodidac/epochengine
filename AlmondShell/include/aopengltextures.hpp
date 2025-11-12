@@ -30,15 +30,19 @@
 
 #ifdef ALMOND_USING_OPENGL
 
+#include "aopenglplatform.hpp"
+#include "aopenglcontext.hpp"
+#include "aopenglstate.hpp"
+
 #include "acontext.hpp"
 #include "acontextmultiplexer.hpp"
-#include "aopenglstate.hpp"
 #include "aatlasmanager.hpp"
 #include "aatlastexture.hpp"
 #include "aimageloader.hpp"
 #include "atexture.hpp"
 #include "aspritehandle.hpp"
 #include "acommandline.hpp"
+
 
 #include <atomic>
 #include <format>
@@ -54,9 +58,9 @@ namespace almondnamespace::opengltextures
 {
     namespace detail
     {
-        inline openglcontext::PlatformGL::PlatformGLContext to_platform_context(const openglcontext::OpenGL4State& state) noexcept
+        inline almondnamespace::openglcontext::PlatformGL::PlatformGLContext to_platform_context(const openglcontext::OpenGL4State& state) noexcept
         {
-            openglcontext::PlatformGL::PlatformGLContext ctx{};
+            almondnamespace::openglcontext::PlatformGL::PlatformGLContext ctx{};
 #if defined(_WIN32)
             ctx.device = state.hdc;
             ctx.context = state.hglrc;
@@ -92,7 +96,7 @@ namespace almondnamespace::opengltextures
     inline std::unordered_map<const TextureAtlas*, AtlasGPU, TextureAtlasPtrHash, TextureAtlasPtrEqual> opengl_gpu_atlases;
 
     // forward declare OpenGL4State to avoid pulling in aopenglcontext here
-    namespace openglcontext { struct OpenGL4State; }
+    //namespace openglcontext { struct OpenGL4State; }
     struct BackendData {
         std::unordered_map<const TextureAtlas*, AtlasGPU,
             TextureAtlasPtrHash, TextureAtlasPtrEqual> gpu_atlases;
@@ -198,7 +202,7 @@ namespace almondnamespace::opengltextures
         }
 
         const auto platformCtx = detail::to_platform_context(glState);
-        openglcontext::PlatformGL::ScopedContext contextGuard;
+        almondnamespace::openglcontext::PlatformGL::ScopedContext contextGuard;
         if (!contextGuard.set(platformCtx)) {
             std::cerr << "[UploadAtlas] Failed to activate GL context for upload\n";
             return;
