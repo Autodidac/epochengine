@@ -210,8 +210,15 @@
 
 #ifdef ALMOND_USING_OPENGL
 	#include <glad/glad.h>	// for GLAD - OpenGL loader
+#if defined(_WIN32)
 	#include <GL/wglext.h>  // for WGL - OpenGL extensions WGL Loader
 #endif
+
+#if defined(__linux__)
+
+#endif
+#endif
+
 #ifdef ALMOND_USING_SDL
 	#include <glad/glad.h> // for GLAD - OpenGL loader... SDL requires it's own backend
 	#include <SDL3/SDL.h>

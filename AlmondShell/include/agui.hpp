@@ -92,7 +92,7 @@ namespace almondnamespace::gui
 
     void push_input(const InputEvent& e) noexcept;
 
-    void begin_frame(std::shared_ptr<core::Context> ctx, float dt, Vec2 mouse_pos, bool mouse_down) noexcept;
+    void begin_frame(std::shared_ptr<almondnamespace::core::Context> ctx, float dt, Vec2 mouse_pos, bool mouse_down) noexcept;
     void end_frame() noexcept;
 
     void begin_window(std::string_view title, Vec2 position, Vec2 size) noexcept;

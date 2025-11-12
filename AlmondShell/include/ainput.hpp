@@ -363,7 +363,7 @@ inline constexpr uint16_t map_key_to_mac(Key k)
     }
 }
 
-#elif defined((__linux__))
+#elif defined(__linux__)
 
 inline constexpr uint16_t map_key_to_linux(Key k) {
     switch (k)

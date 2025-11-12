@@ -40,7 +40,7 @@ namespace almondnamespace::contextwindow
         HDC hdc = nullptr;
         HGLRC glrc = nullptr;
 
-        static inline WindowData* s_instance = nullptr;
+        //static inline WindowData* s_instance = nullptr;
 #endif
 #endif
 
@@ -59,7 +59,7 @@ namespace almondnamespace::contextwindow
 
         bool should_close = false;
 
-      //  static inline WindowData* s_instance = nullptr;
+        static inline WindowData* s_instance = nullptr;
 
         static void set_global_instance(WindowData* instance) {
             s_instance = instance;
