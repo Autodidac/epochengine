@@ -1,8 +1,12 @@
 #!/bin/bash
-rm -rf build/*
-rm -rf built/*
 
-echo "vcpkg_installed directory cleaned."
-echo "Build directory cleaned."
-echo "Built directory cleaned."
+set -euo pipefail
 
+rm -rf Bin
+rm -rf build
+rm -rf built
+rm -rf CMakeCache.txt CMakeFiles
+
+echo "Bin directory cleaned."
+echo "Legacy build directory cleaned."
+echo "Built artifacts cleaned."
