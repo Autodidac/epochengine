@@ -340,7 +340,7 @@ inline constexpr uint16_t map_key_to_mac(Key k)
         case Key::Num9: return 0x19; case Key::Num7: return 0x1A; case Key::Minus: return 0x1B; case Key::Num8: return 0x1C;
         case Key::Num0: return 0x1D; case Key::RightBracket: return 0x1E; case Key::O: return 0x1F; case Key::U: return 0x20;
         case Key::LeftBracket: return 0x21; case Key::I: return 0x22; case Key::P: return 0x23; case Key::Enter: return 0x24;
-        case Key::L: return 0x25; case Key::J: return 0x26; case Key::Quote: return 0x27; case Key::K: return 0x28;
+        case Key::L: return 0x25; case Key::J: return 0x26; case Key::Apostrophe: return 0x27; case Key::K: return 0x28;
         case Key::Semicolon: return 0x29; case Key::Backslash: return 0x2A; case Key::Comma: return 0x2B;
         case Key::Slash: return 0x2C; case Key::N: return 0x2D; case Key::M: return 0x2E; case Key::Period: return 0x2F;
         case Key::Tab: return 0x30; case Key::Space: return 0x31; case Key::Backquote: return 0x32;
@@ -382,7 +382,7 @@ inline constexpr uint16_t map_key_to_linux(Key k) {
 
         case Key::Enter: return 36; case Key::Escape: return 9; case Key::Backspace: return 22; case Key::Tab: return 23;
         case Key::Space: return 65; case Key::Minus: return 20; case Key::Equal: return 21; case Key::LeftBracket: return 34;
-        case Key::RightBracket: return 35; case Key::Backslash: return 51; case Key::Semicolon: return 47; case Key::Quote: return 48;
+        case Key::RightBracket: return 35; case Key::Backslash: return 51; case Key::Semicolon: return 47; case Key::Apostrophe: return 48;
         case Key::GraveAccent: return 49; case Key::Comma: return 59; case Key::Period: return 60; case Key::Slash: return 61;
 
         case Key::CapsLock: return 66; case Key::F1: return 67; case Key::F2: return 68; case Key::F3: return 69; case Key::F4: return 70;

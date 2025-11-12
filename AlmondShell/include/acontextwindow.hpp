@@ -70,7 +70,7 @@ namespace almondnamespace::contextwindow
         }
 
         // Platform-specific setters
-#ifndef ALMOND_MAIN_HEADLESS
+#if defined(_WIN32) && !defined(ALMOND_MAIN_HEADLESS)
         void setParentHandle(HWND hwndValue) noexcept { hwnd = hwndValue; }
         void setChildHandle(HWND hwnd) noexcept { hwndChild = hwnd; }
 
