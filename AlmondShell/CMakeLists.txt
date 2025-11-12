@@ -21,11 +21,13 @@ set(ALMONDSHELL_SOURCES
 if(WIN32)
     list(APPEND ALMONDSHELL_SOURCES
         src/acontextmultiplexer_win.cpp
+        src/aopenglplatform_win.cpp
         src/WinResource.rc
     )
 elseif(UNIX AND NOT APPLE)
     list(APPEND ALMONDSHELL_SOURCES
         src/acontextmultiplexer_linux.cpp
+        src/aopenglplatform_linux.cpp
     )
 endif()
 

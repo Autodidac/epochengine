@@ -52,7 +52,24 @@
 
 namespace almondnamespace::opengltextures
 {
-    struct AtlasGPU 
+    namespace detail
+    {
+        inline openglcontext::PlatformGL::PlatformGLContext to_platform_context(const openglcontext::OpenGL4State& state) noexcept
+        {
+            openglcontext::PlatformGL::PlatformGLContext ctx{};
+#if defined(_WIN32)
+            ctx.device = state.hdc;
+            ctx.context = state.hglrc;
+#elif defined(__linux__)
+            ctx.display = state.display;
+            ctx.drawable = state.drawable ? state.drawable : state.window;
+            ctx.context = state.glxContext;
+#endif
+            return ctx;
+        }
+    }
+
+    struct AtlasGPU
     {
         GLuint textureHandle = 0;
         u64 version = static_cast<u64>(-1);  // force mismatch on first compare
@@ -180,17 +197,11 @@ namespace almondnamespace::opengltextures
             const_cast<TextureAtlas&>(atlas).rebuild_pixels();
         }
 
-        // Ensure we have a current GL context
-        HGLRC oldCtx = wglGetCurrentContext();
-        if (!oldCtx) {
-            if (!glState.hdc || !glState.hglrc) {
-                std::cerr << "[UploadAtlas] No current GL context and no state to make one!\n";
-                return;
-            }
-            if (!wglMakeCurrent(glState.hdc, glState.hglrc)) {
-                std::cerr << "[UploadAtlas] Failed to make GL context current for upload\n";
-                return;
-            }
+        const auto platformCtx = detail::to_platform_context(glState);
+        openglcontext::PlatformGL::ScopedContext contextGuard;
+        if (!contextGuard.set(platformCtx)) {
+            std::cerr << "[UploadAtlas] Failed to activate GL context for upload\n";
+            return;
         }
 
         std::lock_guard<std::mutex> gpuLock(oglData->gpuMutex);
@@ -241,10 +252,6 @@ namespace almondnamespace::opengltextures
 
         std::cerr << "[OpenGL] Uploaded atlas '" << atlas.name
             << "' (tex id " << gpu.textureHandle << ")\n";
-
-        if (!oldCtx) {
-            wglMakeCurrent(nullptr, nullptr);
-        }
     }
 
     inline void ensure_uploaded(const TextureAtlas& atlas)
