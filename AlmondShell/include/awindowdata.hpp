@@ -42,6 +42,9 @@ namespace almondnamespace::core
         using ResizeCallback = std::function<void(int, int)>;
         ResizeCallback onResize;
 
+        using ThreadInitializeCallback = std::function<bool(const std::shared_ptr<Context>&)>;
+        ThreadInitializeCallback threadInitialize;
+
         CommandQueue commandQueue;
 
         std::atomic<bool> paused{ false };

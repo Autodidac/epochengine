@@ -10,6 +10,9 @@
 #if defined(ALMOND_USING_RAYLIB)
 #include "araylibcontext.hpp"
 #endif
+#if defined(ALMOND_USING_SDL)
+#include "asdlcontext.hpp"
+#endif
 #if defined(ALMOND_USING_SOFTWARE_RENDERER)
 #include "asoftrenderer_context.hpp"
 #endif
@@ -21,6 +24,7 @@
 #include <algorithm>
 #include <chrono>
 #include <cstring>
+#include <memory>
 #include <mutex>
 #include <shared_mutex>
 #include <stdexcept>
@@ -408,32 +412,83 @@ namespace almondnamespace::core
                     }
                 }
 #endif
+#if defined(ALMOND_USING_SDL)
+                if (type == ContextType::SDL)
+                {
+                    const int width = (std::max)(1, window->width);
+                    const int height = (std::max)(1, window->height);
+                    const std::string title = (i < narrowTitles.size()) ? narrowTitles[i] : std::string("SDL Dock");
+                    auto resizeCopy = window->onResize;
+
+                    window->threadInitialize = [ctxWeak = std::weak_ptr<Context>(ctx),
+                        width,
+                        height,
+                        title,
+                        resize = std::move(resizeCopy)](const std::shared_ptr<Context>& liveCtx) mutable -> bool
+                    {
+                        auto target = liveCtx ? liveCtx : ctxWeak.lock();
+                        if (!target)
+                        {
+                            std::cerr << "[Init] SDL context unavailable during thread initialization\n";
+                            return false;
+                        }
+
+                        if (!almondnamespace::sdlcontext::sdl_initialize(
+                                target,
+                                nullptr,
+                                width,
+                                height,
+                                std::move(resize),
+                                title))
+                        {
+                            std::cerr << "[Init] Failed to initialize SDL context for hwnd="
+                                      << target->hwnd << '\n';
+                            return false;
+                        }
+
+                        return true;
+                    };
+                }
+#endif
 #if defined(ALMOND_USING_RAYLIB)
                 if (type == ContextType::RayLib)
                 {
                     const unsigned width = static_cast<unsigned>((std::max)(1, window->width));
                     const unsigned height = static_cast<unsigned>((std::max)(1, window->height));
                     const std::string& title = (i < narrowTitles.size()) ? narrowTitles[i] : std::string("Raylib Dock");
+                    auto resizeCopy = window->onResize;
 
-                    if (!almondnamespace::raylibcontext::raylib_initialize(
-                            ctx,
-                            nullptr,
-                            width,
-                            height,
-                            window->onResize,
-                            title))
+                    window->threadInitialize = [ctxWeak = std::weak_ptr<Context>(ctx),
+                        width,
+                        height,
+                        title,
+                        resize = std::move(resizeCopy)](const std::shared_ptr<Context>& liveCtx) mutable -> bool
                     {
-                        std::cerr << "[Init] Failed to initialize RayLib context for hwnd="
-                                  << ctx->hwnd << '\n';
-                        window->running = false;
-                    }
-                    else
-                    {
+                        auto target = liveCtx ? liveCtx : ctxWeak.lock();
+                        if (!target)
+                        {
+                            std::cerr << "[Init] RayLib context unavailable during thread initialization\n";
+                            return false;
+                        }
+
+                        if (!almondnamespace::raylibcontext::raylib_initialize(
+                                target,
+                                nullptr,
+                                width,
+                                height,
+                                std::move(resize),
+                                title))
+                        {
+                            std::cerr << "[Init] Failed to initialize RayLib context for hwnd="
+                                      << target->hwnd << '\n';
+                            return false;
+                        }
+
                         // Raylib may manage its own native handles on Linux; keep
                         // the placeholder window data so the multiplexer can
                         // continue managing the X11 resources it created.
-                        (void)ctx;
-                    }
+                        return true;
+                    };
                 }
 #endif
             }
@@ -989,6 +1044,17 @@ namespace almondnamespace::core
                 MultiContextManager::SetCurrent(nullptr);
             }
         } reset{ localDisplay, glxCtx };
+
+        if (win.threadInitialize)
+        {
+            auto init = std::move(win.threadInitialize);
+            win.threadInitialize = nullptr;
+            if (!init || !init(ctx))
+            {
+                win.running = false;
+                return;
+            }
+        }
 
         if (ctx->initialize)
         {
