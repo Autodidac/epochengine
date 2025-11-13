@@ -311,7 +311,12 @@ namespace almondnamespace
         }
 
         void rebuild_pixels() const {
-            std::shared_lock<std::shared_mutex> lock(entriesMutex);
+            // Rebuilding mutates both the shared `pixel_data` buffer and the atlas
+            // version counter, so we must take an exclusive lock. A shared lock
+            // allowed concurrent writers to race here, which manifested as random
+            // crashes on the render threads (the software backend was the first to
+            // trip over it on Linux).
+            std::unique_lock<std::shared_mutex> lock(entriesMutex);
             const size_t size = static_cast<size_t>(width) * height * 4;
             if (pixel_data.size() != size)
                 pixel_data.resize(size);
