@@ -212,8 +212,9 @@ namespace almondnamespace::anativecontext
     // Draw a textured quad from the first atlas (kept as-is)
     inline void softrenderer_draw_quad(SoftRendState& softstate)
     {
-        if (atlasmanager::atlas_vector.empty()) return;
-        const auto* atlas = atlasmanager::atlas_vector[0];
+        const auto atlases = atlasmanager::get_atlas_vector_snapshot();
+        if (atlases.empty()) return;
+        const auto* atlas = atlases[0];
         if (!atlas) return;
 
         int w = atlas->width;

@@ -331,6 +331,12 @@ namespace almondnamespace::atlasmanager
         return atlas_vector;
     }
 
+    inline std::vector<const TextureAtlas*> get_atlas_vector_snapshot()
+    {
+        std::shared_lock lock(atlasMutex);
+        return atlas_vector;
+    }
+
     inline void register_backend_uploader(core::ContextType type,
         std::function<void(const TextureAtlas&)> ensureFn)
     {
