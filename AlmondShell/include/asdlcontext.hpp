@@ -172,7 +172,7 @@ namespace almondnamespace::sdlcontext
         // Force the type with cast so MSVC can’t mis-deduce
         if (static_cast<int>(SDL_Init(SDL_INIT_VIDEO)) < 0) {
             SDL_Log("SDL_Init failed: %s", SDL_GetError());
-            return EXIT_FAILURE;
+            return false;
         }
 
         if (windowTitle.empty()) {
