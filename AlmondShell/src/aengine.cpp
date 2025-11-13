@@ -160,11 +160,9 @@ namespace almondnamespace::core
 
     namespace
     {
-#if defined(_WIN32)
-        int RunEngineMainLoopInternal(HINSTANCE hInstance, int nCmdShow)
+        template <typename PumpFunc>
+        int RunEngineMainLoopCommon(almondnamespace::core::MultiContextManager& mgr, PumpFunc&& pump_events)
         {
-            UNREFERENCED_PARAMETER(nCmdShow);
-
             enum class SceneID {
                 Menu,
                 Snake,
@@ -179,14 +177,275 @@ namespace almondnamespace::core
                 Cellular,
                 Exit
             };
-        
+
             SceneID g_sceneID = SceneID::Menu;
             std::unique_ptr<almondnamespace::scene::Scene> g_activeScene;
             almondnamespace::menu::MenuOverlay menu;
             menu.set_max_columns(cli::menu_columns);
-        
+
+            auto collect_backend_contexts = []()
+            {
+                using ContextGroup = std::pair<almondnamespace::core::ContextType,
+                    std::vector<std::shared_ptr<almondnamespace::core::Context>>>;
+                std::vector<ContextGroup> snapshot;
+                {
+                    std::shared_lock lock(almondnamespace::core::g_backendsMutex);
+                    snapshot.reserve(almondnamespace::core::g_backends.size());
+                    for (auto& [type, state] : almondnamespace::core::g_backends) {
+                        std::vector<std::shared_ptr<almondnamespace::core::Context>> contexts;
+                        contexts.reserve(1 + state.duplicates.size());
+                        if (state.master)
+                            contexts.push_back(state.master);
+                        for (auto& dup : state.duplicates)
+                            contexts.push_back(dup);
+                        snapshot.emplace_back(type, std::move(contexts));
+                    }
+                }
+                return snapshot;
+            };
+
+            auto init_menu = [&]() {
+                auto backendContexts = collect_backend_contexts();
+                for (auto& [_, contexts] : backendContexts) {
+                    for (auto& ctx : contexts) {
+                        if (ctx) menu.initialize(ctx);
+                    }
+                }
+            };
+            init_menu();
+
+            std::unordered_map<almondnamespace::core::Context*, std::chrono::steady_clock::time_point> lastFrameTimes;
+
+            bool running = true;
+
+            while (running) {
+                if (!pump_events()) {
+                    running = false;
+                    break;
+                }
+
+                auto backendContexts = collect_backend_contexts();
+                for (auto& [type, contexts] : backendContexts) {
+                    auto update_on_ctx = [&](std::shared_ptr<almondnamespace::core::Context> ctx) -> bool {
+                        if (!ctx) return true;
+                        auto* win = mgr.findWindowByHWND(ctx->hwnd);
+                        if (!win)
+                            win = mgr.findWindowByContext(ctx);
+                        if (!win)
+                            return true; // window not ready yet
+
+                        bool ctxRunning = win->running;
+
+                        const auto now = std::chrono::steady_clock::now();
+                        const auto rawCtx = ctx.get();
+                        float dtSeconds = 0.0f;
+                        auto [timeIt, inserted] = lastFrameTimes.emplace(rawCtx, now);
+                        if (!inserted) {
+                            dtSeconds = std::chrono::duration<float>(now - timeIt->second).count();
+                            timeIt->second = now;
+                        }
+
+                        auto begin_scene = [&](auto makeScene, SceneID id) {
+                            auto clear_commands = [](const std::shared_ptr<almondnamespace::core::Context>& context) {
+                                if (context && context->windowData) {
+                                    context->windowData->commandQueue.clear();
+                                }
+                            };
+
+                            auto snapshot = collect_backend_contexts();
+                            for (auto& [_, group] : snapshot) {
+                                for (auto& contextPtr : group) {
+                                    clear_commands(contextPtr);
+                                }
+                            }
+
+                            menu.cleanup();
+                            if (g_activeScene) {
+                                g_activeScene->unload();
+                            }
+                            g_activeScene = makeScene();
+                            g_activeScene->load();
+                            g_sceneID = id;
+                        };
+
+                        switch (g_sceneID) {
+                        case SceneID::Menu: {
+                            int mx = 0, my = 0;
+                            ctx->get_mouse_position_safe(mx, my);
+                            const almondnamespace::gui::Vec2 mousePos{
+                                static_cast<float>(mx),
+                                static_cast<float>(my)
+                            };
+                            const bool mouseLeftDown = almondnamespace::input::mouseDown.test(almondnamespace::input::MouseButton::MouseLeft);
+                            const bool upPressed = almondnamespace::input::keyPressed.test(almondnamespace::input::Key::Up);
+                            const bool downPressed = almondnamespace::input::keyPressed.test(almondnamespace::input::Key::Down);
+                            const bool leftPressed = almondnamespace::input::keyPressed.test(almondnamespace::input::Key::Left);
+                            const bool rightPressed = almondnamespace::input::keyPressed.test(almondnamespace::input::Key::Right);
+                            const bool enterPressed = almondnamespace::input::keyPressed.test(almondnamespace::input::Key::Enter);
+
+                            almondnamespace::gui::begin_frame(ctx, dtSeconds, mousePos, mouseLeftDown);
+                            auto choice = menu.update_and_draw(ctx, win, dtSeconds, upPressed, downPressed, leftPressed, rightPressed, enterPressed);
+                            almondnamespace::gui::end_frame();
+
+                            if (choice) {
+                                if (*choice == almondnamespace::menu::Choice::Snake) {
+                                    begin_scene([] { return std::make_unique<almondnamespace::snake::SnakeScene>(); }, SceneID::Snake);
+                                }
+                                else if (*choice == almondnamespace::menu::Choice::Tetris) {
+                                    begin_scene([] { return std::make_unique<almondnamespace::tetris::TetrisScene>(); }, SceneID::Tetris);
+                                }
+                                else if (*choice == almondnamespace::menu::Choice::Pacman) {
+                                    begin_scene([] { return std::make_unique<almondnamespace::pacman::PacmanScene>(); }, SceneID::Pacman);
+                                }
+                                else if (*choice == almondnamespace::menu::Choice::Sokoban) {
+                                    begin_scene([] { return std::make_unique<almondnamespace::sokoban::SokobanScene>(); }, SceneID::Sokoban);
+                                }
+                                else if (*choice == almondnamespace::menu::Choice::Bejeweled) {
+                                    begin_scene([] { return std::make_unique<almondnamespace::match3::Match3Scene>(); }, SceneID::Match3);
+                                }
+                                else if (*choice == almondnamespace::menu::Choice::Puzzle) {
+                                    begin_scene([] { return std::make_unique<almondnamespace::sliding::SlidingScene>(); }, SceneID::Sliding);
+                                }
+                                else if (*choice == almondnamespace::menu::Choice::Minesweep) {
+                                    begin_scene([] { return std::make_unique<almondnamespace::minesweeper::MinesweeperScene>(); }, SceneID::Minesweeper);
+                                }
+                                else if (*choice == almondnamespace::menu::Choice::Fourty) {
+                                    begin_scene([] { return std::make_unique<almondnamespace::game2048::Game2048Scene>(); }, SceneID::Game2048);
+                                }
+                                else if (*choice == almondnamespace::menu::Choice::Sandsim) {
+                                    begin_scene([] { return std::make_unique<almondnamespace::sandsim::SandSimScene>(); }, SceneID::Sandsim);
+                                }
+                                else if (*choice == almondnamespace::menu::Choice::Cellular) {
+                                    begin_scene([] { return std::make_unique<almondnamespace::cellular::CellularScene>(); }, SceneID::Cellular);
+                                }
+                                else if (*choice == almondnamespace::menu::Choice::Settings) {
+                                    std::cout << "[Menu] Settings selected.";
+                                }
+                                else if (*choice == almondnamespace::menu::Choice::Exit) {
+                                    g_sceneID = SceneID::Exit;
+                                    running = false;
+                                }
+                            }
+                            break;
+                        }
+                        case SceneID::Snake:
+                        case SceneID::Tetris:
+                        case SceneID::Pacman:
+                        case SceneID::Sokoban:
+                        case SceneID::Match3:
+                        case SceneID::Sliding:
+                        case SceneID::Minesweeper:
+                        case SceneID::Game2048:
+                        case SceneID::Sandsim:
+                        case SceneID::Cellular:
+                            if (g_activeScene) {
+                                ctxRunning = g_activeScene->frame(ctx, win);
+                                if (!ctxRunning) {
+                                    g_activeScene->unload();
+                                    g_activeScene.reset();
+                                    g_sceneID = SceneID::Menu;
+                                    init_menu();
+                                }
+                            }
+                            break;
+                        case SceneID::Exit:
+                            running = false;
+                            break;
+                        }
+
+                        if (!ctxRunning) {
+                            lastFrameTimes.erase(rawCtx);
+                        }
+
+                        return ctxRunning;
+                    };
+
+#if defined(ALMOND_SINGLE_PARENT)
+                    if (!contexts.empty()) {
+                        auto masterCtx = contexts.front();
+                        if (masterCtx && !update_on_ctx(masterCtx)) { running = false; break; }
+                        for (size_t i = 1; i < contexts.size(); ++i) {
+                            if (!update_on_ctx(contexts[i])) running = false;
+                        }
+                    }
+#else
+                    bool anyAlive = false;
+                    for (size_t i = 0; i < contexts.size(); ++i) {
+                        auto& ctx = contexts[i];
+                        if (!ctx) continue;
+                        bool alive = update_on_ctx(ctx);
+                        if (alive) {
+                            anyAlive = true;
+                        }
+                        else if (i > 0) {
+                            ctx->running = false;
+                        }
+                    }
+                    if (!anyAlive) {
+                        std::cout << "[Engine] All contexts for backend "
+                            << int(type) << " closed.";
+                    }
+#endif
+                }
+
+                std::this_thread::sleep_for(std::chrono::milliseconds(16));
+            }
+
+            if (g_activeScene) {
+                g_activeScene->unload();
+                g_activeScene.reset();
+            }
+            menu.cleanup();
+            mgr.StopAll();
+
+            auto backendContexts = collect_backend_contexts();
+            for (auto& [type, contexts] : backendContexts) {
+                auto cleanup_backend = [&](std::shared_ptr<almondnamespace::core::Context> ctx) {
+                    if (!ctx) return;
+                    switch (type) {
+#ifdef ALMOND_USING_OPENGL
+                    case almondnamespace::core::ContextType::OpenGL:
+                        almondnamespace::openglcontext::opengl_cleanup(ctx);
+                        break;
+#endif
+#ifdef ALMOND_USING_SOFTWARE_RENDERER
+                    case almondnamespace::core::ContextType::Software:
+                        almondnamespace::anativecontext::softrenderer_cleanup(ctx);
+                        break;
+#endif
+#ifdef ALMOND_USING_SDL
+                    case almondnamespace::core::ContextType::SDL:
+                        almondnamespace::sdlcontext::sdl_cleanup(ctx);
+                        break;
+#endif
+#ifdef ALMOND_USING_SFML
+                    case almondnamespace::core::ContextType::SFML:
+                        almondnamespace::sfmlcontext::sfml_cleanup(ctx);
+                        break;
+#endif
+#ifdef ALMOND_USING_RAYLIB
+                    case almondnamespace::core::ContextType::RayLib:
+                        almondnamespace::raylibcontext::raylib_cleanup(ctx);
+                        break;
+#endif
+                    default: break;
+                    }
+                };
+
+                for (auto& ctx : contexts) {
+                    cleanup_backend(ctx);
+                }
+            }
+
+            return 0;
+        }
+
+#if defined(_WIN32)
+        int RunEngineMainLoopInternal(HINSTANCE hInstance, int nCmdShow)
+        {
+            UNREFERENCED_PARAMETER(nCmdShow);
+
             try {
-                // ---- Setup command line ----
                 int32_t numCmdLineArgs = 0;
                 LPWSTR* pCommandLineArgvArray =
                     CommandLineToArgvW(GetCommandLineW(), &numCmdLineArgs);
@@ -196,8 +455,7 @@ namespace almondnamespace::core
                     return -1;
                 }
                 LocalFree(pCommandLineArgvArray);
-        
-                // ---- Initialize multi-context manager ----
+
                 almondnamespace::core::MultiContextManager mgr;
                 HINSTANCE hi = hInstance ? hInstance : GetModuleHandle(nullptr);
                 bool multiOk = mgr.Initialize(hi,
@@ -207,290 +465,79 @@ namespace almondnamespace::core
                     /*OpenGL*/   1,
                     /*Software*/ 1,
                     ALMOND_SINGLE_PARENT == 1);
-        
+
                 if (!multiOk) {
                     MessageBoxW(NULL, L"Failed to initialize contexts!",
                         L"Error", MB_ICONERROR | MB_OK);
                     return -1;
                 }
-        
+
                 almondnamespace::input::designate_polling_thread_to_current();
-        
+
                 mgr.StartRenderThreads();
                 mgr.ArrangeDockedWindowsGrid();
-        
-                auto collect_backend_contexts = []()
-                {
-                    using ContextGroup = std::pair<almondnamespace::core::ContextType,
-                        std::vector<std::shared_ptr<almondnamespace::core::Context>>>;
-                    std::vector<ContextGroup> snapshot;
-                    {
-                        std::shared_lock lock(almondnamespace::core::g_backendsMutex);
-                        snapshot.reserve(almondnamespace::core::g_backends.size());
-                        for (auto& [type, state] : almondnamespace::core::g_backends) {
-                            std::vector<std::shared_ptr<almondnamespace::core::Context>> contexts;
-                            contexts.reserve(1 + state.duplicates.size());
-                            if (state.master)
-                                contexts.push_back(state.master);
-                            for (auto& dup : state.duplicates)
-                                contexts.push_back(dup);
-                            snapshot.emplace_back(type, std::move(contexts));
-                        }
-                    }
-                    return snapshot;
-                };
-        
-                // Initialize menu overlay on all contexts
-                auto init_menu = [&]() {
-                    auto backendContexts = collect_backend_contexts();
-                    for (auto& [_, contexts] : backendContexts) {
-                        for (auto& ctx : contexts) {
-                            if (ctx) menu.initialize(ctx);
-                        }
-                    }
-                };
-                init_menu();
-        
-                std::unordered_map<almondnamespace::core::Context*, std::chrono::steady_clock::time_point> lastFrameTimes;
 
-                bool running = true;
-        
-                // ---- Main loop ----
-                while (running) {
+                auto pump = []() -> bool {
                     MSG msg{};
+                    bool keepRunning = true;
                     while (PeekMessage(&msg, nullptr, 0, 0, PM_REMOVE)) {
-                        if (msg.message == WM_QUIT) running = false;
-                        else { TranslateMessage(&msg); DispatchMessage(&msg); }
+                        if (msg.message == WM_QUIT) {
+                            keepRunning = false;
+                        }
+                        else {
+                            TranslateMessage(&msg);
+                            DispatchMessage(&msg);
+                        }
                     }
-        
-                    // Ensure input state is refreshed from the main thread before any
-                    // context-specific processing happens.  Rendering threads are now
-                    // gated from polling directly, so the designated polling thread
-                    // (WinMain) must keep the shared state up to date.
+
+                    if (!keepRunning) {
+                        return false;
+                    }
+
                     almondnamespace::input::poll_input();
-        
-                    // Update all backends
-                    auto backendContexts = collect_backend_contexts();
-                    for (auto& [type, contexts] : backendContexts) {
-                        auto update_on_ctx = [&](std::shared_ptr<almondnamespace::core::Context> ctx) -> bool {
-                            if (!ctx) return true;
-                            auto* win = mgr.findWindowByHWND(ctx->hwnd);
-                            if (!win)
-                                win = mgr.findWindowByContext(ctx);
-                            if (!win)
-                                return true; // window not ready yet
+                    return true;
+                };
 
-                            bool ctxRunning = win->running;
-
-                            const auto now = std::chrono::steady_clock::now();
-                            const auto rawCtx = ctx.get();
-                            float dtSeconds = 0.0f;
-                            auto [timeIt, inserted] = lastFrameTimes.emplace(rawCtx, now);
-                            if (!inserted) {
-                                dtSeconds = std::chrono::duration<float>(now - timeIt->second).count();
-                                timeIt->second = now;
-                            }
-
-                            auto begin_scene = [&](auto makeScene, SceneID id) {
-                                auto clear_commands = [](const std::shared_ptr<almondnamespace::core::Context>& context) {
-                                    if (context && context->windowData) {
-                                        context->windowData->commandQueue.clear();
-                                    }
-                                };
-        
-                                auto snapshot = collect_backend_contexts();
-                                for (auto& [_, group] : snapshot) {
-                                    for (auto& contextPtr : group) {
-                                        clear_commands(contextPtr);
-                                    }
-                                }
-        
-                                menu.cleanup();
-                                if (g_activeScene) {
-                                    g_activeScene->unload();
-                                }
-                                g_activeScene = makeScene();
-                                g_activeScene->load();
-                                g_sceneID = id;
-                            };
-        
-                            // --- Scene dispatch ---
-                            switch (g_sceneID) {
-                            case SceneID::Menu: {
-                                int mx = 0, my = 0;
-                                ctx->get_mouse_position_safe(mx, my);
-                                const almondnamespace::gui::Vec2 mousePos{
-                                    static_cast<float>(mx),
-                                    static_cast<float>(my)
-                                };
-                                const bool mouseLeftDown = almondnamespace::input::mouseDown.test(almondnamespace::input::MouseButton::MouseLeft);
-                                const bool upPressed = almondnamespace::input::keyPressed.test(almondnamespace::input::Key::Up);
-                                const bool downPressed = almondnamespace::input::keyPressed.test(almondnamespace::input::Key::Down);
-                                const bool leftPressed = almondnamespace::input::keyPressed.test(almondnamespace::input::Key::Left);
-                                const bool rightPressed = almondnamespace::input::keyPressed.test(almondnamespace::input::Key::Right);
-                                const bool enterPressed = almondnamespace::input::keyPressed.test(almondnamespace::input::Key::Enter);
-
-                                almondnamespace::gui::begin_frame(ctx, dtSeconds, mousePos, mouseLeftDown);
-                                auto choice = menu.update_and_draw(ctx, win, dtSeconds, upPressed, downPressed, leftPressed, rightPressed, enterPressed);
-                                almondnamespace::gui::end_frame();
-
-                                if (choice) {
-                                    if (*choice == almondnamespace::menu::Choice::Snake) {
-                                        begin_scene([] { return std::make_unique<almondnamespace::snake::SnakeScene>(); }, SceneID::Snake);
-                                    }
-                                    else if (*choice == almondnamespace::menu::Choice::Tetris) {
-                                        begin_scene([] { return std::make_unique<almondnamespace::tetris::TetrisScene>(); }, SceneID::Tetris);
-                                    }
-                                    else if (*choice == almondnamespace::menu::Choice::Pacman) {
-                                        begin_scene([] { return std::make_unique<almondnamespace::pacman::PacmanScene>(); }, SceneID::Pacman);
-                                    }
-                                    else if (*choice == almondnamespace::menu::Choice::Sokoban) {
-                                        begin_scene([] { return std::make_unique<almondnamespace::sokoban::SokobanScene>(); }, SceneID::Sokoban);
-                                    }
-                                    else if (*choice == almondnamespace::menu::Choice::Bejeweled) {
-                                        begin_scene([] { return std::make_unique<almondnamespace::match3::Match3Scene>(); }, SceneID::Match3);
-                                    }
-                                    else if (*choice == almondnamespace::menu::Choice::Puzzle) {
-                                        begin_scene([] { return std::make_unique<almondnamespace::sliding::SlidingScene>(); }, SceneID::Sliding);
-                                    }
-                                    else if (*choice == almondnamespace::menu::Choice::Minesweep) {
-                                        begin_scene([] { return std::make_unique<almondnamespace::minesweeper::MinesweeperScene>(); }, SceneID::Minesweeper);
-                                    }
-                                    else if (*choice == almondnamespace::menu::Choice::Fourty) {
-                                        begin_scene([] { return std::make_unique<almondnamespace::game2048::Game2048Scene>(); }, SceneID::Game2048);
-                                    }
-                                    else if (*choice == almondnamespace::menu::Choice::Sandsim) {
-                                        begin_scene([] { return std::make_unique<almondnamespace::sandsim::SandSimScene>(); }, SceneID::Sandsim);
-                                    }
-                                    else if (*choice == almondnamespace::menu::Choice::Cellular) {
-                                        begin_scene([] { return std::make_unique<almondnamespace::cellular::CellularScene>(); }, SceneID::Cellular);
-                                    }
-                                    else if (*choice == almondnamespace::menu::Choice::Settings) {
-                                        std::cout << "[Menu] Settings selected.";
-                                    }
-                                    else if (*choice == almondnamespace::menu::Choice::Exit) {
-                                        g_sceneID = SceneID::Exit;
-                                        running = false;
-                                    }
-                                }
-                                break;
-                            }
-                            case SceneID::Snake:
-                            case SceneID::Tetris:
-                            case SceneID::Pacman:
-                            case SceneID::Sokoban:
-                            case SceneID::Match3:
-                            case SceneID::Sliding:
-                            case SceneID::Minesweeper:
-                            case SceneID::Game2048:
-                            case SceneID::Sandsim:
-                            case SceneID::Cellular:
-                                if (g_activeScene) {
-                                    ctxRunning = g_activeScene->frame(ctx, win);
-                                    if (!ctxRunning) {
-                                        g_activeScene->unload();
-                                        g_activeScene.reset();
-                                        g_sceneID = SceneID::Menu;
-                                        init_menu(); // reinitialize menu overlay
-                                    }
-                                }
-                                break;
-                            case SceneID::Exit:
-                                running = false;
-                                break;
-                            }
-        
-                            if (!ctxRunning) {
-                                lastFrameTimes.erase(rawCtx);
-                            }
-
-                            return ctxRunning;
-                            };
-        
-        #if defined(ALMOND_SINGLE_PARENT)
-                        if (!contexts.empty()) {
-                            auto masterCtx = contexts.front();
-                            if (masterCtx && !update_on_ctx(masterCtx)) { running = false; break; }
-                            for (size_t i = 1; i < contexts.size(); ++i) {
-                                if (!update_on_ctx(contexts[i])) running = false;
-                            }
-                        }
-        #else
-                        bool anyAlive = false;
-                        for (size_t i = 0; i < contexts.size(); ++i) {
-                            auto& ctx = contexts[i];
-                            if (!ctx) continue;
-                            bool alive = update_on_ctx(ctx);
-                            if (alive) {
-                                anyAlive = true;
-                            }
-                            else if (i > 0) {
-                                ctx->running = false;
-                            }
-                        }
-                        if (!anyAlive) {
-                            std::cout << "[Engine] All contexts for backend "
-                                << int(type) << " closed.";
-                        }
-        #endif
-                    }
-        
-                    std::this_thread::sleep_for(std::chrono::milliseconds(16));
-                }
-        
-                // ---- Cleanup ----
-                if (g_activeScene) {
-                    g_activeScene->unload();
-                    g_activeScene.reset();
-                }
-                menu.cleanup();
-                mgr.StopAll();
-        
-                auto backendContexts = collect_backend_contexts();
-                for (auto& [type, contexts] : backendContexts) {
-                    auto cleanup_backend = [&](std::shared_ptr<almondnamespace::core::Context> ctx) {
-                        if (!ctx) return;
-                        switch (type) {
-        #ifdef ALMOND_USING_OPENGL
-                        case almondnamespace::core::ContextType::OpenGL:
-                            almondnamespace::openglcontext::opengl_cleanup(ctx);
-                            break;
-        #endif
-        #ifdef ALMOND_USING_SOFTWARE_RENDERER
-                        case almondnamespace::core::ContextType::Software:
-                            almondnamespace::anativecontext::softrenderer_cleanup(ctx);
-                            break;
-        #endif
-        #ifdef ALMOND_USING_SDL
-                        case almondnamespace::core::ContextType::SDL:
-                            almondnamespace::sdlcontext::sdl_cleanup(ctx);
-                            break;
-        #endif
-        #ifdef ALMOND_USING_SFML
-                        case almondnamespace::core::ContextType::SFML:
-                            almondnamespace::sfmlcontext::sfml_cleanup(ctx);
-                            break;
-        #endif
-        #ifdef ALMOND_USING_RAYLIB
-                        case almondnamespace::core::ContextType::RayLib:
-                            almondnamespace::raylibcontext::raylib_cleanup(ctx);
-                            break;
-        #endif
-                        default: break;
-                        }
-                        };
-        
-                    for (auto& ctx : contexts) {
-                        cleanup_backend(ctx);
-                    }
-                }
+                return RunEngineMainLoopCommon(mgr, pump);
             }
             catch (const std::exception& ex) {
                 MessageBoxA(nullptr, ex.what(), "Error", MB_ICONERROR | MB_OK);
                 return -1;
             }
-        
-            return 0;
+        }
+#elif defined(__linux__)
+        int RunEngineMainLoopLinux()
+        {
+            try {
+                almondnamespace::core::MultiContextManager mgr;
+                bool multiOk = mgr.Initialize(nullptr,
+                    /*RayLib*/   1,
+                    /*SDL*/      1,
+                    /*SFML*/     0,
+                    /*OpenGL*/   1,
+                    /*Software*/ 1,
+                    false);
+
+                if (!multiOk) {
+                    std::cerr << "[Engine] Failed to initialize contexts!\n";
+                    return -1;
+                }
+
+                almondnamespace::input::designate_polling_thread_to_current();
+
+                mgr.StartRenderThreads();
+                mgr.ArrangeDockedWindowsGrid();
+
+                auto pump = []() -> bool {
+                    return almondnamespace::platform::pump_events();
+                };
+
+                return RunEngineMainLoopCommon(mgr, pump);
+            }
+            catch (const std::exception& ex) {
+                std::cerr << "[Engine] " << ex.what() << '\n';
+                return -1;
+            }
         }
 #endif
     } // namespace
@@ -515,6 +562,11 @@ namespace almondnamespace::core
     #endif
         const HINSTANCE instance = GetModuleHandleW(nullptr);
         const int result = RunEngineMainLoopInternal(instance, SW_SHOWNORMAL);
+        if (result != 0) {
+            std::cerr << "[Engine] RunEngine terminated with code " << result << "\n";
+        }
+#elif defined(__linux__)
+        const int result = RunEngineMainLoopLinux();
         if (result != 0) {
             std::cerr << "[Engine] RunEngine terminated with code " << result << "\n";
         }
