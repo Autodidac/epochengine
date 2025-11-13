@@ -87,12 +87,12 @@ namespace almondnamespace::platform
         almondnamespace::input::poll_input(); // macOS stub version
 
         return true;
-
+    
 #elif defined(__linux__)
-        namespace almondnamespace::platform {
+        //namespace almondnamespace::platform {
             extern Display* global_display;
             extern ::Window global_window;
-        }
+        //}
 
         using almondnamespace::platform::global_display;
         using almondnamespace::platform::global_window;
