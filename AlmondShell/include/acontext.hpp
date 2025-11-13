@@ -48,8 +48,10 @@
 #include <shared_mutex>
 
 #if defined(__linux__)
-extern Display* global_display;
-extern ::Window global_window;
+namespace almondnamespace::platform {
+    extern Display* global_display;
+    extern ::Window global_window;
+}
 #endif
 
 namespace almondnamespace::core
@@ -203,7 +205,7 @@ namespace almondnamespace::core
             }
 #elif defined(__linux__)
             if (hwnd && input::are_mouse_coords_global()) {
-                Display* display = global_display;
+                Display* display = almondnamespace::platform::global_display;
                 ::Window target = static_cast<::Window>(reinterpret_cast<uintptr_t>(hwnd));
                 if (display && target != 0) {
                     Window root{};
