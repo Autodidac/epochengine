@@ -198,4 +198,5 @@
 - Cached Raylib's bootstrapped WGL handles and gated context reacquisition so standalone Raylib sessions can make the GL context current reliably, documented the change, and bumped the engine version to v0.62.5.
 - Documented the child-window scaling alignment and context refresh smoke coverage for Raylib, ensuring docked panes keep the design canvas while contexts rebound, and bumped the engine version to v0.62.6.
 - Fixed the OpenGL renderer to reference the shared context state when issuing quad and debug-outline draws, restored successful builds, refreshed the documentation, and bumped the engine version to v0.62.7.
+- Initialised the Linux software renderer alongside the multiplexer so menu runs stop crashing after Raylib boots, documented the workflow changes, and bumped the engine version to v0.70.0.
 
