@@ -52,7 +52,7 @@ detect_vcpkg_root() {
 
   local candidate
 
-  candidate="${SCRIPT_DIR}/../vcpkg"
+  candidate="${SCRIPT_DIR}/../../vcpkg"
   if [[ -f "${candidate}/scripts/buildsystems/vcpkg.cmake" ]]; then
     printf '%s\n' "${candidate}"
     return 0

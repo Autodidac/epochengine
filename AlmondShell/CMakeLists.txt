@@ -47,6 +47,12 @@ if(ALMOND_ENABLE_RAYLIB)
     target_link_libraries(almondshell PRIVATE raylib)
 endif()
 
+    # Raylib on Linux requires GLFW
+    if(UNIX AND NOT APPLE)
+        find_package(glfw3 CONFIG REQUIRED)
+        target_link_libraries(almondshell PRIVATE glfw)
+    endif()
+
 find_package(SDL3 CONFIG REQUIRED)
 target_link_libraries(almondshell PRIVATE SDL3::SDL3)
 

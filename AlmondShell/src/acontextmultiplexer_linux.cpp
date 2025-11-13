@@ -178,7 +178,7 @@ namespace almondnamespace::core
             GLX_BLUE_SIZE, 8,
             GLX_ALPHA_SIZE, 8,
             GLX_DEPTH_SIZE, 24,
-            None
+            0
         };
 
         GLXFBConfig* configs = glXChooseFBConfig(display, screen, visualAttribs, &fbCount);
@@ -463,7 +463,7 @@ namespace almondnamespace::core
             GLX_CONTEXT_MAJOR_VERSION_ARB, 3,
             GLX_CONTEXT_MINOR_VERSION_ARB, 3,
             GLX_CONTEXT_PROFILE_MASK_ARB, GLX_CONTEXT_CORE_PROFILE_BIT_ARB,
-            None
+            0
         };
 
         GLXContext shared = sharedContext;
@@ -915,7 +915,7 @@ namespace almondnamespace::core
             {
                 if (display && ctx)
                 {
-                    glXMakeCurrent(display, None, nullptr);
+                    glXMakeCurrent(display, 0, nullptr);
                 }
                 MultiContextManager::SetCurrent(nullptr);
             }
