@@ -68,9 +68,10 @@ namespace almondnamespace::anativecontext
     // ─── High-level entry: blit first atlas onto framebuffer ───────────────────
     inline void render_first_atlas_quad(BackendData& backend)
     {
-        if (atlasmanager::atlas_vector.empty()) return;
+        const auto atlases = atlasmanager::get_atlas_vector_snapshot();
+        if (atlases.empty()) return;
 
-        const auto* atlas = atlasmanager::atlas_vector[0];
+        const auto* atlas = atlases[0];
         if (!atlas) return;
 
         // Upload atlas → TexturePtr if not already cached
