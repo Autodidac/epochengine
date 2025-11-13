@@ -17,11 +17,17 @@
 #include <shared_mutex>
 #include <stdexcept>
 
-Display* global_display = nullptr;
-::Window global_window = 0;
+namespace almondnamespace::platform
+{
+    Display* global_display = nullptr;
+    ::Window global_window = 0;
+}
 
 namespace almondnamespace::core
 {
+    using almondnamespace::platform::global_display;
+    using almondnamespace::platform::global_window;
+
     MultiContextManager* GetActiveMultiContextManager() noexcept
     {
         return MultiContextManager::s_activeInstance;
