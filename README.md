@@ -63,13 +63,14 @@ flowchart LR
 
 ---
 
-## Current Snapshot (v0.70.0)
+## Current Snapshot (v0.70.1)
 
 - ✅ **Immediate GUI everywhere** – `agui.hpp` seeds a shared font atlas, now covers buttons, image buttons, editable text fields, text boxes, and a turnkey console overlay so every backend renders consistent tooling widgets out of the box.
 - ✅ **Child-window scaling & context refresh coverage** – Raylib docked child panes now stay aligned with the preserved design canvas while new smoke coverage exercises context reacquisition, keeping the GL context bound after scaling and docking churn.
 - ✅ **OpenGL renderer state fix** – The in-engine OpenGL renderer now scopes its global state correctly when drawing quads and debug outlines, unblocking builds that failed due to missing `s_openglstate` symbols.
 - ✅ **Configurable menu layouts** – The runtime honours a `--menu-columns` cap to keep atlas-driven menus readable on constrained displays.
 - ✅ **Robust hot reload** – The scripting pipeline emits `ScriptLoadReport` diagnostics, prunes completed jobs, and waits synchronously so tooling observes a deterministic post-reload state.
+- ✅ **Reliable GL loader initialisation** – Linux builds now link the standalone `glad` loader regardless of the active backends, keeping `gladLoadGLLoader` available even when Raylib is enabled.
 
 Refer to [`Changes/changelog.txt`](Changes/changelog.txt) for the full history of fixes and enhancements.
 
@@ -200,7 +201,7 @@ packages when you configure the project in manifest mode (`VCPKG_FEATURE_FLAGS=m
 
 - [`asio`](https://think-async.com/) – Asynchronous networking primitives used by the updater and runtime services.
 - [`fmt`](https://fmt.dev/) – Type-safe, fast formatting for logging and diagnostics.
-- [`glad`](https://glad.dav1d.de/) – OpenGL function loader used by the OpenGL backend.
+- [`glad`](https://glad.dav1d.de/) – OpenGL function loader now linked unconditionally so Linux builds keep `gladLoadGLLoader` available even when Raylib is active.
 - [`glm`](https://github.com/g-truc/glm) – Mathematics library for vector and matrix operations.
 - [`opengl`](https://www.khronos.org/opengl/) – OpenGL utility components supplied by vcpkg.
 - [`raylib`](https://www.raylib.com/) – Optional renderer and tooling integrations.
@@ -214,6 +215,33 @@ If you are using a classic (non-manifest) vcpkg workflow, install the same packa
 ```bash
 vcpkg install asio fmt glad glm opengl raylib sfml sdl3 sdl3-image zlib
 ```
+
+### Linux build quickstart
+
+1. **Install system prerequisites** (Ubuntu/Debian example):
+   ```bash
+   sudo apt update && sudo apt install build-essential clang ninja-build cmake pkg-config
+   ```
+2. **Restore dependencies via manifest mode** (optional helper shown if you have not bootstrapped vcpkg yet):
+   ```bash
+   ./AlmondShell/unix/bootstrap-vcpkg.sh
+   ./vcpkg/vcpkg install --triplet x64-linux
+   ```
+   CMake will reuse the manifest to pull `glad`, `raylib`, `SDL3`, and the other declared libraries on the first configure run.
+3. **Configure and build**:
+   ```bash
+   cmake -S AlmondShell -B build/linux-clang -G Ninja -DCMAKE_BUILD_TYPE=Release
+   cmake --build build/linux-clang
+   ```
+   Pass `-DALMOND_ENABLE_RAYLIB=OFF` if you need to disable Raylib entirely; otherwise the standalone glad loader now links automatically, fixing the previous undefined reference to `gladLoadGLLoader` on Linux.
+4. **Run AlmondShell**:
+   ```bash
+   ./build/linux-clang/almondshell
+   ```
+5. **Generate API documentation (optional)**:
+   ```bash
+   cmake --build build/linux-clang --target docs
+   ```
 
 When CMake is configured with vcpkg integration enabled, the dependencies will be restored automatically on subsequent builds.
 

@@ -1,5 +1,9 @@
 # Changelog
 
+## [v0.70.1]
+- Fixed Linux builds by always linking the glad OpenGL loader so `gladLoadGLLoader` resolves even when Raylib is active.
+- Documented the new build workflow, refreshed the Linux quickstart instructions, and bumped engine metadata to v0.70.1.
+
 ## [v0.59.11]
 - Expanded the immediate-mode GUI with image buttons, editable text fields, multiline text boxes, and a ready-made console window helper while plumbing keyboard/text input through `agui`'s event queue.
 

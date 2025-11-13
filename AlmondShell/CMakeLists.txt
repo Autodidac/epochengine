@@ -70,17 +70,14 @@ endif()
 
 find_package(glad CONFIG QUIET)
 if(glad_FOUND)
-    if(ALMOND_ENABLE_RAYLIB)
-        # When Raylib is enabled it already provides GLAD symbols, so avoid
-        # linking against the standalone glad library to prevent duplicate
-        # symbol definitions while still inheriting its include directories.
-        get_target_property(GLAD_INCLUDE_DIRS glad::glad INTERFACE_INCLUDE_DIRECTORIES)
-        if(GLAD_INCLUDE_DIRS AND NOT GLAD_INCLUDE_DIRS STREQUAL "GLAD_INCLUDE_DIRS-NOTFOUND")
-            target_include_directories(almondshell PRIVATE ${GLAD_INCLUDE_DIRS})
-        endif()
-    else()
-        target_link_libraries(almondshell PRIVATE glad::glad)
-    endif()
+    # Always link against glad. Raylib no longer forwards the GL loader symbol on
+    # Linux, so relying solely on its transitive export breaks the build. Linking
+    # the official glad target keeps other platforms unchanged while restoring
+    # `gladLoadGLLoader` for POSIX builds.
+    target_link_libraries(almondshell PRIVATE glad::glad)
+elseif(NOT TARGET glad::glad)
+    message(FATAL_ERROR "glad was not found. Install it via vcpkg (./vcpkg install glad) "
+        "or provide a glad::glad target before configuring AlmondShell.")
 endif()
 
 find_package(glm CONFIG QUIET)
