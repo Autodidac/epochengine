@@ -7,6 +7,9 @@
 #include "acontext.hpp"
 #include "astringconverter.hpp"
 
+#if defined(ALMOND_USING_OPENGL)
+#include "aopenglcontext.hpp"
+#endif
 #if defined(ALMOND_USING_RAYLIB)
 #include "araylibcontext.hpp"
 #endif
@@ -394,6 +397,57 @@ namespace almondnamespace::core
 
                 SetupResizeCallback(*window);
 
+#if defined(ALMOND_USING_OPENGL)
+                if (type == ContextType::OpenGL)
+                {
+                    const unsigned width = static_cast<unsigned>((std::max)(1, window->width));
+                    const unsigned height = static_cast<unsigned>((std::max)(1, window->height));
+                    auto resizeCopy = window->onResize;
+
+                    window->threadInitialize = [ctxWeak = std::weak_ptr<Context>(ctx),
+                        width,
+                        height,
+                        resize = std::move(resizeCopy)](const std::shared_ptr<Context>& liveCtx) mutable -> bool
+                    {
+                        auto target = liveCtx ? liveCtx : ctxWeak.lock();
+                        if (!target)
+                        {
+                            std::cerr << "[Init] OpenGL context unavailable during thread initialization\n";
+                            return false;
+                        }
+
+                        try
+                        {
+                            if (!almondnamespace::openglcontext::opengl_initialize(
+                                    target,
+                                    nullptr,
+                                    width,
+                                    height,
+                                    std::move(resize)))
+                            {
+                                std::cerr << "[Init] Failed to initialize OpenGL context for hwnd="
+                                          << target->hwnd << '\n';
+                                return false;
+                            }
+                        }
+                        catch (const std::exception& e)
+                        {
+                            std::cerr << "[Init] Exception during OpenGL initialization for hwnd="
+                                      << target->hwnd << ": " << e.what() << '\n';
+                            return false;
+                        }
+                        catch (...)
+                        {
+                            std::cerr << "[Init] Unknown exception during OpenGL initialization for hwnd="
+                                      << target->hwnd << '\n';
+                            return false;
+                        }
+
+                        return true;
+                    };
+                }
+#endif
+
 #if defined(ALMOND_USING_SOFTWARE_RENDERER)
                 if (type == ContextType::Software)
                 {
@@ -753,6 +807,57 @@ namespace almondnamespace::core
 
         SetupResizeCallback(*winPtr);
 
+#if defined(ALMOND_USING_OPENGL)
+        if (type == ContextType::OpenGL)
+        {
+            const unsigned width = static_cast<unsigned>((std::max)(1, winPtr->width));
+            const unsigned height = static_cast<unsigned>((std::max)(1, winPtr->height));
+            auto resizeCopy = winPtr->onResize;
+
+            winPtr->threadInitialize = [ctxWeak = std::weak_ptr<Context>(ctx),
+                width,
+                height,
+                resize = std::move(resizeCopy)](const std::shared_ptr<Context>& liveCtx) mutable -> bool
+            {
+                auto target = liveCtx ? liveCtx : ctxWeak.lock();
+                if (!target)
+                {
+                    std::cerr << "[Init] OpenGL context unavailable during thread initialization\n";
+                    return false;
+                }
+
+                try
+                {
+                    if (!almondnamespace::openglcontext::opengl_initialize(
+                            target,
+                            nullptr,
+                            width,
+                            height,
+                            std::move(resize)))
+                    {
+                        std::cerr << "[Init] Failed to initialize OpenGL context for hwnd="
+                                  << target->hwnd << '\n';
+                        return false;
+                    }
+                }
+                catch (const std::exception& e)
+                {
+                    std::cerr << "[Init] Exception during OpenGL initialization for hwnd="
+                              << target->hwnd << ": " << e.what() << '\n';
+                    return false;
+                }
+                catch (...)
+                {
+                    std::cerr << "[Init] Unknown exception during OpenGL initialization for hwnd="
+                              << target->hwnd << '\n';
+                    return false;
+                }
+
+                return true;
+            };
+        }
+#endif
+
         WindowData* raw = winPtr.get();
         {
             std::scoped_lock lock(windowsMutex);
@@ -1021,9 +1126,13 @@ namespace almondnamespace::core
             static std::atomic<bool> gladInitialized{ false };
             if (!gladInitialized.load(std::memory_order_acquire))
             {
-                if (gladLoadGL())
+                if (gladLoadGLLoader(reinterpret_cast<GLADloadproc>(glXGetProcAddressARB)))
                 {
                     gladInitialized.store(true, std::memory_order_release);
+                }
+                else
+                {
+                    std::cerr << "[Init] Failed to load OpenGL functions via GLAD on Linux\n";
                 }
             }
         }
