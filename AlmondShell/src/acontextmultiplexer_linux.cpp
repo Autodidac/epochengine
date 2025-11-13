@@ -14,6 +14,7 @@
 #include <algorithm>
 #include <chrono>
 #include <cstring>
+#include <mutex>
 #include <shared_mutex>
 #include <stdexcept>
 
@@ -46,6 +47,9 @@ namespace almondnamespace::core
     {
         constexpr int kDefaultWidth = 800;
         constexpr int kDefaultHeight = 600;
+
+        std::once_flag g_xlibInitFlag;
+        bool g_xlibInitialized = false;
 
         inline ::Window to_xwindow(HWND handle)
         {
@@ -150,6 +154,17 @@ namespace almondnamespace::core
         const int totalRequested = RayLibWinCount + SDLWinCount + SFMLWinCount + OpenGLWinCount + SoftwareWinCount;
         if (totalRequested <= 0)
         {
+            return false;
+        }
+
+        std::call_once(g_xlibInitFlag, []()
+        {
+            g_xlibInitialized = (XInitThreads() != 0);
+        });
+
+        if (!g_xlibInitialized)
+        {
+            std::cerr << "[Init] XInitThreads failed; aborting X11 initialization" << std::endl;
             return false;
         }
 
