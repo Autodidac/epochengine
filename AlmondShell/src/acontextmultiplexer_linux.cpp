@@ -7,6 +7,10 @@
 #include "acontext.hpp"
 #include "astringconverter.hpp"
 
+#if defined(ALMOND_USING_RAYLIB)
+#include "araylibcontext.hpp"
+#endif
+
 #include <X11/Xatom.h>
 #include <X11/extensions/Xrandr.h>
 #include <GL/glxext.h>
@@ -382,6 +386,35 @@ namespace almondnamespace::core
                 }
 
                 SetupResizeCallback(*window);
+
+#if defined(ALMOND_USING_RAYLIB)
+                if (type == ContextType::RayLib)
+                {
+                    const unsigned width = static_cast<unsigned>((std::max)(1, window->width));
+                    const unsigned height = static_cast<unsigned>((std::max)(1, window->height));
+                    const std::string& title = (i < narrowTitles.size()) ? narrowTitles[i] : std::string("Raylib Dock");
+
+                    if (!almondnamespace::raylibcontext::raylib_initialize(
+                            ctx,
+                            nullptr,
+                            width,
+                            height,
+                            window->onResize,
+                            title))
+                    {
+                        std::cerr << "[Init] Failed to initialize RayLib context for hwnd="
+                                  << ctx->hwnd << '\n';
+                        window->running = false;
+                    }
+                    else
+                    {
+                        // Raylib may manage its own native handles on Linux; keep
+                        // the placeholder window data so the multiplexer can
+                        // continue managing the X11 resources it created.
+                        (void)ctx;
+                    }
+                }
+#endif
             }
         };
 
