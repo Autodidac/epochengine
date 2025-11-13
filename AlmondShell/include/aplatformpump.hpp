@@ -89,8 +89,13 @@ namespace almondnamespace::platform
         return true;
 
 #elif defined(__linux__)
-        extern Display* global_display;  // defined in your linux_context.cpp
-        extern ::Window global_window;
+        namespace almondnamespace::platform {
+            extern Display* global_display;
+            extern ::Window global_window;
+        }
+
+        using almondnamespace::platform::global_display;
+        using almondnamespace::platform::global_window;
 
         namespace core = almondnamespace::core;
 

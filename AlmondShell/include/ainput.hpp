@@ -517,13 +517,15 @@ inline void poll_input() // macOS input polling
 
 #elif defined(__linux__)
 
-inline void get_mouse_position(int& x, int& y)
-{
+namespace almondnamespace::platform {
     extern Display* global_display;
     extern ::Window global_window;
+}
 
-    Display* display = global_display;
-    ::Window window = global_window;
+inline void get_mouse_position(int& x, int& y)
+{
+    Display* display = almondnamespace::platform::global_display;
+    ::Window window = almondnamespace::platform::global_window;
 
     if (!display || window == 0)
     {
