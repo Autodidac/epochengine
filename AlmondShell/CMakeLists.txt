@@ -70,7 +70,17 @@ endif()
 
 find_package(glad CONFIG QUIET)
 if(glad_FOUND)
-    target_link_libraries(almondshell PRIVATE glad::glad)
+    if(ALMOND_ENABLE_RAYLIB)
+        # When Raylib is enabled it already provides GLAD symbols, so avoid
+        # linking against the standalone glad library to prevent duplicate
+        # symbol definitions while still inheriting its include directories.
+        get_target_property(GLAD_INCLUDE_DIRS glad::glad INTERFACE_INCLUDE_DIRECTORIES)
+        if(GLAD_INCLUDE_DIRS AND NOT GLAD_INCLUDE_DIRS STREQUAL "GLAD_INCLUDE_DIRS-NOTFOUND")
+            target_include_directories(almondshell PRIVATE ${GLAD_INCLUDE_DIRS})
+        endif()
+    else()
+        target_link_libraries(almondshell PRIVATE glad::glad)
+    endif()
 endif()
 
 find_package(glm CONFIG QUIET)
