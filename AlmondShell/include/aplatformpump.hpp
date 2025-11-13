@@ -94,8 +94,8 @@ namespace almondnamespace::platform
             extern ::Window global_window;
         //}
 
-        using almondnamespace::platform::global_display;
-        using almondnamespace::platform::global_window;
+        //using almondnamespace::platform::global_display;
+        //using almondnamespace::platform::global_window;
 
         namespace core = almondnamespace::core;
 
