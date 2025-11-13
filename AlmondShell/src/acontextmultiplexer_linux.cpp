@@ -10,6 +10,9 @@
 #if defined(ALMOND_USING_RAYLIB)
 #include "araylibcontext.hpp"
 #endif
+#if defined(ALMOND_USING_SOFTWARE_RENDERER)
+#include "asoftrenderer_context.hpp"
+#endif
 
 #include <X11/Xatom.h>
 #include <X11/extensions/Xrandr.h>
@@ -387,6 +390,24 @@ namespace almondnamespace::core
 
                 SetupResizeCallback(*window);
 
+#if defined(ALMOND_USING_SOFTWARE_RENDERER)
+                if (type == ContextType::Software)
+                {
+                    const unsigned width = static_cast<unsigned>((std::max)(1, window->width));
+                    const unsigned height = static_cast<unsigned>((std::max)(1, window->height));
+                    if (!almondnamespace::anativecontext::softrenderer_initialize(
+                            ctx,
+                            nullptr,
+                            width,
+                            height,
+                            window->onResize))
+                    {
+                        std::cerr << "[Init] Failed to initialize Software renderer for hwnd="
+                                  << ctx->hwnd << '\n';
+                        window->running = false;
+                    }
+                }
+#endif
 #if defined(ALMOND_USING_RAYLIB)
                 if (type == ContextType::RayLib)
                 {

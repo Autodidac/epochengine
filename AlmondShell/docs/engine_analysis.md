@@ -63,10 +63,9 @@ Asset producers can run off the main thread via the coroutine-enabled `taskgraph
 - **Roadmap Traceability** – The existing `roadmap.txt` lacked granular prompts or acceptance checks per phase, making automation hand-offs hard to script.
 - **Testing Surface** – No automated smoke tests or CI hooks are defined for the critical updater and renderer paths, leaving regression risk high during phase transitions.
 
-## Recent Progress (v0.62.7)
+## Recent Progress (v0.70.0)
 
-- Scoped the OpenGL renderer's global state usage to the shared `openglcontext::OpenGL4State`, fixing the missing `s_openglstate` symbol that previously broke quad rendering builds.
-- Updated the README snapshot and changelog to record the OpenGL renderer fix and the associated documentation sweep.
+- Initialised the software renderer during Linux multiplexer setup so Raylib + Software sessions stop segfaulting once the render threads start, and documented the release alongside the version bump.
 
 ## Recent Progress (v0.62.0)
 
