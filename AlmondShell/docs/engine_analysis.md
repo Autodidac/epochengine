@@ -63,9 +63,9 @@ Asset producers can run off the main thread via the coroutine-enabled `taskgraph
 - **Roadmap Traceability** – The existing `roadmap.txt` lacked granular prompts or acceptance checks per phase, making automation hand-offs hard to script.
 - **Testing Surface** – No automated smoke tests or CI hooks are defined for the critical updater and renderer paths, leaving regression risk high during phase transitions.
 
-## Recent Progress (v0.70.0)
+## Recent Progress (v0.70.1)
 
-- Initialised the software renderer during Linux multiplexer setup so Raylib + Software sessions stop segfaulting once the render threads start, and documented the release alongside the version bump.
+- Linked the glad OpenGL loader explicitly when configuring on Linux so `gladLoadGLLoader` resolves even with Raylib enabled, fixing the failing almondshell link step and documenting the workflow update.
 
 ## Recent Progress (v0.62.0)
 

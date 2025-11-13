@@ -46,7 +46,7 @@ Unsupported mixes:
 
 ## Change Log
 
-- **v0.70.0** – Noted that Linux builds now initialise the software renderer through the multiplexer so software-only or mixed backend shells keep their resize callbacks, atlas uploads, and framebuffers valid from the first frame.
+- **v0.70.1** – Recorded that Linux builds now link the standalone glad loader so Raylib-enabled configurations keep `gladLoadGLLoader` available during the final link step.
 - **v0.63.0** – Recorded that Raylib-only builds always include the Win32 WGL loader when available and require the platform OpenGL import library even if the OpenGL renderer macro is disabled.
 - **v0.62.5** – Logged that Raylib now caches its original WGL handles and only reacquires the context on demand so single-backend builds no longer fail to activate the GL context.
 - **v0.62.4** – Recorded that Raylib now seeds its fitted viewport from the live framebuffer during creation so docked GUIs align immediately.
