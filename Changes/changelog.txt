@@ -1,5 +1,8 @@
 # Changelog
 
+## [v0.70.3]
+- Re-synchronised every build entry point (CMake, shell scripts, VS Code tasks) to link against the standalone glad loader so Linux targets resolve `gladLoadGLLoader` without bespoke flags.
+
 ## [v0.70.2]
 - Eliminated duplicate glad symbol definitions when bundling both the Raylib loader and standalone artefacts, tightening the default linkage rules.
 - Relaxed the CMake option flow so distributors can toggle glad packaging without tripping Raylib's built-in loader assumptions, and bumped metadata to v0.70.2.
