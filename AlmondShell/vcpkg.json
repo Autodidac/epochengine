@@ -6,7 +6,6 @@
     "glad",
     "glm",
     "opengl",
-    "raylib",
     "sdl3",
     "sdl3-image",
     "zlib",
