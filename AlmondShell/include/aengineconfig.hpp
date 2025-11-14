@@ -54,43 +54,11 @@
 #define ALMOND_SINGLE_PARENT 1  // 0 = multiple top-level windows, 1 = single parent + children
 // Only one of each context will be used, if you want multiple contexts, you must define them in the engine config,
 
-// Allow CMake or external build systems to toggle backends via -DALMOND_USING_* definitions.
-#if defined(ALMOND_USING_SDL) && (ALMOND_USING_SDL == 0)
-#undef ALMOND_USING_SDL
-#define ALMOND_USING_SDL_DISABLED 1
-#endif
-
-#if defined(ALMOND_USING_RAYLIB) && (ALMOND_USING_RAYLIB == 0)
-#undef ALMOND_USING_RAYLIB
-#define ALMOND_USING_RAYLIB_DISABLED 1
-#endif
-
-#if defined(ALMOND_USING_SOFTWARE_RENDERER) && (ALMOND_USING_SOFTWARE_RENDERER == 0)
-#undef ALMOND_USING_SOFTWARE_RENDERER
-#define ALMOND_USING_SOFTWARE_RENDERER_DISABLED 1
-#endif
-
-#if defined(ALMOND_USING_OPENGL) && (ALMOND_USING_OPENGL == 0)
-#undef ALMOND_USING_OPENGL
-#define ALMOND_USING_OPENGL_DISABLED 1
-#endif
-
-// Contexts - External Engine Backends
-#if !defined(ALMOND_USING_SDL) && !defined(ALMOND_USING_SDL_DISABLED)
 #define ALMOND_USING_SDL
-#endif
-//#define ALMOND_USING_SFML // perminently disabled - issues with sfml 3 until they update
-#if !defined(ALMOND_USING_RAYLIB) && !defined(ALMOND_USING_RAYLIB_DISABLED)
-#define ALMOND_USING_RAYLIB
-#endif
-
-// Rendering Only backends
-#if !defined(ALMOND_USING_SOFTWARE_RENDERER) && !defined(ALMOND_USING_SOFTWARE_RENDERER_DISABLED)
+//#define ALMOND_USING_RAYLIB
 #define ALMOND_USING_SOFTWARE_RENDERER
-#endif
-#if !defined(ALMOND_USING_OPENGL) && !defined(ALMOND_USING_OPENGL_DISABLED)
 #define ALMOND_USING_OPENGL
-#endif
+
 //#define ALMOND_USING_VULKAN  // You must also set the context in the example
 //#define ALMOND_USING_DIRECTX  // Currently Not Supported In AlmondShell, See AlmondEngine...
 
