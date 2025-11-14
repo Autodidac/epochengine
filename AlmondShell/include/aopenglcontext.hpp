@@ -208,6 +208,59 @@ namespace almondnamespace::openglcontext
         return "#version 330 core";
     }
 
+    inline std::pair<GLint, GLint> parse_gl_version_string(const char* versionStr) noexcept
+    {
+        if (!versionStr)
+            return { 0, 0 };
+
+        std::string_view sv{ versionStr };
+
+        // Trim leading whitespace
+        const auto first_non_ws = sv.find_first_not_of(" \t\n\r");
+        if (first_non_ws == std::string_view::npos)
+            return { 0, 0 };
+        sv.remove_prefix(first_non_ws);
+
+        // Find first digit (skip "OpenGL ES ", "OpenGL ES 3.2", etc.)
+        const auto first_digit = sv.find_first_of("0123456789");
+        if (first_digit == std::string_view::npos)
+            return { 0, 0 };
+        sv.remove_prefix(first_digit);
+
+        const auto dot_pos = sv.find('.');
+        if (dot_pos == std::string_view::npos)
+            return { 0, 0 };
+
+        std::string_view major_part = sv.substr(0, dot_pos);
+        sv.remove_prefix(dot_pos + 1);
+
+        // Minor is the consecutive digits after the dot
+        const auto minor_end = sv.find_first_not_of("0123456789");
+        std::string_view minor_part = sv.substr(0, minor_end);
+
+        auto parse_decimal = [](std::string_view part, GLint& out) noexcept -> bool {
+            if (part.empty())
+                return false;
+
+            GLint value = 0;
+            for (unsigned char ch : part)
+            {
+                if (ch < '0' || ch > '9')
+                    return false;
+                value = static_cast<GLint>(value * 10 + (ch - '0'));
+            }
+            out = value;
+            return true;
+            };
+
+        GLint major = 0;
+        GLint minor = 0;
+        if (!parse_decimal(major_part, major) || !parse_decimal(minor_part, minor))
+            return { 0, 0 };
+
+        return { major, minor };
+    }
+
     inline bool build_quad_pipeline(OpenGL4State& glState)
     {
         destroy_quad_pipeline(glState);
@@ -221,16 +274,9 @@ namespace almondnamespace::openglcontext
             if (major == 0 && minor == 0)
             {
                 const auto* versionStr = reinterpret_cast<const char*>(glGetString(GL_VERSION));
-                if (versionStr)
-                {
-                    int parsedMajor = 0;
-                    int parsedMinor = 0;
-                    if (std::sscanf(versionStr, "%d.%d", &parsedMajor, &parsedMinor) == 2)
-                    {
-                        major = static_cast<GLint>(parsedMajor);
-                        minor = static_cast<GLint>(parsedMinor);
-                    }
-                }
+                auto [parsedMajor, parsedMinor] = parse_gl_version_string(versionStr);
+                major = parsedMajor;
+                minor = parsedMinor;
             }
 
             if (major == 0 && minor == 0)
