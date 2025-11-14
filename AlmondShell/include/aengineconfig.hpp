@@ -54,10 +54,42 @@
 #define ALMOND_SINGLE_PARENT 1  // 0 = multiple top-level windows, 1 = single parent + children
 // Only one of each context will be used, if you want multiple contexts, you must define them in the engine config,
 
-#define ALMOND_USING_SDL
-//#define ALMOND_USING_RAYLIB
-#define ALMOND_USING_SOFTWARE_RENDERER
-#define ALMOND_USING_OPENGL
+#define ALMOND_USING_SDL 1
+//#define ALMOND_USING_RAYLIB 1
+#define ALMOND_USING_SOFTWARE_RENDERER 1
+#define ALMOND_USING_OPENGL 1
+
+#if defined(ALMOND_FORCE_DISABLE_SDL)
+#undef ALMOND_USING_SDL
+#endif
+#if defined(ALMOND_FORCE_ENABLE_SDL)
+#undef ALMOND_USING_SDL
+#define ALMOND_USING_SDL 1
+#endif
+
+#if defined(ALMOND_FORCE_DISABLE_RAYLIB)
+#undef ALMOND_USING_RAYLIB
+#endif
+#if defined(ALMOND_FORCE_ENABLE_RAYLIB)
+#undef ALMOND_USING_RAYLIB
+#define ALMOND_USING_RAYLIB 1
+#endif
+
+#if defined(ALMOND_FORCE_DISABLE_SOFTWARE_RENDERER)
+#undef ALMOND_USING_SOFTWARE_RENDERER
+#endif
+#if defined(ALMOND_FORCE_ENABLE_SOFTWARE_RENDERER)
+#undef ALMOND_USING_SOFTWARE_RENDERER
+#define ALMOND_USING_SOFTWARE_RENDERER 1
+#endif
+
+#if defined(ALMOND_FORCE_DISABLE_OPENGL)
+#undef ALMOND_USING_OPENGL
+#endif
+#if defined(ALMOND_FORCE_ENABLE_OPENGL)
+#undef ALMOND_USING_OPENGL
+#define ALMOND_USING_OPENGL 1
+#endif
 
 //#define ALMOND_USING_VULKAN  // You must also set the context in the example
 //#define ALMOND_USING_DIRECTX  // Currently Not Supported In AlmondShell, See AlmondEngine...
