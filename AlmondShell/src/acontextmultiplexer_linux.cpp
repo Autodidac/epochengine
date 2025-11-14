@@ -1123,6 +1123,7 @@ namespace almondnamespace::core
         {
             glXMakeCurrent(localDisplay, window, glxCtx);
 
+#if defined(ALMOND_USING_OPENGL) || defined(ALMOND_USING_RAYLIB) || defined(ALMOND_USING_SDL)
             static std::atomic<bool> gladInitialized{ false };
             if (!gladInitialized.load(std::memory_order_acquire))
             {
@@ -1135,6 +1136,7 @@ namespace almondnamespace::core
                     std::cerr << "[Init] Failed to load OpenGL functions via GLAD on Linux\n";
                 }
             }
+#endif
         }
 
         ctx->windowData = &win;

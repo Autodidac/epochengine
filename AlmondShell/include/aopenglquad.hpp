@@ -26,11 +26,10 @@
 
 #include "aengineconfig.hpp"
 
+#if defined(ALMOND_USING_OPENGL)
 #include <glad/glad.h>
 #include <stdexcept>
 #include <vector>
-
-#if defined(ALMOND_USING_OPENGL)
 
 namespace almondnamespace::openglcontext {
 
