@@ -53,6 +53,11 @@
 
 
   "cmake.toolchain": "../${workspaceFolder}/vcpkg/scripts/buildsystems/vcpkg.cmake",
+  "cmake.configureSettings": {
+    "VCPKG_FEATURE_FLAGS": "manifests",
+    "VCPKG_INSTALLATION_ROOT": "${workspaceFolder}/vcpkg_installed",
+    "ALMOND_ENABLE_RAYLIB": "ON"
+  },
 
   "C_Cpp_Runner.useAddressSanitizer": false,
   "C_Cpp_Runner.useUndefinedSanitizer": false,
