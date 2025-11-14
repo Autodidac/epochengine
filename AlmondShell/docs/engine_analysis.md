@@ -65,7 +65,7 @@ Asset producers can run off the main thread via the coroutine-enabled `taskgraph
 
 ## Recent Progress (v0.70.1)
 
-- Linked the glad OpenGL loader explicitly when configuring on Linux so `gladLoadGLLoader` resolves even with Raylib enabled, fixing the failing almondshell link step and documenting the workflow update.
+- Linux builds now reuse Raylib's bundled OpenGL loader when the backend is enabled, only falling back to the standalone glad artefacts if Raylib was built without them or the new `-DALMOND_FORCE_GLAD=ON` override is supplied. This keeps the default toolchain aligned with distribution packages while preserving an escape hatch for environments that still need an explicit glad link step.
 
 ## Recent Progress (v0.62.0)
 
