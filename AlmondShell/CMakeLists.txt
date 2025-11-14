@@ -43,7 +43,6 @@ option(ALMOND_ENABLE_RAYLIB "Enable the Raylib backend" ON)
 option(ALMOND_ENABLE_SDL "Enable the SDL backend" ON)
 option(ALMOND_ENABLE_OPENGL "Enable the OpenGL backend" ON)
 option(ALMOND_ENABLE_SOFTWARE_RENDERER "Enable the software renderer backend" ON)
-option(ALMOND_FORCE_GLAD "Force explicit linking against the GLAD loader" OFF)
 
 if(ALMOND_ENABLE_RAYLIB)
     target_compile_definitions(almondshell PRIVATE ALMOND_USING_RAYLIB=1)
@@ -133,14 +132,6 @@ endif()
 
 if(ALMOND_ENABLE_OPENGL OR ALMOND_ENABLE_RAYLIB OR ALMOND_ENABLE_SDL)
     set(ALMOND_GLAD_SHOULD_LINK ON)
-    if(UNIX AND NOT APPLE AND ALMOND_ENABLE_RAYLIB AND NOT ALMOND_FORCE_GLAD)
-        # Raylib ships its own GL loader on Linux, so linking against glad is redundant
-        # and can trigger duplicate symbol resolution. Keep propagating the headers so
-        # we can still build, but skip the explicit linker dependency unless the user
-        # overrides this behaviour with -DALMOND_FORCE_GLAD=ON (useful if Raylib was
-        # compiled without the loader).
-        set(ALMOND_GLAD_SHOULD_LINK OFF)
-    endif()
 
     find_package(glad CONFIG QUIET)
     if(glad_FOUND)
@@ -167,7 +158,7 @@ if(ALMOND_ENABLE_OPENGL OR ALMOND_ENABLE_RAYLIB OR ALMOND_ENABLE_SDL)
                 message(FATAL_ERROR "glad headers were not found. Install them alongside the loader or provide a glad::glad target before configuring AlmondShell.")
             endif()
         elseif(NOT GLAD_INCLUDE_DIR)
-            message(FATAL_ERROR "glad headers were not found. Install them or re-enable linking with -DALMOND_FORCE_GLAD=ON to use a packaged loader.")
+            message(FATAL_ERROR "glad headers were not found. Install them alongside the loader or provide a glad::glad target before configuring AlmondShell.")
         endif()
     endif()
 endif()
