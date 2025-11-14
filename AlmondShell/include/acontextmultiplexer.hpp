@@ -70,9 +70,9 @@ using DWORD_PTR = uintptr_t;
 #include <vector>
 #include <unordered_map>
 
-#if defined(ALMOND_USING_OPENGL) || defined(ALMOND_USING_RAYLIB) || defined(ALMOND_USING_SDL)
-#include <glad/glad.h>
-#endif
+//#if defined(ALMOND_USING_OPENGL) || defined(ALMOND_USING_RAYLIB) || defined(ALMOND_USING_SDL)
+//#include <glad/glad.h>
+//#endif
 
 //#define ALMOND_SINGLE_PARENT 1  // 0 = multiple top-level windows, 1 = single parent + children
 #define ALMOND_SHARED_CONTEXT 1  // Force shared OpenGL context
