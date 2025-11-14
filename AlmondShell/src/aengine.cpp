@@ -687,7 +687,6 @@ namespace almondnamespace::core
         FreeConsole(); // if you somehow still have one
 #endif
     }
- } // namespace almondnamespace::core
 
     //HWND create_window(HINSTANCE hInstance, int x, int y, int w, int h, const wchar_t* cname, const wchar_t* title, HWND parent) {
     //    DWORD style = (parent) ? (WS_CHILD | WS_VISIBLE | WS_BORDER | WS_CLIPSIBLINGS | WS_CLIPCHILDREN) : (WS_OVERLAPPEDWINDOW | WS_VISIBLE);
@@ -716,8 +715,10 @@ WCHAR szWindowClass[MAX_LOADSTRING] = L"SampleWindowClass";
 
 almondnamespace::contextwindow::WindowData windowContext{};
 
-  #endif // defined(_WIN32) && defined(ALMOND_USING_WINMAIN)
- 
+#endif // defined(_WIN32) && defined(ALMOND_USING_WINMAIN)
+
+} // namespace almondnamespace::core
+
 /////////////////////////////////////////////////////////
 
 // this basically just leaves ninja.zip when commented out, but will be configured better in the future
