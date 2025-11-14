@@ -624,7 +624,6 @@ namespace almondnamespace::core
             RunEngine();
         //}
     }
-} // namespace almondnamespace::core
 
 
     struct TextureUploadTask
@@ -688,7 +687,8 @@ namespace almondnamespace::core
         FreeConsole(); // if you somehow still have one
 #endif
     }
- 
+ } // namespace almondnamespace::core
+
     //HWND create_window(HINSTANCE hInstance, int x, int y, int w, int h, const wchar_t* cname, const wchar_t* title, HWND parent) {
     //    DWORD style = (parent) ? (WS_CHILD | WS_VISIBLE | WS_BORDER | WS_CLIPSIBLINGS | WS_CLIPCHILDREN) : (WS_OVERLAPPEDWINDOW | WS_VISIBLE);
     //    HWND hwnd = CreateWindowEx(0, cname, title, style, x, y, w, h, parent, nullptr, hInstance, nullptr);
@@ -828,9 +828,5 @@ int main(int argc, char* argv[])
 
     almondnamespace::core::StartEngine(); // Replace with actual engine logic
     return 0;
-//}
-#endif
-
-
-
 }
+#endif
