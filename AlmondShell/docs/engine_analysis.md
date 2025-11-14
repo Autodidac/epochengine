@@ -63,9 +63,9 @@ Asset producers can run off the main thread via the coroutine-enabled `taskgraph
 - **Roadmap Traceability** – The existing `roadmap.txt` lacked granular prompts or acceptance checks per phase, making automation hand-offs hard to script.
 - **Testing Surface** – No automated smoke tests or CI hooks are defined for the critical updater and renderer paths, leaving regression risk high during phase transitions.
 
-## Recent Progress (v0.70.1)
+## Recent Progress (v0.70.2)
 
-- Linux builds now reuse Raylib's bundled OpenGL loader when the backend is enabled, only falling back to the standalone glad artefacts if Raylib was built without them or the new `-DALMOND_FORCE_GLAD=ON` override is supplied. This keeps the default toolchain aligned with distribution packages while preserving an escape hatch for environments that still need an explicit glad link step.
+- The glad packaging flow now defers to Raylib's loader when available while avoiding duplicate symbol exports when the standalone artefacts are still shipped. Distributors can override the selection explicitly without tripping CMake validation, and the engine metadata has been bumped to v0.70.2 for diagnostics.
 
 ## Recent Progress (v0.62.0)
 
