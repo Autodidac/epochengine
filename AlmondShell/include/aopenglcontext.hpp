@@ -51,6 +51,8 @@
 #include <vector>
 #include <cstdint>
 #include <utility>
+#include <string>
+#include <cstdio>
 
 #if defined(__linux__)
 #    include <X11/Xlib.h>
@@ -175,13 +177,74 @@ namespace almondnamespace::openglcontext
         glState.ebo = 0;
     }
 
+    inline const char* select_glsl_version(GLint major, GLint minor)
+    {
+        struct VersionCandidate
+        {
+            GLint major;
+            GLint minor;
+            const char* shaderVersion;
+        };
+
+        static constexpr VersionCandidate versions[] = {
+            {4, 6, "#version 460 core"},
+            {4, 5, "#version 450 core"},
+            {4, 4, "#version 440 core"},
+            {4, 3, "#version 430 core"},
+            {4, 2, "#version 420 core"},
+            {4, 1, "#version 410 core"},
+            {4, 0, "#version 400 core"},
+            {3, 3, "#version 330 core"},
+        };
+
+        for (const auto& candidate : versions)
+        {
+            if (major > candidate.major || (major == candidate.major && minor >= candidate.minor))
+            {
+                return candidate.shaderVersion;
+            }
+        }
+
+        return "#version 330 core";
+    }
+
     inline bool build_quad_pipeline(OpenGL4State& glState)
     {
         destroy_quad_pipeline(glState);
 
         try {
-            constexpr auto vs_source = R"(
-        #version 460 core
+            GLint major = 0;
+            GLint minor = 0;
+            glGetIntegerv(GL_MAJOR_VERSION, &major);
+            glGetIntegerv(GL_MINOR_VERSION, &minor);
+
+            if (major == 0 && minor == 0)
+            {
+                const auto* versionStr = reinterpret_cast<const char*>(glGetString(GL_VERSION));
+                if (versionStr)
+                {
+                    int parsedMajor = 0;
+                    int parsedMinor = 0;
+                    if (std::sscanf(versionStr, "%d.%d", &parsedMajor, &parsedMinor) == 2)
+                    {
+                        major = static_cast<GLint>(parsedMajor);
+                        minor = static_cast<GLint>(parsedMinor);
+                    }
+                }
+            }
+
+            if (major == 0 && minor == 0)
+            {
+                major = 3;
+                minor = 3;
+            }
+
+            const char* versionDirective = select_glsl_version(major, minor);
+
+            std::cerr << "[OpenGL] Using GLSL directive '" << versionDirective
+                << "' for GL context " << major << '.' << minor << "\n";
+
+            std::string vs_source = std::string(versionDirective) + R"(
 
         layout(location = 0) in vec2 aPos;       // [-0.5..0.5] quad coords
         layout(location = 1) in vec2 aTexCoord;  // [0..1] UV coords
@@ -198,8 +261,7 @@ namespace almondnamespace::openglcontext
         }
     )";
 
-            constexpr auto fs_source = R"(
-        #version 460 core
+            std::string fs_source = std::string(versionDirective) + R"(
         in vec2 vUV;
         out vec4 outColor;
 
@@ -210,7 +272,7 @@ namespace almondnamespace::openglcontext
         }
     )";
 
-            glState.shader = linkProgram(vs_source, fs_source);
+            glState.shader = linkProgram(vs_source.c_str(), fs_source.c_str());
         }
         catch (const std::exception& ex) {
             std::cerr << "[OpenGL] Failed to build quad pipeline: " << ex.what() << "\n";
