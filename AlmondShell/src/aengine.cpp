@@ -806,10 +806,12 @@ int APIENTRY wWinMain(_In_ HINSTANCE hInstance,
 // -----------------------------------------------------------------------------
 int main(int argc, char* argv[]) 
 {
+
 #if defined(_WIN32) && defined(ALMOND_USING_WINMAIN)
     LPWSTR pCommandLine = GetCommandLineW();
     return wWinMain(GetModuleHandle(NULL), NULL, pCommandLine, SW_SHOWNORMAL);
-}
+
+
 #else
     const auto cli_result = almondnamespace::core::cli::parse(argc, argv);
 
@@ -828,5 +830,6 @@ int main(int argc, char* argv[])
 
     almondnamespace::core::StartEngine(); // Replace with actual engine logic
     return 0;
-}
+
 #endif
+}
