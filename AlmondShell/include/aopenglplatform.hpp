@@ -39,8 +39,8 @@
 #    pragma push_macro("Font")
 #    define Font almondshell_X11Font
 #    include <X11/Xlib.h>
-#    pragma pop_macro("Font")
 #    include <GL/glx.h>
+#    pragma pop_macro("Font")
 #endif
 
 #include <utility>
