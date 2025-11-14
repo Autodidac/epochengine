@@ -43,6 +43,7 @@ option(ALMOND_ENABLE_RAYLIB "Enable the Raylib backend" ON)
 option(ALMOND_ENABLE_SDL "Enable the SDL backend" ON)
 option(ALMOND_ENABLE_OPENGL "Enable the OpenGL backend" ON)
 option(ALMOND_ENABLE_SOFTWARE_RENDERER "Enable the software renderer backend" ON)
+option(ALMOND_FORCE_GLAD "Force explicit linking against the GLAD loader" OFF)
 
 if(ALMOND_ENABLE_RAYLIB)
     target_compile_definitions(almondshell PRIVATE ALMOND_USING_RAYLIB=1)
@@ -131,21 +132,42 @@ elseif(WIN32)
 endif()
 
 if(ALMOND_ENABLE_OPENGL OR ALMOND_ENABLE_RAYLIB OR ALMOND_ENABLE_SDL)
+    set(ALMOND_GLAD_SHOULD_LINK ON)
+    if(UNIX AND NOT APPLE AND ALMOND_ENABLE_RAYLIB AND NOT ALMOND_FORCE_GLAD)
+        # Raylib ships its own GL loader on Linux, so linking against glad is redundant
+        # and can trigger duplicate symbol resolution. Keep propagating the headers so
+        # we can still build, but skip the explicit linker dependency unless the user
+        # overrides this behaviour with -DALMOND_FORCE_GLAD=ON (useful if Raylib was
+        # compiled without the loader).
+        set(ALMOND_GLAD_SHOULD_LINK OFF)
+    endif()
+
     find_package(glad CONFIG QUIET)
     if(glad_FOUND)
-        # Always link against glad. Raylib no longer forwards the GL loader symbol on
-        # Linux, so relying solely on its transitive export breaks the build. Linking
-        # the official glad target keeps other platforms unchanged while restoring
-        # `gladLoadGLLoader` for POSIX builds.
-        target_link_libraries(almondshell PRIVATE glad::glad)
+        if(ALMOND_GLAD_SHOULD_LINK)
+            target_link_libraries(almondshell PRIVATE glad::glad)
+        else()
+            target_include_directories(almondshell PRIVATE $<TARGET_PROPERTY:glad::glad,INTERFACE_INCLUDE_DIRECTORIES>)
+        endif()
     else()
         find_path(GLAD_INCLUDE_DIR glad/glad.h)
-        find_library(GLAD_LIBRARY NAMES glad)
-        if(GLAD_INCLUDE_DIR AND GLAD_LIBRARY)
+        if(ALMOND_GLAD_SHOULD_LINK)
+            find_library(GLAD_LIBRARY NAMES glad)
+        endif()
+        if(GLAD_INCLUDE_DIR)
             target_include_directories(almondshell PRIVATE ${GLAD_INCLUDE_DIR})
-            target_link_libraries(almondshell PRIVATE ${GLAD_LIBRARY})
-        elseif(NOT TARGET glad::glad)
-            message(FATAL_ERROR "glad was not found. Install it via vcpkg, your system package manager, or provide a glad::glad target before configuring AlmondShell.")
+        endif()
+        if(ALMOND_GLAD_SHOULD_LINK)
+            if(GLAD_LIBRARY)
+                target_link_libraries(almondshell PRIVATE ${GLAD_LIBRARY})
+            elseif(NOT TARGET glad::glad)
+                message(FATAL_ERROR "glad was not found. Install it via vcpkg, your system package manager, or provide a glad::glad target before configuring AlmondShell.")
+            endif()
+            if(NOT GLAD_INCLUDE_DIR)
+                message(FATAL_ERROR "glad headers were not found. Install them alongside the loader or provide a glad::glad target before configuring AlmondShell.")
+            endif()
+        elseif(NOT GLAD_INCLUDE_DIR)
+            message(FATAL_ERROR "glad headers were not found. Install them or re-enable linking with -DALMOND_FORCE_GLAD=ON to use a packaged loader.")
         endif()
     endif()
 endif()
