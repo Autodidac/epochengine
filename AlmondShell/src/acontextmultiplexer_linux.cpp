@@ -9,6 +9,7 @@
 
 #if defined(ALMOND_USING_OPENGL)
 #include "aopenglcontext.hpp"
+#include "aopenglplatform.hpp"
 #endif
 #if defined(ALMOND_USING_RAYLIB)
 #include "araylibcontext.hpp"
@@ -1127,7 +1128,17 @@ namespace almondnamespace::core
             static std::atomic<bool> gladInitialized{ false };
             if (!gladInitialized.load(std::memory_order_acquire))
             {
-                if (gladLoadGLLoader(reinterpret_cast<GLADloadproc>(glXGetProcAddressARB)))
+                auto loadProc = [](const char* name) -> void*
+                {
+#if defined(ALMOND_USING_OPENGL)
+                    return almondnamespace::openglcontext::PlatformGL::get_proc_address(name);
+#else
+                    return reinterpret_cast<void*>(
+                        glXGetProcAddressARB(reinterpret_cast<const GLubyte*>(name)));
+#endif
+                };
+
+                if (gladLoadGLLoader(loadProc))
                 {
                     gladInitialized.store(true, std::memory_order_release);
                 }
