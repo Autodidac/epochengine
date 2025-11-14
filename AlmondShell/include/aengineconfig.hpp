@@ -251,8 +251,8 @@
 #endif
 
 #ifdef ALMOND_USING_OPENGL
-#if defined(_WIN32)
 	#include <glad/glad.h>	// for GLAD - OpenGL loader
+#if defined(_WIN32)
 	#include <GL/wglext.h>  // for WGL - OpenGL extensions WGL Loader
 #endif
 
