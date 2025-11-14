@@ -27,7 +27,9 @@
 #include "aengineconfig.hpp"
 
 #if defined(ALMOND_USING_OPENGL)
-#include <glad/glad.h>
+
+//#include <glad/glad.h>
+
 #include <stdexcept>
 #include <vector>
 

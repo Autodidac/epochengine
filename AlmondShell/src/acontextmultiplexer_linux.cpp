@@ -4,7 +4,7 @@
 #if defined(__linux__)
 
 #include "acontextmultiplexer.hpp"
-#include "acontext.hpp"
+//#include "acontext.hpp"
 #include "astringconverter.hpp"
 
 #if defined(ALMOND_USING_OPENGL)

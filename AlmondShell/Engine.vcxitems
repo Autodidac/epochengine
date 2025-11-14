@@ -97,7 +97,6 @@
     </ClInclude>
     <ClInclude Include="$(MSBuildThisFileDirectory)include\anet.hpp" />
     <ClInclude Include="$(MSBuildThisFileDirectory)include\anoopcontext.hpp" />
-    <ClInclude Include="$(MSBuildThisFileDirectory)include\aopenglbillboards.hpp" />
     <ClInclude Include="$(MSBuildThisFileDirectory)include\aopenglcontext.hpp" />
     <ClInclude Include="$(MSBuildThisFileDirectory)include\aopenglfreetype.hpp" />
     <ClInclude Include="$(MSBuildThisFileDirectory)include\aopenglplatform.hpp" />

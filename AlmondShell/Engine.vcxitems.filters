@@ -471,9 +471,6 @@
     <ClInclude Include="$(MSBuildThisFileDirectory)include\aopenglplatform.hpp">
       <Filter>Header Files\core\backbone\external\context\opengl</Filter>
     </ClInclude>
-    <ClInclude Include="$(MSBuildThisFileDirectory)include\aopenglbillboards.hpp">
-      <Filter>Header Files\core\backbone\external\context\opengl</Filter>
-    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <Image Include="$(MSBuildThisFileDirectory)src\icon.ico">
