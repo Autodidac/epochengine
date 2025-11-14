@@ -44,9 +44,13 @@ Unsupported mixes:
 - **SFML, Vulkan, or DirectX** – These paths are stubbed and intentionally disabled until their respective integrations stabilise.
 - **Renderer-less builds** – Disabling both `ALMOND_USING_OPENGL` and `ALMOND_USING_SOFTWARE_RENDERER` prevents the texture managers from initialising and is not supported.
 
+## Linux packaging guidance
+
+Raylib distributes its own OpenGL loader on Linux, and AlmondShell now reuses that implementation by default whenever the Raylib backend is enabled. The CMake option `-DALMOND_FORCE_GLAD=ON` keeps the old behaviour of explicitly locating and linking the standalone glad library, and remains available for distributions that ship Raylib builds without the loader or that prefer a packaged glad artefact. Leave the option at its default `OFF` value when Raylib exposes `rlLoadGL*` so duplicate symbol issues are avoided, or flip it `ON` to bring back the direct glad dependency when packaging against a minimal Raylib build.
+
 ## Change Log
 
-- **v0.70.1** – Recorded that Linux builds now link the standalone glad loader so Raylib-enabled configurations keep `gladLoadGLLoader` available during the final link step.
+- **v0.70.1** – Documented that Linux builds reuse Raylib's bundled loader when available and introduced the `-DALMOND_FORCE_GLAD=ON` escape hatch for explicitly linking the standalone glad artefacts in packaging scenarios where Raylib omits them.
 - **v0.63.0** – Recorded that Raylib-only builds always include the Win32 WGL loader when available and require the platform OpenGL import library even if the OpenGL renderer macro is disabled.
 - **v0.62.5** – Logged that Raylib now caches its original WGL handles and only reacquires the context on demand so single-backend builds no longer fail to activate the GL context.
 - **v0.62.4** – Recorded that Raylib now seeds its fitted viewport from the live framebuffer during creation so docked GUIs align immediately.
