@@ -1,5 +1,9 @@
 # Changelog
 
+## [v0.70.2]
+- Eliminated duplicate glad symbol definitions when bundling both the Raylib loader and standalone artefacts, tightening the default linkage rules.
+- Relaxed the CMake option flow so distributors can toggle glad packaging without tripping Raylib's built-in loader assumptions, and bumped metadata to v0.70.2.
+
 ## [v0.70.1]
 - Fixed Linux builds by always linking the glad OpenGL loader so `gladLoadGLLoader` resolves even when Raylib is active.
 - Documented the new build workflow, refreshed the Linux quickstart instructions, and bumped engine metadata to v0.70.1.

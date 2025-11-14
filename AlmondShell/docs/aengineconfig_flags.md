@@ -50,6 +50,7 @@ Raylib distributes its own OpenGL loader on Linux, and AlmondShell now reuses th
 
 ## Change Log
 
+- **v0.70.2** – Clarified that CMake now keeps Raylib's loader active by default while suppressing duplicate glad symbols, and noted that packagers can still flip `-DALMOND_FORCE_GLAD=ON` when a standalone loader is required.
 - **v0.70.1** – Documented that Linux builds reuse Raylib's bundled loader when available and introduced the `-DALMOND_FORCE_GLAD=ON` escape hatch for explicitly linking the standalone glad artefacts in packaging scenarios where Raylib omits them.
 - **v0.63.0** – Recorded that Raylib-only builds always include the Win32 WGL loader when available and require the platform OpenGL import library even if the OpenGL renderer macro is disabled.
 - **v0.62.5** – Logged that Raylib now caches its original WGL handles and only reacquires the context on demand so single-backend builds no longer fail to activate the GL context.

@@ -63,14 +63,14 @@ flowchart LR
 
 ---
 
-## Current Snapshot (v0.70.1)
+## Current Snapshot (v0.70.2)
 
 - ✅ **Immediate GUI everywhere** – `agui.hpp` seeds a shared font atlas, now covers buttons, image buttons, editable text fields, text boxes, and a turnkey console overlay so every backend renders consistent tooling widgets out of the box.
 - ✅ **Child-window scaling & context refresh coverage** – Raylib docked child panes now stay aligned with the preserved design canvas while new smoke coverage exercises context reacquisition, keeping the GL context bound after scaling and docking churn.
 - ✅ **OpenGL renderer state fix** – The in-engine OpenGL renderer now scopes its global state correctly when drawing quads and debug outlines, unblocking builds that failed due to missing `s_openglstate` symbols.
 - ✅ **Configurable menu layouts** – The runtime honours a `--menu-columns` cap to keep atlas-driven menus readable on constrained displays.
 - ✅ **Robust hot reload** – The scripting pipeline emits `ScriptLoadReport` diagnostics, prunes completed jobs, and waits synchronously so tooling observes a deterministic post-reload state.
-- ✅ **Reliable GL loader initialisation** – Linux builds now link the standalone `glad` loader regardless of the active backends, keeping `gladLoadGLLoader` available even when Raylib is enabled.
+- ✅ **Smarter GL loader packaging** – Duplicate `glad` symbols no longer appear when shipping both the Raylib loader and standalone artefacts, and the CMake toggles now respect explicit packaging choices without breaking defaults.
 
 Refer to [`Changes/changelog.txt`](Changes/changelog.txt) for the full history of fixes and enhancements.
 
