@@ -1,5 +1,8 @@
 # Changelog
 
+## [v0.70.4]
+- Taught the OpenGL renderer to cache the backend-managed GL state and rebuild the quad pipeline on demand so debug-outline and quad helpers keep using the objects initialised in `opengl_initialize()` on both Windows and Linux, eliminating the lingering `s_openglstate` dereferences.
+
 ## [v0.70.3]
 - Re-synchronised every build entry point (CMake, shell scripts, VS Code tasks) to link against the standalone glad loader so Linux targets resolve `gladLoadGLLoader` without bespoke flags.
 

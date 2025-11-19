@@ -50,6 +50,7 @@ Raylib distributes its own OpenGL loader on Linux, but AlmondShell now links the
 
 ## Change Log
 
+- **v0.70.4** – Documented that the OpenGL renderer now binds the backend-managed GL state so quad and debug-outline helpers reuse the pipeline initialised by `opengl_initialize()` on both Windows and Linux.
 - **v0.70.3** – Recorded that the standalone glad loader is now linked on every platform so AlmondShell's OpenGL calls resolve uniformly across shell scripts, CMake presets, and VS Code tasks.
 - **v0.70.2** – Clarified that CMake now keeps Raylib's loader active by default while suppressing duplicate glad symbols, and noted that packagers can still flip `-DALMOND_FORCE_GLAD=ON` when a standalone loader is required.
 - **v0.70.1** – Documented that Linux builds reuse Raylib's bundled loader when available and introduced the `-DALMOND_FORCE_GLAD=ON` escape hatch for explicitly linking the standalone glad artefacts in packaging scenarios where Raylib omits them.

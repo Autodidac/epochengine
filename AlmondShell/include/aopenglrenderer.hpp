@@ -25,7 +25,7 @@
 #pragma once
 
 #include "aengineconfig.hpp"
-//#include "aopenglcontext.hpp"
+#include "aopenglcontext.hpp"
 #include "aatlastexture.hpp"
 #include "aspritehandle.hpp"
 #include "aopengltextures.hpp" // AtlasGPU + gpu_atlases + ensure_uploaded
@@ -38,7 +38,25 @@
 #if defined (ALMOND_USING_OPENGL)
 namespace almondnamespace::openglrenderer
 {
-	//using almondnamespace::openglcontext::state::s_openglstate;
+        inline openglcontext::OpenGL4State& renderer_gl_state() noexcept
+        {
+            static openglcontext::OpenGL4State* cachedState = nullptr;
+            if (!cachedState)
+            {
+                cachedState = &opengltextures::get_opengl_backend().glState;
+            }
+            return *cachedState;
+        }
+
+        inline openglcontext::OpenGL4State& renderer_gl_state_with_pipeline() noexcept
+        {
+            auto& glState = renderer_gl_state();
+            if (!openglcontext::ensure_quad_pipeline(glState))
+            {
+                std::cerr << "[OpenGL] Failed to rebuild quad pipeline before issuing draw calls\n";
+            }
+            return glState;
+        }
 
 	struct RendererContext
 	{
@@ -96,7 +114,7 @@ namespace almondnamespace::openglrenderer
 
     inline void draw_debug_outline() noexcept
     {
-        auto& glState = almondnamespace::openglcontext::s_openglstate;
+        auto& glState = renderer_gl_state_with_pipeline();
 
         glUseProgram(glState.shader);
 
@@ -179,8 +197,9 @@ namespace almondnamespace::openglrenderer
 //        }
 //
 //
-//        glUseProgram(openglcontext::s_openglstate.shader);
-//        glBindVertexArray(openglcontext::s_openglstate.vao);
+//        auto& glState = renderer_gl_state_with_pipeline();
+//        glUseProgram(glState.shader);
+//        glBindVertexArray(glState.vao);
 //
 //        glDisable(GL_DEPTH_TEST);
 //        glDisable(GL_CULL_FACE);
@@ -203,8 +222,8 @@ namespace almondnamespace::openglrenderer
 //        float dv = v1 - v0;
 //        std::cerr << "[DrawSprite] UVs: u0=" << u0 << ", u1=" << u1 << ", du=" << du << "\n";
 //        std::cerr << "[DrawSprite] UVs: v0=" << v0 << ", v1=" << v1 << ", dv=" << dv << "\n";
-//        if (openglcontext::s_openglstate.uUVRegionLoc >= 0)
-//            glUniform4f(openglcontext::s_openglstate.uUVRegionLoc, u0, v0, du, dv);
+//        if (glState.uUVRegionLoc >= 0)
+//            glUniform4f(glState.uUVRegionLoc, u0, v0, du, dv);
 //
 //        // Flip Y pixel coordinate *before* normalization
 //        float flippedY = h - (y + height * 0.5f);
@@ -229,8 +248,8 @@ namespace almondnamespace::openglrenderer
 //            << ", x=" << entry.region.x << ", y=" << entry.region.y
 //            << ", w=" << entry.region.width << ", h=" << entry.region.height << '\n';
 //#endif
-//        if (openglcontext::s_openglstate.uTransformLoc >= 0)
-//            glUniform4f(openglcontext::s_openglstate.uTransformLoc, ndc_x, ndc_y, ndc_w, ndc_h);
+//        if (glState.uTransformLoc >= 0)
+//            glUniform4f(glState.uTransformLoc, ndc_x, ndc_y, ndc_w, ndc_h);
 //
 //        //debug_gl_state(s_state.shader, s_state.vao, tex, s_state.uUVRegionLoc, s_state.uTransformLoc);
 //
@@ -251,7 +270,7 @@ namespace almondnamespace::openglrenderer
 
 
     inline void draw_quad(const openglcontext::Quad& quad, GLuint texture) {
-        auto& glState = almondnamespace::openglcontext::s_openglstate;
+        auto& glState = renderer_gl_state_with_pipeline();
 
         glUseProgram(glState.shader);
 
