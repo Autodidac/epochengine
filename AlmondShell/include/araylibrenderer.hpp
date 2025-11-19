@@ -144,6 +144,8 @@ namespace almondnamespace::raylibcontext
         const float viewportWidth = (float)(std::max)(1, fit.vpW);
         const float viewportHeight = (float)(std::max)(1, fit.vpH);
         const float viewportScale = (fit.scale > 0.0f) ? fit.scale : 1.0f;
+        const float designWidth = (float)(std::max)(1, fit.refW);
+        const float designHeight = (float)(std::max)(1, fit.refH);
 
 #if !defined(RAYLIB_NO_WINDOW)
         Vector2 offset = { 0.0f, 0.0f };
@@ -166,10 +168,10 @@ namespace almondnamespace::raylibcontext
         float px, py, pw, ph;
         if (normalized) {
             // 0..1 -> viewport pixels
-            px = baseOffsetX + x * viewportWidth;
-            py = baseOffsetY + y * viewportHeight;
-            const float scaledW = (width > 0.f ? width * viewportWidth : (float)r.width * viewportScale);
-            const float scaledH = (height > 0.f ? height * viewportHeight : (float)r.height * viewportScale);
+            px = baseOffsetX + x * designWidth * viewportScale;
+            py = baseOffsetY + y * designHeight * viewportScale;
+            const float scaledW = (width > 0.f ? width * designWidth * viewportScale : (float)r.width * viewportScale);
+            const float scaledH = (height > 0.f ? height * designHeight * viewportScale : (float)r.height * viewportScale);
             pw = (std::max)(scaledW, 1.0f);
             ph = (std::max)(scaledH, 1.0f);
         }

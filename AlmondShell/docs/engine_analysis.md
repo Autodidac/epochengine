@@ -91,6 +91,9 @@ Asset producers can run off the main thread via the coroutine-enabled `taskgraph
   the window instead of shrinking as the viewport grows.
 
 ## Recent Progress (v0.59.3)
+- OpenGL quad draws now always rebuild the shared shader/VAO pipeline on demand and purge GPU atlases through the active backend data, keeping texture uploads live across context churn on Linux and Windows.
+- The immediate-mode GUI skips rendering whitespace quads while preserving advance metrics so font spacing stays stable across atlas implementations.
+- Raylib viewport math now uses the design-space reference dimensions when normalised GUI coordinates are supplied, aligning overlay widgets with the letterboxed canvas instead of the raw framebuffer size.
 - Cached narrow window titles alongside HWND handles in the multiplexer so SDL and Raylib initialisers can read consistent UTF-8
   names when contexts spawn, fixing the Windows build regression caused by the loop-scoped `narrowTitle` identifier.
 
