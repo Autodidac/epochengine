@@ -287,12 +287,25 @@ namespace almondnamespace::opengltextures
 
 
     inline void clear_gpu_atlases() noexcept {
-        for (auto& [_, gpu] : opengl_gpu_atlases) {
-            if (gpu.textureHandle) {
-                glDeleteTextures(1, &gpu.textureHandle);
+        BackendData* oglData = nullptr;
+        {
+            std::shared_lock lock(core::g_backendsMutex);
+            auto it = core::g_backends.find(core::ContextType::OpenGL);
+            if (it != core::g_backends.end()) {
+                oglData = static_cast<BackendData*>(it->second.data.get());
             }
         }
-        opengl_gpu_atlases.clear();
+
+        if (oglData) {
+            std::lock_guard<std::mutex> gpuLock(oglData->gpuMutex);
+            for (auto& [_, gpu] : oglData->gpu_atlases) {
+                if (gpu.textureHandle) {
+                    glDeleteTextures(1, &gpu.textureHandle);
+                }
+            }
+            oglData->gpu_atlases.clear();
+        }
+
         s_generation.fetch_add(1, std::memory_order_relaxed);
     }
 
@@ -351,6 +364,11 @@ namespace almondnamespace::opengltextures
         }
 
         auto& backend = get_opengl_backend();
+
+        if (!openglcontext::ensure_quad_pipeline(backend.glState)) {
+            std::cerr << "[DrawSprite] Missing quad pipeline; skipping draw\n";
+            return;
+        }
 
         GLint viewport[4] = { 0, 0, 0, 0 };
         glGetIntegerv(GL_VIEWPORT, viewport);

@@ -658,13 +658,15 @@ namespace
                 ++lines;
             }
 
-            if (const auto* glyph = lookup_glyph(static_cast<unsigned char>(ch))) {
-                if (glyph->handle.is_valid()) {
+            if (ch != ' ' && ch != '\t') {
+                if (const auto* glyph = lookup_glyph(static_cast<unsigned char>(ch))) {
                     const float drawW = glyph->size_px.x * scale;
                     const float drawH = glyph->size_px.y * scale;
-                    const float offsetX = glyph->offset_px.x * scale;
-                    const float offsetY = glyph->offset_px.y * scale;
-                    draw_sprite(glyph->handle, penX + offsetX, baseline + offsetY, drawW, drawH);
+                    if (glyph->handle.is_valid() && drawW > 0.0f && drawH > 0.0f) {
+                        const float offsetX = glyph->offset_px.x * scale;
+                        const float offsetY = glyph->offset_px.y * scale;
+                        draw_sprite(glyph->handle, penX + offsetX, baseline + offsetY, drawW, drawH);
+                    }
                 }
             }
 
