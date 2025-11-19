@@ -641,8 +641,7 @@ namespace almondnamespace::core {
         raylibContext->is_key_held = [](input::Key k) { return input::is_key_held(k); };
         raylibContext->is_key_down = [](input::Key k) { return input::is_key_down(k); };
         raylibContext->get_mouse_position = [](int& x, int& y) {
-            x = input::mouseX.load(std::memory_order_relaxed);
-            y = input::mouseY.load(std::memory_order_relaxed);
+            almondnamespace::raylibcontext::raylib_get_mouse_position(x, y);
         };
         raylibContext->is_mouse_button_held = [](input::MouseButton b) { return input::is_mouse_button_held(b); };
         raylibContext->is_mouse_button_down = [](input::MouseButton b) { return input::is_mouse_button_down(b); };

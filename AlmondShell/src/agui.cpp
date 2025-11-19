@@ -746,7 +746,7 @@ void push_input(const almondnamespace::gui::InputEvent& e) noexcept
     g_pendingEvents.push_back(e);
 }
 
-void begin_frame(std::shared_ptr<core::Context> ctx, float dt, Vec2 mouse_pos, bool mouse_down) noexcept
+void begin_frame(const std::shared_ptr<core::Context>& ctx, float dt, Vec2 mouse_pos, bool mouse_down) noexcept
 {
     core::Context* rawCtx = ctx.get();
     if (rawCtx) {
@@ -758,7 +758,7 @@ void begin_frame(std::shared_ptr<core::Context> ctx, float dt, Vec2 mouse_pos, b
         }
     }
 
-    g_frame.ctxShared = std::move(ctx);
+    g_frame.ctxShared = ctx;
     g_frame.ctx = rawCtx;
     g_frame.deltaTime = dt;
 
