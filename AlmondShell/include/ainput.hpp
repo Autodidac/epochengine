@@ -786,7 +786,7 @@ using almondnamespace::sfmlcontext::state::s_sfmlstate;
 using almondnamespace::raylibcontext::s_raylibstate;
 #endif
 #ifdef ALMOND_USING_OPENGL
-using almondnamespace::openglcontext::s_openglstate;
+using almondnamespace::openglstate::s_openglstate;
 #endif
 #ifdef ALMOND_USING_VULKAN
 using almondnamespace::vulkancontext::s_vulkanstate;

@@ -78,7 +78,7 @@ namespace almondnamespace::state
 #endif
 #ifdef ALMOND_USING_OPENGL
 
-    inline openglcontext::OpenGL4State s_openglstate{};
+    inline openglstate::OpenGL4State s_openglstate{};
 
 #endif
 #ifdef ALMOND_USING_VULKAN

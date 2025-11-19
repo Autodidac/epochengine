@@ -38,9 +38,9 @@
 #if defined (ALMOND_USING_OPENGL)
 namespace almondnamespace::openglrenderer
 {
-        inline openglcontext::OpenGL4State& renderer_gl_state() noexcept
+        inline openglstate::OpenGL4State& renderer_gl_state() noexcept
         {
-            static openglcontext::OpenGL4State* cachedState = nullptr;
+            static almondnamespace::openglstate::OpenGL4State* cachedState = nullptr;
             if (!cachedState)
             {
                 cachedState = &opengltextures::get_opengl_backend().glState;
@@ -48,7 +48,7 @@ namespace almondnamespace::openglrenderer
             return *cachedState;
         }
 
-        inline openglcontext::OpenGL4State& renderer_gl_state_with_pipeline() noexcept
+        inline almondnamespace::openglstate::OpenGL4State& renderer_gl_state_with_pipeline() noexcept
         {
             auto& glState = renderer_gl_state();
             if (!openglcontext::ensure_quad_pipeline(glState))

@@ -41,7 +41,7 @@
 
 #if defined (ALMOND_USING_OPENGL)
 
-namespace almondnamespace::openglcontext
+namespace almondnamespace::openglstate
 {
     struct OpenGL4State
     {

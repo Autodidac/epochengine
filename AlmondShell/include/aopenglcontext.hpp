@@ -77,7 +77,7 @@ namespace almondnamespace::openglcontext
         }
 #endif
 
-        inline PlatformGL::PlatformGLContext state_to_platform_context(const OpenGL4State& state) noexcept
+        inline PlatformGL::PlatformGLContext state_to_platform_context(const almondnamespace::openglstate::OpenGL4State& state) noexcept
         {
             PlatformGL::PlatformGLContext ctx{};
 #if defined(_WIN32)
@@ -152,7 +152,7 @@ namespace almondnamespace::openglcontext
         return program;
     }
 
-    inline void destroy_quad_pipeline(OpenGL4State& glState) noexcept
+    inline void destroy_quad_pipeline(almondnamespace::openglstate::OpenGL4State& glState) noexcept
     {
         if (glState.shader && glIsProgram(glState.shader)) {
             glDeleteProgram(glState.shader);
@@ -261,7 +261,7 @@ namespace almondnamespace::openglcontext
         return { major, minor };
     }
 
-    inline bool build_quad_pipeline(OpenGL4State& glState)
+    inline bool build_quad_pipeline(almondnamespace::openglstate::OpenGL4State& glState)
     {
         destroy_quad_pipeline(glState);
 
@@ -380,7 +380,7 @@ namespace almondnamespace::openglcontext
         return true;
     }
 
-    inline bool ensure_quad_pipeline(OpenGL4State& glState)
+    inline bool ensure_quad_pipeline(almondnamespace::openglstate::OpenGL4State& glState)
     {
         const bool shaderValid = glState.shader != 0 && glIsProgram(glState.shader) == GL_TRUE;
         const bool vaoValid = glState.vao != 0 && glIsVertexArray(glState.vao) == GL_TRUE;

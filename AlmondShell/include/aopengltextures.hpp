@@ -26,7 +26,7 @@
 
 #include "aplatform.hpp"
 #include "aengineconfig.hpp"
-#include "atypes.hpp"
+//#include "atypes.hpp"
 
 #ifdef ALMOND_USING_OPENGL
 
@@ -58,7 +58,7 @@ namespace almondnamespace::opengltextures
 {
     namespace detail
     {
-        inline almondnamespace::openglcontext::PlatformGL::PlatformGLContext to_platform_context(const openglcontext::OpenGL4State& state) noexcept
+        inline almondnamespace::openglcontext::PlatformGL::PlatformGLContext to_platform_context(const openglstate::OpenGL4State& state) noexcept
         {
             almondnamespace::openglcontext::PlatformGL::PlatformGLContext ctx{};
 #if defined(_WIN32)
@@ -101,7 +101,7 @@ namespace almondnamespace::opengltextures
         std::unordered_map<const TextureAtlas*, AtlasGPU,
             TextureAtlasPtrHash, TextureAtlasPtrEqual> gpu_atlases;
         std::mutex gpuMutex;
-        almondnamespace::openglcontext::OpenGL4State glState{};
+        almondnamespace::openglstate::OpenGL4State glState{};
     };
 
     inline BackendData& get_opengl_backend() {
@@ -353,6 +353,23 @@ namespace almondnamespace::opengltextures
         return tex;
     }
 
+    inline bool ensure_created_pipeline(almondnamespace::openglstate::OpenGL4State& glState)
+    {
+        // Check if the quad VAO and shader are already created
+        if (glState.shader != 0 && glState.vao != 0)
+            return true;
+
+        // Minimal stub: you should replace this with your actual quad pipeline setup.
+        // For now, just return false to indicate not ready.
+        // If you have a function elsewhere that sets up the quad pipeline, call it here.
+
+        // Example:
+        // bool success = setup_quad_pipeline(glState);
+        // return success;
+
+        return false;
+    }
+
     // Diagnostic draw_sprite version
     inline void draw_sprite(SpriteHandle handle,
         std::span<const TextureAtlas* const> atlases,
@@ -365,7 +382,7 @@ namespace almondnamespace::opengltextures
 
         auto& backend = get_opengl_backend();
 
-        if (!openglcontext::ensure_quad_pipeline(backend.glState)) {
+        if (!ensure_created_pipeline(backend.glState)) {
             std::cerr << "[DrawSprite] Missing quad pipeline; skipping draw\n";
             return;
         }
@@ -532,7 +549,6 @@ namespace almondnamespace::opengltextures
             << " H=" << ndc_h << "\n";
 #endif
     }
-
 
 } // namespace almondnamespace::opengl
 
