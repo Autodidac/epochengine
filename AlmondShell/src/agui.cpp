@@ -680,20 +680,21 @@ namespace
         draw_sprite(g_resources.buttonActive, x, y, caretWidth, height);
     }
 
-    void draw_text_line(std::string_view text, float x, float y, float scale)
+    void draw_text_line(std::string_view text, float x, float y, float scale, std::optional<float> indent = std::nullopt)
     {
         ensure_resources();
         if (!g_frame.ctx || !g_resources.font.asset)
             return;
 
-        float penX = x;
+        const float anchorX = indent.value_or(x);
+        float penX = anchorX;
         float baseline = y + baseline_offset(scale);
         const float lineAdvance = line_advance_amount(scale);
 
         for (std::size_t i = 0; i < text.size(); ++i) {
             const char ch = text[i];
             if (ch == '\n') {
-                penX = g_frame.origin.x + kContentPadding;
+                penX = anchorX;
                 baseline += lineAdvance;
                 continue;
             }
