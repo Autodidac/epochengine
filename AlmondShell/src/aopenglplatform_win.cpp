@@ -2,8 +2,6 @@
 
 #if defined(ALMOND_USING_OPENGL) && defined(_WIN32)
 
-#include <GL/wgl.h>
-
 namespace almondnamespace::openglcontext::PlatformGL
 {
     PlatformGLContext get_current() noexcept

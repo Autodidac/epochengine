@@ -253,7 +253,28 @@
 #ifdef ALMOND_USING_OPENGL
 	#include <glad/glad.h>	// for GLAD - OpenGL loader
 #if defined(_WIN32)
-	#include <GL/wglext.h>  // for WGL - OpenGL extensions WGL Loader
+	#if defined(__has_include) && __has_include(<glad/glad_wgl.h>)
+		#include <glad/glad_wgl.h>
+	#elif defined(__has_include) && __has_include(<GL/wglext.h>)
+		#include <GL/wglext.h>  // WGL extensions (legacy path)
+	#else
+		// Minimal WGL definitions needed for context creation when no header is available
+		#ifndef WGL_CONTEXT_MAJOR_VERSION_ARB
+			#define WGL_CONTEXT_MAJOR_VERSION_ARB 0x2091
+		#endif
+		#ifndef WGL_CONTEXT_MINOR_VERSION_ARB
+			#define WGL_CONTEXT_MINOR_VERSION_ARB 0x2092
+		#endif
+		#ifndef WGL_CONTEXT_PROFILE_MASK_ARB
+			#define WGL_CONTEXT_PROFILE_MASK_ARB 0x9126
+		#endif
+		#ifndef WGL_CONTEXT_CORE_PROFILE_BIT_ARB
+			#define WGL_CONTEXT_CORE_PROFILE_BIT_ARB 0x00000001
+		#endif
+		#ifndef PFNWGLCREATECONTEXTATTRIBSARBPROC
+			typedef HGLRC (WINAPI *PFNWGLCREATECONTEXTATTRIBSARBPROC)(HDC, HGLRC, const int*);
+		#endif
+	#endif
 #endif
 
 #if defined(__linux__)

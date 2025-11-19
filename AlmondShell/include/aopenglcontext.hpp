@@ -464,7 +464,7 @@ namespace almondnamespace::openglcontext
 
         if (!glState.hwnd)
         {
-            glState.hwnd = CreateWindowEx(
+            glState.hwnd = CreateWindowExW(
                 0, L"AlmondChild", L"working",
                 WS_CHILD | WS_VISIBLE | WS_BORDER,
                 CW_USEDEFAULT, CW_USEDEFAULT, w, h,

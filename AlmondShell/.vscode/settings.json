@@ -52,7 +52,7 @@
   ],
 
 
-  "cmake.toolchain": "../${workspaceFolder}/vcpkg/scripts/buildsystems/vcpkg.cmake",
+  "cmake.toolchain": "${workspaceFolder}/../vcpkg/scripts/buildsystems/vcpkg.cmake",
   "cmake.configureSettings": {
     "VCPKG_FEATURE_FLAGS": "manifests",
     "VCPKG_INSTALLATION_ROOT": "${workspaceFolder}/vcpkg_installed",

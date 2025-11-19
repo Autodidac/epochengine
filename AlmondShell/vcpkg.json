@@ -9,6 +9,7 @@
     "sdl3",
     "sdl3-image",
     "zlib",
+		"raylib",
     {
       "name": "libx11",
       "platform": "linux"

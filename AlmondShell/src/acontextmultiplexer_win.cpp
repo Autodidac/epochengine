@@ -233,26 +233,29 @@ namespace almondnamespace::core
 
     ATOM MultiContextManager::RegisterParentClass(HINSTANCE hInst, LPCWSTR name)
     {
-        WNDCLASS wc{};
-        wc.lpfnWndProc = ParentProc;
-        wc.hInstance = hInst;
+        WNDCLASSW wc{};
+        wc.lpfnWndProc   = ParentProc;
+        wc.hInstance     = hInst;
         wc.lpszClassName = name;
-        wc.style = CS_OWNDC | CS_HREDRAW | CS_VREDRAW;
-        wc.hCursor = LoadCursor(nullptr, IDC_ARROW);
-        return RegisterClass(&wc);
+        wc.style         = CS_OWNDC | CS_HREDRAW | CS_VREDRAW;
+        wc.hCursor       = LoadCursor(nullptr, IDC_ARROW);
+    
+        return RegisterClassW(&wc);
     }
-
+    
     ATOM MultiContextManager::RegisterChildClass(HINSTANCE hInst, LPCWSTR name)
     {
-        WNDCLASS wc{};
-        wc.lpfnWndProc = ChildProc;
-        wc.hInstance = hInst;
+        WNDCLASSW wc{};
+        wc.lpfnWndProc   = ChildProc;
+        wc.hInstance     = hInst;
         wc.lpszClassName = name;
-        wc.style = CS_OWNDC | CS_HREDRAW | CS_VREDRAW;
-        wc.hCursor = LoadCursor(nullptr, IDC_ARROW);
-        wc.hbrBackground = (HBRUSH)(COLOR_WINDOW + 1);
-        return RegisterClass(&wc);
+        wc.style         = CS_OWNDC | CS_HREDRAW | CS_VREDRAW;
+        wc.hCursor       = LoadCursor(nullptr, IDC_ARROW);
+        wc.hbrBackground = reinterpret_cast<HBRUSH>(COLOR_WINDOW + 1);
+    
+        return RegisterClassW(&wc);
     }
+    
 
     void MultiContextManager::SetupPixelFormat(HDC hdc)
     {
@@ -361,7 +364,7 @@ namespace almondnamespace::core
             DWORD style = WS_OVERLAPPEDWINDOW | WS_VISIBLE;
             AdjustWindowRect(&want, style, FALSE);
 
-            parent = CreateWindowEx(0, L"AlmondParent", L"Almond Docking",
+            parent = CreateWindowExW(0, L"AlmondParent", L"Almond Docking",
                 style,
                 CW_USEDEFAULT, CW_USEDEFAULT,
                 want.right - want.left, want.bottom - want.top,
@@ -378,7 +381,7 @@ namespace almondnamespace::core
 //#ifdef ALMOND_USING_OPENGL
         // ---------------- Shared dummy GL context (for wglShareLists) ----------------
         {
-            HWND dummy = CreateWindowEx(WS_EX_TOOLWINDOW, L"AlmondChild", L"Dummy", WS_POPUP, 0, 0, 1, 1, nullptr, nullptr, hInst, nullptr);
+            HWND dummy = CreateWindowExW(WS_EX_TOOLWINDOW, L"AlmondChild", L"Dummy", WS_POPUP, 0, 0, 1, 1, nullptr, nullptr, hInst, nullptr);
             if (!dummy) return false;
 
             HDC dummyDC = GetDC(dummy);
@@ -417,7 +420,7 @@ namespace almondnamespace::core
             {
                 const std::wstring windowTitle = BuildChildWindowTitle(type, i);
                 const std::string narrowTitle = almondnamespace::text::narrow_utf8(windowTitle);
-                HWND hwnd = CreateWindowEx(0, L"AlmondChild", windowTitle.c_str(),
+                HWND hwnd = CreateWindowExW(0, L"AlmondChild", windowTitle.c_str(),
                     (parent ? WS_CHILD | WS_VISIBLE : WS_OVERLAPPEDWINDOW | WS_VISIBLE),
                     0, 0, 800, 600,
                     parent, nullptr, hInst, nullptr);
@@ -1122,7 +1125,7 @@ namespace almondnamespace::core
         for (UINT i = 0; i < count; ++i) 
         {
             wchar_t path[MAX_PATH]{};
-            DragQueryFile(hDrop, i, path, MAX_PATH);
+            DragQueryFileW(hDrop, i, path, MAX_PATH);
             std::wcout << L"[Drop] " << path << L"\n";
         }
     }

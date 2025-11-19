@@ -1,18 +1,19 @@
 {
   "version": "2.0.0",
   "tasks": [
-    // ============================
-    // Windows Tasks
-    // ============================
     {
       "label": "Configure (GCC, Windows, Release)",
       "type": "shell",
       "command": "cmake",
       "args": [
-        "-S", ".",
-        "-B", "bin/GCC-Release",
+        "-S",
+        ".",
+        "-B",
+        "bin/GCC-Release",
+        "-G",
+        "MinGW Makefiles",
         "-DCMAKE_INSTALL_PREFIX=${workspaceFolder}/built",
-        "-DCMAKE_TOOLCHAIN_FILE=C:/Users/me/source/repos/vcpkg/scripts/buildsystems/vcpkg.cmake",
+        "-DCMAKE_TOOLCHAIN_FILE=${env:VCPKG_ROOT}/scripts/buildsystems/vcpkg.cmake",
         "-DCMAKE_BUILD_TYPE=Release",
         "-DCMAKE_C_COMPILER=gcc",
         "-DCMAKE_CXX_COMPILER=g++",
@@ -21,6 +22,7 @@
       ],
       "options": {
         "env": {
+          "VCPKG_ROOT": "C:\\Users\\iammi\\source\\repos\\vcpkg",
           "VCPKG_FEATURE_FLAGS": "manifests",
           "VCPKG_INSTALLATION_ROOT": "${workspaceFolder}/vcpkg_installed"
         }
@@ -32,9 +34,15 @@
       "label": "Build (GCC, Windows, Release)",
       "type": "shell",
       "command": "cmake",
-      "args": ["--build", "bin/GCC-Release"],
+      "args": [
+        "--build",
+        "bin/GCC-Release"
+      ],
       "dependsOn": "Configure (GCC, Windows, Release)",
-      "group": { "kind": "build", "isDefault": true },
+      "group": {
+        "kind": "build",
+        "isDefault": true
+      },
       "windows": {},
       "problemMatcher": []
     },
@@ -43,10 +51,14 @@
       "type": "shell",
       "command": "cmake",
       "args": [
-        "-S", ".",
-        "-B", "bin/GCC-Debug",
+        "-S",
+        ".",
+        "-B",
+        "bin/GCC-Debug",
+        "-G",
+        "MinGW Makefiles",
         "-DCMAKE_INSTALL_PREFIX=${workspaceFolder}/built",
-        "-DCMAKE_TOOLCHAIN_FILE=C:/Users/me/source/repos/vcpkg/scripts/buildsystems/vcpkg.cmake",
+        "-DCMAKE_TOOLCHAIN_FILE=${env:VCPKG_ROOT}/scripts/buildsystems/vcpkg.cmake",
         "-DCMAKE_BUILD_TYPE=Debug",
         "-DCMAKE_C_COMPILER=gcc",
         "-DCMAKE_CXX_COMPILER=g++",
@@ -55,6 +67,7 @@
       ],
       "options": {
         "env": {
+          "VCPKG_ROOT": "C:\\Users\\iammi\\source\\repos\\vcpkg",
           "VCPKG_FEATURE_FLAGS": "manifests",
           "VCPKG_INSTALLATION_ROOT": "${workspaceFolder}/vcpkg_installed"
         }
@@ -66,7 +79,10 @@
       "label": "Build (GCC, Windows, Debug)",
       "type": "shell",
       "command": "cmake",
-      "args": ["--build", "bin/GCC-Debug"],
+      "args": [
+        "--build",
+        "bin/GCC-Debug"
+      ],
       "dependsOn": "Configure (GCC, Windows, Debug)",
       "group": "build",
       "windows": {},
@@ -77,20 +93,27 @@
       "type": "shell",
       "command": "cmake",
       "args": [
-        "-S", ".",
-        "-B", "bin/Clang-Release",
+        "-S",
+        ".",
+        "-B",
+        "bin/Clang-Release",
+        "-G",
+        "Ninja",
         "-DCMAKE_INSTALL_PREFIX=${workspaceFolder}/built",
-        "-DCMAKE_TOOLCHAIN_FILE=C:/Users/me/source/repos/vcpkg/scripts/buildsystems/vcpkg.cmake",
+        "-DCMAKE_TOOLCHAIN_FILE=C:\\Users\\iammi\\source\\repos\\vcpkg\\scripts\\buildsystems\\vcpkg.cmake",
         "-DCMAKE_BUILD_TYPE=Release",
-        "-DCMAKE_C_COMPILER=clang",
-        "-DCMAKE_CXX_COMPILER=clang++",
+        "-DCMAKE_C_COMPILER=C:\\Program Files\\LLVM\\bin\\clang.exe",
+        "-DCMAKE_CXX_COMPILER=C:\\Program Files\\LLVM\\bin\\clang++.exe",
+        "-DCMAKE_MAKE_PROGRAM=C:\\Users\\iammi\\AppData\\Local\\Microsoft\\WinGet\\Links\\ninja.exe",
         "-DVCPKG_FEATURE_FLAGS=manifests",
         "-DVCPKG_INSTALLATION_ROOT=${workspaceFolder}/vcpkg_installed"
       ],
       "options": {
         "env": {
+          "VCPKG_ROOT": "C:\\Users\\iammi\\source\\repos\\vcpkg",
           "VCPKG_FEATURE_FLAGS": "manifests",
-          "VCPKG_INSTALLATION_ROOT": "${workspaceFolder}/vcpkg_installed"
+          "VCPKG_INSTALLATION_ROOT": "${workspaceFolder}/vcpkg_installed",
+          "PATH": "C:\\Program Files\\LLVM\\bin;${env:PATH}"
         }
       },
       "windows": {},
@@ -100,7 +123,10 @@
       "label": "Build (Clang, Windows, Release)",
       "type": "shell",
       "command": "cmake",
-      "args": ["--build", "bin/Clang-Release"],
+      "args": [
+        "--build",
+        "bin/Clang-Release"
+      ],
       "dependsOn": "Configure (Clang, Windows, Release)",
       "group": "build",
       "windows": {},
@@ -111,20 +137,27 @@
       "type": "shell",
       "command": "cmake",
       "args": [
-        "-S", ".",
-        "-B", "bin/Clang-Debug",
+        "-S",
+        ".",
+        "-B",
+        "bin/Clang-Debug",
+        "-G",
+        "Ninja",
         "-DCMAKE_INSTALL_PREFIX=${workspaceFolder}/built",
-        "-DCMAKE_TOOLCHAIN_FILE=C:/Users/me/source/repos/vcpkg/scripts/buildsystems/vcpkg.cmake",
+        "-DCMAKE_TOOLCHAIN_FILE=C:\\Users\\iammi\\source\\repos\\vcpkg\\scripts\\buildsystems\\vcpkg.cmake",
         "-DCMAKE_BUILD_TYPE=Debug",
-        "-DCMAKE_C_COMPILER=clang",
-        "-DCMAKE_CXX_COMPILER=clang++",
+        "-DCMAKE_C_COMPILER=C:\\Program Files\\LLVM\\bin\\clang.exe",
+        "-DCMAKE_CXX_COMPILER=C:\\Program Files\\LLVM\\bin\\clang++.exe",
+        "-DCMAKE_MAKE_PROGRAM=C:\\Users\\iammi\\AppData\\Local\\Microsoft\\WinGet\\Links\\ninja.exe",
         "-DVCPKG_FEATURE_FLAGS=manifests",
         "-DVCPKG_INSTALLATION_ROOT=${workspaceFolder}/vcpkg_installed"
       ],
       "options": {
         "env": {
+          "VCPKG_ROOT": "C:\\Users\\iammi\\source\\repos\\vcpkg",
           "VCPKG_FEATURE_FLAGS": "manifests",
-          "VCPKG_INSTALLATION_ROOT": "${workspaceFolder}/vcpkg_installed"
+          "VCPKG_INSTALLATION_ROOT": "${workspaceFolder}/vcpkg_installed",
+          "PATH": "C:\\Program Files\\LLVM\\bin;${env:PATH}"
         }
       },
       "windows": {},
@@ -134,25 +167,116 @@
       "label": "Build (Clang, Windows, Debug)",
       "type": "shell",
       "command": "cmake",
-      "args": ["--build", "bin/Clang-Debug"],
+      "args": [
+        "--build",
+        "bin/Clang-Debug"
+      ],
       "dependsOn": "Configure (Clang, Windows, Debug)",
       "group": "build",
       "windows": {},
       "problemMatcher": []
     },
-
-    // ============================
-    // Linux Tasks
-    // ============================
+    {
+      "label": "Configure (MSVC, Windows, Release)",
+      "type": "shell",
+      "command": "cmake",
+      "args": [
+        "-S",
+        ".",
+        "-B",
+        "bin/MSVC-Release",
+        "-G",
+        "Visual Studio 17 2022",
+        "-A",
+        "x64",
+        "-DCMAKE_INSTALL_PREFIX=${workspaceFolder}/built",
+        "-DCMAKE_TOOLCHAIN_FILE=${env:VCPKG_ROOT}/scripts/buildsystems/vcpkg.cmake",
+        "-DCMAKE_BUILD_TYPE=Release",
+        "-DVCPKG_FEATURE_FLAGS=manifests",
+        "-DVCPKG_INSTALLATION_ROOT=${workspaceFolder}/vcpkg_installed"
+      ],
+      "options": {
+        "env": {
+          "VCPKG_ROOT": "C:\\Users\\iammi\\source\\repos\\vcpkg",
+          "VCPKG_FEATURE_FLAGS": "manifests",
+          "VCPKG_INSTALLATION_ROOT": "${workspaceFolder}/vcpkg_installed"
+        }
+      },
+      "windows": {},
+      "problemMatcher": []
+    },
+    {
+      "label": "Build (MSVC, Windows, Release)",
+      "type": "shell",
+      "command": "cmake",
+      "args": [
+        "--build",
+        "bin/MSVC-Release",
+        "--config",
+        "Release"
+      ],
+      "dependsOn": "Configure (MSVC, Windows, Release)",
+      "group": "build",
+      "windows": {},
+      "problemMatcher": []
+    },
+    {
+      "label": "Configure (MSVC, Windows, Debug)",
+      "type": "shell",
+      "command": "cmake",
+      "args": [
+        "-S",
+        ".",
+        "-B",
+        "bin/MSVC-Debug",
+        "-G",
+        "Visual Studio 17 2022",
+        "-A",
+        "x64",
+        "-DCMAKE_INSTALL_PREFIX=${workspaceFolder}/built",
+        "-DCMAKE_TOOLCHAIN_FILE=${env:VCPKG_ROOT}/scripts/buildsystems/vcpkg.cmake",
+        "-DCMAKE_BUILD_TYPE=Debug",
+        "-DVCPKG_FEATURE_FLAGS=manifests",
+        "-DVCPKG_INSTALLATION_ROOT=${workspaceFolder}/vcpkg_installed"
+      ],
+      "options": {
+        "env": {
+          "VCPKG_ROOT": "C:\\Users\\iammi\\source\\repos\\vcpkg",
+          "VCPKG_FEATURE_FLAGS": "manifests",
+          "VCPKG_INSTALLATION_ROOT": "${workspaceFolder}/vcpkg_installed"
+        }
+      },
+      "windows": {},
+      "problemMatcher": []
+    },
+    {
+      "label": "Build (MSVC, Windows, Debug)",
+      "type": "shell",
+      "command": "cmake",
+      "args": [
+        "--build",
+        "bin/MSVC-Debug",
+        "--config",
+        "Debug"
+      ],
+      "dependsOn": "Configure (MSVC, Windows, Debug)",
+      "group": "build",
+      "windows": {},
+      "problemMatcher": []
+    },
     {
       "label": "Configure (GCC, Linux, Release)",
       "type": "shell",
       "command": "cmake",
       "args": [
-        "-S", ".",
-        "-B", "bin/GCC-Release",
+        "-S",
+        ".",
+        "-B",
+        "bin/GCC-Release",
+        "-G",
+        "Ninja",
         "-DCMAKE_INSTALL_PREFIX=${workspaceFolder}/built",
-        "-DCMAKE_TOOLCHAIN_FILE=/home/dude/Documents/repos/vcpkg/scripts/buildsystems/vcpkg.cmake",
+        "-DCMAKE_TOOLCHAIN_FILE=${env:VCPKG_ROOT}/scripts/buildsystems/vcpkg.cmake",
         "-DCMAKE_BUILD_TYPE=Release",
         "-DCMAKE_C_COMPILER=gcc",
         "-DCMAKE_CXX_COMPILER=g++",
@@ -172,9 +296,15 @@
       "label": "Build (GCC, Linux, Release)",
       "type": "shell",
       "command": "cmake",
-      "args": ["--build", "bin/GCC-Release"],
+      "args": [
+        "--build",
+        "bin/GCC-Release"
+      ],
       "dependsOn": "Configure (GCC, Linux, Release)",
-      "group": { "kind": "build", "isDefault": true },
+      "group": {
+        "kind": "build",
+        "isDefault": true
+      },
       "linux": {},
       "problemMatcher": []
     },
@@ -183,10 +313,14 @@
       "type": "shell",
       "command": "cmake",
       "args": [
-        "-S", ".",
-        "-B", "bin/GCC-Debug",
+        "-S",
+        ".",
+        "-B",
+        "bin/GCC-Debug",
+        "-G",
+        "Ninja",
         "-DCMAKE_INSTALL_PREFIX=${workspaceFolder}/built",
-        "-DCMAKE_TOOLCHAIN_FILE=/home/dude/Documents/repos/vcpkg/scripts/buildsystems/vcpkg.cmake",
+        "-DCMAKE_TOOLCHAIN_FILE=${env:VCPKG_ROOT}/scripts/buildsystems/vcpkg.cmake",
         "-DCMAKE_BUILD_TYPE=Debug",
         "-DCMAKE_C_COMPILER=gcc",
         "-DCMAKE_CXX_COMPILER=g++",
@@ -206,7 +340,10 @@
       "label": "Build (GCC, Linux, Debug)",
       "type": "shell",
       "command": "cmake",
-      "args": ["--build", "bin/GCC-Debug"],
+      "args": [
+        "--build",
+        "bin/GCC-Debug"
+      ],
       "dependsOn": "Configure (GCC, Linux, Debug)",
       "group": "build",
       "linux": {},
@@ -217,13 +354,17 @@
       "type": "shell",
       "command": "cmake",
       "args": [
-        "-S", ".",
-        "-B", "bin/Clang-Release",
+        "-S",
+        ".",
+        "-B",
+        "bin/Clang-Release",
+        "-G",
+        "Ninja",
         "-DCMAKE_INSTALL_PREFIX=${workspaceFolder}/built",
-        "-DCMAKE_TOOLCHAIN_FILE=/home/dude/Documents/repos/vcpkg/scripts/buildsystems/vcpkg.cmake",
+        "-DCMAKE_TOOLCHAIN_FILE=${env:VCPKG_ROOT}/scripts/buildsystems/vcpkg.cmake",
         "-DCMAKE_BUILD_TYPE=Release",
-        "-DCMAKE_C_COMPILER=clang",
-        "-DCMAKE_CXX_COMPILER=clang++",
+        "-DCMAKE_C_COMPILER=C:\\Program Files\\LLVM\\bin\\clang.exe",
+        "-DCMAKE_CXX_COMPILER=C:\\Program Files\\LLVM\\bin\\clang++.exe",
         "-DVCPKG_FEATURE_FLAGS=manifests",
         "-DVCPKG_INSTALLATION_ROOT=${workspaceFolder}/vcpkg_installed"
       ],
@@ -240,7 +381,10 @@
       "label": "Build (Clang, Linux, Release)",
       "type": "shell",
       "command": "cmake",
-      "args": ["--build", "bin/Clang-Release"],
+      "args": [
+        "--build",
+        "bin/Clang-Release"
+      ],
       "dependsOn": "Configure (Clang, Linux, Release)",
       "group": "build",
       "linux": {},
@@ -251,13 +395,17 @@
       "type": "shell",
       "command": "cmake",
       "args": [
-        "-S", ".",
-        "-B", "bin/Clang-Debug",
+        "-S",
+        ".",
+        "-B",
+        "bin/Clang-Debug",
+        "-G",
+        "Ninja",
         "-DCMAKE_INSTALL_PREFIX=${workspaceFolder}/built",
-        "-DCMAKE_TOOLCHAIN_FILE=/home/dude/Documents/repos/vcpkg/scripts/buildsystems/vcpkg.cmake",
+        "-DCMAKE_TOOLCHAIN_FILE=${env:VCPKG_ROOT}/scripts/buildsystems/vcpkg.cmake",
         "-DCMAKE_BUILD_TYPE=Debug",
-        "-DCMAKE_C_COMPILER=clang",
-        "-DCMAKE_CXX_COMPILER=clang++",
+        "-DCMAKE_C_COMPILER=C:\\Program Files\\LLVM\\bin\\clang.exe",
+        "-DCMAKE_CXX_COMPILER=C:\\Program Files\\LLVM\\bin\\clang++.exe",
         "-DVCPKG_FEATURE_FLAGS=manifests",
         "-DVCPKG_INSTALLATION_ROOT=${workspaceFolder}/vcpkg_installed"
       ],
@@ -274,23 +422,22 @@
       "label": "Build (Clang, Linux, Debug)",
       "type": "shell",
       "command": "cmake",
-      "args": ["--build", "bin/Clang-Debug"],
+      "args": [
+        "--build",
+        "bin/Clang-Debug"
+      ],
       "dependsOn": "Configure (Clang, Linux, Debug)",
       "group": "build",
       "linux": {},
       "problemMatcher": []
     },
-
-    // ============================
-    // Clean Tasks
-    // ============================
     {
       "label": "Clean (Windows)",
       "type": "shell",
       "command": "powershell",
       "args": [
         "-Command",
-        "Remove-Item -Recurse -Force bin/GCC-Release, bin/GCC-Debug, bin/Clang-Release, bin/Clang-Debug, ${workspaceFolder}/vcpkg_installed"
+        "Remove-Item -Recurse -Force bin/GCC-Release, bin/GCC-Debug, bin/Clang-Release, bin/Clang-Debug, bin/MSVC-Release, bin/MSVC-Debug, ${workspaceFolder}/vcpkg_installed"
       ],
       "windows": {},
       "problemMatcher": []
@@ -317,6 +464,8 @@
         "Build (GCC, Windows, Debug)",
         "Build (Clang, Windows, Release)",
         "Build (Clang, Windows, Debug)",
+        "Build (MSVC, Windows, Release)",
+        "Build (MSVC, Windows, Debug)",
         "Build (GCC, Linux, Release)",
         "Build (GCC, Linux, Debug)",
         "Build (Clang, Linux, Release)",
@@ -324,8 +473,22 @@
       ],
       "type": "shell",
       "command": "echo",
-      "args": ["Build all compilers complete."],
+      "args": [
+        "Build all compilers complete."
+      ],
       "group": "build"
+    },
+    {
+      "type": "cmake",
+      "label": "CMake: build",
+      "command": "build",
+      "targets": [
+        "all"
+      ],
+      "preset": "__defaultBuildPreset__",
+      "group": "build",
+      "problemMatcher": [],
+      "detail": "CMake template build task"
     }
   ]
 }
