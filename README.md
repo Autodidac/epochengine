@@ -63,7 +63,7 @@ flowchart LR
 
 ---
 
-## Current Snapshot (v0.70.4)
+## Current Snapshot (v0.70.3)
 
 - ✅ **Immediate GUI everywhere** – `agui.hpp` seeds a shared font atlas, now covers buttons, image buttons, editable text fields, text boxes, and a turnkey console overlay so every backend renders consistent tooling widgets out of the box.
 - ✅ **Child-window scaling & context refresh coverage** – Raylib docked child panes now stay aligned with the preserved design canvas while new smoke coverage exercises context reacquisition, keeping the GL context bound after scaling and docking churn.

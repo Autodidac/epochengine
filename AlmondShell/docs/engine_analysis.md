@@ -63,13 +63,9 @@ Asset producers can run off the main thread via the coroutine-enabled `taskgraph
 - **Roadmap Traceability** – The existing `roadmap.txt` lacked granular prompts or acceptance checks per phase, making automation hand-offs hard to script.
 - **Testing Surface** – No automated smoke tests or CI hooks are defined for the critical updater and renderer paths, leaving regression risk high during phase transitions.
 
-## Recent Progress (v0.70.4)
+## Recent Progress (v0.70.3)
 
-- The internal OpenGL renderer now caches the backend-managed GL state and revalidates the quad pipeline before issuing draw calls, so debug outlines and quad helpers reuse the shader/VAO handles created in `opengl_initialize()` across Windows and Linux. This removes the last dependency on the inline `s_openglstate` snapshot inside the renderer and keeps both platforms in sync.
-
-## Recent Progress (v0.70.2)
-
-- The glad packaging flow now defers to Raylib's loader when available while avoiding duplicate symbol exports when the standalone artefacts are still shipped. Distributors can override the selection explicitly without tripping CMake validation, and the engine metadata has been bumped to v0.70.2 for diagnostics.
+- Every build surface (CMake presets, VS Code tasks, and the helper shell scripts) now links against the standalone glad loader so Linux builds stop failing to resolve `gladLoadGLLoader`. The documentation and diagnostic metadata were bumped in tandem, keeping launcher manifests and version probes aligned with the v0.70.3 snapshot.
 
 ## Recent Progress (v0.62.0)
 
