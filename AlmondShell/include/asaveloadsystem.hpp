@@ -24,6 +24,7 @@
 #include <zlib.h>
 
 #include <string>
+#include <string_view>
 #include <vector>
 #include <map>
 #include <iostream>
@@ -32,9 +33,69 @@
 
 namespace almondnamespace {
 
+    namespace detail {
+        [[nodiscard]] inline std::string encode_utf8_char(char32_t codepoint) {
+            std::string utf8;
+            if (codepoint == 0) {
+                return utf8;
+            }
+
+            if (codepoint <= 0x7F) {
+                utf8.push_back(static_cast<char>(codepoint));
+            }
+            else if (codepoint <= 0x7FF) {
+                utf8.push_back(static_cast<char>(0xC0 | ((codepoint >> 6) & 0x1F)));
+                utf8.push_back(static_cast<char>(0x80 | (codepoint & 0x3F)));
+            }
+            else if (codepoint <= 0xFFFF) {
+                utf8.push_back(static_cast<char>(0xE0 | ((codepoint >> 12) & 0x0F)));
+                utf8.push_back(static_cast<char>(0x80 | ((codepoint >> 6) & 0x3F)));
+                utf8.push_back(static_cast<char>(0x80 | (codepoint & 0x3F)));
+            }
+            else {
+                utf8.push_back(static_cast<char>(0xF0 | ((codepoint >> 18) & 0x07)));
+                utf8.push_back(static_cast<char>(0x80 | ((codepoint >> 12) & 0x3F)));
+                utf8.push_back(static_cast<char>(0x80 | ((codepoint >> 6) & 0x3F)));
+                utf8.push_back(static_cast<char>(0x80 | (codepoint & 0x3F)));
+            }
+
+            return utf8;
+        }
+
+        [[nodiscard]] inline char32_t decode_utf8_char(std::string_view utf8) {
+            if (utf8.empty()) {
+                return 0;
+            }
+
+            const unsigned char* bytes = reinterpret_cast<const unsigned char*>(utf8.data());
+            const auto size = utf8.size();
+
+            if (bytes[0] <= 0x7F) {
+                return bytes[0];
+            }
+            if ((bytes[0] & 0xE0) == 0xC0 && size >= 2) {
+                return static_cast<char32_t>(((bytes[0] & 0x1F) << 6) |
+                                             (bytes[1] & 0x3F));
+            }
+            if ((bytes[0] & 0xF0) == 0xE0 && size >= 3) {
+                return static_cast<char32_t>(((bytes[0] & 0x0F) << 12) |
+                                             ((bytes[1] & 0x3F) << 6) |
+                                             (bytes[2] & 0x3F));
+            }
+            if ((bytes[0] & 0xF8) == 0xF0 && size >= 4) {
+                return static_cast<char32_t>(((bytes[0] & 0x07) << 18) |
+                                             ((bytes[1] & 0x3F) << 12) |
+                                             ((bytes[2] & 0x3F) << 6) |
+                                             (bytes[3] & 0x3F));
+            }
+
+            return 0;
+        }
+    } // namespace detail
+
     class SaveSystem {
     public:
-        static void SaveGame(const std::string& filename, const std::vector<almondnamespace::events::Event>& events) {  
+        static void SaveGame(const std::string& filename, const std::vector<almondnamespace::events::Event>& events) {
            std::ofstream ofs(filename, std::ios::binary);  
            if (!ofs) {  
                std::cerr << "Error opening file for saving!" << std::endl;  
@@ -51,30 +112,9 @@ namespace almondnamespace {
                data += "y=" + std::to_string(event.y) + ";";  
                data += "key=" + std::to_string(event.key) + ";";  
 
-               // Fix for the error: Convert char32_t to UTF-8 string before appending  
-               std::string utf8Text;  
-               if (event.text != 0) {  
-                   char buffer[5] = { 0 };  
-                   if (event.text <= 0x7F) {  
-                       buffer[0] = static_cast<char>(event.text);  
-                   } else if (event.text <= 0x7FF) {  
-                       buffer[0] = static_cast<char>(0xC0 | ((event.text >> 6) & 0x1F));  
-                       buffer[1] = static_cast<char>(0x80 | (event.text & 0x3F));  
-                   } else if (event.text <= 0xFFFF) {  
-                       buffer[0] = static_cast<char>(0xE0 | ((event.text >> 12) & 0x0F));  
-                       buffer[1] = static_cast<char>(0x80 | ((event.text >> 6) & 0x3F));  
-                       buffer[2] = static_cast<char>(0x80 | (event.text & 0x3F));  
-                   } else {  
-                       buffer[0] = static_cast<char>(0xF0 | ((event.text >> 18) & 0x07));  
-                       buffer[1] = static_cast<char>(0x80 | ((event.text >> 12) & 0x3F));  
-                       buffer[2] = static_cast<char>(0x80 | ((event.text >> 6) & 0x3F));  
-                       buffer[3] = static_cast<char>(0x80 | (event.text & 0x3F));  
-                   }  
-                   utf8Text = std::string(buffer);  
-               }  
-               data += "text=" + utf8Text + ";";  
-               data += "\n";  
-           }  
+               data += "text=" + detail::encode_utf8_char(event.text) + ";";
+               data += "\n";
+           }
 
            std::string compressedData = CompressData(data);  
            ofs.write(compressedData.c_str(), compressedData.size());  
@@ -123,31 +163,7 @@ namespace almondnamespace {
                             event.key = std::stoi(value);
                         }
                         else if (key == "text") {
-                            // Replace the problematic line with the following code to fix the error:  
-                            // Fix for the error: Use a temporary buffer to handle char32_t to char conversion  
-                            char buffer[5] = { 0 };  
-                            // Replace the problematic line with the following code to fix the error:  
-                            //std::memset(event.text, 0, sizeof(event.text));  
-                            if (event.text <= 0x7F) {  
-                                buffer[0] = static_cast<char>(event.text);  
-                            } else if (event.text <= 0x7FF) {  
-                                buffer[0] = static_cast<char>(0xC0 | ((event.text >> 6) & 0x1F));  
-                                buffer[1] = static_cast<char>(0x80 | (event.text & 0x3F));  
-                            } else if (event.text <= 0xFFFF) {  
-                                buffer[0] = static_cast<char>(0xE0 | ((event.text >> 12) & 0x0F));  
-                                buffer[1] = static_cast<char>(0x80 | ((event.text >> 6) & 0x3F));  
-                                buffer[2] = static_cast<char>(0x80 | (event.text & 0x3F));  
-                            } else {  
-                                buffer[0] = static_cast<char>(0xF0 | ((event.text >> 18) & 0x07));  
-                                buffer[1] = static_cast<char>(0x80 | ((event.text >> 12) & 0x3F));  
-                                buffer[2] = static_cast<char>(0x80 | ((event.text >> 6) & 0x3F));  
-                                buffer[3] = static_cast<char>(0x80 | (event.text & 0x3F));  
-                            }  
-                            std::memset(reinterpret_cast<void*>(&event.text), 0, sizeof(event.text));
-                            std::strncpy(reinterpret_cast<char*>(event.text), buffer, sizeof(event.text) - 1);
-
-                            //strncpy_s(event.text, value.c_str(), sizeof(event.text) - 1);
-                           // event.text[sizeof(event.text) - 1] = '\0';
+                            event.text = detail::decode_utf8_char(value);
                         }
                         else {
                             event.data[key] = value;
