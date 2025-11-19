@@ -267,27 +267,47 @@ namespace almondnamespace::font
 
             const FontAsset& font = it->second;
             ui::vec2 cursor = pos_px;
+            const float lineHeight = (font.metrics.lineHeight > 0.0f)
+                ? font.metrics.lineHeight
+                : (font.metrics.ascent + font.metrics.descent);
+            const float fallbackAdvance = (font.metrics.spaceAdvance > 0.0f)
+                ? font.metrics.spaceAdvance
+                : font.metrics.averageAdvance;
 
+            char32_t previous = U'\0';
             for (char32_t ch : text)
             {
+                if (ch == U'\n')
+                {
+                    cursor.x = pos_px.x;
+                    cursor.y += lineHeight;
+                    previous = U'\0';
+                    continue;
+                }
+
+                float kern = 0.0f;
+                if (previous != U'\0')
+                    kern = font.get_kerning(previous, ch);
+
                 auto glyph_it = font.glyphs.find(ch);
                 if (glyph_it == font.glyphs.end())
                 {
-                    // Optional: render fallback glyph or log missing glyph here
+                    cursor.x += (fallbackAdvance > 0.0f) ? fallbackAdvance + kern : kern;
+                    previous = U'\0';
                     continue;
                 }
 
                 const Glyph& g = glyph_it->second;
-                if (!g.handle.is_valid())
+                cursor.x += kern;
+
+                if (g.handle.is_valid())
                 {
-                    cursor.x += g.advance;
-                    continue;
+                    ui::vec2 top_left = cursor + g.offset_px;
+                    ctx.draw_sprite_safe(g.handle, atlases, top_left.x, top_left.y, g.size_px.x, g.size_px.y);
                 }
 
-                ui::vec2 top_left = cursor + g.offset_px;
-                ctx.draw_sprite_safe(g.handle, atlases, top_left.x, top_left.y, g.size_px.x, g.size_px.y);
-
                 cursor.x += g.advance;
+                previous = ch;
             }
         }
 

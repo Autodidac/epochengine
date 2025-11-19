@@ -209,6 +209,25 @@ namespace almondnamespace::raylibcontext
         return r;
     }
 
+    inline void raylib_get_mouse_position(int& x, int& y) noexcept
+    {
+        Vector2 mousePos{ 0.0f, 0.0f };
+#if !defined(RAYLIB_NO_WINDOW)
+        if (IsWindowReady())
+            mousePos = GetMousePosition();
+#else
+        mousePos = GetMousePosition();
+#endif
+
+        const int resolvedX = static_cast<int>(std::lround(mousePos.x));
+        const int resolvedY = static_cast<int>(std::lround(mousePos.y));
+
+        const int maxW = static_cast<int>((std::max)(1u, s_raylibstate.virtualWidth));
+        const int maxH = static_cast<int>((std::max)(1u, s_raylibstate.virtualHeight));
+        x = std::clamp(resolvedX, -1, maxW);
+        y = std::clamp(resolvedY, -1, maxH);
+    }
+
     inline void seed_viewport_from_framebuffer(const std::shared_ptr<core::Context>& ctx) noexcept
     {
         const bool widthOverride = core::cli::window_width_overridden
