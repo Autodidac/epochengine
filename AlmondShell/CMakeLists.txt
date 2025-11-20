@@ -1,8 +1,11 @@
-cmake_minimum_required(VERSION 3.21)
+cmake_minimum_required(VERSION 3.28)
+
+set(CMAKE_EXPERIMENTAL_CXX_MODULE_DYNDEP 1)
+set(CMAKE_CXX_SCAN_FOR_MODULES ON)
 
 project(AlmondShell LANGUAGES C CXX)
 
-set(CMAKE_CXX_STANDARD 20)
+set(CMAKE_CXX_STANDARD 23)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 set(CMAKE_CXX_EXTENSIONS OFF)
 
@@ -33,11 +36,24 @@ endif()
 
 add_executable(almondshell ${ALMONDSHELL_SOURCES})
 
+set(ALMONDSHELL_MODULE_DIR ${CMAKE_CURRENT_SOURCE_DIR}/modules)
+
+target_sources(almondshell PRIVATE
+    FILE_SET almondshell_modules TYPE CXX_MODULES
+        BASE_DIRS ${ALMONDSHELL_MODULE_DIR}
+)
+
 target_include_directories(almondshell PRIVATE
     ${CMAKE_CURRENT_SOURCE_DIR}/include
     ${CMAKE_CURRENT_SOURCE_DIR}/src
     ${CMAKE_CURRENT_SOURCE_DIR}/src/stb
 )
+
+if(CMAKE_CXX_COMPILER_ID STREQUAL "MSVC")
+    target_compile_options(almondshell PRIVATE /experimental:module)
+elseif(CMAKE_CXX_COMPILER_ID MATCHES "Clang|GNU")
+    target_compile_options(almondshell PRIVATE -fmodules-ts)
+endif()
 
 option(ALMOND_ENABLE_RAYLIB "Enable the Raylib backend" ON)
 option(ALMOND_ENABLE_SDL "Enable the SDL backend" ON)
