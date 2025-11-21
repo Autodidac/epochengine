@@ -4,7 +4,7 @@
 
 # AlmondShell
 
-**AlmondShell** is a modern **C++20 software engine** that forms the foundation layer for the evolving AlmondEngine project.
+**AlmondShell** is a modern **C++23, modules-first software engine** that forms the foundation layer for the evolving AlmondEngine project.
 It distils over **4,000 hours** of engineering effort invested into getting a multi-context, multi-threaded, fully featured atlas system working—resulting in a flexible runtime that can:
 
 - Substitute AlmondEngine's Vulkan and DirectX layers with multiple 2D graphics back-end contexts.
@@ -63,14 +63,12 @@ flowchart LR
 
 ---
 
-## Current Snapshot (v0.70.3)
+## Current Snapshot (v0.71.0)
 
-- ✅ **Immediate GUI everywhere** – `agui.hpp` seeds a shared font atlas, now covers buttons, image buttons, editable text fields, text boxes, and a turnkey console overlay so every backend renders consistent tooling widgets out of the box.
-- ✅ **Child-window scaling & context refresh coverage** – Raylib docked child panes now stay aligned with the preserved design canvas while new smoke coverage exercises context reacquisition, keeping the GL context bound after scaling and docking churn.
-- ✅ **OpenGL renderer state fix** – The in-engine OpenGL renderer now sources its GL objects from the backend-managed state, ensuring quad/debug draws reuse the pipeline created in `opengl_initialize()` across Windows and Linux.
-- ✅ **Configurable menu layouts** – The runtime honours a `--menu-columns` cap to keep atlas-driven menus readable on constrained displays.
-- ✅ **Robust hot reload** – The scripting pipeline emits `ScriptLoadReport` diagnostics, prunes completed jobs, and waits synchronously so tooling observes a deterministic post-reload state.
-- ✅ **Smarter GL loader packaging** – Duplicate `glad` symbols no longer appear when shipping both the Raylib loader and standalone artefacts, and the CMake toggles now respect explicit packaging choices without breaking defaults.
+- ✅ **C++23 module baseline** – The codebase now targets C++23, and the documentation outlines the module-aware configuration flags needed to rebuild with BMI scanning enabled across CMake presets and helper scripts.
+- ✅ **Module migration guidance** – Fresh-build steps now call out when to clear cached CMake state, how to enable module dependency scanning (`CMAKE_CXX_SCAN_FOR_MODULES`/`CMAKE_EXPERIMENTAL_CXX_MODULE_DYNDEP`), and which compilers have been validated for the milestone.
+- ✅ **Updated toolchain requirements** – Prerequisites have been raised to module-capable compilers (VS 2022 17.10+, clang 17+, GCC 14+) and CMake releases with first-class module support so downstream packagers avoid partial BMI generation.
+- ✅ **Documentation refresh** – Version metadata, the engine analysis brief, and the configuration flag guide are aligned on the v0.71.0 snapshot and the module-focused release notes.
 
 Refer to [`Changes/changelog.txt`](Changes/changelog.txt) for the full history of fixes and enhancements.
 
@@ -83,8 +81,8 @@ Refer to [`Changes/changelog.txt`](Changes/changelog.txt) for the full history o
   When you force an update the bundled updater downloads the matching source archive, expands it next to the executable, and rebuilds the binary so you can inspect or extend the engine even when starting from a published release.
   Can also be built directly from source for full control.
 
-- ⚙️ **Modular C++20 engine**
-  Built in a **functional, header-only style** with static linkage.
+- ⚙️ **Modular C++23 engine**
+  Built in a **functional, header-only + module-first style** with static linkage.
   Context-driven architecture with systems for rendering, windowing, input, scripting, tasks, and asset management.
 
 - 🧪 **Live script reloading**
@@ -187,9 +185,9 @@ To build AlmondShell from source you will need the following tools:
 
 | Requirement            | Notes |
 | ---------------------- | ----- |
-| A C++20 toolchain      | Visual Studio 2022, clang, or GCC 11+ are recommended. |
-| CMake ≥ 3.21           | Used to generate build files and drive the provided presets. |
-| Ninja _or_ MSBuild     | Pick the generator that matches your platform. |
+| A C++23 toolchain with module support | Visual Studio 2022 17.10+, clang 17+, or GCC 14+ are recommended so BMI generation and import scanning work reliably. |
+| CMake ≥ 3.29           | Required for out-of-the-box module scanning. When using 3.27–3.28 enable either `-DCMAKE_CXX_SCAN_FOR_MODULES=ON` or `-DCMAKE_EXPERIMENTAL_CXX_MODULE_DYNDEP=ON` to drive BMI discovery. |
+| Ninja _or_ MSBuild     | Pick the generator that matches your platform. Ninja is recommended with module builds to keep BMI scanning incremental. |
 | Git                    | Required for cloning the repository and fetching dependencies. |
 | [vcpkg](https://vcpkg.io/) | Simplifies acquiring third-party libraries listed in `AlmondShell/vcpkg.json`. |
 | Optional: Vulkan SDK   | Needed when working on Vulkan backends listed in `include/avulkan*`. |
@@ -228,12 +226,13 @@ vcpkg install asio fmt glad glm opengl raylib sfml sdl3 sdl3-image zlib
    ./vcpkg/vcpkg install --triplet x64-linux
    ```
    CMake will reuse the manifest to pull `glad`, `raylib`, `SDL3`, and the other declared libraries on the first configure run.
-3. **Configure and build**:
+3. **Configure and build** (start from a clean build directory so BMI files are regenerated):
    ```bash
-   cmake -S AlmondShell -B build/linux-clang -G Ninja -DCMAKE_BUILD_TYPE=Release
+   rm -rf build/linux-clang
+   cmake -S AlmondShell -B build/linux-clang -G Ninja -DCMAKE_BUILD_TYPE=Release -DCMAKE_CXX_STANDARD=23 -DCMAKE_CXX_SCAN_FOR_MODULES=ON
    cmake --build build/linux-clang
    ```
-   Pass `-DALMOND_ENABLE_RAYLIB=OFF` if you need to disable Raylib entirely; otherwise the standalone glad loader now links automatically, fixing the previous undefined reference to `gladLoadGLLoader` on Linux.
+   When using CMake 3.27–3.28, replace `-DCMAKE_CXX_SCAN_FOR_MODULES=ON` with `-DCMAKE_EXPERIMENTAL_CXX_MODULE_DYNDEP=ON` so the module dependency scanner emits BMI rules for Ninja. Pass `-DALMOND_ENABLE_RAYLIB=OFF` if you need to disable Raylib entirely; otherwise the standalone glad loader now links automatically, fixing the previous undefined reference to `gladLoadGLLoader` on Linux.
 4. **Run AlmondShell**:
    ```bash
    ./build/linux-clang/almondshell
@@ -244,6 +243,16 @@ vcpkg install asio fmt glad glm opengl raylib sfml sdl3 sdl3-image zlib
    ```
 
 When CMake is configured with vcpkg integration enabled, the dependencies will be restored automatically on subsequent builds.
+
+### Migrating to the C++23 module toolchain
+
+The module milestone requires a fresh configuration so BMI files are generated consistently. Follow these steps when upgrading:
+
+1. **Start from a clean build directory.** Remove any existing `build/*` directories and CMake cache files before reconfiguring so stale BMIs do not leak across configurations.
+2. **Reconfigure with module scanning enabled.** Pass `-DCMAKE_CXX_STANDARD=23` together with either `-DCMAKE_CXX_SCAN_FOR_MODULES=ON` (CMake 3.29+) or `-DCMAKE_EXPERIMENTAL_CXX_MODULE_DYNDEP=ON` (CMake 3.27–3.28). These flags let CMake emit BMI scanning rules for Ninja/MSBuild.
+3. **Use a module-capable compiler.** Visual Studio 2022 17.10+, clang 17+, and GCC 14+ have been validated for this milestone. Older releases may parse the code but fail to emit BMIs consistently.
+4. **Prefer Ninja for incremental module builds.** The generator keeps BMI scanning fast and reduces the chance of stale dependency edges when rebuilding after header/module edits.
+5. **Regenerate IDE metadata.** After reconfiguring, refresh VS Code/VS 2022 CMake caches so IntelliSense and launch configurations pick up the C++23 standard and module scanning switches.
 
 ---
 
@@ -277,6 +286,8 @@ export VCPKG_ROOT=/path/to/vcpkg
 cmake --preset Ninja-Release
 cmake --build --preset Ninja-Release
 ```
+
+For existing worktrees, clear the old build directory and add `-DCMAKE_CXX_STANDARD=23` plus either `-DCMAKE_CXX_SCAN_FOR_MODULES=ON` or `-DCMAKE_EXPERIMENTAL_CXX_MODULE_DYNDEP=ON` when re-running `cmake -S/-B` so module BMI discovery is enabled for your generator.
 
 ### Forcing the updater to rebuild from source
 
