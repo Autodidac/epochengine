@@ -22,63 +22,12 @@
  *                                                            *
  **************************************************************/
 // aengine.cpp
-#include "pch.h"
+module AlmondShell.aengine;
 
-#include "aplatform.hpp"
-#include "aengineconfig.hpp"   // All ENGINE-specific includes
-
-#include "aengine.hpp"
-#include "acontext.hpp"
-#include "acontextmultiplexer.hpp"
-#include "acontextwindow.hpp"
-#include "aplatformpump.hpp"
-#include "aversion.hpp"
-#include "aguimenu.hpp"
-#include "aapplicationmodule.hpp"
-#include "aenduserapplication.hpp"
-#include "acommandline.hpp"
-#include "awindowdata.hpp"
-#include "ascene.hpp"
-#include "ainput.hpp"
-//#include "ascriptingsystem.hpp"
-//#include "ataskgraphwithdot.hpp"
-#include "aupdatesystem.hpp"
-
-// Code Analysis
-#include "acodeinspector.hpp"
-
-// games
-#include "a2048like.hpp"
-#include "acellularsim.hpp"
-#include "afroggerlike.hpp"
-#include "amatch3like.hpp"
-#include "aminesweeperlike.hpp"
-#include "apacmanlike.hpp"
-#include "aslidingpuzzlelike.hpp"
-#include "asnakelike.hpp"
-#include "asokobanlike.hpp"
-#include "atetrislike.hpp"
-#include "asandsim.hpp"
-
-#include "asdlcontext.hpp"
-#include "asfmlcontext.hpp"
-#include "asoftrenderer_context.hpp"
-#include "araylibcontext.hpp"
-
-// STL
-#include <filesystem>
-#include <atomic>
-#include <iostream>
-#include <thread>
-#include <vector>
-#include <chrono>
-#include <queue>
-#include <mutex>
-#include <optional>
-#include <memory>
-#include <unordered_map>
-#include <map>
-#include <shared_mutex>
+import std;
+import AlmondShell.aengine:platform;
+import AlmondShell.aengine:engine_components;
+import AlmondShell.aengine:renderers;
 
 //#if !defined(ALMOND_SINGLE_PARENT) || (ALMOND_SINGLE_PARENT == 0)
 //#undef ALMOND_SHARED_CONTEXT
@@ -575,8 +524,8 @@ namespace almondnamespace::core
 #endif
     }
 
-	// ─── 2) Start the engine in WinMain or main() ──────────────────────────────
-    static void StartEngine() {
+        // ─── 2) Start the engine in WinMain or main() ──────────────────────────────
+    void StartEngine() {
 
 		// Print engine version
 		std::cout << "AlmondShell Engine v" << almondnamespace::GetEngineVersion() << '\n';
