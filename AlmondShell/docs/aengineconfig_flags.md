@@ -50,6 +50,7 @@ Raylib distributes its own OpenGL loader on Linux, but AlmondShell now links the
 
 ## Change Log
 
+- **v0.71.0** – Raised the documented baseline to C++23 and noted that module-capable toolchains (VS 2022 17.10+, clang 17+, GCC 14+) plus module scanning flags (`CMAKE_CXX_SCAN_FOR_MODULES` or `CMAKE_EXPERIMENTAL_CXX_MODULE_DYNDEP`) are required when configuring CMake.
 - **v0.70.3** – Recorded that the standalone glad loader is now linked on every platform so AlmondShell's OpenGL calls resolve uniformly across shell scripts, CMake presets, and VS Code tasks.
 - **v0.70.2** – Clarified that CMake now keeps Raylib's loader active by default while suppressing duplicate glad symbols, and noted that packagers can still flip `-DALMOND_FORCE_GLAD=ON` when a standalone loader is required.
 - **v0.70.1** – Documented that Linux builds reuse Raylib's bundled loader when available and introduced the `-DALMOND_FORCE_GLAD=ON` escape hatch for explicitly linking the standalone glad artefacts in packaging scenarios where Raylib omits them.

@@ -63,9 +63,9 @@ Asset producers can run off the main thread via the coroutine-enabled `taskgraph
 - **Roadmap Traceability** – The existing `roadmap.txt` lacked granular prompts or acceptance checks per phase, making automation hand-offs hard to script.
 - **Testing Surface** – No automated smoke tests or CI hooks are defined for the critical updater and renderer paths, leaving regression risk high during phase transitions.
 
-## Recent Progress (v0.70.3)
+## Recent Progress (v0.71.0)
 
-- Every build surface (CMake presets, VS Code tasks, and the helper shell scripts) now links against the standalone glad loader so Linux builds stop failing to resolve `gladLoadGLLoader`. The documentation and diagnostic metadata were bumped in tandem, keeping launcher manifests and version probes aligned with the v0.70.3 snapshot.
+- Established the C++23/module baseline, refreshed the build documentation with module-scanning flags (`CMAKE_CXX_SCAN_FOR_MODULES`/`CMAKE_EXPERIMENTAL_CXX_MODULE_DYNDEP`), and bumped the public metadata so downstream packagers configure BMI-aware toolchains consistently for the v0.71.0 snapshot.
 
 ## Recent Progress (v0.62.0)
 
