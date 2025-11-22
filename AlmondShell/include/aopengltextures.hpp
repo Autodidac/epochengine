@@ -31,7 +31,7 @@
 #ifdef ALMOND_USING_OPENGL
 
 #include "aopenglplatform.hpp"
-#include "aopenglcontext.hpp"
+//#include "aopenglcontext.hpp"
 #include "aopenglstate.hpp"
 
 #include "acontext.hpp"

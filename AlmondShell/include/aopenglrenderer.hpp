@@ -26,13 +26,13 @@
 
 #include "aengineconfig.hpp"
 #include "aopenglcontext.hpp"
-#include "aatlastexture.hpp"
+//#include "aatlastexture.hpp"
 #include "aspritehandle.hpp"
 #include "aopengltextures.hpp" // AtlasGPU + gpu_atlases + ensure_uploaded
 #include "aopenglquad.hpp"
 #include "aopenglstate.hpp"
 
-#include <span>
+//#include <span>
 #include <iostream>
 
 #if defined (ALMOND_USING_OPENGL)

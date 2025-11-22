@@ -30,7 +30,7 @@
 #if defined(ALMOND_USING_OPENGL)
 
 //#include "acontext.hpp"       // Context, ContextType
-#include "acontextmultiplexer.hpp" // BackendMap, windows
+//#include "acontextmultiplexer.hpp" // BackendMap, windows
 #include "awindowdata.hpp"
 
 #include "aplatformpump.hpp"    // platform::pump_events()
@@ -46,13 +46,13 @@
 #include <iostream>
 #include <stdexcept>
 #include <functional>
-#include <mutex>
-#include <queue>
+//#include <mutex>
+//#include <queue>
 #include <vector>
-#include <cstdint>
+//#include <cstdint>
 #include <utility>
 #include <string>
-#include <cstdio>
+//#include <cstdio>
 
 #if defined(__linux__)
 #    include <X11/Xlib.h>
