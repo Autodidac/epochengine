@@ -33,27 +33,38 @@ The multi-context runtime spins up several cooperating systems during process st
 
 ```mermaid
 sequenceDiagram
+    autonumber
     participant Bootstrap as Engine Bootstrap
+    participant Platform as Platform Abstraction
     participant Manager as MultiContextManager
     participant Prototype as Backend Prototype
     participant Window as WindowData
     participant Worker as Render Thread
 
     Bootstrap->>Manager: Initialize()
+    Bootstrap->>Platform: Select platform hooks (Win32/X11/Wayland/SDL3)
+    Platform->>Manager: Install windowing callbacks
     Manager->>Manager: Register window classes & parent
     Manager->>Prototype: InitializeAllContexts()
     Manager->>Window: make_backend_windows()
+    Platform-->>Window: Pump events / dispatch resize
     Window-->>Prototype: CloneContext()
     Manager->>Worker: spawn RenderLoop(Window)
     Worker->>Prototype: process_safe(context, queue)
     Worker-->>Window: Drain command queue
 ```
 
-Resizes, atlas uploads, and render-thread callbacks are orchestrated through the multiplexer so every backend stays in sync. The flowchart below summarises how Win32 resize messages travel through shared `Context`/`WindowData` state before landing in backend-specific handlers. Refer to the engine analysis document for exhaustive call-site notes and per-backend nuances.
+Resizes, atlas uploads, and render-thread callbacks are orchestrated through the multiplexer so every backend stays in sync. The flowchart below summarises how resize events from Win32, X11/Wayland, and SDL3 feeds travel through shared `Context`/`WindowData` state before landing in backend-specific handlers. Refer to the engine analysis document for exhaustive call-site notes and per-backend nuances.
 
 ```mermaid
 flowchart LR
-    WM_SIZE[Win32 WM_SIZE] --> HandleResize{HandleResize Dispatch}
+    style PlatformEvents fill:#fdf6e3,stroke:#657b83,stroke-width:1px
+    subgraph PlatformEvents [Cross-platform event loop]
+        WM_SIZE[Win32/X11/Wayland resize] --> PlatformDispatch[Dispatch via platform abstraction]
+        SDLResize[SDL3 & fallback pumps] --> PlatformDispatch
+    end
+
+    PlatformDispatch --> HandleResize{HandleResize Dispatch}
     HandleResize --> UpdateShared[Update WindowData & Context dimensions]
     UpdateShared --> QueueResize[Enqueue resize callback]
     QueueResize --> RenderThread[RenderLoop drains CommandQueue]
