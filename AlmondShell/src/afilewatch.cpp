@@ -71,8 +71,8 @@ namespace almondnamespace
             }
 
             if (entry.is_regular_file() && entry.path().extension() == ".cpp") {
-                file_state fs;
-                fs.path = entry.path().string();
+                file_state state;
+                state.path = entry.path().string();
 
                 auto last_write = fs::last_write_time(entry, ec);
                 if (ec) {
@@ -80,10 +80,10 @@ namespace almondnamespace
                     continue;
                 }
 
-                fs.last_write_time = last_write.time_since_epoch().count();
-                fs.hash = compute_file_hash(fs.path);
-                fs.dirty = false;
-                result.push_back(std::move(fs));
+                state.last_write_time = last_write.time_since_epoch().count();
+                state.hash = compute_file_hash(state.path);
+                state.dirty = false;
+                result.push_back(std::move(state));
             }
         }
         return result;
