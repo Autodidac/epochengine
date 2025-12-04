@@ -1,8 +1,6 @@
-module;
-
-#include "acommandline.hpp"
-
 export module aengine.cli;
+
+import acommandline;
 
 export namespace almondnamespace::core::cli
 {
