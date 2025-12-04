@@ -74,8 +74,8 @@ namespace almondnamespace::anativecontext
         } keyboard;
 
         // Timing
-        time::Timer pollTimer = time::createTimer(1.0);
-        almondnamespace::time::Timer fpsTimer = time::createTimer(1.0);
+        almondnamespace::time::Timer pollTimer = almondnamespace::time::createTimer(1.0);
+        almondnamespace::time::Timer fpsTimer = almondnamespace::time::createTimer(1.0);
         int frameCount = 0;
 
         // Cube rotation
