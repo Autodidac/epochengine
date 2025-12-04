@@ -37,6 +37,22 @@ namespace almondnamespace::utilities
 {
 #ifdef _WIN32 // Windows-specific
 
+// MSVC may skip defining architecture macros when compiling module
+// interfaces or when certain switches are used. Recreate the mappings that
+// <windows.h> usually sets up so Windows headers don't abort with "No Target
+// Architecture".
+#if !defined(_X86_) && !defined(_AMD64_) && !defined(_ARM_) && !defined(_ARM64_)
+#if defined(_M_IX86)
+#define _X86_
+#elif defined(_M_AMD64) || defined(_M_X64)
+#define _AMD64_
+#elif defined(_M_ARM)
+#define _ARM_
+#elif defined(_M_ARM64)
+#define _ARM64_
+#endif
+#endif
+
 #include <consoleapi3.h>
 #include "aframework.hpp"
 

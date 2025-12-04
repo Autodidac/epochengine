@@ -28,6 +28,22 @@ module;
 #include <utility>
 
 #ifdef _WIN32
+// MSVC doesn't always predefine the architecture macros inside module
+// interface units, which makes <winnt.h> bail out with "No Target
+// Architecture". Mirror the mappings that <windows.h> normally performs so
+// Windows headers have the information they expect.
+#if !defined(_X86_) && !defined(_AMD64_) && !defined(_ARM_) && !defined(_ARM64_)
+#if defined(_M_IX86)
+#define _X86_
+#elif defined(_M_AMD64) || defined(_M_X64)
+#define _AMD64_
+#elif defined(_M_ARM)
+#define _ARM_
+#elif defined(_M_ARM64)
+#define _ARM64_
+#endif
+#endif
+
 #include <consoleapi3.h>
 #else
 #include <stdio.h>
