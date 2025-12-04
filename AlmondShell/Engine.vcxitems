@@ -206,6 +206,7 @@
     <ResourceCompile Include="$(MSBuildThisFileDirectory)src\WinResource.rc" />
   </ItemGroup>
   <ItemGroup>
+    <ClCompile Include="$(MSBuildThisFileDirectory)modules\aengine.cli.ixx" />
     <ClCompile Include="$(MSBuildThisFileDirectory)modules\aengine.engine_components.ixx" />
     <ClCompile Include="$(MSBuildThisFileDirectory)modules\aengine.ixx" />
     <ClCompile Include="$(MSBuildThisFileDirectory)modules\aengine.platform.ixx" />

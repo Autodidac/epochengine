@@ -43,6 +43,7 @@ target_sources(almondshell PRIVATE
         BASE_DIRS ${ALMONDSHELL_MODULE_DIR} ${CMAKE_CURRENT_SOURCE_DIR}/include
         FILES
             ${ALMONDSHELL_MODULE_DIR}/aengine.ixx
+            ${ALMONDSHELL_MODULE_DIR}/aengine.cli.ixx
             ${ALMONDSHELL_MODULE_DIR}/aengine.platform.ixx
             ${ALMONDSHELL_MODULE_DIR}/aengine.engine_components.ixx
             ${ALMONDSHELL_MODULE_DIR}/aengine.renderers.ixx

@@ -548,5 +548,8 @@
     <ClCompile Include="$(MSBuildThisFileDirectory)modules\aengine.engine_components.ixx">
       <Filter>Module Files</Filter>
     </ClCompile>
+    <ClCompile Include="$(MSBuildThisFileDirectory)modules\aengine.cli.ixx">
+      <Filter>Module Files</Filter>
+    </ClCompile>
   </ItemGroup>
 </Project>

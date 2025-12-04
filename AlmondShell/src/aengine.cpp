@@ -30,7 +30,7 @@ import :platform;
 import :engine_components;
 import :renderers;
 
-import "acommandline.hpp";     // Command-line parsing utilities
+import :cli;                    // Command-line parsing utilities
 
 //#if !defined(ALMOND_SINGLE_PARENT) || (ALMOND_SINGLE_PARENT == 0)
 //#undef ALMOND_SHARED_CONTEXT
