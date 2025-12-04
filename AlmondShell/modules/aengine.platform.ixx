@@ -5,7 +5,7 @@ export module aengine:platform;
 export import "aplatform.hpp";
 export import "aengineconfig.hpp";
 export import "aengine.hpp";
-export import "acommandline.hpp";
+export import :cli;
 export import "aupdateconfig.hpp";
 export import "aupdatesystem.hpp";
 export import "aplatformpump.hpp";
