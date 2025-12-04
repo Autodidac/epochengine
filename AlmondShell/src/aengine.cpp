@@ -22,6 +22,13 @@
  *                                                            *
  **************************************************************/
 // aengine.cpp
+module;
+
+#if defined(_WIN32)
+#    include <windows.h>
+#    include <shellapi.h>
+#endif
+
 module aengine;
 
 import std;
