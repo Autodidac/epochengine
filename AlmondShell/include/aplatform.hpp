@@ -24,6 +24,17 @@
 // aplatform.hpp
 #pragma once
 
+// MSVC's standard library implementation can spuriously report redefinition
+// errors for default template arguments when header units or modules are
+// involved but the corresponding C++20 modules are not actually available.
+// Force the project to use the traditional header-based includes instead of
+// attempting to import modules guarded by __cpp_modules feature detection.
+// This keeps builds consistent across toolchains that do not ship the
+// module interfaces referenced in other AlmondShell headers.
+#ifndef ALMOND_FORCE_LEGACY_HEADERS
+#define ALMOND_FORCE_LEGACY_HEADERS 1
+#endif
+
 #include <string>
 #include <ctime>
 
