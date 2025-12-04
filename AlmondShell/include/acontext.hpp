@@ -24,8 +24,8 @@
  // acontext.hpp
 #pragma once
 
-//#include "aplatform.hpp"        // Must always come first for platform defines
-//#include "aengineconfig.hpp"    // All ENGINE-specific includes
+#include "aplatform.hpp"        // Must always come first for platform defines
+#include "aengineconfig.hpp"    // All ENGINE-specific includes
 
 #include "ainput.hpp"           // Keycodes and input handling
 #include "aatlastexture.hpp"    // TextureAtlas type

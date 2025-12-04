@@ -25,6 +25,7 @@
 #pragma once
 
 #include <string>
+#include <ctime>
 
 // Define the namespace based on a macro
 #define almondnamespace almondshell
@@ -63,5 +64,12 @@
 #pragma comment(lib, "Shcore.lib")
 #include <CommCtrl.h>
 #pragma comment(lib, "comctl32.lib")
+#endif // !ALMOND_MAIN_HEADLESS
+
+// <ctime> (via <time.h>) on MSVC defines a macro named `time` that collides with
+// our `almondnamespace::time` namespace. Undefine it after the Windows headers so
+// nested namespace usage stays intact.
+#ifdef time
+#undef time
 #endif // !ALMOND_MAIN_HEADLESS
 #endif
