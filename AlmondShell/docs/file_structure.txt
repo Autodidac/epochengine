@@ -1,4 +1,10 @@
 /AlmondShell
+│
+│  NOTE: The ECS, component, and engine systems are now consumed via `import`
+│  rather than `#include`. Pull the consolidated surface from `import aengine;`
+│  or target partitions such as `import aengine.engine_components;` and
+│  `import aengine.platform;` instead of the legacy umbrella headers.
+│
 │── include/
 │   │── abuildsystem.hpp          # Build system utilities
 │   │── acompiler.hpp             # Compiler-related definitions
