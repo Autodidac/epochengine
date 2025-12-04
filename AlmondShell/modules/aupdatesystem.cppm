@@ -1,5 +1,7 @@
 module;
 
+module aupdatesystem;
+
 import std;
 
 import "abuildsystem.hpp";

@@ -1,5 +1,7 @@
 module;
 
+module aenduserapplication;
+
 import <memory>;
 
 import aenduserapplication;

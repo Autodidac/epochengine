@@ -1,5 +1,7 @@
 module;
 
+module ascene;
+
 import <string>;
 
 import ascene;

@@ -46,7 +46,7 @@ include Directory
 •	aui.hpp
 •	aupdateconfig.hpp
 •	modules/aupdatesystem.ixx
-•       modules/aupdatesystem.cpp
+•       modules/aupdatesystem.cppm
 •	autilities.hpp
 •	aversion.hpp
 •	avulkanglfwsetup.hpp
