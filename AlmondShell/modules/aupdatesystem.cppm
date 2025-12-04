@@ -2,8 +2,6 @@ module;
 
 module aupdatesystem;
 
-import std;
-
 import "abuildsystem.hpp";
 import "aupdateconfig.hpp";
 import aupdatesystem;

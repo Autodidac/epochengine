@@ -5,8 +5,6 @@ module;
 
 export module aupdatesystem;
 
-import std;
-
 export namespace almondnamespace
 {
     namespace cmds

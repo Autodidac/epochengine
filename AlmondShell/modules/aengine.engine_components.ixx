@@ -2,8 +2,6 @@ module;
 
 export module aengine:engine_components;
 
-import std;
-
 import ascene;
 import aupdatesystem;
 import "acodeinspector.hpp";

@@ -2,8 +2,6 @@ module;
 
 export module aengine:platform;
 
-import std;
-
 import "aplatform.hpp";
 import "aengineconfig.hpp";
 import "aengine.hpp";

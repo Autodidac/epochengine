@@ -2,8 +2,6 @@ module;
 
 export module aengine:renderers;
 
-import std;
-
 #ifdef ALMOND_USING_SDL
 import "asdlcontext.hpp";
 #endif

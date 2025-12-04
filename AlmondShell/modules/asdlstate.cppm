@@ -11,7 +11,6 @@ import <SDL3/SDL.h>;
 module asdlstate;
 
 import asdlstate;
-import std;
 
 namespace almondnamespace::sdlcontext::state
 {
