@@ -211,6 +211,7 @@
     <ClCompile Include="$(MSBuildThisFileDirectory)modules\aengine.ixx" />
     <ClCompile Include="$(MSBuildThisFileDirectory)modules\aengine.platform.ixx" />
     <ClCompile Include="$(MSBuildThisFileDirectory)modules\aengine.renderers.ixx" />
+    <ClCompile Include="$(MSBuildThisFileDirectory)modules\aengine.updater.ixx" />
     <ClCompile Include="$(MSBuildThisFileDirectory)src\acompiler.cpp" />
     <ClCompile Include="$(MSBuildThisFileDirectory)src\acontext.cpp">
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">false</ExcludedFromBuild>
