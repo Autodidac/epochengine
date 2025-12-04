@@ -554,5 +554,11 @@
     <ClCompile Include="$(MSBuildThisFileDirectory)modules\aengine.updater.ixx">
       <Filter>Module Files</Filter>
     </ClCompile>
+    <ClCompile Include="$(MSBuildThisFileDirectory)modules\aengine.input.ixx">
+      <Filter>Module Files</Filter>
+    </ClCompile>
+    <ClCompile Include="$(MSBuildThisFileDirectory)modules\aengine.menu.ixx">
+      <Filter>Module Files</Filter>
+    </ClCompile>
   </ItemGroup>
 </Project>

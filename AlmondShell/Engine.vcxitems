@@ -208,7 +208,9 @@
   <ItemGroup>
     <ClCompile Include="$(MSBuildThisFileDirectory)modules\aengine.cli.ixx" />
     <ClCompile Include="$(MSBuildThisFileDirectory)modules\aengine.engine_components.ixx" />
+    <ClCompile Include="$(MSBuildThisFileDirectory)modules\aengine.input.ixx" />
     <ClCompile Include="$(MSBuildThisFileDirectory)modules\aengine.ixx" />
+    <ClCompile Include="$(MSBuildThisFileDirectory)modules\aengine.menu.ixx" />
     <ClCompile Include="$(MSBuildThisFileDirectory)modules\aengine.platform.ixx" />
     <ClCompile Include="$(MSBuildThisFileDirectory)modules\aengine.renderers.ixx" />
     <ClCompile Include="$(MSBuildThisFileDirectory)modules\aengine.updater.ixx" />
