@@ -21,40 +21,32 @@
  *   See LICENSE file for full terms.                         *
  *                                                            *
  **************************************************************/
-module aecs:internal_private;
+export module aecs:components;
 
-import <format>;
 import <string>;
-import <string_view>;
+import <utility>;
+import <vector>;
 
-import :storage;
 import almond.core.logger;
 import almond.core.time;
 
-import "aeventsystem.hpp";
-import "alogger.hpp";
-import "arobusttime.hpp";
-
-namespace almondnamespace::ecs::_detail
+export namespace almondnamespace::ecs
 {
-    inline void notify(almondnamespace::Logger* log,
-        almondnamespace::timing::Timer* clk,
-        Entity e,
-        std::string_view action,
-        std::string_view comp)
-    {
-        if (!log || !clk) return;
-        auto ts = timing::getCurrentTimeString();
-        log->log(std::format("[ECS] {}{} entity={} at {}",
-            action,
-            comp.empty() ? "" : std::format(":{}", comp),
-            e, ts));
-        events::push_event(events::Event{
-            events::EventType::Custom,
-            { {"ecs_action", std::string(action)},
-              {"entity",     std::to_string(e)},
-              {"component",  std::string(comp)},
-              {"timing",       ts} },
-            0.f, 0.f });
-    }
+    // ─── Position ─────────────────────────────────────────────────────────
+    struct Position { float x{ 0 }, y{ 0 }; };
+
+    // ─── Velocity ─────────────────────────────────────────────────────────
+    struct Velocity { float dx{ 0 }, dy{ 0 }; };
+
+    // ─── History ──────────────────────────────────────────────────────────
+    // Each entity that needs rewind support keeps its past states here
+    struct History { std::vector<std::pair<float, float>> states; };
+
+    // ─── LoggerComponent ─────────────────────────────────────────────────
+    // Stores per-entity logging preferences (file, level, clock pointer)
+    struct LoggerComponent {
+        std::string       file;
+        almondnamespace::LogLevel          level{ almondnamespace::LogLevel::INFO };
+        almondnamespace::timing::Timer* clock{};
+    };
 }

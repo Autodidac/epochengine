@@ -100,7 +100,9 @@ target_sources(almondshell PRIVATE
             ${ALMONDSHELL_MODULE_DIR}/ascene.ixx
             ${ALMONDSHELL_MODULE_DIR}/ascene.cppm
             ${ALMONDSHELL_MODULE_DIR}/aecs.ixx
-            ${ALMONDSHELL_MODULE_DIR}/aecs.private.ixx
+            ${ALMONDSHELL_MODULE_DIR}/aecs.components.ixx
+            ${ALMONDSHELL_MODULE_DIR}/aecs.internal_private.ixx
+            ${ALMONDSHELL_MODULE_DIR}/aecs.storage.ixx
             ${ALMONDSHELL_MODULE_DIR}/almond.core.types.ixx
             ${ALMONDSHELL_MODULE_DIR}/almond.core.time.ixx
             ${ALMONDSHELL_MODULE_DIR}/almond.core.logger.ixx
