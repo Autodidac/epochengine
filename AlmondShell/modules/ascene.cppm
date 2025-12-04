@@ -14,7 +14,7 @@ import "amovementevent.hpp";
 
 namespace almondnamespace::scene
 {
-    Scene::Scene(Logger* L, time::Timer* C, LogLevel sceneLevel)
+    Scene::Scene(Logger* L, timing::Timer* C, LogLevel sceneLevel)
         : reg(Components::make_registry(L, C)),
         logger(L),
         clock(C),

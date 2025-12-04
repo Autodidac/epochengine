@@ -42,7 +42,7 @@ import ascene;
 namespace almondnamespace::tetris 
 {
     struct TetrisScene : public scene::Scene {
-        TetrisScene(Logger* L = nullptr, time::Timer* C = nullptr)
+        TetrisScene(Logger* L = nullptr, timing::Timer* C = nullptr)
             : Scene(L, C) {
         }
 
@@ -51,8 +51,8 @@ namespace almondnamespace::tetris
             if (!setup_sprites())
                 throw std::runtime_error("Failed to setup Tetris sprites");
             state = {};
-            timer = time::createTimer(0.25);
-            time::setScale(timer, 0.25);
+            timer = timing::createTimer(0.25);
+            timing::setScale(timer, 0.25);
             acc = 0.0;
             game_over = false;
         }
@@ -82,7 +82,7 @@ namespace almondnamespace::tetris
 
             // --- Timing ---
             advance(timer, 0.016);
-            acc += time::elapsed(timer);
+            acc += timing::elapsed(timer);
             reset(timer);
 
             while (acc >= STEP_S) {
@@ -139,7 +139,7 @@ namespace almondnamespace::tetris
             }
         } state;
 
-        time::Timer timer{};
+        timing::Timer timer{};
         double acc = 0.0;
         bool game_over = false;
 

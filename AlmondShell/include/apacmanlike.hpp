@@ -83,7 +83,7 @@ namespace almondnamespace::pacman
     };
 
     struct PacmanScene : public scene::Scene {
-        PacmanScene(Logger* L = nullptr, time::Timer* C = nullptr)
+        PacmanScene(Logger* L = nullptr, timing::Timer* C = nullptr)
             : Scene(L, C)
         {
         }

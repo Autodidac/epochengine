@@ -23,6 +23,8 @@
  **************************************************************/
 module;
 
+export module ascene;
+
 import <memory>;
 import <string>;
 
@@ -33,7 +35,6 @@ import aengine:platform;
 import "aentitycomponents.hpp";
 import "amovementevent.hpp";
 
-export module ascene;
 
 namespace almondnamespace::scene
 {
@@ -43,7 +44,7 @@ namespace almondnamespace::scene
         using Registry = almondnamespace::ecs::reg_ex<Components...>;
 
         static Registry make_registry(almondnamespace::Logger* logger,
-            almondnamespace::time::Timer* clock)
+            almondnamespace::timing::Timer* clock)
         {
             return almondnamespace::ecs::make_registry<Components...>(logger, clock);
         }
@@ -59,7 +60,7 @@ namespace almondnamespace::scene
         using Registry = typename Components::Registry;
 
         Scene(Logger* L = nullptr,
-            time::Timer* C = nullptr,
+            timing::Timer* C = nullptr,
             LogLevel sceneLevel = LogLevel::INFO);
 
         Scene(const Scene&) = delete;
@@ -105,7 +106,7 @@ namespace almondnamespace::scene
         Registry reg;
         bool loaded = false;
         Logger* logger = nullptr;       // optional shared logger
-        time::Timer* clock = nullptr;   // optional time reference
+        timing::Timer* clock = nullptr;   // optional time reference
         LogLevel sceneLogLevel{ LogLevel::INFO };         // per-scene verbosity threshold
     };
 

@@ -886,9 +886,9 @@ namespace almondnamespace::raylibcontext
         // -----------------------------------------------
 
         // Animated bg (helps verify viewport)
-        static auto* bgTimer = almondnamespace::time::getTimer("menu", "bg_color");
-        if (!bgTimer) bgTimer = &almondnamespace::time::createNamedTimer("menu", "bg_color");
-        const double t = almondnamespace::time::elapsed(*bgTimer);
+        static auto* bgTimer = almondnamespace::timing::getTimer("menu", "bg_color");
+        if (!bgTimer) bgTimer = &almondnamespace::timing::createNamedTimer("menu", "bg_color");
+        const double t = almondnamespace::timing::elapsed(*bgTimer);
 
         const unsigned char r = static_cast<unsigned char>((0.5 + 0.5 * std::sin(t * 1.0)) * 255);
         const unsigned char g = static_cast<unsigned char>((0.5 + 0.5 * std::sin(t * 0.7 + 2.0)) * 255);

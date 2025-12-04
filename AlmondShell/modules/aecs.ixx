@@ -29,6 +29,9 @@ import <typeinfo>;
 import <utility>;
 
 import "aentitycomponentmanager.hpp";
+#include "aentity.hpp";
+
+import almond.core.time;
 
 namespace almondnamespace
 {
@@ -46,13 +49,13 @@ export namespace almondnamespace::ecs
         ComponentStorage storage;
         EntityID nextID{ 1 };
         almondnamespace::Logger* log{ nullptr };
-        almondnamespace::time::Timer* clk{ nullptr };
+        almondnamespace::timing::Timer* clk{ nullptr };
     };
 
     template<typename... Cs>
     [[nodiscard]] inline reg_ex<Cs...> make_registry(
         almondnamespace::Logger* L = nullptr,
-        almondnamespace::time::Timer* C = nullptr)
+        almondnamespace::timing::Timer* C = nullptr)
     {
         return { {}, 1, L, C };
     }
@@ -60,7 +63,7 @@ export namespace almondnamespace::ecs
     namespace _detail
     {
         void notify(almondnamespace::Logger* log,
-            almondnamespace::time::Timer* clk,
+            almondnamespace::timing::Timer* clk,
             Entity e,
             std::string_view action,
             std::string_view comp = "");

@@ -383,11 +383,11 @@ namespace almondnamespace::sdlcontext
             return false;
         }
 
-        static auto* bgTimer = almondnamespace::time::getTimer("menu", "bg_color");
+        static auto* bgTimer = almondnamespace::timing::getTimer("menu", "bg_color");
         if (!bgTimer)
-            bgTimer = &almondnamespace::time::createNamedTimer("menu", "bg_color");
+            bgTimer = &almondnamespace::timing::createNamedTimer("menu", "bg_color");
 
-        double t = almondnamespace::time::elapsed(*bgTimer); // seconds
+        double t = almondnamespace::timing::elapsed(*bgTimer); // seconds
 
         // smooth rainbow values
         // Uint8 r = static_cast<Uint8>((0.5 + 0.5 * std::min(t * 1.0)) * 255);

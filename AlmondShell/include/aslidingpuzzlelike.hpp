@@ -52,7 +52,7 @@ namespace almondnamespace::sliding
     inline constexpr double MOVE_S = 0.15; // 150 ms per move
 
     struct SlidingScene : public scene::Scene {
-        SlidingScene(Logger* L = nullptr, time::Timer* C = nullptr)
+        SlidingScene(Logger* L = nullptr, timing::Timer* C = nullptr)
             : Scene(L, C)
         {
         }
@@ -61,8 +61,8 @@ namespace almondnamespace::sliding
             Scene::load();
             setupSprites();
             state = {};
-            timer = time::createTimer(0.25);
-            time::setScale(timer, 0.25);
+            timer = timing::createTimer(0.25);
+            timing::setScale(timer, 0.25);
             acc = 0.0;
             movedThisFrame = false;
         }
@@ -109,7 +109,7 @@ namespace almondnamespace::sliding
             }
 
             advance(timer, 0.016);
-            acc += time::elapsed(timer);
+            acc += timing::elapsed(timer);
             reset(timer);
 
             if (acc >= MOVE_S) {
@@ -245,7 +245,7 @@ namespace almondnamespace::sliding
 
         State state{};
         std::unordered_map<int, SpriteHandle> tiles{};
-        time::Timer timer{};
+        timing::Timer timer{};
         double acc = 0.0;
         bool movedThisFrame = false;
     };

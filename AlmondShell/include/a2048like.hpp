@@ -70,7 +70,7 @@ namespace almondnamespace::game2048
     }
 
     struct Game2048Scene : public scene::Scene {
-        Game2048Scene(Logger* L = nullptr, time::Timer* C = nullptr)
+        Game2048Scene(Logger* L = nullptr, timing::Timer* C = nullptr)
             : Scene(L, C)
         {
         }

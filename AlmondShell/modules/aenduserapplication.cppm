@@ -40,7 +40,7 @@ namespace almondnamespace::app
         // Handle foodSlot = opengl::load_and_register(ctx, "assets/yellow.ppm", "snake_food");
 
         // timers
-        time::Timer clock;
+        timing::Timer clock;
         //auto tick = clock.createTimer(); tick.start();
         double acc = 0.0;
 

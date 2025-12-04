@@ -47,7 +47,7 @@ namespace almondnamespace::sandsim
     inline constexpr double STEP_S = 0.016;
 
     struct SandSimScene : public scene::Scene {
-        SandSimScene(Logger* L = nullptr, time::Timer* C = nullptr)
+        SandSimScene(Logger* L = nullptr, timing::Timer* C = nullptr)
             : Scene(L, C)
         {
         }
@@ -56,8 +56,8 @@ namespace almondnamespace::sandsim
             Scene::load();
             setupSprites();
             grid = gamecore::make_grid<bool>(W, H, false);
-            timer = time::createTimer(0.25);
-            time::setScale(timer, 0.25);
+            timer = timing::createTimer(0.25);
+            timing::setScale(timer, 0.25);
             acc = 0.0;
         }
 
@@ -88,7 +88,7 @@ namespace almondnamespace::sandsim
             }
 
             advance(timer, STEP_S);
-            acc += time::elapsed(timer);
+            acc += timing::elapsed(timer);
             reset(timer);
 
             while (acc >= STEP_S) {
@@ -192,7 +192,7 @@ namespace almondnamespace::sandsim
 
         gamecore::grid_t<bool> grid{};
         SpriteHandle sandHandle{};
-        time::Timer timer{};
+        timing::Timer timer{};
         double acc = 0.0;
     };
 

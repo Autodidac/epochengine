@@ -50,7 +50,7 @@ namespace almondnamespace::ecs {
     struct LoggerComponent {
         std::string       file;
         LogLevel          level{ LogLevel::INFO };
-        time::Timer* clock{};
+        timing::Timer* clock{};
     };
 
 } // namespace almondnamespace::ecs

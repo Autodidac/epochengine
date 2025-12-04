@@ -41,7 +41,7 @@ namespace almondnamespace::ecs
 {
     // ─── spawn_entity ──────────────────────────────────────────────────
     template<typename... Cs>
-    inline Entity spawn_entity(reg_ex<Cs...>& R, std::string_view logfile, almondnamespace::LogLevel lvl, time::Timer& clock)
+    inline Entity spawn_entity(reg_ex<Cs...>& R, std::string_view logfile, almondnamespace::LogLevel lvl, timing::Timer& clock)
     {
         Entity e = create_entity(R);
 
@@ -50,7 +50,7 @@ namespace almondnamespace::ecs
         add_component<LoggerComponent>(R, e, { std::string(logfile),lvl,&clock });
 
         // logging
-        if (R.log && R.clk) R.log->log(std::format("[ECS] Entity {} spawned at {}", e, time::getCurrentTimeString()));
+        if (R.log && R.clk) R.log->log(std::format("[ECS] Entity {} spawned at {}", e, timing::getCurrentTimeString()));
 
         events::push_event({ events::EventType::Custom,
                              {{"action","spawn"},

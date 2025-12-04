@@ -1,10 +1,11 @@
 module;
 
-module aupdatesystem;
+import aupdatesystem;
 
 import "abuildsystem.hpp";
 import "aupdateconfig.hpp";
-import aupdatesystem;
+
+//import aupdatesystem;
 
 namespace almondnamespace
 {

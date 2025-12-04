@@ -78,8 +78,8 @@ namespace almondnamespace::sfmlcontext::state
             std::bitset<sf::Keyboard::KeyCount> prevDown;
         } keyboard{};
 
-        time::Timer pollTimer = time::createTimer(1.0);
-        time::Timer fpsTimer = time::createTimer(1.0);
+        timing::Timer pollTimer = timing::createTimer(1.0);
+        timing::Timer fpsTimer = timing::createTimer(1.0);
         int frameCount = 0;
 
         [[nodiscard]] sf::RenderWindow* get_sfml_window() const noexcept

@@ -57,7 +57,7 @@ namespace almondnamespace::match3
     };
 
     struct Match3Scene : public scene::Scene {
-        Match3Scene(Logger* L = nullptr, time::Timer* C = nullptr)
+        Match3Scene(Logger* L = nullptr, timing::Timer* C = nullptr)
             : Scene(L, C)
         {
         }

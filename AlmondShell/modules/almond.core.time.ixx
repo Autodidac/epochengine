@@ -31,7 +31,7 @@ module;
 
 export module almond.core.time;
 
-export namespace almondnamespace::time
+export namespace almondnamespace::timing
 {
     using Clock = std::chrono::steady_clock;
 

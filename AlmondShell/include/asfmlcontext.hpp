@@ -190,11 +190,11 @@ namespace almondnamespace::sfmlcontext
             return false;
         }
 
-        static auto* bgTimer = almondnamespace::time::getTimer("menu", "bg_color");
+        static auto* bgTimer = almondnamespace::timing::getTimer("menu", "bg_color");
         if (!bgTimer)
-            bgTimer = &almondnamespace::time::createNamedTimer("menu", "bg_color");
+            bgTimer = &almondnamespace::timing::createNamedTimer("menu", "bg_color");
 
-        double t = almondnamespace::time::elapsed(*bgTimer);
+        double t = almondnamespace::timing::elapsed(*bgTimer);
         unsigned char r = static_cast<unsigned char>((0.5 + 0.5 * std::sin(t * 1.0)) * 255);
         unsigned char g = static_cast<unsigned char>((0.5 + 0.5 * std::sin(t * 0.7 + 2.0)) * 255);
         unsigned char b = static_cast<unsigned char>((0.5 + 0.5 * std::sin(t * 1.3 + 4.0)) * 255);

@@ -52,7 +52,7 @@ namespace almondnamespace::frogger {
     };
 
     struct FroggerScene : public scene::Scene {
-        FroggerScene(Logger* L = nullptr, time::Timer* C = nullptr)
+        FroggerScene(Logger* L = nullptr, timing::Timer* C = nullptr)
             : Scene(L, C)
         {
         }

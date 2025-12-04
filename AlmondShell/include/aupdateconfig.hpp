@@ -23,7 +23,7 @@
  **************************************************************/
 #pragma once
 
-import std;
+//import std;
 
 #include "aversion.hpp"
 

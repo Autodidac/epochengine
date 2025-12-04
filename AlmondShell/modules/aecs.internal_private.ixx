@@ -21,7 +21,7 @@
  *   See LICENSE file for full terms.                         *
  *                                                            *
  **************************************************************/
-module aecs:private;
+module aecs:internal_private;
 
 import <format>;
 import <string>;
@@ -35,13 +35,13 @@ import "arobusttime.hpp";
 namespace almondnamespace::ecs::_detail
 {
     inline void notify(almondnamespace::Logger* log,
-        almondnamespace::time::Timer* clk,
+        almondnamespace::timing::Timer* clk,
         Entity e,
         std::string_view action,
         std::string_view comp)
     {
         if (!log || !clk) return;
-        auto ts = time::getCurrentTimeString();
+        auto ts = timing::getCurrentTimeString();
         log->log(std::format("[ECS] {}{} entity={} at {}",
             action,
             comp.empty() ? "" : std::format(":{}", comp),
@@ -51,7 +51,7 @@ namespace almondnamespace::ecs::_detail
             { {"ecs_action", std::string(action)},
               {"entity",     std::to_string(e)},
               {"component",  std::string(comp)},
-              {"time",       ts} },
+              {"timing",       ts} },
             0.f, 0.f });
     }
 }

@@ -3,6 +3,8 @@ module;
 #include "abuildsystem.hpp"
 #include "aupdateconfig.hpp"
 
+import std;
+
 export module aupdatesystem;
 
 export namespace almondnamespace

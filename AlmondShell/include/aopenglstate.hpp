@@ -87,8 +87,8 @@ namespace almondnamespace::openglstate
             std::bitset<256> prevDown;
         } keyboard;
 
-        almondnamespace::time::Timer pollTimer = almondnamespace::time::createTimer(1.0);
-        almondnamespace::time::Timer fpsTimer = almondnamespace::time::createTimer(1.0);
+        almondnamespace::timing::Timer pollTimer = almondnamespace::timing::createTimer(1.0);
+        almondnamespace::timing::Timer fpsTimer = almondnamespace::timing::createTimer(1.0);
         int frameCount = 0;
 
         GLuint shader = 0;

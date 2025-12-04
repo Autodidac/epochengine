@@ -91,7 +91,7 @@ namespace almondnamespace::minesweeper
     };
 
     struct MinesweeperScene : public scene::Scene {
-        MinesweeperScene(Logger* L = nullptr, time::Timer* C = nullptr)
+        MinesweeperScene(Logger* L = nullptr, timing::Timer* C = nullptr)
             : Scene(L, C)
         {
         }

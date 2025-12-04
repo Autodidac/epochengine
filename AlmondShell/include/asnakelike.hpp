@@ -49,7 +49,7 @@ import aecs;
 namespace almondnamespace::snake {
 
     struct SnakeScene : public scene::Scene {
-        SnakeScene(Logger* L = nullptr, time::Timer* C = nullptr)
+        SnakeScene(Logger* L = nullptr, timing::Timer* C = nullptr)
             : Scene(L, C) {
         }
 
@@ -141,7 +141,7 @@ namespace almondnamespace::snake {
         Position dir{ -1, 0 };
         Position lastdir{ 0, 0 };
 
-        time::Timer timer{};
+        timing::Timer timer{};
         double acc = 0.0;
         double tongueTimer = 0.0;
         int tongueFrame = 0;
@@ -236,8 +236,8 @@ namespace almondnamespace::snake {
             ecs::add_component(world, food, Position{ 0, 0 });
             place_food();
 
-            timer = time::createTimer(0.25);
-            time::setScale(timer, 0.25);
+            timer = timing::createTimer(0.25);
+            timing::setScale(timer, 0.25);
             acc = 0.0;
             tongueTimer = 0.0;
             tongueFrame = 0;
@@ -256,8 +256,8 @@ namespace almondnamespace::snake {
 
         inline void tickTimers() {
             advance(timer, 0.016);
-            acc += time::elapsed(timer);
-            tongueTimer += time::elapsed(timer);
+            acc += timing::elapsed(timer);
+            tongueTimer += timing::elapsed(timer);
             reset(timer);
 
             if (tongueTimer >= tongueStep) {

@@ -167,6 +167,11 @@
     </ClCompile>
     <ClCompile Include="StaticLib1.cpp" />
   </ItemGroup>
+  <ItemGroup>
+    <ClCompile Update="C:\Users\iammi\source\repos\epochengine\AlmondShell\modules\aecs.internal_private.ixx">
+      <FileType>Document</FileType>
+    </ClCompile>
+  </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">
   </ImportGroup>

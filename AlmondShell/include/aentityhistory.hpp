@@ -23,6 +23,7 @@
  **************************************************************/
 #pragma once
 
+
 #include "aplatform.hpp"      // must always come first
 #include "alogger.hpp"        // Logger
 #include "arobusttime.hpp"    // almondnamespace::time::RobustTime
@@ -31,6 +32,13 @@
 #include <vector>
 #include <mutex>
 #include <format>
+
+import std;
+import almond.core.logger;
+import almond.core.time;
+import aecs;
+//import aecs.internal_private;
+
 
 namespace almondnamespace::ecs
 {
@@ -56,7 +64,7 @@ namespace almondnamespace::ecs
         logger.log(std::format(
             "[ECS] Saved state for EntityID {} at {} -> ({:.2f}, {:.2f})",
             id,
-            time::getCurrentTimeString(),
+            timing::getCurrentTimeString(),
             x, y
         ));
     }
@@ -89,13 +97,13 @@ namespace almondnamespace::ecs
         if (ok) {
             logger.log(std::format(
                 "[ECS] EntityID {} rewound to ({:.2f}, {:.2f}) at {}",
-                id, x, y, time::getCurrentTimeString()
+                id, x, y, timing::getCurrentTimeString()
             ));
         }
         else {
             logger.log(std::format(
                 "[ECS] EntityID {} rewind failed (no history) at {}",
-                id, time::getCurrentTimeString()
+                id, timing::getCurrentTimeString()
             ));
         }
         return ok;

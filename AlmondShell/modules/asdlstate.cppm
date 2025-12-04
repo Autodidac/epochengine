@@ -1,14 +1,13 @@
 module;
 
+module asdlstate;
+
 #ifdef _WIN32
 import <Windows.h>;
 #endif
 
 #ifdef ALMOND_USING_SDL
 import <SDL3/SDL.h>;
-#endif
-
-module asdlstate;
 
 import asdlstate;
 
@@ -20,3 +19,4 @@ namespace almondnamespace::sdlcontext::state
         return state;
     }
 }
+#endif

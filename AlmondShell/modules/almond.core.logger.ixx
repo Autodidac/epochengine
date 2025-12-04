@@ -83,7 +83,7 @@ export namespace almondnamespace
             std::lock_guard<std::mutex> lock(mutex);
 
             if (level >= logLevel) {
-                logFile << time::getCurrentTimeString() << " [" << logLevelToString(level) << "] - " << message << std::endl;
+                logFile << timing::getCurrentTimeString() << " [" << logLevelToString(level) << "] - " << message << std::endl;
             }
         }
 
