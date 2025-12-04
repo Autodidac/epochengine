@@ -9,7 +9,6 @@ import aecs;
 import almond.core.logger;
 import almond.core.time;
 import aengine:platform;
-import "aentitycomponents.hpp";
 import "amovementevent.hpp";
 
 namespace almondnamespace::scene

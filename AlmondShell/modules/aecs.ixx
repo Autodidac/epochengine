@@ -21,36 +21,27 @@
  *   See LICENSE file for full terms.                         *
  *                                                            *
  **************************************************************/
-module;
+export module aecs;
 
-
-#include "aentitycomponentmanager.hpp"
-#include "aentity.hpp"
-
-import <cassert>;
+import std;
 import <string_view>;
 import <typeinfo>;
 import <utility>;
 
+export import :components;
+export import :storage;
+import :internal_private;
+
 import almond.core.time;
-
-export module aecs;
-
-namespace almondnamespace
-{
-    class Logger;
-    namespace time { class Timer; }
-}
+import almond.core.logger;
 
 export namespace almondnamespace::ecs
 {
-    using Entity = EntityID;
-
     template<typename... Cs>
     struct reg_ex
     {
         ComponentStorage storage;
-        EntityID nextID{ 1 };
+        Entity nextID{ 1 };
         almondnamespace::Logger* log{ nullptr };
         almondnamespace::timing::Timer* clk{ nullptr };
     };
