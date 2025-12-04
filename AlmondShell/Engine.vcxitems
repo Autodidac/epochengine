@@ -214,6 +214,10 @@
     <ClCompile Include="$(MSBuildThisFileDirectory)modules\aengine.platform.ixx" />
     <ClCompile Include="$(MSBuildThisFileDirectory)modules\aengine.renderers.ixx" />
     <ClCompile Include="$(MSBuildThisFileDirectory)modules\aengine.updater.ixx" />
+    <ClCompile Include="$(MSBuildThisFileDirectory)modules\almond.core.logger.ixx" />
+    <ClCompile Include="$(MSBuildThisFileDirectory)modules\almond.core.time.ixx" />
+    <ClCompile Include="$(MSBuildThisFileDirectory)modules\almond.core.types.ixx" />
+    <ClCompile Include="$(MSBuildThisFileDirectory)modules\almond.core.utilities.ixx" />
     <ClCompile Include="$(MSBuildThisFileDirectory)src\acompiler.cpp" />
     <ClCompile Include="$(MSBuildThisFileDirectory)src\acontext.cpp">
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">false</ExcludedFromBuild>

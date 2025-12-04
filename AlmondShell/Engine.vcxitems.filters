@@ -560,5 +560,17 @@
     <ClCompile Include="$(MSBuildThisFileDirectory)modules\aengine.menu.ixx">
       <Filter>Module Files</Filter>
     </ClCompile>
+    <ClCompile Include="$(MSBuildThisFileDirectory)modules\almond.core.logger.ixx">
+      <Filter>Module Files</Filter>
+    </ClCompile>
+    <ClCompile Include="$(MSBuildThisFileDirectory)modules\almond.core.time.ixx">
+      <Filter>Module Files</Filter>
+    </ClCompile>
+    <ClCompile Include="$(MSBuildThisFileDirectory)modules\almond.core.types.ixx">
+      <Filter>Module Files</Filter>
+    </ClCompile>
+    <ClCompile Include="$(MSBuildThisFileDirectory)modules\almond.core.utilities.ixx">
+      <Filter>Module Files</Filter>
+    </ClCompile>
   </ItemGroup>
 </Project>
