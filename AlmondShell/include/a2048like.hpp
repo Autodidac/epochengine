@@ -44,8 +44,8 @@
 
 namespace almondnamespace::game2048
 {
-    constexpr int GRID_W = 4;
-    constexpr int GRID_H = 4;
+    inline constexpr int GRID_W = 4;
+    inline constexpr int GRID_H = 4;
 
     struct GameState {
         gamecore::grid_t<int> grid;

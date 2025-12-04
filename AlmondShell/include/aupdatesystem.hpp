@@ -40,11 +40,11 @@ namespace almondnamespace
 {
     namespace cmds
     {
-        constexpr std::string_view kUpdateLong{ "--update" };
-        constexpr std::string_view kUpdateShort{ "-u" };
-        constexpr std::string_view kForceFlag{ "--force" };
-        constexpr std::string_view kHelpLong{ "--help" };
-        constexpr std::string_view kHelpShort{ "-h" };
+        inline constexpr std::string_view kUpdateLong{ "--update" };
+        inline constexpr std::string_view kUpdateShort{ "-u" };
+        inline constexpr std::string_view kForceFlag{ "--force" };
+        inline constexpr std::string_view kHelpLong{ "--help" };
+        inline constexpr std::string_view kHelpShort{ "-h" };
 
         inline void cleanup_previous_update_artifacts()
         {

@@ -40,7 +40,7 @@
 namespace almondnamespace::app
 {
     // ─── Fixed‑step config ──────────────────────────────────────────────
-	constexpr double STEP_S = 0.150;   // 150 ms per frame
+	inline constexpr double STEP_S = 0.150;   // 150 ms per frame
     namespace events = almondnamespace::events;
 
     // ─── helper: enqueue raw input as events (no coupling) ──────────────

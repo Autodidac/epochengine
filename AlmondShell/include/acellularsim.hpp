@@ -42,7 +42,7 @@
 
 namespace almondnamespace::cellular {
 
-    constexpr int W = 80, H = 60;
+    inline constexpr int W = 80, H = 60;
 
     struct CellularScene : public scene::Scene {
         CellularScene(Logger* L = nullptr, time::Timer* C = nullptr)

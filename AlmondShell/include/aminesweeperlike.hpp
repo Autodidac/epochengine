@@ -46,9 +46,9 @@
 
 namespace almondnamespace::minesweeper
 {
-    constexpr int GRID_W = 16;
-    constexpr int GRID_H = 16;
-    constexpr int MINES = 40;
+    inline constexpr int GRID_W = 16;
+    inline constexpr int GRID_H = 16;
+    inline constexpr int MINES = 40;
 
     struct GameState
     {

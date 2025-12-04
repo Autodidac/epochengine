@@ -1,6 +1,6 @@
 module;
 
-export module AlmondShell.aengine:platform;
+export module aengine:platform;
 
 export import "aplatform.hpp";
 export import "aengineconfig.hpp";

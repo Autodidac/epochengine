@@ -1,6 +1,6 @@
 module;
 
-export module AlmondShell.aengine:engine_components;
+export module aengine:engine_components;
 
 export import "ascene.hpp";
 export import "aupdatesystem.hpp";

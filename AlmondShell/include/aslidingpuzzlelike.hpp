@@ -47,9 +47,9 @@
 
 namespace almondnamespace::sliding
 {
-    constexpr int GRID_W = 4;
-    constexpr int GRID_H = 4;
-    constexpr double MOVE_S = 0.15; // 150 ms per move
+    inline constexpr int GRID_W = 4;
+    inline constexpr int GRID_H = 4;
+    inline constexpr double MOVE_S = 0.15; // 150 ms per move
 
     struct SlidingScene : public scene::Scene {
         SlidingScene(Logger* L = nullptr, time::Timer* C = nullptr)

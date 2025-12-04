@@ -73,26 +73,11 @@
     <Filter Include="Header Files\core\backbone\external\context\sfml">
       <UniqueIdentifier>{2012e991-2ab8-465c-ae08-74e1d2495ade}</UniqueIdentifier>
     </Filter>
-    <Filter Include="Header Files\core\backbone\external\modules">
-      <UniqueIdentifier>{a882d22a-ba51-4787-9863-57f5e130551b}</UniqueIdentifier>
-    </Filter>
-    <Filter Include="Header Files\core\backbone\external\modules\apps">
-      <UniqueIdentifier>{9a06530e-e1bc-4ac7-8e42-b41fe2f2e7b8}</UniqueIdentifier>
-    </Filter>
     <Filter Include="Header Files\core\scripting">
       <UniqueIdentifier>{f4590aad-bf09-4d16-8729-eec648c88828}</UniqueIdentifier>
     </Filter>
     <Filter Include="Header Files\core\backbone\external\context\sdl3">
       <UniqueIdentifier>{72cf8110-ecdf-4d7b-96eb-1f2ef25c0572}</UniqueIdentifier>
-    </Filter>
-    <Filter Include="Header Files\core\backbone\external\modules\menu">
-      <UniqueIdentifier>{65bb1a56-7cdb-49ae-8776-d6dfa09f84be}</UniqueIdentifier>
-    </Filter>
-    <Filter Include="Header Files\core\backbone\external\modules\simulation">
-      <UniqueIdentifier>{7bef822f-47d1-4830-99f7-b67925e5c689}</UniqueIdentifier>
-    </Filter>
-    <Filter Include="Header Files\core\backbone\external\modules\games">
-      <UniqueIdentifier>{78365f5f-e3f7-46ca-be9f-39873802a035}</UniqueIdentifier>
     </Filter>
     <Filter Include="Header Files\core\backbone\external\context\noop">
       <UniqueIdentifier>{fa9b2da1-f16c-47cc-aff4-8d61d32ecdd8}</UniqueIdentifier>
@@ -111,6 +96,24 @@
     </Filter>
     <Filter Include="Source Files\crossplatform">
       <UniqueIdentifier>{81d9dae6-2dbe-49b5-8539-cbdf46301748}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Module Files">
+      <UniqueIdentifier>{b80c85b8-f247-488e-b9b9-cd7c155a129d}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Header Files\core\backbone\external\applications">
+      <UniqueIdentifier>{a882d22a-ba51-4787-9863-57f5e130551b}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Header Files\core\backbone\external\applications\apps">
+      <UniqueIdentifier>{9a06530e-e1bc-4ac7-8e42-b41fe2f2e7b8}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Header Files\core\backbone\external\applications\menu">
+      <UniqueIdentifier>{65bb1a56-7cdb-49ae-8776-d6dfa09f84be}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Header Files\core\backbone\external\applications\simulation">
+      <UniqueIdentifier>{7bef822f-47d1-4830-99f7-b67925e5c689}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Header Files\core\backbone\external\applications\games">
+      <UniqueIdentifier>{78365f5f-e3f7-46ca-be9f-39873802a035}</UniqueIdentifier>
     </Filter>
   </ItemGroup>
   <ItemGroup>
@@ -163,10 +166,10 @@
       <Filter>Header Files\core\backbone\external\context\vulkan</Filter>
     </ClInclude>
     <ClInclude Include="$(MSBuildThisFileDirectory)include\asnakelike.hpp">
-      <Filter>Header Files\core\backbone\external\modules\games</Filter>
+      <Filter>Header Files\core\backbone\external\applications\games</Filter>
     </ClInclude>
     <ClInclude Include="$(MSBuildThisFileDirectory)include\atetrislike.hpp">
-      <Filter>Header Files\core\backbone\external\modules\games</Filter>
+      <Filter>Header Files\core\backbone\external\applications\games</Filter>
     </ClInclude>
     <ClInclude Include="$(MSBuildThisFileDirectory)include\agui.hpp">
       <Filter>Header Files\core\backbone\userinterface</Filter>
@@ -217,25 +220,25 @@
       <Filter>Header Files\models</Filter>
     </ClInclude>
     <ClInclude Include="$(MSBuildThisFileDirectory)include\asokobanlike.hpp">
-      <Filter>Header Files\core\backbone\external\modules\games</Filter>
+      <Filter>Header Files\core\backbone\external\applications\games</Filter>
     </ClInclude>
     <ClInclude Include="$(MSBuildThisFileDirectory)include\afroggerlike.hpp">
-      <Filter>Header Files\core\backbone\external\modules\games</Filter>
+      <Filter>Header Files\core\backbone\external\applications\games</Filter>
     </ClInclude>
     <ClInclude Include="$(MSBuildThisFileDirectory)include\apacmanlike.hpp">
-      <Filter>Header Files\core\backbone\external\modules\games</Filter>
+      <Filter>Header Files\core\backbone\external\applications\games</Filter>
     </ClInclude>
     <ClInclude Include="$(MSBuildThisFileDirectory)include\aminesweeperlike.hpp">
-      <Filter>Header Files\core\backbone\external\modules\games</Filter>
+      <Filter>Header Files\core\backbone\external\applications\games</Filter>
     </ClInclude>
     <ClInclude Include="$(MSBuildThisFileDirectory)include\a2048like.hpp">
-      <Filter>Header Files\core\backbone\external\modules\games</Filter>
+      <Filter>Header Files\core\backbone\external\applications\games</Filter>
     </ClInclude>
     <ClInclude Include="$(MSBuildThisFileDirectory)include\aslidingpuzzlelike.hpp">
-      <Filter>Header Files\core\backbone\external\modules\games</Filter>
+      <Filter>Header Files\core\backbone\external\applications\games</Filter>
     </ClInclude>
     <ClInclude Include="$(MSBuildThisFileDirectory)include\amatch3like.hpp">
-      <Filter>Header Files\core\backbone\external\modules\games</Filter>
+      <Filter>Header Files\core\backbone\external\applications\games</Filter>
     </ClInclude>
     <ClInclude Include="$(MSBuildThisFileDirectory)include\asaveloadsystem.hpp">
       <Filter>Header Files\events</Filter>
@@ -262,7 +265,7 @@
       <Filter>Header Files\core\platform</Filter>
     </ClInclude>
     <ClInclude Include="$(MSBuildThisFileDirectory)include\agamecore.hpp">
-      <Filter>Header Files\core\backbone\external\modules</Filter>
+      <Filter>Header Files\core\backbone\external\applications</Filter>
     </ClInclude>
     <ClInclude Include="$(MSBuildThisFileDirectory)include\acontext.hpp">
       <Filter>Header Files\core\backbone\external\context</Filter>
@@ -289,13 +292,13 @@
       <Filter>Header Files\core\utilities</Filter>
     </ClInclude>
     <ClInclude Include="$(MSBuildThisFileDirectory)include\aapplicationmodule.hpp">
-      <Filter>Header Files\core\backbone\external\modules</Filter>
+      <Filter>Header Files\core\backbone\external\applications</Filter>
     </ClInclude>
     <ClInclude Include="$(MSBuildThisFileDirectory)include\aentity.hpp">
       <Filter>Header Files\ecs</Filter>
     </ClInclude>
     <ClInclude Include="$(MSBuildThisFileDirectory)include\aenduserapplication.hpp">
-      <Filter>Header Files\core\backbone\external\modules\apps</Filter>
+      <Filter>Header Files\core\backbone\external\applications\apps</Filter>
     </ClInclude>
     <ClInclude Include="$(MSBuildThisFileDirectory)include\ampmcboundedqueue.hpp">
       <Filter>Header Files\core\multithreading</Filter>
@@ -304,10 +307,10 @@
       <Filter>Header Files\core\multithreading</Filter>
     </ClInclude>
     <ClInclude Include="$(MSBuildThisFileDirectory)include\acellularsim.hpp">
-      <Filter>Header Files\core\backbone\external\modules\simulation</Filter>
+      <Filter>Header Files\core\backbone\external\applications\simulation</Filter>
     </ClInclude>
     <ClInclude Include="$(MSBuildThisFileDirectory)include\asandsim.hpp">
-      <Filter>Header Files\core\backbone\external\modules\simulation</Filter>
+      <Filter>Header Files\core\backbone\external\applications\simulation</Filter>
     </ClInclude>
     <ClInclude Include="$(MSBuildThisFileDirectory)include\acodeinspector.hpp">
       <Filter>Header Files\core\utilities</Filter>
@@ -412,7 +415,7 @@
       <Filter>Header Files\core\backbone\external\context</Filter>
     </ClInclude>
     <ClInclude Include="$(MSBuildThisFileDirectory)include\aguimenu.hpp">
-      <Filter>Header Files\core\backbone\external\modules\menu</Filter>
+      <Filter>Header Files\core\backbone\external\applications\menu</Filter>
     </ClInclude>
     <ClInclude Include="$(MSBuildThisFileDirectory)include\asoftrenderer_context.hpp">
       <Filter>Header Files\core\backbone\external\context\software</Filter>
@@ -532,6 +535,18 @@
     </ClCompile>
     <ClCompile Include="$(MSBuildThisFileDirectory)src\aopenglplatform_win.cpp">
       <Filter>Source Files\crossplatform</Filter>
+    </ClCompile>
+    <ClCompile Include="$(MSBuildThisFileDirectory)modules\aengine.renderers.ixx">
+      <Filter>Module Files</Filter>
+    </ClCompile>
+    <ClCompile Include="$(MSBuildThisFileDirectory)modules\aengine.platform.ixx">
+      <Filter>Module Files</Filter>
+    </ClCompile>
+    <ClCompile Include="$(MSBuildThisFileDirectory)modules\aengine.ixx">
+      <Filter>Module Files</Filter>
+    </ClCompile>
+    <ClCompile Include="$(MSBuildThisFileDirectory)modules\aengine.engine_components.ixx">
+      <Filter>Module Files</Filter>
     </ClCompile>
   </ItemGroup>
 </Project>

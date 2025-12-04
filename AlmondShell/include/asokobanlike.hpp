@@ -44,8 +44,9 @@
 
 namespace almondnamespace::sokoban
 {
-    constexpr int GRID_W = 16;
-    constexpr int GRID_H = 12;
+    inline constexpr int GRID_W = 16;
+    inline constexpr int GRID_H = 12;
+
     enum Cell { FLOOR, WALL, GOAL };
 
     struct State

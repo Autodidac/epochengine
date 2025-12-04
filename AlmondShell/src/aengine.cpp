@@ -22,12 +22,15 @@
  *                                                            *
  **************************************************************/
 // aengine.cpp
-module AlmondShell.aengine;
+module aengine;
 
 import std;
-import AlmondShell.aengine:platform;
-import AlmondShell.aengine:engine_components;
-import AlmondShell.aengine:renderers;
+
+import :platform;
+import :engine_components;
+import :renderers;
+
+#include "acommandline.hpp"     // Command-line parsing utilities
 
 //#if !defined(ALMOND_SINGLE_PARENT) || (ALMOND_SINGLE_PARENT == 0)
 //#undef ALMOND_SHARED_CONTEXT
@@ -37,7 +40,7 @@ import AlmondShell.aengine:renderers;
 //#define ALMOND_SHARED_CONTEXT 1
 //#endif
 
-namespace cli = almondnamespace::core::cli;
+//namespace cli = almondnamespace::core::cli;
 
 namespace almondnamespace::core
 {
@@ -130,7 +133,7 @@ namespace almondnamespace::core
             SceneID g_sceneID = SceneID::Menu;
             std::unique_ptr<almondnamespace::scene::Scene> g_activeScene;
             almondnamespace::menu::MenuOverlay menu;
-            menu.set_max_columns(cli::menu_columns);
+            menu.set_max_columns(almondnamespace::core::cli::menu_columns);
 
             auto collect_backend_contexts = []()
             {

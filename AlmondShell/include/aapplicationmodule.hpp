@@ -60,4 +60,4 @@ namespace almondnamespace {
         &NAME##_init, &NAME##_update, &NAME##_shutdown                       \
     };                                                                       \
     static almondnamespace::_module_registrar NAME##_auto { &NAME##_desc };  \
-    static void NAME##_init() noexcept                                       \
+    static void NAME##_init() noexcept                                       

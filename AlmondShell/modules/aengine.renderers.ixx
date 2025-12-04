@@ -1,6 +1,6 @@
 module;
 
-export module AlmondShell.aengine:renderers;
+export module aengine:renderers;
 
 #ifdef ALMOND_USING_SDL
 export import "asdlcontext.hpp";

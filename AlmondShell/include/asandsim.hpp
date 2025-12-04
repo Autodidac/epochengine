@@ -43,8 +43,8 @@ namespace almondnamespace::sandsim
 {
     static SpriteRegistry registry;
 
-    constexpr int W = 120, H = 80;
-    constexpr double STEP_S = 0.016;
+    inline constexpr int W = 120, H = 80;
+    inline constexpr double STEP_S = 0.016;
 
     struct SandSimScene : public scene::Scene {
         SandSimScene(Logger* L = nullptr, time::Timer* C = nullptr)

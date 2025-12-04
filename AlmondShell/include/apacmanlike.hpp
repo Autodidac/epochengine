@@ -43,8 +43,8 @@
 
 namespace almondnamespace::pacman
 {
-    constexpr int GRID_W = 28;
-    constexpr int GRID_H = 31;
+    inline constexpr int GRID_W = 28;
+    inline constexpr int GRID_H = 31;
 
     enum Tile : int { EMPTY, WALL, PELLET };
 
