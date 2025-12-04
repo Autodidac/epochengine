@@ -164,7 +164,6 @@
     <ClInclude Include="$(MSBuildThisFileDirectory)include\atypesposix.hpp" />
     <ClInclude Include="$(MSBuildThisFileDirectory)include\atypeswin32.hpp" />
     <ClInclude Include="$(MSBuildThisFileDirectory)include\aupdateconfig.hpp" />
-    <ClInclude Include="$(MSBuildThisFileDirectory)include\aupdatesystem.hpp" />
     <ClInclude Include="$(MSBuildThisFileDirectory)include\autilities.hpp" />
     <ClInclude Include="$(MSBuildThisFileDirectory)include\aversion.hpp" />
     <ClInclude Include="$(MSBuildThisFileDirectory)include\avulkanglfwsetup.hpp" />
@@ -220,6 +219,8 @@
     <ClCompile Include="$(MSBuildThisFileDirectory)modules\aengine.platform.ixx" />
     <ClCompile Include="$(MSBuildThisFileDirectory)modules\aengine.renderers.ixx" />
     <ClCompile Include="$(MSBuildThisFileDirectory)modules\aengine.updater.ixx" />
+    <ClCompile Include="$(MSBuildThisFileDirectory)modules\aupdatesystem.ixx" />
+    <ClCompile Include="$(MSBuildThisFileDirectory)modules\aupdatesystem.cpp" />
     <ClCompile Include="$(MSBuildThisFileDirectory)modules\aecs.ixx" />
     <ClCompile Include="$(MSBuildThisFileDirectory)modules\aecs.private.ixx" />
     <ClCompile Include="$(MSBuildThisFileDirectory)modules\almond.core.logger.ixx" />

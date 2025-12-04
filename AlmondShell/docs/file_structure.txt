@@ -45,7 +45,8 @@
 │   │── atypeswin32.hpp           # Windows-specific types
 │   │── aui.hpp                   # UI utilities
 │   │── aupdateconfig.hpp         # Update configuration
-│   │── aupdatesystem.hpp         # Update system
+│   │── modules/aupdatesystem.ixx      # Update system (module interface)
+│   │   └─ modules/aupdatesystem.cpp   # Update system implementation
 │   │── autilities.hpp            # General utilities
 │   │── aversion.hpp              # Versioning utilities
 │   │── avulkanglfwsetup.hpp      # Vulkan GLFW setup

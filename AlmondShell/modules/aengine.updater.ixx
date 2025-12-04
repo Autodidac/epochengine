@@ -2,7 +2,7 @@ module;
 
 export module aengine.updater;
 
-#include "aupdatesystem.hpp"
+import aupdatesystem;
 
 export namespace almondnamespace::updater
 {
