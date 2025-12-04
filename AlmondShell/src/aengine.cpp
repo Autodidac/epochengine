@@ -29,6 +29,8 @@ module;
 #    include <shellapi.h>
 #endif
 
+#include "acontextmultiplexer.hpp"
+
 module aengine;
 
 import std;
