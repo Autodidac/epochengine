@@ -132,12 +132,12 @@
       <SDLCheck>true</SDLCheck>
       <PreprocessorDefinitions>ENGINE_STATICLIB;_DEBUG;_CONSOLE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <ConformanceMode>true</ConformanceMode>
-      <LanguageStandard>stdcpp20</LanguageStandard>
+      <LanguageStandard>stdcpp23</LanguageStandard>
       <AdditionalIncludeDirectories>../../include;</AdditionalIncludeDirectories>
       <LanguageStandard_C>stdc17</LanguageStandard_C>
     </ClCompile>
     <Link>
-      <SubSystem>Console</SubSystem>
+      <SubSystem>Windows</SubSystem>
       <GenerateDebugInformation>true</GenerateDebugInformation>
       <AdditionalLibraryDirectories>..\..\..\x64\Debug;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
       <AdditionalDependencies>StaticLib1.lib;%(AdditionalDependencies)</AdditionalDependencies>
@@ -151,7 +151,7 @@
       <SDLCheck>true</SDLCheck>
       <PreprocessorDefinitions>ENGINE_STATICLIB;NDEBUG;_CONSOLE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <ConformanceMode>true</ConformanceMode>
-      <LanguageStandard>stdcpp20</LanguageStandard>
+      <LanguageStandard>stdcpp23</LanguageStandard>
       <AdditionalIncludeDirectories>../../include;</AdditionalIncludeDirectories>
       <LanguageStandard_C>stdc17</LanguageStandard_C>
     </ClCompile>

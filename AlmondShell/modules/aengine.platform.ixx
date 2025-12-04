@@ -11,6 +11,7 @@ import aengine.cli;
 import aengine.updater;
 import "aupdateconfig.hpp";
 import "aupdatesystem.hpp";
+
 import "aplatformpump.hpp";
 import "aguimenu.hpp";
 import "aapplicationmodule.hpp";
@@ -32,14 +33,13 @@ export namespace almondnamespace
 
     namespace menu
     {
-        using ::almondnamespace::menu::Menu;
-        using ::almondnamespace::menu::MenuItem;
+        using ::almondnamespace::menu::MenuOverlay;
     }
 
     namespace updater
     {
-        using ::almondnamespace::updater::OWNER;
-        using ::almondnamespace::updater::REPO;
+        //using ::almondnamespace::updater::OWNER;
+       // using ::almondnamespace::updater::REPO;
     }
 
     namespace platform

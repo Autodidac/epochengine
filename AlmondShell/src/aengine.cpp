@@ -27,8 +27,26 @@ module aengine;
 import std;
 
 import :platform;
+import :cli;     // Command-line parsing utilities
 import :engine_components;
 import :renderers;
+//import :scenes;
+//import :gui;
+//import :menu;
+//import :input;
+//import :snake;
+//import :tetris;
+//import :pacman;
+//import :sokoban;
+//import :match3;
+//import :sliding;
+//import :minesweeper;
+//import :game2048;
+//import :sandsim;
+//import :cellular;
+//import :updateconfig;
+//import :updatesystem;
+//import :platformpump;
 
 import aengine.cli;             // Command-line parsing utilities
 import aengine.updater;         // Updater command helpers
