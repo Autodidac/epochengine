@@ -487,6 +487,9 @@
     <None Include="$(MSBuildThisFileDirectory)vcpkg.json">
       <Filter>Resource Files</Filter>
     </None>
+    <None Include="$(MSBuildThisFileDirectory)modules\.gitkeep">
+      <Filter>Module Files</Filter>
+    </None>
   </ItemGroup>
   <ItemGroup>
     <ResourceCompile Include="$(MSBuildThisFileDirectory)src\WinResource.rc">
