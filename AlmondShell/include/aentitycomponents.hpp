@@ -43,14 +43,14 @@ namespace almondnamespace::ecs {
 
     // ─── History ──────────────────────────────────────────────────────────
     // Each entity that needs rewind support keeps its past states here
-   // struct History { std::vector<std::pair<float, float>> states; };
+    struct History { std::vector<std::pair<float, float>> states; };
 
     // ─── LoggerComponent ─────────────────────────────────────────────────
     // Stores per‑entity logging preferences (file, level, clock pointer)
     struct LoggerComponent {
         std::string       file;
-        LogLevel          level{ LogLevel::INFO };
-        timing::Timer* clock{};
+        almondnamespace::LogLevel          level{ almondnamespace::LogLevel::INFO };
+        almondnamespace::timing::Timer* clock{};
     };
 
 } // namespace almondnamespace::ecs
