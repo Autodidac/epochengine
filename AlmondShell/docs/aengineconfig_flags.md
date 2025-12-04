@@ -55,6 +55,7 @@ Raylib distributes its own OpenGL loader on Linux, but AlmondShell now links the
 
 ## Change Log
 
+- **v0.72.2** – Synced the engine helpers, updater defaults, and documentation to the latest module-scanning release so CLI banners and metadata all advertise the same snapshot.
 - **v0.72.1** – Tracked module coverage through the runtime and renderer interfaces, highlighted clean rebuild requirements when swapping compilers, and reinforced Modules TS flag usage across presets and manual invocations.
 - **v0.72.0** – Documented that module scanning now defaults on in presets and helper scripts (`CMAKE_CXX_SCAN_FOR_MODULES` with the `CMAKE_EXPERIMENTAL_CXX_MODULE_DYNDEP` fallback) and that VS 2022, clang, and GCC builds should compile with their Modules TS flags enabled.
 - **v0.70.3** – Recorded that the standalone glad loader is now linked on every platform so AlmondShell's OpenGL calls resolve uniformly across shell scripts, CMake presets, and VS Code tasks.
