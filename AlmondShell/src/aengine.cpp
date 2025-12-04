@@ -29,6 +29,7 @@ module;
 #    include <shellapi.h>
 #endif
 
+#include "aengineconfig.hpp"
 #include "acontextmultiplexer.hpp"
 
 module aengine;
@@ -499,7 +500,7 @@ namespace almondnamespace::core
                     /*SFML*/     0,
                     /*OpenGL*/   1,
                     /*Software*/ 1,
-                    false);
+                    ALMOND_SINGLE_PARENT == 1);
 
                 if (!multiOk) {
                     std::cerr << "[Engine] Failed to initialize contexts!\n";
