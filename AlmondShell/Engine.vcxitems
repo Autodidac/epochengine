@@ -46,7 +46,6 @@
     <ClInclude Include="$(MSBuildThisFileDirectory)include\acontext.hpp" />
     <ClInclude Include="$(MSBuildThisFileDirectory)include\acontextwindow.hpp" />
     <ClInclude Include="$(MSBuildThisFileDirectory)include\aeditor.hpp" />
-    <ClInclude Include="$(MSBuildThisFileDirectory)include\aenduserapplication.hpp" />
     <ClInclude Include="$(MSBuildThisFileDirectory)include\aengine.hpp" />
     <ClInclude Include="$(MSBuildThisFileDirectory)include\aenginebindings.hpp" />
     <ClInclude Include="$(MSBuildThisFileDirectory)include\aengineconfig.hpp" />
@@ -219,6 +218,8 @@
     <ClCompile Include="$(MSBuildThisFileDirectory)modules\aengine.platform.ixx" />
     <ClCompile Include="$(MSBuildThisFileDirectory)modules\aengine.renderers.ixx" />
     <ClCompile Include="$(MSBuildThisFileDirectory)modules\aengine.updater.ixx" />
+    <ClCompile Include="$(MSBuildThisFileDirectory)modules\aenduserapplication.ixx" />
+    <ClCompile Include="$(MSBuildThisFileDirectory)modules\aenduserapplication.cppm" />
     <ClCompile Include="$(MSBuildThisFileDirectory)modules\aupdatesystem.ixx" />
     <ClCompile Include="$(MSBuildThisFileDirectory)modules\aupdatesystem.cpp" />
     <ClCompile Include="$(MSBuildThisFileDirectory)modules\aecs.ixx" />

@@ -14,7 +14,7 @@ import "aupdateconfig.hpp";
 import "aplatformpump.hpp";
 import "aguimenu.hpp";
 import "aapplicationmodule.hpp";
-import "aenduserapplication.hpp";
+import aenduserapplication;
 import "awindowdata.hpp";
 import "acontext.hpp";
 import "acontextmultiplexer.hpp";
