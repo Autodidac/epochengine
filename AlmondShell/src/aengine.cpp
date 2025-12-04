@@ -159,8 +159,10 @@ namespace almondnamespace::core
 
             SceneID g_sceneID = SceneID::Menu;
             std::unique_ptr<almondnamespace::scene::Scene> g_activeScene;
-            almondnamespace::menu::MenuOverlay menu;
-            menu.set_max_columns(almondnamespace::core::cli::menu_columns);
+            using MenuOverlay = typename almondnamespace::menu::MenuOverlay;
+
+            MenuOverlay menuOverlay;
+            menuOverlay.set_max_columns(almondnamespace::core::cli::menu_columns);
 
             auto collect_backend_contexts = []()
             {
@@ -187,7 +189,7 @@ namespace almondnamespace::core
                 auto backendContexts = collect_backend_contexts();
                 for (auto& [_, contexts] : backendContexts) {
                     for (auto& ctx : contexts) {
-                        if (ctx) menu.initialize(ctx);
+                        if (ctx) menuOverlay.initialize(ctx);
                     }
                 }
             };
@@ -238,7 +240,7 @@ namespace almondnamespace::core
                                 }
                             }
 
-                            menu.cleanup();
+                            menuOverlay.cleanup();
                             if (g_activeScene) {
                                 g_activeScene->unload();
                             }
@@ -263,7 +265,7 @@ namespace almondnamespace::core
                             const bool enterPressed = almondnamespace::input::keyPressed.test(almondnamespace::input::Key::Enter);
 
                             almondnamespace::gui::begin_frame(ctx, dtSeconds, mousePos, mouseLeftDown);
-                            auto choice = menu.update_and_draw(ctx, win, dtSeconds, upPressed, downPressed, leftPressed, rightPressed, enterPressed);
+                            auto choice = menuOverlay.update_and_draw(ctx, win, dtSeconds, upPressed, downPressed, leftPressed, rightPressed, enterPressed);
                             almondnamespace::gui::end_frame();
 
                             if (choice) {
@@ -374,7 +376,7 @@ namespace almondnamespace::core
                 g_activeScene->unload();
                 g_activeScene.reset();
             }
-            menu.cleanup();
+            menuOverlay.cleanup();
             mgr.StopAll();
 
             auto backendContexts = collect_backend_contexts();
