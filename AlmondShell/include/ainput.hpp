@@ -777,7 +777,7 @@ inline bool is_mouse_button_down(MouseButton btn) {
 //winproc
 #if defined(_WIN32)
 #ifdef ALMOND_USING_SDL
-using almondnamespace::sdlcontext::state::s_sdlstate;
+using almondnamespace::sdlcontext::state::get_sdl_state;
 #endif
 #ifdef ALMOND_USING_SFML
 using almondnamespace::sfmlcontext::state::s_sfmlstate;
