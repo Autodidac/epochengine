@@ -220,6 +220,10 @@
     <ClCompile Include="$(MSBuildThisFileDirectory)modules\aengine.updater.ixx" />
     <ClCompile Include="$(MSBuildThisFileDirectory)modules\aenduserapplication.ixx" />
     <ClCompile Include="$(MSBuildThisFileDirectory)modules\aenduserapplication.cppm" />
+    <ClCompile Include="$(MSBuildThisFileDirectory)modules\ascene.cppm" />
+    <ClCompile Include="$(MSBuildThisFileDirectory)modules\ascene.ixx" />
+    <ClCompile Include="$(MSBuildThisFileDirectory)modules\asdlstate.cppm" />
+    <ClCompile Include="$(MSBuildThisFileDirectory)modules\asdlstate.ixx" />
     <ClCompile Include="$(MSBuildThisFileDirectory)modules\aupdatesystem.ixx" />
     <ClCompile Include="$(MSBuildThisFileDirectory)modules\aupdatesystem.cppm" />
     <ClCompile Include="$(MSBuildThisFileDirectory)modules\aecs.ixx" />

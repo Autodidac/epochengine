@@ -581,5 +581,19 @@
     <ClCompile Include="$(MSBuildThisFileDirectory)modules\almond.core.utilities.ixx">
       <Filter>Module Files</Filter>
     </ClCompile>
+    <ClCompile Include="$(MSBuildThisFileDirectory)modules\aupdatesystem.ixx" />
+    <ClCompile Include="$(MSBuildThisFileDirectory)modules\aupdatesystem.cppm" />
+    <ClCompile Include="$(MSBuildThisFileDirectory)modules\ascene.cppm">
+      <Filter>Module Files</Filter>
+    </ClCompile>
+    <ClCompile Include="$(MSBuildThisFileDirectory)modules\ascene.ixx">
+      <Filter>Module Files</Filter>
+    </ClCompile>
+    <ClCompile Include="$(MSBuildThisFileDirectory)modules\asdlstate.cppm">
+      <Filter>Module Files</Filter>
+    </ClCompile>
+    <ClCompile Include="$(MSBuildThisFileDirectory)modules\asdlstate.ixx">
+      <Filter>Module Files</Filter>
+    </ClCompile>
   </ItemGroup>
 </Project>

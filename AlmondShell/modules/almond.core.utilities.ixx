@@ -55,12 +55,12 @@ export module almond.core.utilities;
 export namespace almondnamespace::utilities
 {
 #ifdef _WIN32
-    [[nodiscard]] inline constexpr bool isConsoleApplication() noexcept
+    [[nodiscard]] inline bool isConsoleApplication() noexcept
     {
         return GetConsoleWindow() != nullptr;
     }
 #else
-    [[nodiscard]] inline constexpr bool isConsoleApplication() noexcept
+    [[nodiscard]] inline bool isConsoleApplication() noexcept
     {
         return isatty(fileno(stdout)) != 0;
     }
