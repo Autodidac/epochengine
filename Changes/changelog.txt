@@ -1,5 +1,11 @@
 # Changelog
 
+## [v0.72.2]
+- Bumped the engine metadata so the CLI banner, updater config, and documentation now advertise the v0.72.2 release in lockstep
+  with the module-scanning defaults and module coverage guidance.
+- Added the missing changelog and README snapshot updates for the v0.72.2 rollout to keep downstream packagers aligned on the
+  current build expectations.
+
 ## [v0.72.0]
 - Enabled module scanning by default across CMake presets and helper scripts (`CMAKE_CXX_SCAN_FOR_MODULES` plus the 3.27–3.28
   `CMAKE_EXPERIMENTAL_CXX_MODULE_DYNDEP` fallback) and added compiler-specific Modules TS flags so VS 2022, clang, and GCC
