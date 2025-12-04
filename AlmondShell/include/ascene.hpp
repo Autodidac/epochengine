@@ -26,12 +26,14 @@
 
 #include "aplatform.hpp"       // must always come first
 #include "aentitycomponents.hpp" // e.g. Position
-#include "aecs.hpp"            // ECS registry
+#include "aeventsystem.hpp"    // Event helpers
+#include "alogger.hpp"         // Logger
+
+import aecs;                   // ECS registry
 #include "amovementevent.hpp"  // MovementEvent
 #include "arobusttime.hpp"     // Timer
 #include "acontext.hpp"        // Context
 #include "awindowdata.hpp"     // WindowData
-#include "alogger.hpp"         // Logger
 
 #include <memory>
 #include <iostream>

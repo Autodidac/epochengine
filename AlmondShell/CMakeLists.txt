@@ -55,6 +55,8 @@ target_sources(almondshell PRIVATE
             ${ALMONDSHELL_MODULE_DIR}/aengine.renderers.ixx
             ${ALMONDSHELL_MODULE_DIR}/aengine.menu.ixx
             ${ALMONDSHELL_MODULE_DIR}/aengine.input.ixx
+            ${ALMONDSHELL_MODULE_DIR}/aecs.ixx
+            ${ALMONDSHELL_MODULE_DIR}/aecs.private.ixx
             ${ALMONDSHELL_MODULE_DIR}/almond.core.types.ixx
             ${ALMONDSHELL_MODULE_DIR}/almond.core.time.ixx
             ${ALMONDSHELL_MODULE_DIR}/almond.core.logger.ixx

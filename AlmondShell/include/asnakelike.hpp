@@ -29,11 +29,12 @@
 #include "arobusttime.hpp"
 #include "acontext.hpp"
 #include "agamecore.hpp"
-#include "aecs.hpp"
 #include "aeventsystem.hpp"
 #include "ainput.hpp"
 #include "aatlasmanager.hpp"
 #include "aopengltextures.hpp"
+
+import aecs;
 
 #include <deque>
 #include <random>

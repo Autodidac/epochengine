@@ -21,11 +21,37 @@
  *   See LICENSE file for full terms.                         *
  *                                                            *
  **************************************************************/
-// aecs.hpp
-#pragma once
+module aecs:private;
 
-#if defined(__cpp_modules) && __cpp_modules >= 201907L && !defined(ALMOND_FORCE_LEGACY_HEADERS)
+import <format>;
+import <string>;
+import <string_view>;
+
 import aecs;
-#else
-#   error "The ECS API now relies on the aecs module; enable C++20 modules or set ALMOND_FORCE_LEGACY_HEADERS to use a legacy header."
-#endif
+import "aeventsystem.hpp";
+import "alogger.hpp";
+import "arobusttime.hpp";
+
+namespace almondnamespace::ecs::_detail
+{
+    inline void notify(almondnamespace::Logger* log,
+        almondnamespace::time::Timer* clk,
+        Entity e,
+        std::string_view action,
+        std::string_view comp)
+    {
+        if (!log || !clk) return;
+        auto ts = time::getCurrentTimeString();
+        log->log(std::format("[ECS] {}{} entity={} at {}",
+            action,
+            comp.empty() ? "" : std::format(":{}", comp),
+            e, ts));
+        events::push_event(events::Event{
+            events::EventType::Custom,
+            { {"ecs_action", std::string(action)},
+              {"entity",     std::to_string(e)},
+              {"component",  std::string(comp)},
+              {"time",       ts} },
+            0.f, 0.f });
+    }
+}
