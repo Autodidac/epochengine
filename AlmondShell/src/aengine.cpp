@@ -31,6 +31,7 @@ module;
 
 #include "aengineconfig.hpp"
 #include "acontextmultiplexer.hpp"
+#include "ainput.hpp"
 
 module aengine;
 
@@ -61,6 +62,8 @@ import :input;
 
 import aengine.cli;             // Command-line parsing utilities
 import aengine.updater;         // Updater command helpers
+
+namespace input = almondnamespace::input;
 
 //#if !defined(ALMOND_SINGLE_PARENT) || (ALMOND_SINGLE_PARENT == 0)
 //#undef ALMOND_SHARED_CONTEXT
@@ -456,7 +459,7 @@ namespace almondnamespace::core
                     return -1;
                 }
 
-                almondnamespace::input::designate_polling_thread_to_current();
+                input::designate_polling_thread_to_current();
 
                 mgr.StartRenderThreads();
                 mgr.ArrangeDockedWindowsGrid();
@@ -478,7 +481,7 @@ namespace almondnamespace::core
                         return false;
                     }
 
-                    almondnamespace::input::poll_input();
+                    input::poll_input();
                     return true;
                 };
 
@@ -507,7 +510,7 @@ namespace almondnamespace::core
                     return -1;
                 }
 
-                almondnamespace::input::designate_polling_thread_to_current();
+                input::designate_polling_thread_to_current();
 
                 mgr.StartRenderThreads();
                 mgr.ArrangeDockedWindowsGrid();
