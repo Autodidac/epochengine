@@ -1,6 +1,11 @@
 cmake_minimum_required(VERSION 3.28)
 
-set(CMAKE_EXPERIMENTAL_CXX_MODULE_DYNDEP 1)
+if(CMAKE_VERSION VERSION_LESS 3.29)
+    # CMake 3.27–3.28 require the experimental dyndep scanner to emit BMI rules.
+    set(CMAKE_EXPERIMENTAL_CXX_MODULE_DYNDEP 1)
+endif()
+
+# Keep module scanning enabled across all supported generators/toolchains.
 set(CMAKE_CXX_SCAN_FOR_MODULES ON)
 
 project(AlmondShell LANGUAGES C CXX)
@@ -103,14 +108,18 @@ target_include_directories(almondshell PRIVATE
 )
 
 if(CMAKE_CXX_COMPILER_ID STREQUAL "MSVC")
-    # Modern MSVC releases provide standard C++20 module support without
-    # the deprecated /experimental:module switch; use the latest standard
-    # mode to ensure module semantics are enabled.
+    # Modern MSVC releases provide standard module support without the
+    # deprecated /experimental:module switch; keep the latest standard
+    # mode enabled so BMI emission stays aligned with scan-for-modules.
     target_compile_options(almondshell PRIVATE /std:c++latest)
 elseif(CMAKE_CXX_COMPILER_ID STREQUAL "GNU")
+    # GCC 14+ requires the Modules TS flag so the dyn-dep scanner emits
+    # BMI build rules correctly when paired with Ninja or Makefiles.
     target_compile_options(almondshell PRIVATE -fmodules-ts)
 elseif(CMAKE_CXX_COMPILER_ID MATCHES "Clang")
-    target_compile_options(almondshell PRIVATE -fmodules)
+    # Clang builds rely on the Modules TS flag to keep BMI generation
+    # consistent across CMake presets and helper scripts.
+    target_compile_options(almondshell PRIVATE -fmodules-ts)
 endif()
 
 option(ALMOND_ENABLE_RAYLIB "Enable the Raylib backend" ON)

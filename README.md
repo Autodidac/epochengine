@@ -74,12 +74,12 @@ flowchart LR
 
 ---
 
-## Current Snapshot (v0.71.0)
+## Current Snapshot (v0.72.0)
 
-- ✅ **C++23 module baseline** – The codebase now targets C++23, and the documentation outlines the module-aware configuration flags needed to rebuild with BMI scanning enabled across CMake presets and helper scripts.
-- ✅ **Module migration guidance** – Fresh-build steps now call out when to clear cached CMake state, how to enable module dependency scanning (`CMAKE_CXX_SCAN_FOR_MODULES`/`CMAKE_EXPERIMENTAL_CXX_MODULE_DYNDEP`), and which compilers have been validated for the milestone.
-- ✅ **Updated toolchain requirements** – Prerequisites have been raised to module-capable compilers (VS 2022 17.10+, clang 17+, GCC 14+) and CMake releases with first-class module support so downstream packagers avoid partial BMI generation.
-- ✅ **Documentation refresh** – Version metadata, the engine analysis brief, and the configuration flag guide are aligned on the v0.71.0 snapshot and the module-focused release notes.
+- ✅ **Module scanning defaults** – CMake presets and build helpers now force `CMAKE_CXX_SCAN_FOR_MODULES` (plus the 3.27–3.28 `CMAKE_EXPERIMENTAL_CXX_MODULE_DYNDEP` fallback) so BMI discovery is always active, while compiler-specific module flags cover VS 2022, clang, and GCC builds.
+- ✅ **Module migration guidance** – Fresh-build steps call out when to clear cached CMake state, how to enable dependency scanning on legacy CMake releases, and which compilers have been validated for the milestone.
+- ✅ **Updated toolchain requirements** – Prerequisites remain module-capable compilers (VS 2022 17.10+, clang 17+, GCC 14+) and CMake releases with module scanning enabled so downstream packagers avoid partial BMI generation.
+- ✅ **Documentation refresh** – Version metadata, the engine analysis brief, and the configuration flag guide are aligned on the v0.72.0 snapshot and the tightened module-scanning defaults.
 
 Refer to [`Changes/changelog.txt`](Changes/changelog.txt) for the full history of fixes and enhancements.
 
@@ -261,7 +261,7 @@ The module milestone requires a fresh configuration so BMI files are generated c
 
 1. **Start from a clean build directory.** Remove any existing `build/*` directories and CMake cache files before reconfiguring so stale BMIs do not leak across configurations.
 2. **Reconfigure with module scanning enabled.** Pass `-DCMAKE_CXX_STANDARD=23` together with either `-DCMAKE_CXX_SCAN_FOR_MODULES=ON` (CMake 3.29+) or `-DCMAKE_EXPERIMENTAL_CXX_MODULE_DYNDEP=ON` (CMake 3.27–3.28). These flags let CMake emit BMI scanning rules for Ninja/MSBuild.
-3. **Use a module-capable compiler.** Visual Studio 2022 17.10+, clang 17+, and GCC 14+ have been validated for this milestone. Older releases may parse the code but fail to emit BMIs consistently.
+3. **Use a module-capable compiler.** Visual Studio 2022 17.10+, clang 17+, and GCC 14+ have been validated for this milestone, and the presets/helper scripts now add the corresponding module flags (`/std:c++latest` on MSVC, `-fmodules-ts` on clang/GCC) so BMI emission stays in sync with the scanner.
 4. **Prefer Ninja for incremental module builds.** The generator keeps BMI scanning fast and reduces the chance of stale dependency edges when rebuilding after header/module edits.
 5. **Regenerate IDE metadata.** After reconfiguring, refresh VS Code/VS 2022 CMake caches so IntelliSense and launch configurations pick up the C++23 standard and module scanning switches.
 

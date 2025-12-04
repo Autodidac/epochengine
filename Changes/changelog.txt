@@ -1,5 +1,12 @@
 # Changelog
 
+## [v0.72.0]
+- Enabled module scanning by default across CMake presets and helper scripts (`CMAKE_CXX_SCAN_FOR_MODULES` plus the 3.27–3.28
+  `CMAKE_EXPERIMENTAL_CXX_MODULE_DYNDEP` fallback) and added compiler-specific Modules TS flags so VS 2022, clang, and GCC
+  builds emit BMI dependencies consistently.
+- Updated the README, configuration guide, and engine analysis to capture the stricter module-scanning defaults and bumped the
+  published version metadata to v0.72.0.
+
 ## [v0.71.0]
 - Adopted the C++23 module toolchain and documented the migration steps (fresh build trees, module-aware CMake configuration,
   and compiler requirements) so downstream packagers can rebuild AlmondShell with BMI-aware generators.

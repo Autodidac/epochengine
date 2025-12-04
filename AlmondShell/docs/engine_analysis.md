@@ -68,9 +68,9 @@ Asset producers can run off the main thread via the coroutine-enabled `taskgraph
 - **Roadmap Traceability** – The existing `roadmap.txt` lacked granular prompts or acceptance checks per phase, making automation hand-offs hard to script.
 - **Testing Surface** – No automated smoke tests or CI hooks are defined for the critical updater and renderer paths, leaving regression risk high during phase transitions.
 
-## Recent Progress (v0.71.0)
+## Recent Progress (v0.72.0)
 
-- Established the C++23/module baseline, refreshed the build documentation with module-scanning flags (`CMAKE_CXX_SCAN_FOR_MODULES`/`CMAKE_EXPERIMENTAL_CXX_MODULE_DYNDEP`), and bumped the public metadata so downstream packagers configure BMI-aware toolchains consistently for the v0.71.0 snapshot.
+- Hardened the module toolchain by enabling scan-for-modules across presets and helper scripts (with the CMake 3.27–3.28 dyn-dep fallback) and aligning VS 2022, clang, and GCC builds on their Modules TS flags for consistent BMI generation.
 
 ## Recent Progress (v0.62.0)
 

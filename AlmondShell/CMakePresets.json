@@ -7,7 +7,9 @@
       "generator": "Ninja",
       "cacheVariables": {
         "CMAKE_TOOLCHAIN_FILE": "$env{VCPKG_ROOT}/scripts/buildsystems/vcpkg.cmake",
-        "VCPKG_FEATURE_FLAGS": "manifests"
+        "VCPKG_FEATURE_FLAGS": "manifests",
+        "CMAKE_CXX_SCAN_FOR_MODULES": "ON",
+        "CMAKE_EXPERIMENTAL_CXX_MODULE_DYNDEP": "ON"
       }
     },
     {
@@ -18,7 +20,9 @@
       "installDir": "${sourceDir}/bin/install/${presetName}",
       "cacheVariables": {
         "CMAKE_TOOLCHAIN_FILE": "$env{VCPKG_ROOT}/scripts/buildsystems/vcpkg.cmake",
-        "VCPKG_FEATURE_FLAGS": "manifests"
+        "VCPKG_FEATURE_FLAGS": "manifests",
+        "CMAKE_CXX_SCAN_FOR_MODULES": "ON",
+        "CMAKE_EXPERIMENTAL_CXX_MODULE_DYNDEP": "ON"
       },
       "condition": {
         "type": "equals",
@@ -130,7 +134,9 @@
         "CMAKE_TOOLCHAIN_FILE": "$env{VCPKG_ROOT}/scripts/buildsystems/vcpkg.cmake",
         "VCPKG_FEATURE_FLAGS": "manifests",
         "CMAKE_C_COMPILER": "gcc",
-        "CMAKE_CXX_COMPILER": "g++"
+        "CMAKE_CXX_COMPILER": "g++",
+        "CMAKE_CXX_SCAN_FOR_MODULES": "ON",
+        "CMAKE_EXPERIMENTAL_CXX_MODULE_DYNDEP": "ON"
       },
       "condition": {
         "type": "equals",
