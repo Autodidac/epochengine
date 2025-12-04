@@ -40,7 +40,7 @@ set(ALMONDSHELL_MODULE_DIR ${CMAKE_CURRENT_SOURCE_DIR}/modules)
 
 target_sources(almondshell PRIVATE
     FILE_SET almondshell_modules TYPE CXX_MODULES
-        BASE_DIRS ${ALMONDSHELL_MODULE_DIR} ${CMAKE_CURRENT_SOURCE_DIR}/include
+        BASE_DIRS ${ALMONDSHELL_MODULE_DIR}
         FILES
             ${ALMONDSHELL_MODULE_DIR}/aengine.ixx
             ${ALMONDSHELL_MODULE_DIR}/aengine.cli.ixx
@@ -48,9 +48,42 @@ target_sources(almondshell PRIVATE
             ${ALMONDSHELL_MODULE_DIR}/aengine.platform.ixx
             ${ALMONDSHELL_MODULE_DIR}/aengine.engine_components.ixx
             ${ALMONDSHELL_MODULE_DIR}/aengine.renderers.ixx
+    FILE_SET almondshell_header_units TYPE HEADERS
+        BASE_DIRS ${CMAKE_CURRENT_SOURCE_DIR}/include
+        FILES
+            ${CMAKE_CURRENT_SOURCE_DIR}/include/a2048like.hpp
+            ${CMAKE_CURRENT_SOURCE_DIR}/include/aapplicationmodule.hpp
             ${CMAKE_CURRENT_SOURCE_DIR}/include/acommandline.hpp
+            ${CMAKE_CURRENT_SOURCE_DIR}/include/acellularsim.hpp
+            ${CMAKE_CURRENT_SOURCE_DIR}/include/acodeinspector.hpp
+            ${CMAKE_CURRENT_SOURCE_DIR}/include/acontext.hpp
+            ${CMAKE_CURRENT_SOURCE_DIR}/include/acontextmultiplexer.hpp
+            ${CMAKE_CURRENT_SOURCE_DIR}/include/acontextwindow.hpp
+            ${CMAKE_CURRENT_SOURCE_DIR}/include/aenduserapplication.hpp
+            ${CMAKE_CURRENT_SOURCE_DIR}/include/aengine.hpp
+            ${CMAKE_CURRENT_SOURCE_DIR}/include/aengineconfig.hpp
+            ${CMAKE_CURRENT_SOURCE_DIR}/include/afroggerlike.hpp
+            ${CMAKE_CURRENT_SOURCE_DIR}/include/aguimenu.hpp
+            ${CMAKE_CURRENT_SOURCE_DIR}/include/ainput.hpp
+            ${CMAKE_CURRENT_SOURCE_DIR}/include/amatch3like.hpp
+            ${CMAKE_CURRENT_SOURCE_DIR}/include/aminesweeperlike.hpp
+            ${CMAKE_CURRENT_SOURCE_DIR}/include/apacmanlike.hpp
+            ${CMAKE_CURRENT_SOURCE_DIR}/include/aplatform.hpp
+            ${CMAKE_CURRENT_SOURCE_DIR}/include/aplatformpump.hpp
+            ${CMAKE_CURRENT_SOURCE_DIR}/include/araylibcontext.hpp
+            ${CMAKE_CURRENT_SOURCE_DIR}/include/asandsim.hpp
+            ${CMAKE_CURRENT_SOURCE_DIR}/include/ascene.hpp
+            ${CMAKE_CURRENT_SOURCE_DIR}/include/asdlcontext.hpp
+            ${CMAKE_CURRENT_SOURCE_DIR}/include/asfmlcontext.hpp
+            ${CMAKE_CURRENT_SOURCE_DIR}/include/aslidingpuzzlelike.hpp
+            ${CMAKE_CURRENT_SOURCE_DIR}/include/asnakelike.hpp
+            ${CMAKE_CURRENT_SOURCE_DIR}/include/asoftrenderer_context.hpp
+            ${CMAKE_CURRENT_SOURCE_DIR}/include/asokobanlike.hpp
+            ${CMAKE_CURRENT_SOURCE_DIR}/include/atetrislike.hpp
             ${CMAKE_CURRENT_SOURCE_DIR}/include/aupdateconfig.hpp
             ${CMAKE_CURRENT_SOURCE_DIR}/include/aupdatesystem.hpp
+            ${CMAKE_CURRENT_SOURCE_DIR}/include/aversion.hpp
+            ${CMAKE_CURRENT_SOURCE_DIR}/include/awindowdata.hpp
 )
 
 target_include_directories(almondshell PRIVATE
@@ -60,9 +93,14 @@ target_include_directories(almondshell PRIVATE
 )
 
 if(CMAKE_CXX_COMPILER_ID STREQUAL "MSVC")
-    target_compile_options(almondshell PRIVATE /experimental:module)
-elseif(CMAKE_CXX_COMPILER_ID MATCHES "Clang|GNU")
+    # Modern MSVC releases provide standard C++20 module support without
+    # the deprecated /experimental:module switch; use the latest standard
+    # mode to ensure module semantics are enabled.
+    target_compile_options(almondshell PRIVATE /std:c++latest)
+elseif(CMAKE_CXX_COMPILER_ID STREQUAL "GNU")
     target_compile_options(almondshell PRIVATE -fmodules-ts)
+elseif(CMAKE_CXX_COMPILER_ID MATCHES "Clang")
+    target_compile_options(almondshell PRIVATE -fmodules)
 endif()
 
 option(ALMOND_ENABLE_RAYLIB "Enable the Raylib backend" ON)
