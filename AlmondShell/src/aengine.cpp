@@ -29,6 +29,8 @@ import std;
 import :platform;
 import :engine_components;
 import :renderers;
+import :menu;
+import :input;
 //import :scenes;
 //import :gui;
 //import :menu;
