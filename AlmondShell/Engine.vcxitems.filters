@@ -204,9 +204,6 @@
     <ClInclude Include="$(MSBuildThisFileDirectory)include\aupdateconfig.hpp">
       <Filter>Header Files\updater</Filter>
     </ClInclude>
-    <ClInclude Include="$(MSBuildThisFileDirectory)include\aupdatesystem.hpp">
-      <Filter>Header Files\updater</Filter>
-    </ClInclude>
     <ClInclude Include="$(MSBuildThisFileDirectory)include\aeditor.hpp">
       <Filter>Header Files\core</Filter>
     </ClInclude>

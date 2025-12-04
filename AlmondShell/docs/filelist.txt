@@ -45,7 +45,8 @@ include Directory
 •	atypeswin32.hpp
 •	aui.hpp
 •	aupdateconfig.hpp
-•	aupdatesystem.hpp
+•	modules/aupdatesystem.ixx
+•       modules/aupdatesystem.cpp
 •	autilities.hpp
 •	aversion.hpp
 •	avulkanglfwsetup.hpp

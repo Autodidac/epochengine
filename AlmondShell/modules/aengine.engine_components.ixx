@@ -5,7 +5,7 @@ export module aengine:engine_components;
 import std;
 
 import ascene;
-import "aupdatesystem.hpp";
+import aupdatesystem;
 import "acodeinspector.hpp";
 import "a2048like.hpp";
 import "acellularsim.hpp";

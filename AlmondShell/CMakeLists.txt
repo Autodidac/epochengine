@@ -50,6 +50,8 @@ target_sources(almondshell PRIVATE
             ${ALMONDSHELL_MODULE_DIR}/aengine.ixx
             ${ALMONDSHELL_MODULE_DIR}/aengine.cli.ixx
             ${ALMONDSHELL_MODULE_DIR}/aengine.updater.ixx
+            ${ALMONDSHELL_MODULE_DIR}/aupdatesystem.ixx
+            ${ALMONDSHELL_MODULE_DIR}/aupdatesystem.cpp
             ${ALMONDSHELL_MODULE_DIR}/aengine.platform.ixx
             ${ALMONDSHELL_MODULE_DIR}/aengine.engine_components.ixx
             ${ALMONDSHELL_MODULE_DIR}/aengine.renderers.ixx
@@ -100,7 +102,6 @@ target_sources(almondshell PRIVATE
             ${CMAKE_CURRENT_SOURCE_DIR}/include/atypes.hpp
             ${CMAKE_CURRENT_SOURCE_DIR}/include/autilities.hpp
             ${CMAKE_CURRENT_SOURCE_DIR}/include/aupdateconfig.hpp
-            ${CMAKE_CURRENT_SOURCE_DIR}/include/aupdatesystem.hpp
             ${CMAKE_CURRENT_SOURCE_DIR}/include/aversion.hpp
             ${CMAKE_CURRENT_SOURCE_DIR}/include/awindowdata.hpp
 )

@@ -34,7 +34,6 @@
 #include "acontext.hpp"
 #include "ascriptingsystem.hpp"
 #include "ataskgraphwithdot.hpp"
-#include "aupdatesystem.hpp"
 #include "aopenglcontext.hpp"
 
 // application includes

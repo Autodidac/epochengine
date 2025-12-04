@@ -1,52 +1,16 @@
-﻿/**************************************************************
- *   █████╗ ██╗     ███╗   ███╗   ███╗   ██╗    ██╗██████╗    *
- *  ██╔══██╗██║     ████╗ ████║ ██╔═══██╗████╗  ██║██╔══██╗   *
- *  ███████║██║     ██╔████╔██║ ██║   ██║██╔██╗ ██║██║  ██║   *
- *  ██╔══██║██║     ██║╚██╔╝██║ ██║   ██║██║╚██╗██║██║  ██║   *
- *  ██║  ██║███████╗██║ ╚═╝ ██║ ╚██████╔╝██║ ╚████║██████╔╝   *
- *  ╚═╝  ╚═╝╚══════╝╚═╝     ╚═╝  ╚═════╝ ╚═╝  ╚═══╝╚═════╝    *
- *                                                            *
- *   This file is part of the Almond Project.                 *
- *   AlmondShell - Modular C++ Framework                      *
- *                                                            *
- *   SPDX-License-Identifier: LicenseRef-MIT-NoSell           *
- *                                                            *
- *   Provided "AS IS", without warranty of any kind.          *
- *   Use permitted for Non-Commercial Purposes ONLY,          *
- *   without prior commercial licensing agreement.            *
- *                                                            *
- *   Redistribution Allowed with This Notice and              *
- *   LICENSE file. No obligation to disclose modifications.   *
- *                                                            *
- *   See LICENSE file for full terms.                         *
- *                                                            *
- **************************************************************/
-#pragma once
+module;
 
-#include "abuildsystem.hpp"
-#include "aupdateconfig.hpp"
+import std;
 
-#include <array>
-#include <cstdlib>
-#include <filesystem>
-#include <fstream>
-#include <iostream>
-#include <regex>
-#include <string>
-#include <string_view>
-#include <system_error>
+import "abuildsystem.hpp";
+import "aupdateconfig.hpp";
+import aupdatesystem;
 
 namespace almondnamespace
 {
     namespace cmds
     {
-        inline constexpr std::string_view kUpdateLong{ "--update" };
-        inline constexpr std::string_view kUpdateShort{ "-u" };
-        inline constexpr std::string_view kForceFlag{ "--force" };
-        inline constexpr std::string_view kHelpLong{ "--help" };
-        inline constexpr std::string_view kHelpShort{ "-h" };
-
-        inline void cleanup_previous_update_artifacts()
+        void cleanup_previous_update_artifacts()
         {
             namespace fs = std::filesystem;
 
@@ -85,17 +49,14 @@ namespace almondnamespace
                 }
             }
         }
-    } // namespace
+    }
 
     namespace updater
     {
-        // 🔄 **Replace binary with the new compiled version**
-        inline void replace_binary_from_script(const std::string& new_binary) {
+        void replace_binary_from_script(const std::string& new_binary) {
             std::cout << "[INFO] Replacing current binary...\n";
 
 #if defined(_WIN32)
-            //clean_up_build_files();
-
             std::ofstream batchFile(REPLACE_RUNNING_EXE_SCRIPT_NAME());
             if (!batchFile) {
                 std::cerr << "[ERROR] Failed to create batch file for self-replacement.\n";
@@ -165,7 +126,7 @@ namespace almondnamespace
 #endif
         }
 
-        inline bool move_directory_contents(const std::filesystem::path& source,
+        bool move_directory_contents(const std::filesystem::path& source,
                                             const std::filesystem::path& destination)
         {
             namespace fs = std::filesystem;
@@ -221,29 +182,24 @@ namespace almondnamespace
             return true;
         }
 
-        // 🔄 **Replace the Current Binary**
-        inline void replace_binary(const std::string& new_binary) 
+        void replace_binary(const std::string& new_binary)
         {
             std::cout << "[INFO] Replacing binary...\n";
             clean_up_build_files();
 #if defined(_WIN32)
             replace_binary_from_script(new_binary);
-            //system(("move /Y " + new_binary + " updater.exe").c_str());
 #elif defined(__linux__) || defined(__APPLE__)
             replace_binary_from_script(new_binary);
-            // system(("mv " + new_binary + " updater").c_str());
 #endif
             return;
         }
 
-        // 🔍 **Check for Updates**
-        inline bool check_for_updates(const std::string& remote_config_url)
+        bool check_for_updates(const std::string& remote_config_url)
         {
             std::cout << "[INFO] Checking for updates...\n";
 
             std::string temp_config_path = "temp_config.hpp";
 
-            // ✅ Download `config.hpp` using `wget` or `curl`, but don't keep it permanently
 #if defined(_WIN32)
             std::string command = "curl -L --fail --silent --show-error -o \"" + temp_config_path + "\" \"" + remote_config_url + "\"";
 #else
@@ -255,7 +211,6 @@ namespace almondnamespace
                 return false;
             }
 
-            // ✅ Read `config.hpp` from the temporary file
             std::ifstream config_file(temp_config_path);
             if (!config_file) {
                 std::cerr << "[ERROR] Failed to open downloaded config.hpp for reading.\n";
@@ -268,14 +223,13 @@ namespace almondnamespace
             while (std::getline(config_file, line)) {
                 std::smatch match;
                 if (std::regex_search(line, match, version_regex)) {
-                    latest_version = match[1]; // Extract version number
+                    latest_version = match[1];
                     break;
                 }
             }
 
             config_file.close();
 
-            // ✅ Delete temporary file immediately after reading
 #if defined(_WIN32)
             system(("del /F /Q " + temp_config_path + " >nul 2>&1").c_str());
 #else
@@ -356,12 +310,10 @@ namespace almondnamespace
             std::cout << "[INFO] Local Version: " << PROJECT_VERSION << "\n";
             std::cout << "[INFO] Remote Version: " << latest_version << "\n";
 
-            // ✅ Compare remote version with local version
             return latest_version != PROJECT_VERSION;
         }
 
-        // 🚀 **Install Updater from Binary**
-        inline bool install_from_binary(const std::string& binary_url) {
+        bool install_from_binary(const std::string& binary_url) {
             std::cout << "[INFO] Installing from precompiled binary...\n";
 
             const std::string output_binary = OUTPUT_BINARY();
@@ -375,8 +327,7 @@ namespace almondnamespace
             return true;
         }
 
-        // 🚀 **Install Updater from Source**
-        inline void install_from_source(const std::string& binary_url) {
+        void install_from_source(const std::string& binary_url) {
             std::cout << "[INFO] Installing from source...\n";
 
             if (!setup_7zip()) {
@@ -391,7 +342,6 @@ namespace almondnamespace
 
             std::string extracted_folder = REPO + "-main";
 
-            // ✅ Debug: Check if files exist before moving
             std::cout << "[DEBUG] Listing extracted files before moving:\n";
 #if defined(_WIN32)
             system(("dir /s /b " + extracted_folder).c_str());
@@ -430,48 +380,15 @@ namespace almondnamespace
                 return;
             }
 
-            // you can reverse the redunant fallback order from "binary to source" to "source to binary" in download/usage order
-            // by using this and altering the update_from_source() function differently, add binary_url to install_from_source(const std::string& binary_url) 
-            //install_from_binary(binary_url);
             replace_binary(OUTPUT_BINARY());
         }
 
-        // 🔄 **Update from Source (Minimal)**
-        inline void update_project(const std::string& source_url, const std::string& binary_url) {
-
-            //    if (!check_for_updates(source_url)) {
-            //#if defined(_WIN32)
-            //        system("cls");  // Windows
-            //#else
-            //        system("clear"); // Linux/macOS
-            //#endif
-            //        std::cout << "[INFO] No updates available.\n";
-            //        return;
-            //    }
-
-                // get rid of this line if you're looking to reverse redundant fallback order
-            //if (!install_from_binary(binary_url))
-            //{
-            //    std::cout << "[INFO] Updating from source...\n";
-            //    install_from_source(binary_url);
-            //}
+        void update_project(const std::string& source_url, const std::string& binary_url) {
+            (void)source_url;
+            (void)binary_url;
         }
 
-        struct UpdateChannel
-        {
-            std::string version_url;
-            std::string binary_url;
-        };
-
-        struct UpdateCommandResult
-        {
-            bool update_available = false;
-            bool update_performed = false;
-            bool force_required = false;
-            int exit_code = 0;
-        };
-
-        inline UpdateCommandResult run_update_command(const UpdateChannel& channel, bool force_install)
+        UpdateCommandResult run_update_command(const UpdateChannel& channel, bool force_install)
         {
             cmds::cleanup_previous_update_artifacts();
 
@@ -497,6 +414,5 @@ namespace almondnamespace
             result.update_performed = true;
             return result;
         }
-
     }
 }
