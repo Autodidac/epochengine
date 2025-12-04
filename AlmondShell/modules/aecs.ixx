@@ -21,7 +21,7 @@
  *   See LICENSE file for full terms.                         *
  *                                                            *
  **************************************************************/
-module;
+export module aecs;
 
 import <cassert>;
 import <string_view>;
@@ -35,8 +35,6 @@ namespace almondnamespace
     class Logger;
     namespace time { class Timer; }
 }
-
-export module aecs;
 
 export namespace almondnamespace::ecs
 {
