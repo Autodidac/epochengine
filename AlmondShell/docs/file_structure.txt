@@ -56,6 +56,16 @@
 │   │── avulkantexture.hpp        # Vulkan texture management
 │   │── avulkantriangle.hpp       # Vulkan triangle rendering
 │
+│── modules/
+│   │── aengine.ixx                   # Primary module interface aggregating core engine partitions
+│   │── aengine.cli.ixx               # CLI-facing module surface for the runtime
+│   │── aengine.engine_components.ixx # ECS and component module partition
+│   │── aengine.input.ixx             # Input handling module partition
+│   │── aengine.menu.ixx              # Menu and overlay module partition
+│   │── aengine.platform.ixx          # Platform/windowing abstractions
+│   │── aengine.renderers.ixx         # Renderer module partition entry point
+│   │── aengine.updater.ixx           # Updater module partition
+│
 │── src/
 │   │── acompiler.cpp             # Compiler-related implementation
 │   │── acontextcreator.cpp       # Context creation
@@ -79,3 +89,6 @@
 │   │   │── StaticLib1.vcxproj.filters # Visual Studio filters
 │
 │── CMakeLists.txt                # CMake build script
+│── CMakePresets.json             # CMake configure/build presets
+│── Engine.vcxitems               # Shared MSBuild items for Visual Studio
+│── Engine.vcxitems.filters       # Filters for the shared MSBuild items
