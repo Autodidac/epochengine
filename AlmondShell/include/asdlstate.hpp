@@ -75,8 +75,8 @@ namespace almondnamespace::sdlcontext::state
             std::bitset<SDL_SCANCODE_COUNT> prevDown;
         } keyboard{};
 
-        time::Timer pollTimer = time::createTimer(1.0);
-        time::Timer fpsTimer = time::createTimer(1.0);
+        almondnamespace::time::Timer pollTimer = almondnamespace::time::createTimer(1.0);
+        almondnamespace::time::Timer fpsTimer = almondnamespace::time::createTimer(1.0);
         int frameCount = 0;
 
 #ifdef _WIN32
