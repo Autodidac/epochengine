@@ -5,6 +5,11 @@
 - **Versioned Core** – `include/aversion.hpp` exposes inline getters for the semantic version components, enabling compile-time inspection of the running revision.
 - **Context Management** – `src/acontext.cpp` and `include/acontextmultiplexer.hpp` orchestrate the per-backend render contexts and their window lifecycles, while `include/acontextwindow.hpp` encapsulates platform window data.
 - **Hot-Reload Pipeline** – `src/ascriptingsystem.cpp` drives compilation and loading of `.ascript.cpp` files via the task graph scheduler, handing control to `ScriptScheduler` nodes created in `include/ascriptingsystem.hpp`.
+- **C++23 Modules Under `modules/`** – Module interface units such as `aengine.ixx`, `aengine.renderers.ixx`, and `aengine.platform.ixx` live alongside the legacy headers. Use these partitions for module-aware builds while keeping `include/` for transitional header-based consumers.
+
+## Build Tooling Overview
+- **CMake-first configuration** – `CMakeLists.txt` paired with `CMakePresets.json` drives the portable build, with module scanning flags required on module-capable toolchains.
+- **Visual Studio/MSBuild support** – `Engine.vcxitems` and its companion filters file expose the same sources to MSBuild-based workflows, keeping parity with the CMake configuration.
 
 ## MultiContextManager Startup Sequence
 
