@@ -1,7 +1,7 @@
 // asceneerialize.hpp
 #pragma once
 
-#include "ascene.hpp"   // almondnamespace::Scene
+import ascene;   // almondnamespace::Scene
 #include "ascenesnapshot.hpp" // almondnamespace::SceneSnapshot
 #include <ostream>
 #include <istream>

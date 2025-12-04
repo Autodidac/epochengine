@@ -25,7 +25,7 @@
 
 #include "aplatform.hpp"   // must always come first  
 
-#include "ascene.hpp"
+import ascene;
 
 #include <chrono>
 #include <memory>

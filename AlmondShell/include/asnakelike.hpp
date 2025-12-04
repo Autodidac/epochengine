@@ -24,7 +24,7 @@
  // asnakelike.hpp - functional Snake mini‑app
 #pragma once
 
-#include "ascene.hpp"
+import ascene;
 #include "aplatformpump.hpp"
 #include "arobusttime.hpp"
 #include "acontext.hpp"

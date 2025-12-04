@@ -24,7 +24,7 @@
  // amatch3game.hpp
 #pragma once
 
-#include "ascene.hpp"
+import ascene;
 #include "aeventsystem.hpp"
 #include "aplatformpump.hpp"
 #include "acontext.hpp"

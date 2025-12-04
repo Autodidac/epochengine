@@ -32,7 +32,7 @@
 #include "aatlasmanager.hpp"
 #include "aspriteregistry.hpp"
 #include "aspritepool.hpp"
-#include "ascene.hpp"
+import ascene;
 #include "aimageloader.hpp"
 
 #include <deque>

@@ -55,6 +55,8 @@ target_sources(almondshell PRIVATE
             ${ALMONDSHELL_MODULE_DIR}/aengine.renderers.ixx
             ${ALMONDSHELL_MODULE_DIR}/aengine.menu.ixx
             ${ALMONDSHELL_MODULE_DIR}/aengine.input.ixx
+            ${ALMONDSHELL_MODULE_DIR}/ascene.ixx
+            ${ALMONDSHELL_MODULE_DIR}/ascene.cppm
             ${ALMONDSHELL_MODULE_DIR}/aecs.ixx
             ${ALMONDSHELL_MODULE_DIR}/aecs.private.ixx
             ${ALMONDSHELL_MODULE_DIR}/almond.core.types.ixx
