@@ -1,6 +1,4 @@
 export module aengine;
-
-export import std;
 export import :platform;
 export import :engine_components;
 export import :renderers;
