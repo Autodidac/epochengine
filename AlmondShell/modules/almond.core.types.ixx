@@ -21,15 +21,14 @@
  *   See LICENSE file for full terms.                         *
  *                                                            *
  **************************************************************/
-#pragma once
+module;
 
-#if defined(__cpp_modules) && __cpp_modules >= 201907L && !defined(ALMOND_FORCE_LEGACY_HEADERS)
-import almond.core.types;
-#else
 #include <cstddef>
 #include <cstdint>
 
-namespace almondnamespace
+export module almond.core.types;
+
+export namespace almondnamespace
 {
     using int8 = int8_t;
     using uint8 = uint8_t;
@@ -47,5 +46,4 @@ namespace almondnamespace
     {
         return (value << 24) | ((value << 8) & 0x00FF0000) | ((value >> 8) & 0x0000FF00) | (value >> 24);
     }
-}  // namespace almondnamespace
-#endif
+} // namespace almondnamespace

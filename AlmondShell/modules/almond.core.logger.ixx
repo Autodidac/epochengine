@@ -21,15 +21,7 @@
  *   See LICENSE file for full terms.                         *
  *                                                            *
  **************************************************************/
-//alogger.hpp
-#pragma once
-
-#include "aplatform.hpp"      // Must always come first for platform defines
-
-#if defined(__cpp_modules) && __cpp_modules >= 201907L && !defined(ALMOND_FORCE_LEGACY_HEADERS)
-import almond.core.logger;
-#else
-#include "arobusttime.hpp"
+module;
 
 #include <filesystem>
 #include <fstream>
@@ -38,7 +30,11 @@ import almond.core.logger;
 #include <stdexcept>
 #include <string>
 
-namespace almondnamespace
+export module almond.core.logger;
+
+import almond.core.time;
+
+export namespace almondnamespace
 {
     enum class LogLevel
     {
@@ -78,7 +74,7 @@ namespace almondnamespace
 
         inline static Logger& GetInstance(const std::string& logFileName)
         {
-            static Logger instance(logFileName);  // Ensure timeSystem is dereferenced
+            static Logger instance(logFileName);
             return instance;
         }
 
@@ -100,10 +96,10 @@ namespace almondnamespace
         std::ofstream logFile;
         std::mutex mutex;
         std::string logFileName;
-       // almondnamespace::time::Timer& timeSystem;
         LogLevel logLevel;
 
-        std::string logLevelToString(LogLevel level) const {
+        std::string logLevelToString(LogLevel level) const
+        {
             switch (level) {
             case LogLevel::INFO: return "INFO";
             case LogLevel::WARN: return "WARN";
@@ -112,6 +108,4 @@ namespace almondnamespace
             }
         }
     };
-
 } // namespace almondnamespace
-#endif

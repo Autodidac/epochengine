@@ -21,31 +21,59 @@
  *   See LICENSE file for full terms.                         *
  *                                                            *
  **************************************************************/
-#pragma once
+module;
 
-#if defined(__cpp_modules) && __cpp_modules >= 201907L && !defined(ALMOND_FORCE_LEGACY_HEADERS)
-import almond.core.types;
+#include <iostream>
+#include <type_traits>
+#include <utility>
+
+#ifdef _WIN32
+#include <consoleapi3.h>
 #else
-#include <cstddef>
-#include <cstdint>
-
-namespace almondnamespace
-{
-    using int8 = int8_t;
-    using uint8 = uint8_t;
-    using int16 = int16_t;
-    using uint16 = uint16_t;
-    using int32 = int32_t;
-    using uint32 = uint32_t;
-    using int64 = int64_t;
-    using uint64 = uint64_t;
-
-    using intptr = std::intptr_t;
-    using uintptr = std::uintptr_t;
-
-    [[nodiscard]] constexpr uint32 swap_endian(uint32 value) noexcept
-    {
-        return (value << 24) | ((value << 8) & 0x00FF0000) | ((value >> 8) & 0x0000FF00) | (value >> 24);
-    }
-}  // namespace almondnamespace
+#include <stdio.h>
+#include <unistd.h>
 #endif
+
+export module almond.core.utilities;
+
+export namespace almondnamespace::utilities
+{
+#ifdef _WIN32
+    [[nodiscard]] inline constexpr bool isConsoleApplication() noexcept
+    {
+        return GetConsoleWindow() != nullptr;
+    }
+#else
+    [[nodiscard]] inline constexpr bool isConsoleApplication() noexcept
+    {
+        return isatty(fileno(stdout)) != 0;
+    }
+#endif
+
+#define NO_RETURN_RETRY_ONCE(call)                  \
+    do {                                            \
+        try {                                       \
+            call;                                   \
+        } catch (...) {                             \
+            std::cerr << "[Retry] Retrying: " #call "\n"; \
+            call;                                   \
+        }                                           \
+    } while (0)
+
+    template<typename Func>
+    auto make_retry_once(Func&& f)
+    {
+        return [f = std::forward<Func>(f)](auto&&... args) -> decltype(auto)
+            {
+                try
+                {
+                    return f(std::forward<decltype(args)>(args)...);
+                }
+                catch (...)
+                {
+                    std::cerr << "[Retry] First attempt failed, retrying once...\n";
+                    return f(std::forward<decltype(args)>(args)...);
+                }
+            };
+    }
+} // namespace almondnamespace::utilities

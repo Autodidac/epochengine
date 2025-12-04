@@ -21,20 +21,18 @@
  *   See LICENSE file for full terms.                         *
  *                                                            *
  **************************************************************/
-#pragma once
+module;
 
-#if defined(__cpp_modules) && __cpp_modules >= 201907L && !defined(ALMOND_FORCE_LEGACY_HEADERS)
-import almond.core.time;
-#else
 #include <chrono>
 #include <format>
 #include <string>
 #include <string_view>
 #include <unordered_map>
 
-namespace almondnamespace::time
-{
+export module almond.core.time;
 
+export namespace almondnamespace::time
+{
     using Clock = std::chrono::steady_clock;
 
     struct Timer
@@ -110,12 +108,14 @@ namespace almondnamespace::time
         std::unordered_map<std::string, Timer> timers;
     };
 
-    inline std::unordered_map<std::string, ScopedTimers>& timerRegistry() {
+    inline std::unordered_map<std::string, ScopedTimers>& timerRegistry()
+    {
         static std::unordered_map<std::string, ScopedTimers> registry;
         return registry;
     }
 
-    inline Timer& createNamedTimer(std::string_view group, std::string_view name, double scale = 1.0) {
+    inline Timer& createNamedTimer(std::string_view group, std::string_view name, double scale = 1.0)
+    {
         return timerRegistry()[std::string(group)].timers[std::string(name)] = createTimer(scale);
     }
 
@@ -145,7 +145,4 @@ namespace almondnamespace::time
         const auto local = std::chrono::zoned_time{ std::chrono::current_zone(), now };
         return std::format("{:%Y-%m-%d %H:%M:%S}", local);
     }
-
-
 } // namespace almondnamespace::time
-#endif

@@ -50,6 +50,10 @@ target_sources(almondshell PRIVATE
             ${ALMONDSHELL_MODULE_DIR}/aengine.renderers.ixx
             ${ALMONDSHELL_MODULE_DIR}/aengine.menu.ixx
             ${ALMONDSHELL_MODULE_DIR}/aengine.input.ixx
+            ${ALMONDSHELL_MODULE_DIR}/almond.core.types.ixx
+            ${ALMONDSHELL_MODULE_DIR}/almond.core.time.ixx
+            ${ALMONDSHELL_MODULE_DIR}/almond.core.logger.ixx
+            ${ALMONDSHELL_MODULE_DIR}/almond.core.utilities.ixx
     FILE_SET almondshell_header_units TYPE HEADERS
         BASE_DIRS ${CMAKE_CURRENT_SOURCE_DIR}/include
         FILES
@@ -70,8 +74,10 @@ target_sources(almondshell PRIVATE
             ${CMAKE_CURRENT_SOURCE_DIR}/include/amatch3like.hpp
             ${CMAKE_CURRENT_SOURCE_DIR}/include/aminesweeperlike.hpp
             ${CMAKE_CURRENT_SOURCE_DIR}/include/apacmanlike.hpp
+            ${CMAKE_CURRENT_SOURCE_DIR}/include/alogger.hpp
             ${CMAKE_CURRENT_SOURCE_DIR}/include/aplatform.hpp
             ${CMAKE_CURRENT_SOURCE_DIR}/include/aplatformpump.hpp
+            ${CMAKE_CURRENT_SOURCE_DIR}/include/arobusttime.hpp
             ${CMAKE_CURRENT_SOURCE_DIR}/include/araylibcontext.hpp
             ${CMAKE_CURRENT_SOURCE_DIR}/include/asandsim.hpp
             ${CMAKE_CURRENT_SOURCE_DIR}/include/ascene.hpp
@@ -82,6 +88,8 @@ target_sources(almondshell PRIVATE
             ${CMAKE_CURRENT_SOURCE_DIR}/include/asoftrenderer_context.hpp
             ${CMAKE_CURRENT_SOURCE_DIR}/include/asokobanlike.hpp
             ${CMAKE_CURRENT_SOURCE_DIR}/include/atetrislike.hpp
+            ${CMAKE_CURRENT_SOURCE_DIR}/include/atypes.hpp
+            ${CMAKE_CURRENT_SOURCE_DIR}/include/autilities.hpp
             ${CMAKE_CURRENT_SOURCE_DIR}/include/aupdateconfig.hpp
             ${CMAKE_CURRENT_SOURCE_DIR}/include/aupdatesystem.hpp
             ${CMAKE_CURRENT_SOURCE_DIR}/include/aversion.hpp
