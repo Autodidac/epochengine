@@ -44,6 +44,7 @@ target_sources(almondshell PRIVATE
         FILES
             ${ALMONDSHELL_MODULE_DIR}/aengine.ixx
             ${ALMONDSHELL_MODULE_DIR}/aengine.cli.ixx
+            ${ALMONDSHELL_MODULE_DIR}/aengine.updater.ixx
             ${ALMONDSHELL_MODULE_DIR}/aengine.platform.ixx
             ${ALMONDSHELL_MODULE_DIR}/aengine.engine_components.ixx
             ${ALMONDSHELL_MODULE_DIR}/aengine.renderers.ixx
