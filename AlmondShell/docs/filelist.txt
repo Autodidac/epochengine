@@ -1,5 +1,8 @@
 include Directory
 
+Module-first ECS consumption: import `aengine` or `aengine.engine_components`
+instead of including the `aentity*.hpp`/`acomponent*` headers directly.
+
 •	abuildsystem.hpp
 •	acomponentmanager.hpp
 •	acomplier.hpp

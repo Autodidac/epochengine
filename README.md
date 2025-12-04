@@ -20,8 +20,8 @@ The runtime is designed for rapid iteration with hot-reloadable scripting, a sel
 
 - 🧱 **Static Linking First**
   AlmondShell's runtime is delivered as a fully static target, ensuring deterministic deployment, predictable performance, and portability across distribution channels.
-- 📚 **Header-Only Core**
-  The primary engine modules live in headers so they can be inlined, composed, and consumed without linker gymnastics, unlocking rapid iteration for integrators.
+- 📚 **Module-Based Core**
+  The engine now ships as C++23 modules so ECS partitions and runtime systems can be imported directly (for example `import aengine;`, `import aengine.engine_components;`, or `import aengine.renderers;`) without juggling umbrella headers. The module set covers the core runtime surface plus dedicated partitions for input, menus, platform, and renderer wiring.
 - 🧠 **Functional Flow**
   Systems are composed in a functional style that favours pure interfaces and immutable data where possible, simplifying reasoning about complex runtime state.
 
@@ -94,7 +94,7 @@ Refer to [`Changes/changelog.txt`](Changes/changelog.txt) for the full history o
   Can also be built directly from source for full control.
 
 - ⚙️ **Modular C++23 engine**
-  Built in a **functional, header-only + module-first style** with static linkage.
+  Built in a **functional, module-first style** with static linkage (legacy headers remain for compatibility while the module partitions take priority).
   Context-driven architecture with systems for rendering, windowing, input, scripting, tasks, and asset management.
 
 - 🧪 **Live script reloading**
