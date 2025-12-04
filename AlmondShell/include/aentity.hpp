@@ -27,11 +27,12 @@
 #include "aplatform.hpp"   // must always come first
 
  // High‑level entity helpers (header‑only, functional)
-#include "aecs.hpp"                 // reg_ex<…>
 #include "aentitycomponents.hpp"    // Position, History, LoggerComponent
 #include "aeventsystem.hpp"         // push_event
 #include "alogger.hpp"
 #include "arobusttime.hpp"
+
+import aecs;                        // reg_ex<…>
 
 #include <string_view>
 #include <format>

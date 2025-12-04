@@ -563,6 +563,12 @@
     <ClCompile Include="$(MSBuildThisFileDirectory)modules\aengine.menu.ixx">
       <Filter>Module Files</Filter>
     </ClCompile>
+    <ClCompile Include="$(MSBuildThisFileDirectory)modules\aecs.ixx">
+      <Filter>Module Files</Filter>
+    </ClCompile>
+    <ClCompile Include="$(MSBuildThisFileDirectory)modules\aecs.private.ixx">
+      <Filter>Module Files</Filter>
+    </ClCompile>
     <ClCompile Include="$(MSBuildThisFileDirectory)modules\almond.core.logger.ixx">
       <Filter>Module Files</Filter>
     </ClCompile>
