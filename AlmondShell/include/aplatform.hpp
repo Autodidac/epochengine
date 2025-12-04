@@ -35,8 +35,10 @@
 #define ALMOND_FORCE_LEGACY_HEADERS 1
 #endif
 
-#include <string>
-#include <ctime>
+import std;
+
+//#include <string>
+//#include <ctime>
 
 // Define the namespace based on a macro
 #define almondnamespace almondshell

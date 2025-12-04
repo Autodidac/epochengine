@@ -76,7 +76,7 @@ namespace almondnamespace::anativecontext
         } keyboard;
 
         // Timing
-        almondnamespace::timing::Timer pollTimer = createTimer(1.0);
+        almondnamespace::timing::Timer pollTimer = almondnamespace::timing::createTimer(1.0);
         almondnamespace::timing::Timer fpsTimer = almondnamespace::timing::createTimer(1.0);
         int frameCount = 0;
 

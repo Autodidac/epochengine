@@ -8,7 +8,7 @@ import aenduserapplication;
 import "aapplicationmodule.hpp";
 import "acontext.hpp";
 import "aeventsystem.hpp";
-import "ainput.hpp";
+//import "ainput.hpp";
 import "arobusttime.hpp";
 
 namespace almondnamespace::app

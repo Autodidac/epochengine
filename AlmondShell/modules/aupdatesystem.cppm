@@ -2,10 +2,14 @@ module;
 
 import aupdatesystem;
 
+import std;
+
 import "abuildsystem.hpp";
 import "aupdateconfig.hpp";
 
 //import aupdatesystem;
+
+export module aengine.updater;
 
 namespace almondnamespace
 {

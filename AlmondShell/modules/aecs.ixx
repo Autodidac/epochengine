@@ -22,10 +22,10 @@
  *                                                            *
  **************************************************************/
 module;
+
+
 #include "aentitycomponentmanager.hpp"
 #include "aentity.hpp"
-
-export module aecs;
 
 import <cassert>;
 import <string_view>;
@@ -33,6 +33,8 @@ import <typeinfo>;
 import <utility>;
 
 import almond.core.time;
+
+export module aecs;
 
 namespace almondnamespace
 {
