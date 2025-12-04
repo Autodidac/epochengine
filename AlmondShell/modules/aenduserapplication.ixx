@@ -4,9 +4,9 @@ import <memory>;
 
 import "aapplicationmodule.hpp";
 import "acontext.hpp";
-import "aeventsystem.hpp";
+import aeventsystem;
 import "ainput.hpp";
-import "arobusttime.hpp";
+import almond.core.time;
 
 export module aenduserapplication;
 

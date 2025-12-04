@@ -30,10 +30,7 @@ import <string_view>;
 import :storage;
 import almond.core.logger;
 import almond.core.time;
-
-import "aeventsystem.hpp";
-import "alogger.hpp";
-import "arobusttime.hpp";
+import aeventsystem;
 
 namespace almondnamespace::ecs::_detail
 {

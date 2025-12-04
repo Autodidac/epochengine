@@ -46,7 +46,6 @@ set(ALMONDSHELL_MODULE_DIR ${CMAKE_CURRENT_SOURCE_DIR}/modules)
 set(ALMONDSHELL_HEADER_UNITS
     ${CMAKE_CURRENT_SOURCE_DIR}/include/a2048like.hpp
     ${CMAKE_CURRENT_SOURCE_DIR}/include/aapplicationmodule.hpp
-    ${CMAKE_CURRENT_SOURCE_DIR}/include/acommandline.hpp
     ${CMAKE_CURRENT_SOURCE_DIR}/include/acellularsim.hpp
     ${CMAKE_CURRENT_SOURCE_DIR}/include/acodeinspector.hpp
     ${CMAKE_CURRENT_SOURCE_DIR}/include/acontext.hpp
@@ -60,7 +59,6 @@ set(ALMONDSHELL_HEADER_UNITS
     ${CMAKE_CURRENT_SOURCE_DIR}/include/amatch3like.hpp
     ${CMAKE_CURRENT_SOURCE_DIR}/include/aminesweeperlike.hpp
     ${CMAKE_CURRENT_SOURCE_DIR}/include/apacmanlike.hpp
-    ${CMAKE_CURRENT_SOURCE_DIR}/include/alogger.hpp
     ${CMAKE_CURRENT_SOURCE_DIR}/include/aplatform.hpp
     ${CMAKE_CURRENT_SOURCE_DIR}/include/aplatformpump.hpp
     ${CMAKE_CURRENT_SOURCE_DIR}/include/arobusttime.hpp
@@ -107,6 +105,8 @@ target_sources(almondshell PRIVATE
             ${ALMONDSHELL_MODULE_DIR}/almond.core.time.ixx
             ${ALMONDSHELL_MODULE_DIR}/almond.core.logger.ixx
             ${ALMONDSHELL_MODULE_DIR}/almond.core.utilities.ixx
+            ${ALMONDSHELL_MODULE_DIR}/aeventsystem.cppm
+            ${ALMONDSHELL_MODULE_DIR}/acommandline.cppm
     FILE_SET almondshell_header_units TYPE CXX_MODULES
         BASE_DIRS ${CMAKE_CURRENT_SOURCE_DIR}/include
         FILES
