@@ -48,8 +48,14 @@ Unsupported mixes:
 
 Raylib distributes its own OpenGL loader on Linux, but AlmondShell now links the standalone glad loader in every configuration so all render backends resolve `gladLoadGLLoader` consistently. Distributions that rely exclusively on Raylib's symbols should keep shipping the glad artefacts alongside the engine or provide an alternative wrapper that exports the loader entry points AlmondShell expects.
 
+## Module toolchain requirements
+
+- Configure CMake with module scanning enabled. Presets and helper scripts set `CMAKE_CXX_SCAN_FOR_MODULES=ON` and fall back to `CMAKE_EXPERIMENTAL_CXX_MODULE_DYNDEP=ON` for CMake 3.27–3.28, but manual invocations should mirror those flags.
+- Build with a module-capable compiler configuration: `/std:c++latest` for Visual Studio 2022 17.10+, or `-fmodules-ts` on both clang 17+ and GCC 14+ so BMI generation stays aligned with the scanner output.
+
 ## Change Log
 
+- **v0.72.0** – Documented that module scanning now defaults on in presets and helper scripts (`CMAKE_CXX_SCAN_FOR_MODULES` with the `CMAKE_EXPERIMENTAL_CXX_MODULE_DYNDEP` fallback) and that VS 2022, clang, and GCC builds should compile with their Modules TS flags enabled.
 - **v0.71.0** – Raised the documented baseline to C++23 and noted that module-capable toolchains (VS 2022 17.10+, clang 17+, GCC 14+) plus module scanning flags (`CMAKE_CXX_SCAN_FOR_MODULES` or `CMAKE_EXPERIMENTAL_CXX_MODULE_DYNDEP`) are required when configuring CMake.
 - **v0.70.3** – Recorded that the standalone glad loader is now linked on every platform so AlmondShell's OpenGL calls resolve uniformly across shell scripts, CMake presets, and VS Code tasks.
 - **v0.70.2** – Clarified that CMake now keeps Raylib's loader active by default while suppressing duplicate glad symbols, and noted that packagers can still flip `-DALMOND_FORCE_GLAD=ON` when a standalone loader is required.
