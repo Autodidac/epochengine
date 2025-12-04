@@ -6,6 +6,8 @@ export import "aplatform.hpp";
 export import "aengineconfig.hpp";
 export import "aengine.hpp";
 export import "acommandline.hpp";
+export import "aupdateconfig.hpp";
+export import "aupdatesystem.hpp";
 export import "aplatformpump.hpp";
 export import "aguimenu.hpp";
 export import "aapplicationmodule.hpp";
