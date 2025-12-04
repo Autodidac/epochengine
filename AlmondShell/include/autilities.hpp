@@ -1,4 +1,4 @@
-﻿/**************************************************************
+/**************************************************************
  *   █████╗ ██╗     ███╗   ███╗   ███╗   ██╗    ██╗██████╗    *
  *  ██╔══██╗██║     ████╗ ████║ ██╔═══██╗████╗  ██║██╔══██╗   *
  *  ███████║██║     ██╔████╔██║ ██║   ██║██╔██╗ ██║██║  ██║   *
@@ -26,8 +26,12 @@
 #include "aplatform.hpp"
 
 #include <iostream>
-#include <utility>
+
+#if defined(__cpp_modules) && __cpp_modules >= 201907L && !defined(ALMOND_FORCE_LEGACY_HEADERS)
+import almond.core.utilities;
+#else
 #include <type_traits>
+#include <utility>
 
 namespace almondnamespace::utilities
 {
@@ -53,7 +57,7 @@ namespace almondnamespace::utilities
 
 #endif
 
-    // Macro retry-once for no-return calls, scoped safely
+#ifndef NO_RETURN_RETRY_ONCE
 #define NO_RETURN_RETRY_ONCE(call)                  \
     do {                                            \
         try {                                       \
@@ -63,8 +67,8 @@ namespace almondnamespace::utilities
             call;                                   \
         }                                           \
     } while (0)
+#endif
 
-    // Retry wrapper for callables with return values
     template<typename Func>
     auto make_retry_once(Func&& f)
     {
@@ -82,55 +86,16 @@ namespace almondnamespace::utilities
             };
     }
 } // namespace almondnamespace::utilities
+#endif
 
-////// Usage examples: //////
-
-        //1. Using the macro for calls that don’t return anything(void functions) :
-        //#include "aalmondretry.hpp"
-
-        //    void risky_operation()
-        //{
-        //    static int attempts = 0;
-        //    if (++attempts == 1) {
-        //        throw std::runtime_error("Simulated failure");
-        //    }
-        //    std::cout << "Operation succeeded on attempt " << attempts << "\n";
-        //}
-
-        //int main()
-        //{
-        //    NO_RETURN_RETRY_ONCE(risky_operation());
-
-        //    // Output:
-        //    // [Retry] Retrying: risky_operation();
-        //    // Operation succeeded on attempt 2
-        //}
-
-
-
-        //2. Using the function wrapper for functions with return values:
-        //cpp
-        //    Copy
-        //    Edit
-        //#include "aalmondretry.hpp"
-
-        //    int risky_calculation(int x)
-        //{
-        //    static int attempts = 0;
-        //    if (++attempts == 1) {
-        //        throw std::runtime_error("First attempt failed");
-        //    }
-        //    return x * 2;
-        //}
-
-        //int main()
-        //{
-        //    auto safe_calculation = almondnamespace::utilities::make_retry_once(risky_calculation);
-
-        //    int result = safe_calculation(21);
-        //    std::cout << "Result: " << result << "\n";
-
-        //    // Output:
-        //    // [Retry] First attempt failed, retrying once...
-        //    // Result: 42
-        //}
+#ifndef NO_RETURN_RETRY_ONCE
+#define NO_RETURN_RETRY_ONCE(call)                  \
+    do {                                            \
+        try {                                       \
+            call;                                   \
+        } catch (...) {                             \
+            std::cerr << "[Retry] Retrying: " #call "\n"; \
+            call;                                   \
+        }                                           \
+    } while (0)
+#endif
