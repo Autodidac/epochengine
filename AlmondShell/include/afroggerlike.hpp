@@ -31,7 +31,7 @@
 #include "agamecore.hpp"
 #include "aatlasmanager.hpp"
 #include "aspritepool.hpp"
-#include "ascene.hpp"
+import ascene;
 #include "aimageloader.hpp"
 
 #include <vector>
