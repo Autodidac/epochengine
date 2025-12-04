@@ -294,9 +294,6 @@
     <ClInclude Include="$(MSBuildThisFileDirectory)include\aentity.hpp">
       <Filter>Header Files\ecs</Filter>
     </ClInclude>
-    <ClInclude Include="$(MSBuildThisFileDirectory)include\aenduserapplication.hpp">
-      <Filter>Header Files\core\backbone\external\applications\apps</Filter>
-    </ClInclude>
     <ClInclude Include="$(MSBuildThisFileDirectory)include\ampmcboundedqueue.hpp">
       <Filter>Header Files\core\multithreading</Filter>
     </ClInclude>
@@ -555,6 +552,12 @@
       <Filter>Module Files</Filter>
     </ClCompile>
     <ClCompile Include="$(MSBuildThisFileDirectory)modules\aengine.input.ixx">
+      <Filter>Module Files</Filter>
+    </ClCompile>
+    <ClCompile Include="$(MSBuildThisFileDirectory)modules\aenduserapplication.ixx">
+      <Filter>Module Files</Filter>
+    </ClCompile>
+    <ClCompile Include="$(MSBuildThisFileDirectory)modules\aenduserapplication.cppm">
       <Filter>Module Files</Filter>
     </ClCompile>
     <ClCompile Include="$(MSBuildThisFileDirectory)modules\aengine.menu.ixx">

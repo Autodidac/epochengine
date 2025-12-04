@@ -57,6 +57,8 @@ target_sources(almondshell PRIVATE
             ${ALMONDSHELL_MODULE_DIR}/aengine.renderers.ixx
             ${ALMONDSHELL_MODULE_DIR}/aengine.menu.ixx
             ${ALMONDSHELL_MODULE_DIR}/aengine.input.ixx
+            ${ALMONDSHELL_MODULE_DIR}/aenduserapplication.ixx
+            ${ALMONDSHELL_MODULE_DIR}/aenduserapplication.cppm
             ${ALMONDSHELL_MODULE_DIR}/ascene.ixx
             ${ALMONDSHELL_MODULE_DIR}/ascene.cppm
             ${ALMONDSHELL_MODULE_DIR}/aecs.ixx
@@ -76,7 +78,6 @@ target_sources(almondshell PRIVATE
             ${CMAKE_CURRENT_SOURCE_DIR}/include/acontext.hpp
             ${CMAKE_CURRENT_SOURCE_DIR}/include/acontextmultiplexer.hpp
             ${CMAKE_CURRENT_SOURCE_DIR}/include/acontextwindow.hpp
-            ${CMAKE_CURRENT_SOURCE_DIR}/include/aenduserapplication.hpp
             ${CMAKE_CURRENT_SOURCE_DIR}/include/aengine.hpp
             ${CMAKE_CURRENT_SOURCE_DIR}/include/aengineconfig.hpp
             ${CMAKE_CURRENT_SOURCE_DIR}/include/afroggerlike.hpp
