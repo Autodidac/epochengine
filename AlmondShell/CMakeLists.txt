@@ -40,12 +40,15 @@ set(ALMONDSHELL_MODULE_DIR ${CMAKE_CURRENT_SOURCE_DIR}/modules)
 
 target_sources(almondshell PRIVATE
     FILE_SET almondshell_modules TYPE CXX_MODULES
-        BASE_DIRS ${ALMONDSHELL_MODULE_DIR}
+        BASE_DIRS ${ALMONDSHELL_MODULE_DIR} ${CMAKE_CURRENT_SOURCE_DIR}/include
         FILES
             ${ALMONDSHELL_MODULE_DIR}/aengine.ixx
             ${ALMONDSHELL_MODULE_DIR}/aengine.platform.ixx
             ${ALMONDSHELL_MODULE_DIR}/aengine.engine_components.ixx
             ${ALMONDSHELL_MODULE_DIR}/aengine.renderers.ixx
+            ${CMAKE_CURRENT_SOURCE_DIR}/include/acommandline.hpp
+            ${CMAKE_CURRENT_SOURCE_DIR}/include/aupdateconfig.hpp
+            ${CMAKE_CURRENT_SOURCE_DIR}/include/aupdatesystem.hpp
 )
 
 target_include_directories(almondshell PRIVATE
