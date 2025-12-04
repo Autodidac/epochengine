@@ -41,7 +41,7 @@ namespace almondnamespace::ecs
 {
     // ─── spawn_entity ──────────────────────────────────────────────────
     template<typename... Cs>
-    inline Entity spawn_entity(reg_ex<Cs...>& R, std::string_view logfile, almondnamespace::LogLevel lvl, timing::Timer& clock)
+    inline Entity spawn_entity(reg_ex<Cs...>& R, std::string_view logfile, almondnamespace::LogLevel lvl, almondnamespace::timing::Timer& clock)
     {
         Entity e = create_entity(R);
 
@@ -50,7 +50,7 @@ namespace almondnamespace::ecs
         add_component<LoggerComponent>(R, e, { std::string(logfile),lvl,&clock });
 
         // logging
-        if (R.log && R.clk) R.log->log(std::format("[ECS] Entity {} spawned at {}", e, timing::getCurrentTimeString()));
+        if (R.log && R.clk) R.log->log(std::format("[ECS] Entity {} spawned at {}", e, almondnamespace::timing::getCurrentTimeString()));
 
         events::push_event({ events::EventType::Custom,
                              {{"action","spawn"},
@@ -70,7 +70,7 @@ namespace almondnamespace::ecs
         pos.y += dy;
 
         auto& lc = get_component<LoggerComponent>(R, e);
-        Logger logger{ lc.file, *lc.clock, lc.level };
+        almondnamespace::Logger logger{ lc.file, *lc.clock, lc.level };
         std::string ts = lc.clock->getCurrentTimeString();
         logger.log(std::format("[ECS] Entity {} moved to ({:.2f},{:.2f}) at {}", e, pos.x, pos.y, ts));
 
@@ -95,7 +95,7 @@ namespace almondnamespace::ecs
         pos.x = px; pos.y = py;
 
         auto& lc = get_component<LoggerComponent>(R, e);
-        Logger logger{ lc.file, *lc.clock, lc.level };
+        almondnamespace::Logger logger{ lc.file, *lc.clock, lc.level };
         std::string ts = lc.clock->getCurrentTimeString();
         logger.log(std::format("[ECS] Entity {} rewound to ({:.2f},{:.2f}) at {}", e, pos.x, pos.y, ts));
 

@@ -21,15 +21,16 @@
  *   See LICENSE file for full terms.                         *
  *                                                            *
  **************************************************************/
+module;
+#include "aentitycomponentmanager.hpp"
+#include "aentity.hpp"
+
 export module aecs;
 
 import <cassert>;
 import <string_view>;
 import <typeinfo>;
 import <utility>;
-
-import "aentitycomponentmanager.hpp";
-#include "aentity.hpp";
 
 import almond.core.time;
 
