@@ -74,12 +74,13 @@ flowchart LR
 
 ---
 
-## Current Snapshot (v0.72.0)
+## Current Snapshot (v0.72.1)
 
 - ✅ **Module scanning defaults** – CMake presets and build helpers now force `CMAKE_CXX_SCAN_FOR_MODULES` (plus the 3.27–3.28 `CMAKE_EXPERIMENTAL_CXX_MODULE_DYNDEP` fallback) so BMI discovery is always active, while compiler-specific module flags cover VS 2022, clang, and GCC builds.
+- ✅ **Module coverage tracking** – The module build now spans the core runtime, multiplexer plumbing, and renderer interfaces. Remaining headers are being migrated incrementally with BMI coverage audited via the configuration guide.
 - ✅ **Module migration guidance** – Fresh-build steps call out when to clear cached CMake state, how to enable dependency scanning on legacy CMake releases, and which compilers have been validated for the milestone.
 - ✅ **Updated toolchain requirements** – Prerequisites remain module-capable compilers (VS 2022 17.10+, clang 17+, GCC 14+) and CMake releases with module scanning enabled so downstream packagers avoid partial BMI generation.
-- ✅ **Documentation refresh** – Version metadata, the engine analysis brief, and the configuration flag guide are aligned on the v0.72.0 snapshot and the tightened module-scanning defaults.
+- ✅ **Documentation refresh** – Version metadata, the engine analysis brief, and the configuration flag guide are aligned on the v0.72.1 snapshot and the tightened module-scanning defaults.
 
 Refer to [`Changes/changelog.txt`](Changes/changelog.txt) for the full history of fixes and enhancements.
 
@@ -196,7 +197,7 @@ To build AlmondShell from source you will need the following tools:
 
 | Requirement            | Notes |
 | ---------------------- | ----- |
-| A C++23 toolchain with module support | Visual Studio 2022 17.10+, clang 17+, or GCC 14+ are recommended so BMI generation and import scanning work reliably. |
+| A C++23 toolchain with module support | Visual Studio 2022 17.10+, clang 17+, or GCC 14+ are recommended so BMI generation and import scanning work reliably. Ensure the compiler is configured with Modules TS flags (`/std:c++latest` on MSVC, `-fmodules-ts` on clang/GCC) so BMI emission stays aligned with the scanner. |
 | CMake ≥ 3.29           | Required for out-of-the-box module scanning. When using 3.27–3.28 enable either `-DCMAKE_CXX_SCAN_FOR_MODULES=ON` or `-DCMAKE_EXPERIMENTAL_CXX_MODULE_DYNDEP=ON` to drive BMI discovery. |
 | Ninja _or_ MSBuild     | Pick the generator that matches your platform. Ninja is recommended with module builds to keep BMI scanning incremental. |
 | Git                    | Required for cloning the repository and fetching dependencies. |
@@ -243,7 +244,7 @@ vcpkg install asio fmt glad glm opengl raylib sfml sdl3 sdl3-image zlib
    cmake -S AlmondShell -B build/linux-clang -G Ninja -DCMAKE_BUILD_TYPE=Release -DCMAKE_CXX_STANDARD=23 -DCMAKE_CXX_SCAN_FOR_MODULES=ON
    cmake --build build/linux-clang
    ```
-   When using CMake 3.27–3.28, replace `-DCMAKE_CXX_SCAN_FOR_MODULES=ON` with `-DCMAKE_EXPERIMENTAL_CXX_MODULE_DYNDEP=ON` so the module dependency scanner emits BMI rules for Ninja. Pass `-DALMOND_ENABLE_RAYLIB=OFF` if you need to disable Raylib entirely; otherwise the standalone glad loader now links automatically, fixing the previous undefined reference to `gladLoadGLLoader` on Linux.
+   When using CMake 3.27–3.28, replace `-DCMAKE_CXX_SCAN_FOR_MODULES=ON` with `-DCMAKE_EXPERIMENTAL_CXX_MODULE_DYNDEP=ON` so the module dependency scanner emits BMI rules for Ninja. Pass `-DALMOND_ENABLE_RAYLIB=OFF` if you need to disable Raylib entirely; otherwise the standalone glad loader now links automatically, fixing the previous undefined reference to `gladLoadGLLoader` on Linux. Module builds validated against clang 17 and GCC 14 should emit BMI files into `build/*/CMakeFiles` — delete the directory if you see stale import errors after switching compilers.
 4. **Run AlmondShell**:
    ```bash
    ./build/linux-clang/almondshell
@@ -261,9 +262,9 @@ The module milestone requires a fresh configuration so BMI files are generated c
 
 1. **Start from a clean build directory.** Remove any existing `build/*` directories and CMake cache files before reconfiguring so stale BMIs do not leak across configurations.
 2. **Reconfigure with module scanning enabled.** Pass `-DCMAKE_CXX_STANDARD=23` together with either `-DCMAKE_CXX_SCAN_FOR_MODULES=ON` (CMake 3.29+) or `-DCMAKE_EXPERIMENTAL_CXX_MODULE_DYNDEP=ON` (CMake 3.27–3.28). These flags let CMake emit BMI scanning rules for Ninja/MSBuild.
-3. **Use a module-capable compiler.** Visual Studio 2022 17.10+, clang 17+, and GCC 14+ have been validated for this milestone, and the presets/helper scripts now add the corresponding module flags (`/std:c++latest` on MSVC, `-fmodules-ts` on clang/GCC) so BMI emission stays in sync with the scanner.
+3. **Use a module-capable compiler.** Visual Studio 2022 17.10+, clang 17+, and GCC 14+ have been validated for this milestone, and the presets/helper scripts now add the corresponding module flags (`/std:c++latest` on MSVC, `-fmodules-ts` on clang/GCC) so BMI emission stays in sync with the scanner. If you switch between clang and GCC, rebuild from scratch to avoid mixed compiler BMI artefacts.
 4. **Prefer Ninja for incremental module builds.** The generator keeps BMI scanning fast and reduces the chance of stale dependency edges when rebuilding after header/module edits.
-5. **Regenerate IDE metadata.** After reconfiguring, refresh VS Code/VS 2022 CMake caches so IntelliSense and launch configurations pick up the C++23 standard and module scanning switches.
+5. **Regenerate IDE metadata.** After reconfiguring, refresh VS Code/VS 2022 CMake caches so IntelliSense and launch configurations pick up the C++23 standard and module scanning switches. Visual Studio users should delete any `.vs`-scoped cache directories when toggling module flags to ensure MSBuild refreshes BMI inputs.
 
 ---
 

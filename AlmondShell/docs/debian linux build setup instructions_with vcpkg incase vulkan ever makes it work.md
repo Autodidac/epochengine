@@ -38,7 +38,19 @@ cmake -B build -S . -DCMAKE_TOOLCHAIN_FILE=path/to/vcpkg/scripts/buildsystems/vc
 
 ---
 
-### ✅ **Step 4: Setting up MSVC for Linux (via WSL)**
+### ✅ **Step 4: Prep module-capable compilers**
+
+AlmondShell's build requires a Modules TS-capable compiler so BMI files are emitted correctly:
+
+- **clang 17+** – Tested with `-fmodules-ts` enabled.
+- **GCC 14+** – Tested with `-fmodules-ts` enabled.
+- **MSVC (VS 2022 17.10+)** – Use `/std:c++latest` and CMake's module scanning flags when driving MSBuild.
+
+Switching between clang and GCC? Delete your `build/` directory so stale BMIs do not leak across toolchains.
+
+---
+
+### ✅ **Step 5: Setting up MSVC for Linux (via WSL)**
 
 To use **MSVC inside WSL**, install the necessary cross-compilation tools:
 
@@ -57,7 +69,7 @@ To use **MSVC inside WSL**, install the necessary cross-compilation tools:
 
 ---
 
-### ✅ **Step 5: Export Environment Variables for MSVC**
+### ✅ **Step 6: Export Environment Variables for MSVC**
 
 On **WSL**, export MSVC toolchain paths:
 ```bash
@@ -69,7 +81,7 @@ For using MSVC directly, you’ll need to set up the cross-compilation environme
 
 ---
 
-### ✅ **Step 6: Example: Install SDL2 and Vulkan with vcpkg**
+### ✅ **Step 7: Example: Install SDL2 and Vulkan with vcpkg**
 
 ```bash
 ./vcpkg install sdl3:x64-linux
@@ -78,7 +90,7 @@ For using MSVC directly, you’ll need to set up the cross-compilation environme
 
 ---
 
-### ✅ **Step 7: Using vcpkg in Your Project**
+### ✅ **Step 8: Using vcpkg in Your Project**
 
 In your **CMakeLists.txt**:
 ```cmake
@@ -92,6 +104,16 @@ Then build:
 cmake -B build -S .
 cmake --build build
 ```
+
+When configuring AlmondShell directly, prefer the Ninja generator and enable module scanning so CMake emits BMI rules:
+
+```bash
+rm -rf build
+cmake -S AlmondShell -B build -G Ninja -DCMAKE_CXX_STANDARD=23 -DCMAKE_CXX_SCAN_FOR_MODULES=ON
+cmake --build build
+```
+
+On CMake 3.27–3.28 switch `-DCMAKE_CXX_SCAN_FOR_MODULES=ON` for `-DCMAKE_EXPERIMENTAL_CXX_MODULE_DYNDEP=ON`. Re-run from a clean directory anytime you toggle these flags.
 
 ---
 
