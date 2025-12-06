@@ -36,7 +36,7 @@ import "amovementevent.hpp";
 
 namespace almondnamespace::scene
 {
-    template <typename... Components>
+    export template <typename... Components>
     struct SceneComponentList
     {
         using Registry = almondnamespace::ecs::reg_ex<Components...>;
@@ -49,9 +49,9 @@ namespace almondnamespace::scene
     };
 
     // Override this alias to change the default component set carried by Scene registries.
-    using DefaultSceneComponents = SceneComponentList<ecs::Position>;
+    export using DefaultSceneComponents = SceneComponentList<ecs::Position>;
 
-    class Scene
+    export class Scene
     {
     public:
         using Components = DefaultSceneComponents;
