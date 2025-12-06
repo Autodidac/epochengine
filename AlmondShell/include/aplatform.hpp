@@ -46,8 +46,13 @@
 //#include <string>
 //#include <ctime>
 
-// Define the namespace based on a macro
-#define almondnamespace almondshell
+// Maintain compatibility with legacy code that referenced the old
+// `almondshell` namespace name while the project now uses
+// `almondnamespace`. Use a namespace alias instead of a macro so tools
+// and modules see the real namespace and avoid accidental token
+// replacement that can break builds.
+namespace almondnamespace { }
+namespace almondshell = almondnamespace;
 
 // API Visibility Macros
 #ifdef _WIN32
