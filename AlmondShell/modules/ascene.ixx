@@ -73,11 +73,11 @@ namespace almondnamespace::scene
         virtual void unload();
 
         // Per-frame hook (override in derived game scenes)
-        virtual bool frame(std::shared_ptr<almondnamespace::core::Context>,
-            almondnamespace::core::WindowData*)
-        {
-            return true; // default: no-op
-        }
+        //virtual bool frame(std::shared_ptr<almondnamespace::core::Context>,
+        //    almondnamespace::core::WindowData*)
+        //{
+        //    return true; // default: no-op
+        //}
 
         // Entity management
         ecs::Entity createEntity();

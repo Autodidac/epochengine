@@ -1,6 +1,6 @@
 module;
 
-module ascene;
+export module ascene;
 
 import <string>;
 
@@ -67,11 +67,11 @@ namespace almondnamespace::scene
         return newScene;
     }
 
-    void Scene::log(const std::string& msg, LogLevel lvl) const
-    {
-        if (logger && lvl >= sceneLogLevel)
-        {
-            logger->log(msg, lvl);
-        }
-    }
+    //void Scene::log(const std::string& msg, LogLevel lvl) const
+    //{
+    //    if (logger && lvl >= sceneLogLevel)
+    //    {
+    //        logger->log(msg, lvl);
+    //    }
+    //}
 }
