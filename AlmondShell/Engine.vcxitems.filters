@@ -115,6 +115,12 @@
     <Filter Include="Header Files\core\backbone\external\applications\games">
       <UniqueIdentifier>{78365f5f-e3f7-46ca-be9f-39873802a035}</UniqueIdentifier>
     </Filter>
+    <Filter Include="Module Files\ixx">
+      <UniqueIdentifier>{7820e8e5-34fa-4ff1-b5c7-bc66bb5c4488}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Module Files\cppm">
+      <UniqueIdentifier>{d7c950b5-3050-4190-8793-7522382cedb5}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="$(MSBuildThisFileDirectory)include\almondengine.hpp">
@@ -533,71 +539,83 @@
     <ClCompile Include="$(MSBuildThisFileDirectory)src\aopenglplatform_win.cpp">
       <Filter>Source Files\crossplatform</Filter>
     </ClCompile>
-    <ClCompile Include="$(MSBuildThisFileDirectory)modules\aengine.renderers.ixx">
-      <Filter>Module Files</Filter>
+    <ClCompile Include="$(MSBuildThisFileDirectory)modules\acommandline.cppm">
+      <Filter>Module Files\cppm</Filter>
     </ClCompile>
-    <ClCompile Include="$(MSBuildThisFileDirectory)modules\aengine.platform.ixx">
-      <Filter>Module Files</Filter>
-    </ClCompile>
-    <ClCompile Include="$(MSBuildThisFileDirectory)modules\aengine.ixx">
-      <Filter>Module Files</Filter>
-    </ClCompile>
-    <ClCompile Include="$(MSBuildThisFileDirectory)modules\aengine.engine_components.ixx">
-      <Filter>Module Files</Filter>
-    </ClCompile>
-    <ClCompile Include="$(MSBuildThisFileDirectory)modules\aengine.cli.ixx">
-      <Filter>Module Files</Filter>
-    </ClCompile>
-    <ClCompile Include="$(MSBuildThisFileDirectory)modules\aengine.updater.ixx">
-      <Filter>Module Files</Filter>
-    </ClCompile>
-    <ClCompile Include="$(MSBuildThisFileDirectory)modules\aengine.input.ixx">
-      <Filter>Module Files</Filter>
-    </ClCompile>
-    <ClCompile Include="$(MSBuildThisFileDirectory)modules\aenduserapplication.ixx">
-      <Filter>Module Files</Filter>
-    </ClCompile>
-    <ClCompile Include="$(MSBuildThisFileDirectory)modules\aenduserapplication.cppm">
-      <Filter>Module Files</Filter>
-    </ClCompile>
-    <ClCompile Include="$(MSBuildThisFileDirectory)modules\aengine.menu.ixx">
-      <Filter>Module Files</Filter>
-    </ClCompile>
-    <ClCompile Include="$(MSBuildThisFileDirectory)modules\aecs.ixx">
-      <Filter>Module Files</Filter>
+    <ClCompile Include="$(MSBuildThisFileDirectory)modules\aecs.components.ixx">
+      <Filter>Module Files\ixx</Filter>
     </ClCompile>
     <ClCompile Include="$(MSBuildThisFileDirectory)modules\aecs.internal_private.ixx">
-      <Filter>Module Files</Filter>
+      <Filter>Module Files\ixx</Filter>
+    </ClCompile>
+    <ClCompile Include="$(MSBuildThisFileDirectory)modules\aecs.ixx">
+      <Filter>Module Files\ixx</Filter>
+    </ClCompile>
+    <ClCompile Include="$(MSBuildThisFileDirectory)modules\aecs.storage.ixx">
+      <Filter>Module Files\ixx</Filter>
+    </ClCompile>
+    <ClCompile Include="$(MSBuildThisFileDirectory)modules\aenduserapplication.ixx">
+      <Filter>Module Files\ixx</Filter>
+    </ClCompile>
+    <ClCompile Include="$(MSBuildThisFileDirectory)modules\aengine.cli.ixx">
+      <Filter>Module Files\ixx</Filter>
+    </ClCompile>
+    <ClCompile Include="$(MSBuildThisFileDirectory)modules\aengine.engine_components.ixx">
+      <Filter>Module Files\ixx</Filter>
+    </ClCompile>
+    <ClCompile Include="$(MSBuildThisFileDirectory)modules\aengine.input.ixx">
+      <Filter>Module Files\ixx</Filter>
+    </ClCompile>
+    <ClCompile Include="$(MSBuildThisFileDirectory)modules\aengine.ixx">
+      <Filter>Module Files\ixx</Filter>
+    </ClCompile>
+    <ClCompile Include="$(MSBuildThisFileDirectory)modules\aengine.menu.ixx">
+      <Filter>Module Files\ixx</Filter>
+    </ClCompile>
+    <ClCompile Include="$(MSBuildThisFileDirectory)modules\aengine.platform.ixx">
+      <Filter>Module Files\ixx</Filter>
+    </ClCompile>
+    <ClCompile Include="$(MSBuildThisFileDirectory)modules\aengine.renderers.ixx">
+      <Filter>Module Files\ixx</Filter>
+    </ClCompile>
+    <ClCompile Include="$(MSBuildThisFileDirectory)modules\aengine.updater.ixx">
+      <Filter>Module Files\ixx</Filter>
+    </ClCompile>
+    <ClCompile Include="$(MSBuildThisFileDirectory)modules\aeventsystem.cppm">
+      <Filter>Module Files\ixx</Filter>
     </ClCompile>
     <ClCompile Include="$(MSBuildThisFileDirectory)modules\almond.core.logger.ixx">
-      <Filter>Module Files</Filter>
+      <Filter>Module Files\ixx</Filter>
     </ClCompile>
     <ClCompile Include="$(MSBuildThisFileDirectory)modules\almond.core.time.ixx">
-      <Filter>Module Files</Filter>
+      <Filter>Module Files\ixx</Filter>
     </ClCompile>
     <ClCompile Include="$(MSBuildThisFileDirectory)modules\almond.core.types.ixx">
-      <Filter>Module Files</Filter>
+      <Filter>Module Files\ixx</Filter>
     </ClCompile>
     <ClCompile Include="$(MSBuildThisFileDirectory)modules\almond.core.utilities.ixx">
-      <Filter>Module Files</Filter>
+      <Filter>Module Files\ixx</Filter>
     </ClCompile>
-    <ClCompile Include="$(MSBuildThisFileDirectory)modules\ascene.cppm">
-      <Filter>Module Files</Filter>
-    </ClCompile>
-    <ClCompile Include="$(MSBuildThisFileDirectory)modules\ascene.ixx">
-      <Filter>Module Files</Filter>
-    </ClCompile>
-    <ClCompile Include="$(MSBuildThisFileDirectory)modules\asdlstate.cppm">
-      <Filter>Module Files</Filter>
-    </ClCompile>
-    <ClCompile Include="$(MSBuildThisFileDirectory)modules\asdlstate.ixx">
-      <Filter>Module Files</Filter>
+    <ClCompile Include="$(MSBuildThisFileDirectory)modules\aenduserapplication.cppm">
+      <Filter>Module Files\cppm</Filter>
     </ClCompile>
     <ClCompile Include="$(MSBuildThisFileDirectory)modules\aupdatesystem.cppm">
-      <Filter>Module Files</Filter>
+      <Filter>Module Files\cppm</Filter>
+    </ClCompile>
+    <ClCompile Include="$(MSBuildThisFileDirectory)modules\asdlstate.cppm">
+      <Filter>Module Files\cppm</Filter>
+    </ClCompile>
+    <ClCompile Include="$(MSBuildThisFileDirectory)modules\ascene.cppm">
+      <Filter>Module Files\cppm</Filter>
+    </ClCompile>
+    <ClCompile Include="$(MSBuildThisFileDirectory)modules\ascene.ixx">
+      <Filter>Module Files\ixx</Filter>
+    </ClCompile>
+    <ClCompile Include="$(MSBuildThisFileDirectory)modules\asdlstate.ixx">
+      <Filter>Module Files\ixx</Filter>
     </ClCompile>
     <ClCompile Include="$(MSBuildThisFileDirectory)modules\aupdatesystem.ixx">
-      <Filter>Module Files</Filter>
+      <Filter>Module Files\ixx</Filter>
     </ClCompile>
   </ItemGroup>
 </Project>

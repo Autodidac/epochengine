@@ -210,6 +210,9 @@
     <ResourceCompile Include="$(MSBuildThisFileDirectory)src\WinResource.rc" />
   </ItemGroup>
   <ItemGroup>
+    <ClCompile Include="$(MSBuildThisFileDirectory)modules\acommandline.cppm" />
+    <ClCompile Include="$(MSBuildThisFileDirectory)modules\aecs.components.ixx" />
+    <ClCompile Include="$(MSBuildThisFileDirectory)modules\aecs.storage.ixx" />
     <ClCompile Include="$(MSBuildThisFileDirectory)modules\aengine.cli.ixx" />
     <ClCompile Include="$(MSBuildThisFileDirectory)modules\aengine.engine_components.ixx" />
     <ClCompile Include="$(MSBuildThisFileDirectory)modules\aengine.input.ixx" />
@@ -220,6 +223,7 @@
     <ClCompile Include="$(MSBuildThisFileDirectory)modules\aengine.updater.ixx" />
     <ClCompile Include="$(MSBuildThisFileDirectory)modules\aenduserapplication.ixx" />
     <ClCompile Include="$(MSBuildThisFileDirectory)modules\aenduserapplication.cppm" />
+    <ClCompile Include="$(MSBuildThisFileDirectory)modules\aeventsystem.cppm" />
     <ClCompile Include="$(MSBuildThisFileDirectory)modules\ascene.cppm" />
     <ClCompile Include="$(MSBuildThisFileDirectory)modules\ascene.ixx" />
     <ClCompile Include="$(MSBuildThisFileDirectory)modules\asdlstate.cppm" />
