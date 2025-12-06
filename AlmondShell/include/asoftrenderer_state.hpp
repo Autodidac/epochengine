@@ -26,11 +26,7 @@
 
 #include "aplatform.hpp"
 #include "aengineconfig.hpp"    // brings in <windows.h>, <glad/glad.h>, etc.
-#if defined(__cpp_modules) && __cpp_modules >= 201907L && !defined(ALMOND_FORCE_LEGACY_HEADERS)
 import almond.core.time;
-#else
-#include "arobusttime.hpp"      // your time namespace
-#endif
 
 //#include "asoftrenderer_renderer.hpp"
 //#include "asoftrenderer_textures.hpp"
