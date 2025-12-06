@@ -1,4 +1,4 @@
-module aengine.updater;
+export module aengine.updater;
 
 import aupdatesystem;
 
