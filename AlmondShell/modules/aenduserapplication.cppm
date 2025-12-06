@@ -1,4 +1,4 @@
-module aenduserapplication;
+export module aenduserapplication;
 
 import <memory>;
 
