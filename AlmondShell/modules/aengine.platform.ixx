@@ -1,5 +1,9 @@
 module;
 
+#define ALMOND_PLATFORM_PUMP_DECLARE_ONLY
+#include "aplatformpump.hpp"
+#undef ALMOND_PLATFORM_PUMP_DECLARE_ONLY
+
 export module aengine:platform;
 
 import "aplatform.hpp";
@@ -9,7 +13,6 @@ import aengine.cli;
 import aengine.updater;
 import "aupdateconfig.hpp";
 
-import "aplatformpump.hpp";
 import "aguimenu.hpp";
 import "aapplicationmodule.hpp";
 import aenduserapplication;
@@ -41,6 +44,11 @@ export namespace almondnamespace
 
     namespace platform
     {
-        using ::almondnamespace::platform::pump_events;
+        export bool pump_events();
     }
+}
+
+export bool almondnamespace::platform::pump_events()
+{
+    return pump_events_impl();
 }
