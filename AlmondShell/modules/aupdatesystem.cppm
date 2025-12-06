@@ -3,9 +3,13 @@ module aengine.updater;
 import aupdatesystem;
 
 import <filesystem>;
+import <regex>;
 import <iostream>;
 import <system_error>;
 import <vector>;
+import <array>;
+import <fstream>;
+import <string>;
 
 import "abuildsystem.hpp";
 import "aupdateconfig.hpp";
