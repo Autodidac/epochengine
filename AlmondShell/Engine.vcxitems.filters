@@ -599,9 +599,6 @@
     <ClCompile Include="$(MSBuildThisFileDirectory)modules\asdlstate.cppm">
       <Filter>Module Files\cppm</Filter>
     </ClCompile>
-    <ClCompile Include="$(MSBuildThisFileDirectory)modules\ascene.ixx">
-      <Filter>Module Files\cppm</Filter>
-    </ClCompile>
     <ClCompile Include="$(MSBuildThisFileDirectory)modules\asdlstate.ixx">
       <Filter>Module Files\ixx</Filter>
     </ClCompile>
@@ -609,7 +606,10 @@
       <Filter>Module Files\ixx</Filter>
     </ClCompile>
     <ClCompile Include="$(MSBuildThisFileDirectory)modules\aeventsystem.ixx">
-      <Filter>Module Files\cppm</Filter>
+      <Filter>Module Files\ixx</Filter>
+    </ClCompile>
+    <ClCompile Include="$(MSBuildThisFileDirectory)modules\ascene.ixx">
+      <Filter>Module Files\ixx</Filter>
     </ClCompile>
   </ItemGroup>
 </Project>

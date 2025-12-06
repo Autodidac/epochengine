@@ -25,11 +25,10 @@
 
 #include "aplatform.hpp"
 
-#include <iostream>
-
 #if defined(__cpp_modules) && __cpp_modules >= 201907L && !defined(ALMOND_FORCE_LEGACY_HEADERS)
 import almond.core.utilities;
 #else
+#include <iostream>
 #include <type_traits>
 #include <utility>
 
