@@ -4,14 +4,12 @@ module;
 #include "aengineconfig.hpp"
 #include "acontextwindow.hpp"
 
-import std;
-import almond.core.time;
-
-#include <array>
-#include <bitset>
-#include <functional>
-
 export module asdlstate;
+
+import <array>;
+import <bitset>;
+import <functional>;
+import almond.core.time;
 
 export namespace almondnamespace::sdlcontext::state
 {

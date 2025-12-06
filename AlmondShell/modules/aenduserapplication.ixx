@@ -1,4 +1,4 @@
-module;
+export module aenduserapplication;
 
 import <memory>;
 
@@ -7,8 +7,6 @@ import "acontext.hpp";
 import aeventsystem;
 import "ainput.hpp";
 import almond.core.time;
-
-export module aenduserapplication;
 
 export namespace almondnamespace::app
 {

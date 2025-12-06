@@ -31,8 +31,6 @@
 //#include "asoftrenderer_renderer.hpp"
 //#include "asoftrenderer_textures.hpp"
 
-import almond.core.time;
-
 #include <array>
 #include <bitset>
 #include <functional>

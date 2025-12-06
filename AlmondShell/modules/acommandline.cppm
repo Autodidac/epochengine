@@ -1,8 +1,4 @@
-/**************************************************************
- *   This file is part of the Almond Project.                 *
- *   AlmondShell - Modular C++ Framework                      *
- **************************************************************/
-module;
+export module acommandline;
 
 import <algorithm>;
 import <filesystem>;
@@ -11,8 +7,6 @@ import <string_view>;
 
 import "aengine.hpp";
 import "aversion.hpp";
-
-export module acommandline;
 
 export namespace almondnamespace::core::cli {
     inline int  window_width = DEFAULT_WINDOW_WIDTH;
@@ -30,7 +24,7 @@ export namespace almondnamespace::core::cli {
     };
 
     inline void print_engine_info() {
-        std::cout << GetEngineName() << " v" << GetEngineVersion() << '\n';
+        std::cout << almondnamespace::GetEngineName() << " v" << almondnamespace::GetEngineVersion() << '\n';
     }
 
     inline ParseResult parse(int argc, char* argv[]) {
