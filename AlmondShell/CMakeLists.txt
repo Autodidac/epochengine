@@ -43,42 +43,6 @@ add_executable(almondshell ${ALMONDSHELL_SOURCES})
 
 set(ALMONDSHELL_MODULE_DIR ${CMAKE_CURRENT_SOURCE_DIR}/modules)
 
-set(ALMONDSHELL_HEADER_UNITS
-    ${CMAKE_CURRENT_SOURCE_DIR}/include/a2048like.hpp
-    ${CMAKE_CURRENT_SOURCE_DIR}/include/aapplicationmodule.hpp
-    ${CMAKE_CURRENT_SOURCE_DIR}/include/acellularsim.hpp
-    ${CMAKE_CURRENT_SOURCE_DIR}/include/acodeinspector.hpp
-    ${CMAKE_CURRENT_SOURCE_DIR}/include/acontext.hpp
-    ${CMAKE_CURRENT_SOURCE_DIR}/include/acontextmultiplexer.hpp
-    ${CMAKE_CURRENT_SOURCE_DIR}/include/acontextwindow.hpp
-    ${CMAKE_CURRENT_SOURCE_DIR}/include/aengine.hpp
-    ${CMAKE_CURRENT_SOURCE_DIR}/include/aengineconfig.hpp
-    ${CMAKE_CURRENT_SOURCE_DIR}/include/afroggerlike.hpp
-    ${CMAKE_CURRENT_SOURCE_DIR}/include/aguimenu.hpp
-    ${CMAKE_CURRENT_SOURCE_DIR}/include/ainput.hpp
-    ${CMAKE_CURRENT_SOURCE_DIR}/include/amatch3like.hpp
-    ${CMAKE_CURRENT_SOURCE_DIR}/include/aminesweeperlike.hpp
-    ${CMAKE_CURRENT_SOURCE_DIR}/include/apacmanlike.hpp
-    ${CMAKE_CURRENT_SOURCE_DIR}/include/aplatform.hpp
-    ${CMAKE_CURRENT_SOURCE_DIR}/include/aplatformpump.hpp
-    ${CMAKE_CURRENT_SOURCE_DIR}/include/arobusttime.hpp
-    ${CMAKE_CURRENT_SOURCE_DIR}/include/araylibcontext.hpp
-    ${CMAKE_CURRENT_SOURCE_DIR}/include/asandsim.hpp
-    ${CMAKE_CURRENT_SOURCE_DIR}/include/ascene.hpp
-    ${CMAKE_CURRENT_SOURCE_DIR}/include/asdlcontext.hpp
-    ${CMAKE_CURRENT_SOURCE_DIR}/include/asfmlcontext.hpp
-    ${CMAKE_CURRENT_SOURCE_DIR}/include/aslidingpuzzlelike.hpp
-    ${CMAKE_CURRENT_SOURCE_DIR}/include/asnakelike.hpp
-    ${CMAKE_CURRENT_SOURCE_DIR}/include/asoftrenderer_context.hpp
-    ${CMAKE_CURRENT_SOURCE_DIR}/include/asokobanlike.hpp
-    ${CMAKE_CURRENT_SOURCE_DIR}/include/atetrislike.hpp
-    ${CMAKE_CURRENT_SOURCE_DIR}/include/atypes.hpp
-    ${CMAKE_CURRENT_SOURCE_DIR}/include/autilities.hpp
-    ${CMAKE_CURRENT_SOURCE_DIR}/include/aupdateconfig.hpp
-    ${CMAKE_CURRENT_SOURCE_DIR}/include/aversion.hpp
-    ${CMAKE_CURRENT_SOURCE_DIR}/include/awindowdata.hpp
-)
-
 target_sources(almondshell PRIVATE
     FILE_SET almondshell_modules TYPE CXX_MODULES
         BASE_DIRS ${ALMONDSHELL_MODULE_DIR}
@@ -105,14 +69,6 @@ target_sources(almondshell PRIVATE
             ${ALMONDSHELL_MODULE_DIR}/almond.core.utilities.ixx
             ${ALMONDSHELL_MODULE_DIR}/aeventsystem.ixx
             ${ALMONDSHELL_MODULE_DIR}/acommandline.ixx
-    FILE_SET almondshell_header_units TYPE CXX_MODULES
-        BASE_DIRS ${CMAKE_CURRENT_SOURCE_DIR}/include
-        FILES
-            ${ALMONDSHELL_HEADER_UNITS}
-)
-
-set_source_files_properties(${ALMONDSHELL_HEADER_UNITS}
-    PROPERTIES CXX_MODULE_HEADER_UNIT ON
 )
 
 target_include_directories(almondshell PRIVATE
