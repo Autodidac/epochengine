@@ -47,9 +47,20 @@ namespace almondnamespace::core
     #error "Unsupported platform for pump_events"
 #endif
 
-namespace almondnamespace::platform 
+namespace almondnamespace::platform
 {
+    bool pump_events_impl();
+
+#ifndef ALMOND_PLATFORM_PUMP_DECLARE_ONLY
     inline bool pump_events()  // Returns false if the user closed the window / requested quit
+    {
+        return pump_events_impl();
+    }
+#else
+    bool pump_events();
+#endif
+
+    inline bool pump_events_impl()  // Returns false if the user closed the window / requested quit
     {
 #if defined(_WIN32)
 #ifndef ALMOND_MAIN_HEADLESS
