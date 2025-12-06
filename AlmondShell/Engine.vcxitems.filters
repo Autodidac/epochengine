@@ -581,9 +581,6 @@
     <ClCompile Include="$(MSBuildThisFileDirectory)modules\aengine.updater.ixx">
       <Filter>Module Files\ixx</Filter>
     </ClCompile>
-    <ClCompile Include="$(MSBuildThisFileDirectory)modules\aeventsystem.cppm">
-      <Filter>Module Files\ixx</Filter>
-    </ClCompile>
     <ClCompile Include="$(MSBuildThisFileDirectory)modules\almond.core.logger.ixx">
       <Filter>Module Files\ixx</Filter>
     </ClCompile>
@@ -619,6 +616,9 @@
     </ClCompile>
     <ClCompile Include="$(MSBuildThisFileDirectory)modules\aversion.ixx">
       <Filter>Module Files\ixx</Filter>
+    </ClCompile>
+    <ClCompile Include="$(MSBuildThisFileDirectory)modules\aeventsystem.cppm">
+      <Filter>Module Files\cppm</Filter>
     </ClCompile>
   </ItemGroup>
 </Project>
