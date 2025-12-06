@@ -2,11 +2,9 @@
  *   This file is part of the Almond Project.                 *
  *   AlmondShell - Modular C++ Framework                      *
  **************************************************************/
-module;
+export module aeventsystem;
 
 import std;
-
-export module aeventsystem;
 
 export namespace almondnamespace::events {
 
