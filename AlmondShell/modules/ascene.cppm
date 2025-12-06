@@ -12,8 +12,8 @@ import "amovementevent.hpp";
 
 namespace almondnamespace::scene
 {
-    scene::Scene(Logger* L, timing::Timer* C, LogLevel sceneLevel)
-        : reg(Components::make_registry(L, C)),
+    Scene::Scene(Logger* L, timing::Timer* C, LogLevel sceneLevel)
+        : reg(Scene::Components::make_registry(L, C)),
         loaded(false),
         logger(L),
         clock(C),
@@ -31,7 +31,7 @@ namespace almondnamespace::scene
     {
         log("[Scene] Unloaded", LogLevel::INFO);
         loaded = false;
-        reg = Components::make_registry(nullptr, nullptr);
+        reg = Scene::Components::make_registry(nullptr, nullptr);
     }
 
     ecs::Entity Scene::createEntity()
@@ -60,7 +60,7 @@ namespace almondnamespace::scene
         }
     }
 
-    std::unique_ptr<scene::Scene> scene::Scene::clone() const
+    std::unique_ptr<Scene> Scene::clone() const
     {
         auto newScene = std::make_unique<Scene>(logger, clock, sceneLogLevel);
         log("[Scene] Cloned scene", LogLevel::INFO);
