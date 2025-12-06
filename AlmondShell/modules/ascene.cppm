@@ -8,7 +8,6 @@ import ascene;
 import aecs;
 import almond.core.logger;
 import almond.core.time;
-import aengine:platform;
 import "amovementevent.hpp";
 
 namespace almondnamespace::scene
