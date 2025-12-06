@@ -1,4 +1,4 @@
-module asdlstate;
+import asdlstate;
 
 #ifdef _WIN32
 import <Windows.h>;

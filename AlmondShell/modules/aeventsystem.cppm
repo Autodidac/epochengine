@@ -2,15 +2,7 @@
  *   This file is part of the Almond Project.                 *
  *   AlmondShell - Modular C++ Framework                      *
  **************************************************************/
-import <array>;
-import <atomic>;
-import <cstdint>;
-import <functional>;
-import <string>;
-import <string_view>;
-import <unordered_map>;
-import <utility>;
-import <vector>;
+import std;
 
 export module aeventsystem;
 

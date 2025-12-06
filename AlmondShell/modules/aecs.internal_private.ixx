@@ -21,7 +21,7 @@
  *   See LICENSE file for full terms.                         *
  *                                                            *
  **************************************************************/
-module aecs:internal_private;
+export module aecs:internal_private;
 
 import <format>;
 import <string>;

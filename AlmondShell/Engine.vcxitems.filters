@@ -617,5 +617,8 @@
     <ClCompile Include="$(MSBuildThisFileDirectory)modules\aupdatesystem.ixx">
       <Filter>Module Files\ixx</Filter>
     </ClCompile>
+    <ClCompile Include="$(MSBuildThisFileDirectory)modules\aversion.ixx">
+      <Filter>Module Files\ixx</Filter>
+    </ClCompile>
   </ItemGroup>
 </Project>
