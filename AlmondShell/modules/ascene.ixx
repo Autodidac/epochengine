@@ -1,111 +1,78 @@
-/**************************************************************
- *   █████╗ ██╗     ███╗   ███╗   ███╗   ██╗    ██╗██████╗    *
- *  ██╔══██╗██║     ████╗ ████║ ██╔═══██╗████╗  ██║██╔══██╗   *
- *  ███████║██║     ██╔████╔██║ ██║   ██║██╔██╗ ██║██║  ██║   *
- *  ██╔══██║██║     ██║╚██╔╝██║ ██║   ██║██║╚██╗██║██║  ██║   *
- *  ██║  ██║███████╗██║ ╚═╝ ██║ ╚██████╔╝██║ ╚████║██████╔╝   *
- *  ╚═╝  ╚═╝╚══════╝╚═╝     ╚═╝  ╚═════╝ ╚═╝  ╚═══╝╚═════╝    *
- *                                                            *
- *   This file is part of the Almond Project.                 *
- *   AlmondShell - Modular C++ Framework                      *
- *                                                            *
- *   SPDX-License-Identifier: LicenseRef-MIT-NoSell           *
- *                                                            *
- *   Provided "AS IS", without warranty of any kind.          *
- *   Use permitted for Non-Commercial Purposes ONLY,          *
- *   without prior commercial licensing agreement.            *
- *                                                            *
- *   Redistribution Allowed with This Notice and              *
- *   LICENSE file. No obligation to disclose modifications.   *
- *                                                            *
- *   See LICENSE file for full terms.                         *
- *                                                            *
- **************************************************************/
-module;
 
-export module ascene;
+import ascene;
 
 import <memory>;
 import <string>;
 
 import aecs;
+
 import almond.core.logger;
 import almond.core.time;
 import "amovementevent.hpp";
 
-
 namespace almondnamespace::scene
 {
-    export template <typename... Components>
-    struct SceneComponentList
+    Scene::Scene(Logger* L, timing::Timer* C, LogLevel sceneLevel)
+        : reg(Scene::Components::make_registry(L, C)),
+        loaded(false),
+        logger(L),
+        clock(C),
+        sceneLogLevel(sceneLevel)
     {
-        using Registry = almondnamespace::ecs::reg_ex<Components...>;
+    }
 
-        static Registry make_registry(almondnamespace::Logger* logger,
-            almondnamespace::timing::Timer* clock)
+    void Scene::load()
+    {
+        log("[Scene] Loaded", LogLevel::INFO);
+        loaded = true;
+    }
+
+    void Scene::unload()
+    {
+        log("[Scene] Unloaded", LogLevel::INFO);
+        loaded = false;
+        reg = Scene::Components::make_registry(nullptr, nullptr);
+    }
+
+    ecs::Entity Scene::createEntity()
+    {
+        ecs::Entity e = ecs::create_entity(reg);
+        log("[Scene] Created entity " + std::to_string(e), LogLevel::INFO);
+        return e;
+    }
+
+    void Scene::destroyEntity(ecs::Entity e)
+    {
+        ecs::destroy_entity(reg, e);
+        log("[Scene] Destroyed entity " + std::to_string(e), LogLevel::INFO);
+    }
+
+    void Scene::applyMovementEvent(const MovementEvent& ev)
+    {
+        if (ecs::has_component<ecs::Position>(reg, ev.getEntityId()))
         {
-            return almondnamespace::ecs::make_registry<Components...>(logger, clock);
+            auto& pos = ecs::get_component<ecs::Position>(reg, ev.getEntityId());
+            pos.x += ev.getDeltaX();
+            pos.y += ev.getDeltaY();
+            log("[Scene] Moved entity " + std::to_string(ev.getEntityId()) +
+                " by (" + std::to_string(ev.getDeltaX()) + "," +
+                std::to_string(ev.getDeltaY()) + ")", LogLevel::INFO);
         }
-    };
+    }
 
-    // Override this alias to change the default component set carried by Scene registries.
-    export using DefaultSceneComponents = SceneComponentList<ecs::Position>;
-
-    export class Scene
+    std::unique_ptr<Scene> Scene::clone() const
     {
-    public:
-        using Components = DefaultSceneComponents;
-        using Registry = typename Components::Registry;
+        auto newScene = std::make_unique<Scene>(logger, clock, sceneLogLevel);
+        log("[Scene] Cloned scene", LogLevel::INFO);
+        // TODO: deep copy ECS registry components
+        return newScene;
+    }
 
-        Scene(Logger* L = nullptr,
-            timing::Timer* C = nullptr,
-            LogLevel sceneLevel = LogLevel::INFO);
-
-        Scene(const Scene&) = delete;
-        Scene& operator=(const Scene&) = delete;
-        Scene(Scene&&) noexcept = default;
-        Scene& operator=(Scene&&) noexcept = default;
-
-        virtual ~Scene() = default;
-
-        // Lifecycle
-        virtual void load();
-        virtual void unload();
-
-        // Per-frame hook (override in derived game scenes)
-        //virtual bool frame(std::shared_ptr<almondnamespace::core::Context>,
-        //    almondnamespace::core::WindowData*)
-        //{
-        //    return true; // default: no-op
-        //}
-
-        // Entity management
-        ecs::Entity createEntity();
-        void destroyEntity(ecs::Entity e);
-
-        // Apply external event
-        void applyMovementEvent(const almondnamespace::MovementEvent& ev);
-
-        // Clone
-        virtual std::unique_ptr<Scene> clone() const;
-
-        bool isLoaded() const { return loaded; }
-
-        Registry& registry() { return reg; }
-        const Registry& registry() const { return reg; }
-
-        void setLogLevel(LogLevel lvl) { sceneLogLevel = lvl; }
-        LogLevel getLogLevel() const { return sceneLogLevel; }
-
-    protected:
-        void log(const std::string& msg, LogLevel lvl) const;
-
-    private:
-        Registry reg;
-        bool loaded = false;
-        Logger* logger = nullptr;       // optional shared logger
-        timing::Timer* clock = nullptr;   // optional time reference
-        LogLevel sceneLogLevel{ LogLevel::INFO };         // per-scene verbosity threshold
-    };
-
-} // namespace almondnamespace::scene
+    void Scene::log(const std::string& msg, LogLevel lvl) const
+    {
+        if (logger && lvl >= sceneLogLevel)
+        {
+            logger->log(msg, lvl);
+        }
+    }
+}

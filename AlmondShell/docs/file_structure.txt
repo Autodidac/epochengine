@@ -52,7 +52,7 @@
 │   │── aui.hpp                   # UI utilities
 │   │── aupdateconfig.hpp         # Update configuration
 │   │── modules/aupdatesystem.ixx      # Update system (module interface)
-│   │   └─ modules/aupdatesystem.cppm  # Update system implementation
+│   │   └─ modules/aupdatesystem.ixx  # Update system implementation
 │   │── autilities.hpp            # General utilities
 │   │── aversion.hpp              # Versioning utilities
 │   │── avulkanglfwsetup.hpp      # Vulkan GLFW setup

@@ -8,7 +8,7 @@
 ## Update Flow
 - The launcher’s first stage is an updater check that can clear stale artifacts, query the hosted manifest, and pull down a fresh build when a new version is available.【F:AlmondShell/examples/ConsoleApplication1/main.cpp†L39-L62】
 - When no update is required the routine falls back to a clean console state and continues to engine start-up, keeping operator feedback consistent between refresh cycles.【F:AlmondShell/examples/ConsoleApplication1/main.cpp†L55-L61】
-- Re-run the launcher with `--update --force` to apply the update immediately: this path downloads the matching source archive, expands it beside the executable, provisions the toolchain helpers, and rebuilds the binary so the recovered repository tree is available for inspection or local modifications.【F:AlmondShell/modules/aupdatesystem.cppm†L330-L383】【F:AlmondShell/modules/aupdatesystem.cppm†L391-L415】
+- Re-run the launcher with `--update --force` to apply the update immediately: this path downloads the matching source archive, expands it beside the executable, provisions the toolchain helpers, and rebuilds the binary so the recovered repository tree is available for inspection or local modifications.【F:AlmondShell/modules/aupdatesystem.ixx†L324-L392】【F:AlmondShell/modules/aupdatesystem.ixx†L394-L418】
 
 ## Hot-Reload Cycle
 - The sample runtime demonstrates polling the script timestamp roughly every 200 ms and calling `load_or_reload_script` whenever the file changes, keeping edit–compile–run latency tight.【F:AlmondShell/examples/ConsoleApplication1/main.cpp†L84-L104】

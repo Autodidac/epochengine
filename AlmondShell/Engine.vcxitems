@@ -210,7 +210,7 @@
     <ResourceCompile Include="$(MSBuildThisFileDirectory)src\WinResource.rc" />
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="$(MSBuildThisFileDirectory)modules\acommandline.cppm" />
+    <ClCompile Include="$(MSBuildThisFileDirectory)modules\acommandline.ixx" />
     <ClCompile Include="$(MSBuildThisFileDirectory)modules\aecs.components.ixx" />
     <ClCompile Include="$(MSBuildThisFileDirectory)modules\aecs.storage.ixx" />
     <ClCompile Include="$(MSBuildThisFileDirectory)modules\aengine.cli.ixx" />
@@ -222,15 +222,12 @@
     <ClCompile Include="$(MSBuildThisFileDirectory)modules\aengine.renderers.ixx" />
     <ClCompile Include="$(MSBuildThisFileDirectory)modules\aengine.updater.ixx" />
     <ClCompile Include="$(MSBuildThisFileDirectory)modules\aenduserapplication.ixx" />
-    <ClCompile Include="$(MSBuildThisFileDirectory)modules\aenduserapplication.cppm" />
-    <ClCompile Include="$(MSBuildThisFileDirectory)modules\aeventsystem.cppm" />
-    <ClCompile Include="$(MSBuildThisFileDirectory)modules\ascene.cppm" />
+    <ClCompile Include="$(MSBuildThisFileDirectory)modules\aeventsystem.ixx" />
     <ClCompile Include="$(MSBuildThisFileDirectory)modules\ascene.ixx" />
     <ClCompile Include="$(MSBuildThisFileDirectory)modules\aversion.ixx" />
     <ClCompile Include="$(MSBuildThisFileDirectory)modules\asdlstate.cppm" />
     <ClCompile Include="$(MSBuildThisFileDirectory)modules\asdlstate.ixx" />
     <ClCompile Include="$(MSBuildThisFileDirectory)modules\aupdatesystem.ixx" />
-    <ClCompile Include="$(MSBuildThisFileDirectory)modules\aupdatesystem.cppm" />
     <ClCompile Include="$(MSBuildThisFileDirectory)modules\aecs.ixx" />
     <ClCompile Include="$(MSBuildThisFileDirectory)modules\aecs.internal_private.ixx" />
     <ClCompile Include="$(MSBuildThisFileDirectory)modules\almond.core.logger.ixx" />
