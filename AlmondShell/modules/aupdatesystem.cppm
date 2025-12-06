@@ -1,15 +1,14 @@
-module;
+module aengine.updater;
 
 import aupdatesystem;
 
-import std;
+import <filesystem>;
+import <iostream>;
+import <system_error>;
+import <vector>;
 
 import "abuildsystem.hpp";
 import "aupdateconfig.hpp";
-
-//import aupdatesystem;
-
-export module aengine.updater;
 
 namespace almondnamespace
 {

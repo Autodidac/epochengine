@@ -23,12 +23,17 @@
  **************************************************************/
 export module aecs;
 
-import std;
+import <concepts>;
 import <format>;
+import <functional>;
+import <memory>;
+import <ranges>;
 import <string>;
 import <string_view>;
 import <typeinfo>;
 import <utility>;
+import <vector>;
+import <unordered_map>;
 
 export import :components;
 export import :storage;

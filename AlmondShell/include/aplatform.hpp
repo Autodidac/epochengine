@@ -1,4 +1,4 @@
-﻿/**************************************************************
+/**************************************************************
  *   █████╗ ██╗     ███╗   ███╗   ███╗   ██╗    ██╗██████╗    *
  *  ██╔══██╗██║     ████╗ ████║ ██╔═══██╗████╗  ██║██╔══██╗   *
  *  ███████║██║     ██╔████╔██║ ██║   ██║██╔██╗ ██║██║  ██║   *
@@ -35,7 +35,13 @@
 #define ALMOND_FORCE_LEGACY_HEADERS 1
 #endif
 
-import std;
+// Use classic headers instead of importing the C++ standard library module.
+// This avoids duplicate definitions when the toolchain lacks full module
+// support and ensures consistent behavior across compilers.
+#include <cstddef>
+#include <cstdint>
+#include <string>
+#include <string_view>
 
 //#include <string>
 //#include <ctime>

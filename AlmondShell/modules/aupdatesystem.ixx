@@ -3,7 +3,9 @@ module;
 #include "abuildsystem.hpp"
 #include "aupdateconfig.hpp"
 
-import std;
+import <filesystem>;
+import <string>;
+import <string_view>;
 
 export module aupdatesystem;
 
