@@ -6,7 +6,7 @@ import <iostream>;
 import <string_view>;
 
 import "aengine.hpp";
-import "aversion.hpp";
+import aversion;
 
 export namespace almondnamespace::core::cli {
     inline int  window_width = DEFAULT_WINDOW_WIDTH;

@@ -95,6 +95,7 @@ target_sources(almondshell PRIVATE
             ${ALMONDSHELL_MODULE_DIR}/aengine.input.ixx
             ${ALMONDSHELL_MODULE_DIR}/aenduserapplication.ixx
             ${ALMONDSHELL_MODULE_DIR}/aenduserapplication.cppm
+            ${ALMONDSHELL_MODULE_DIR}/aversion.ixx
             ${ALMONDSHELL_MODULE_DIR}/ascene.ixx
             ${ALMONDSHELL_MODULE_DIR}/ascene.cppm
             ${ALMONDSHELL_MODULE_DIR}/aecs.ixx

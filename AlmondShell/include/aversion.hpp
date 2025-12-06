@@ -29,7 +29,7 @@
 #include <string>
 #include <string_view>
 
-namespace almondnamespace 
+namespace almondnamespace
 {
     // Version information as constexpr for compile-time evaluation
     inline constexpr int major = 0;
@@ -66,3 +66,7 @@ namespace almondnamespace
     }
 
 } // namespace almondnamespace
+
+// Keep the engine name accessible even when builds expect the legacy
+// almondshell namespace alias instead of almondnamespace.
+namespace almondshell = almondnamespace;
