@@ -38,6 +38,7 @@ import <unordered_map>;
 export import :components;
 export import :storage;
 
+import aeventsystem;
 import almond.core.time;
 import almond.core.logger;
 
