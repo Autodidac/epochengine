@@ -1,18 +1,18 @@
-module;
 
-module ascene;
+import ascene;
 
 import <memory>;
 import <string>;
 
 import aecs;
+
 import almond.core.logger;
 import almond.core.time;
 import "amovementevent.hpp";
 
 namespace almondnamespace::scene
 {
-    Scene::Scene(Logger* L, timing::Timer* C, LogLevel sceneLevel)
+    scene::Scene(Logger* L, timing::Timer* C, LogLevel sceneLevel)
         : reg(Components::make_registry(L, C)),
         loaded(false),
         logger(L),
@@ -60,7 +60,7 @@ namespace almondnamespace::scene
         }
     }
 
-    std::unique_ptr<Scene> Scene::clone() const
+    std::unique_ptr<scene::Scene> scene::Scene::clone() const
     {
         auto newScene = std::make_unique<Scene>(logger, clock, sceneLogLevel);
         log("[Scene] Cloned scene", LogLevel::INFO);
