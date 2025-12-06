@@ -1,10 +1,10 @@
 module;
 
-export module ascene;
+module ascene;
 
+import <memory>;
 import <string>;
 
-import ascene;
 import aecs;
 import almond.core.logger;
 import almond.core.time;
@@ -14,6 +14,7 @@ namespace almondnamespace::scene
 {
     Scene::Scene(Logger* L, timing::Timer* C, LogLevel sceneLevel)
         : reg(Components::make_registry(L, C)),
+        loaded(false),
         logger(L),
         clock(C),
         sceneLogLevel(sceneLevel)
@@ -67,11 +68,11 @@ namespace almondnamespace::scene
         return newScene;
     }
 
-    //void Scene::log(const std::string& msg, LogLevel lvl) const
-    //{
-    //    if (logger && lvl >= sceneLogLevel)
-    //    {
-    //        logger->log(msg, lvl);
-    //    }
-    //}
+    void Scene::log(const std::string& msg, LogLevel lvl) const
+    {
+        if (logger && lvl >= sceneLogLevel)
+        {
+            logger->log(msg, lvl);
+        }
+    }
 }
