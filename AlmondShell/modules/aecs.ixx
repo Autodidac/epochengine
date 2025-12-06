@@ -24,13 +24,14 @@
 export module aecs;
 
 import std;
+import <format>;
+import <string>;
 import <string_view>;
 import <typeinfo>;
 import <utility>;
 
 export import :components;
 export import :storage;
-import :internal_private;
 
 import almond.core.time;
 import almond.core.logger;
@@ -56,11 +57,28 @@ export namespace almondnamespace::ecs
 
     namespace _detail
     {
-        void notify(almondnamespace::Logger* log,
+        inline void notify(almondnamespace::Logger* log,
             almondnamespace::timing::Timer* clk,
             Entity e,
             std::string_view action,
-            std::string_view comp = "");
+            std::string_view comp = "")
+        {
+            if (!log || !clk) return;
+
+            auto ts = timing::getCurrentTimeString();
+            log->log(std::format("[ECS] {}{} entity={} at {}",
+                action,
+                comp.empty() ? "" : std::format(":{}", comp),
+                e, ts));
+
+            events::push_event(events::Event{
+                events::EventType::Custom,
+                { {"ecs_action", std::string(action)},
+                  {"entity",     std::to_string(e)},
+                  {"component",  std::string(comp)},
+                  {"timing",       ts} },
+                0.f, 0.f });
+        }
     }
 
     template<typename... Cs>

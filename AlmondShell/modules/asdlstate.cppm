@@ -1,5 +1,3 @@
-module;
-
 module asdlstate;
 
 #ifdef _WIN32
