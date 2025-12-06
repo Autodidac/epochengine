@@ -87,17 +87,14 @@ target_sources(almondshell PRIVATE
             ${ALMONDSHELL_MODULE_DIR}/aengine.cli.ixx
             ${ALMONDSHELL_MODULE_DIR}/aengine.updater.ixx
             ${ALMONDSHELL_MODULE_DIR}/aupdatesystem.ixx
-            ${ALMONDSHELL_MODULE_DIR}/aupdatesystem.cppm
             ${ALMONDSHELL_MODULE_DIR}/aengine.platform.ixx
             ${ALMONDSHELL_MODULE_DIR}/aengine.engine_components.ixx
             ${ALMONDSHELL_MODULE_DIR}/aengine.renderers.ixx
             ${ALMONDSHELL_MODULE_DIR}/aengine.menu.ixx
             ${ALMONDSHELL_MODULE_DIR}/aengine.input.ixx
             ${ALMONDSHELL_MODULE_DIR}/aenduserapplication.ixx
-            ${ALMONDSHELL_MODULE_DIR}/aenduserapplication.cppm
             ${ALMONDSHELL_MODULE_DIR}/aversion.ixx
             ${ALMONDSHELL_MODULE_DIR}/ascene.ixx
-            ${ALMONDSHELL_MODULE_DIR}/ascene.cppm
             ${ALMONDSHELL_MODULE_DIR}/aecs.ixx
             ${ALMONDSHELL_MODULE_DIR}/aecs.components.ixx
             ${ALMONDSHELL_MODULE_DIR}/aecs.internal_private.ixx
@@ -106,8 +103,8 @@ target_sources(almondshell PRIVATE
             ${ALMONDSHELL_MODULE_DIR}/almond.core.time.ixx
             ${ALMONDSHELL_MODULE_DIR}/almond.core.logger.ixx
             ${ALMONDSHELL_MODULE_DIR}/almond.core.utilities.ixx
-            ${ALMONDSHELL_MODULE_DIR}/aeventsystem.cppm
-            ${ALMONDSHELL_MODULE_DIR}/acommandline.cppm
+            ${ALMONDSHELL_MODULE_DIR}/aeventsystem.ixx
+            ${ALMONDSHELL_MODULE_DIR}/acommandline.ixx
     FILE_SET almondshell_header_units TYPE CXX_MODULES
         BASE_DIRS ${CMAKE_CURRENT_SOURCE_DIR}/include
         FILES

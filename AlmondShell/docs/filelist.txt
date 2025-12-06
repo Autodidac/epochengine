@@ -49,7 +49,6 @@ instead of including the `aentity*.hpp`/`acomponent*` headers directly.
 •	aui.hpp
 •	aupdateconfig.hpp
 •	modules/aupdatesystem.ixx
-•       modules/aupdatesystem.cppm
 •	autilities.hpp
 •	aversion.hpp
 •	avulkanglfwsetup.hpp
