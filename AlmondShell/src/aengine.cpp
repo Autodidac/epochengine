@@ -35,7 +35,20 @@ module;
 
 module aengine;
 
-import std;
+import <chrono>;
+import <exception>;
+import <format>;
+import <iostream>;
+import <memory>;
+import <mutex>;
+import <optional>;
+import <queue>;
+import <string>;
+import <string_view>;
+import <thread>;
+import <unordered_map>;
+import <utility>;
+import <vector>;
 
 import :platform;
 import :engine_components;
