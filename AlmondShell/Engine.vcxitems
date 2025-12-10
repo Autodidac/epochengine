@@ -225,7 +225,6 @@
     <ClCompile Include="$(MSBuildThisFileDirectory)modules\aeventsystem.ixx" />
     <ClCompile Include="$(MSBuildThisFileDirectory)modules\ascene.ixx" />
     <ClCompile Include="$(MSBuildThisFileDirectory)modules\aversion.ixx" />
-    <ClCompile Include="$(MSBuildThisFileDirectory)modules\asdlstate.cppm" />
     <ClCompile Include="$(MSBuildThisFileDirectory)modules\asdlstate.ixx" />
     <ClCompile Include="$(MSBuildThisFileDirectory)modules\aupdatesystem.ixx" />
     <ClCompile Include="$(MSBuildThisFileDirectory)modules\aecs.ixx" />

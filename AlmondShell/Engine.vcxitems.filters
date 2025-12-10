@@ -596,9 +596,6 @@
     <ClCompile Include="$(MSBuildThisFileDirectory)modules\aupdatesystem.ixx">
       <Filter>Module Files\ixx</Filter>
     </ClCompile>
-    <ClCompile Include="$(MSBuildThisFileDirectory)modules\asdlstate.cppm">
-      <Filter>Module Files\cppm</Filter>
-    </ClCompile>
     <ClCompile Include="$(MSBuildThisFileDirectory)modules\asdlstate.ixx">
       <Filter>Module Files\ixx</Filter>
     </ClCompile>
