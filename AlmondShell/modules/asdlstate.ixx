@@ -6,9 +6,14 @@ module;
 
 export module asdlstate;
 
+#if defined(_WIN32)
+import <Windows.h>;
+#endif
+
 import <array>;
 import <bitset>;
 import <functional>;
+import <SDL3/SDL.h>;
 import almond.core.time;
 
 export namespace almondnamespace::sdlcontext::state
@@ -90,4 +95,13 @@ export namespace almondnamespace::sdlcontext::state
     };
 
     SDL3State& get_sdl_state() noexcept;
+}
+
+namespace almondnamespace::sdlcontext::state
+{
+    SDL3State& get_sdl_state() noexcept
+    {
+        static SDL3State state{};
+        return state;
+    }
 }

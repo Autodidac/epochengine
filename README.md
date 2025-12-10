@@ -74,13 +74,13 @@ flowchart LR
 
 ---
 
-## Current Snapshot (v0.72.2)
+## Current Snapshot (v0.72.3)
 
-- ✅ **Module scanning defaults** – CMake presets and build helpers now force `CMAKE_CXX_SCAN_FOR_MODULES` (plus the 3.27–3.28 `CMAKE_EXPERIMENTAL_CXX_MODULE_DYNDEP` fallback) so BMI discovery is always active, while compiler-specific module flags cover VS 2022, clang, and GCC builds.
+- ✅ **Unified module surfaces** – The SDL state partition now ships as an `.ixx` interface/implementation alongside the rest of the module set, removing the lingering `.cppm` and keeping BMI scanning consistent across generators.
 - ✅ **Module coverage tracking** – The module build now spans the core runtime, multiplexer plumbing, and renderer interfaces. Remaining headers are being migrated incrementally with BMI coverage audited via the configuration guide.
 - ✅ **Module migration guidance** – Fresh-build steps call out when to clear cached CMake state, how to enable dependency scanning on legacy CMake releases, and which compilers have been validated for the milestone.
 - ✅ **Updated toolchain requirements** – Prerequisites remain module-capable compilers (VS 2022 17.10+, clang 17+, GCC 14+) and CMake releases with module scanning enabled so downstream packagers avoid partial BMI generation.
-- ✅ **Documentation refresh** – Version metadata, the engine analysis brief, and the configuration flag guide are aligned on the v0.72.2 snapshot and the tightened module-scanning defaults.
+- ✅ **Documentation refresh** – Version metadata, the engine analysis brief, and the configuration flag guide are aligned on the v0.72.3 snapshot and the tightened module-scanning defaults.
 
 Refer to [`Changes/changelog.txt`](Changes/changelog.txt) for the full history of fixes and enhancements.
 

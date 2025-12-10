@@ -1,5 +1,11 @@
 # Changelog
 
+## [v0.72.3]
+- Migrated the SDL state module implementation from a standalone `.cppm` to the standard `.ixx` layout so BMI scanners, MSBuild
+  filters, and downstream consumers see a consistent module surface across the engine.
+- Updated version metadata and documentation (README snapshot, engine analysis, configuration guide) to advertise the v0.72.3
+  release and the unified module packaging.
+
 ## [v0.72.2]
 - Bumped the engine metadata so the CLI banner, updater config, and documentation now advertise the v0.72.2 release in lockstep
   with the module-scanning defaults and module coverage guidance.
