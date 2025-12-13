@@ -68,9 +68,10 @@ Asset producers can run off the main thread via the coroutine-enabled `taskgraph
 - **Roadmap Traceability** – The existing `roadmap.txt` lacked granular prompts or acceptance checks per phase, making automation hand-offs hard to script.
 - **Testing Surface** – No automated smoke tests or CI hooks are defined for the critical updater and renderer paths, leaving regression risk high during phase transitions.
 
-## Recent Progress (v0.72.3)
+## Recent Progress (v0.72.4)
 
-- Retired the remaining `.cppm` implementation in favour of an `.ixx` module for the SDL state partition so module surfaces stay consistent across BMI scanners, MSBuild filters, and downstream consumers.
+- Continued migrating legacy headers into `.ixx` partitions so module coverage mirrors the runtime surface and BMI scanning remains predictable across toolchains.
+- Hardened the default build paths on Linux and Windows by keeping module-aware configuration flags in sync, trimming residual configuration drift that could trip clean builds.
 
 ## Recent Progress (v0.62.0)
 
