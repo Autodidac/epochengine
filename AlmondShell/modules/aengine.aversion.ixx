@@ -15,7 +15,7 @@ export namespace almondnamespace
 
     export constexpr int major = 0;
     export constexpr int minor = 72;
-    export constexpr int revision = 3;
+    export constexpr int revision = 5;
 
     export constexpr std::string_view kEngineName = "Almond Shell";
 

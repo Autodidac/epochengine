@@ -1,5 +1,9 @@
 # Changelog
 
+## [v0.72.5]
+- Completed the module conversion for the context and backend stack, covering the multiplexer, render/window wiring, and the OpenGL/SDL3/Raylib/software renderer integrations with importable `.ixx` partitions (`aengine.context`, `aengine.context.window`, `aengine.context.render`, and backend-specific targets).
+- Documented the new module coverage and import targets across the README and release notes so downstream consumers can target the contexts/backends directly without legacy headers.
+
 ## [v0.72.4]
 - Continued converting legacy headers into `.ixx` partitions so module coverage mirrors the runtime surface and BMI scanning stays predictable across toolchains.
 - Tightened build presets on Linux and Windows to default to the refreshed module-aware flags, clearing residual configuration drift uncovered during clean builds.
