@@ -1,27 +1,22 @@
-module;
-
-#define ALMOND_PLATFORM_PUMP_DECLARE_ONLY
-#include "aplatformpump.hpp"
-#undef ALMOND_PLATFORM_PUMP_DECLARE_ONLY
-
 export module aengine.platform;
 
-import "aplatform.hpp";
-import "aengineconfig.hpp";
-import "aengine.hpp";
+import aplatform;
+import aengineconfig;
+import aengine;
 import aengine.cli;
 import aengine.updater;
-import "aupdateconfig.hpp";
+import aupdateconfig;
 
-import "aguimenu.hpp";
+import aguimenu;
 import aapplicationmodule;
 import aenduserapplication;
-import "awindowdata.hpp";
-import "acontext.hpp";
-import "acontextmultiplexer.hpp";
-import "acontextwindow.hpp";
-import "ainput.hpp";
+import awindowdata;
+import acontext;
+import acontextmultiplexer;
+import acontextwindow;
+import ainput;
 import aengine.version;
+import aplatformpump;
 
 export namespace almondnamespace
 {
