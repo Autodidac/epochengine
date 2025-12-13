@@ -42,33 +42,41 @@ endif()
 add_executable(almondshell ${ALMONDSHELL_SOURCES})
 
 set(ALMONDSHELL_MODULE_DIR ${CMAKE_CURRENT_SOURCE_DIR}/modules)
+set(ALMONDSHELL_MODULE_FILES
+    ${ALMONDSHELL_MODULE_DIR}/aengine.ixx
+    ${ALMONDSHELL_MODULE_DIR}/aengine.cli.ixx
+    ${ALMONDSHELL_MODULE_DIR}/aengine.updater.ixx
+    ${ALMONDSHELL_MODULE_DIR}/aupdatesystem.ixx
+    ${ALMONDSHELL_MODULE_DIR}/aengine.platform.ixx
+    ${ALMONDSHELL_MODULE_DIR}/aengine.engine_components.ixx
+    ${ALMONDSHELL_MODULE_DIR}/aengine.renderers.ixx
+    ${ALMONDSHELL_MODULE_DIR}/aengine.menu.ixx
+    ${ALMONDSHELL_MODULE_DIR}/aengine.input.ixx
+    ${ALMONDSHELL_MODULE_DIR}/aenduserapplication.ixx
+    ${ALMONDSHELL_MODULE_DIR}/aversion.ixx
+    ${ALMONDSHELL_MODULE_DIR}/ascene.ixx
+    ${ALMONDSHELL_MODULE_DIR}/aecs.ixx
+    ${ALMONDSHELL_MODULE_DIR}/aecs.components.ixx
+    ${ALMONDSHELL_MODULE_DIR}/aecs.internal_private.ixx
+    ${ALMONDSHELL_MODULE_DIR}/aecs.storage.ixx
+    ${ALMONDSHELL_MODULE_DIR}/almond.core.types.ixx
+    ${ALMONDSHELL_MODULE_DIR}/almond.core.time.ixx
+    ${ALMONDSHELL_MODULE_DIR}/almond.core.logger.ixx
+    ${ALMONDSHELL_MODULE_DIR}/almond.core.utilities.ixx
+    ${ALMONDSHELL_MODULE_DIR}/aeventsystem.ixx
+    ${ALMONDSHELL_MODULE_DIR}/acommandline.ixx
+)
+set(ALMONDSHELL_MODULE_HEADERS
+    ${ALMONDSHELL_MODULE_DIR}/almond.core.time.hpp
+)
 
 target_sources(almondshell PRIVATE
     FILE_SET almondshell_modules TYPE CXX_MODULES
         BASE_DIRS ${ALMONDSHELL_MODULE_DIR}
-        FILES
-            ${ALMONDSHELL_MODULE_DIR}/aengine.ixx
-            ${ALMONDSHELL_MODULE_DIR}/aengine.cli.ixx
-            ${ALMONDSHELL_MODULE_DIR}/aengine.updater.ixx
-            ${ALMONDSHELL_MODULE_DIR}/aupdatesystem.ixx
-            ${ALMONDSHELL_MODULE_DIR}/aengine.platform.ixx
-            ${ALMONDSHELL_MODULE_DIR}/aengine.engine_components.ixx
-            ${ALMONDSHELL_MODULE_DIR}/aengine.renderers.ixx
-            ${ALMONDSHELL_MODULE_DIR}/aengine.menu.ixx
-            ${ALMONDSHELL_MODULE_DIR}/aengine.input.ixx
-            ${ALMONDSHELL_MODULE_DIR}/aenduserapplication.ixx
-            ${ALMONDSHELL_MODULE_DIR}/aversion.ixx
-            ${ALMONDSHELL_MODULE_DIR}/ascene.ixx
-            ${ALMONDSHELL_MODULE_DIR}/aecs.ixx
-            ${ALMONDSHELL_MODULE_DIR}/aecs.components.ixx
-            ${ALMONDSHELL_MODULE_DIR}/aecs.internal_private.ixx
-            ${ALMONDSHELL_MODULE_DIR}/aecs.storage.ixx
-            ${ALMONDSHELL_MODULE_DIR}/almond.core.types.ixx
-            ${ALMONDSHELL_MODULE_DIR}/almond.core.time.ixx
-            ${ALMONDSHELL_MODULE_DIR}/almond.core.logger.ixx
-            ${ALMONDSHELL_MODULE_DIR}/almond.core.utilities.ixx
-            ${ALMONDSHELL_MODULE_DIR}/aeventsystem.ixx
-            ${ALMONDSHELL_MODULE_DIR}/acommandline.ixx
+        FILES ${ALMONDSHELL_MODULE_FILES}
+    FILE_SET almondshell_module_headers TYPE HEADERS
+        BASE_DIRS ${ALMONDSHELL_MODULE_DIR}
+        FILES ${ALMONDSHELL_MODULE_HEADERS}
 )
 
 target_include_directories(almondshell PRIVATE
