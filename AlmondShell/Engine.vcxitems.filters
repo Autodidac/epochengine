@@ -611,7 +611,7 @@
     <ClCompile Include="$(MSBuildThisFileDirectory)modules\asdlstate.ixx">
       <Filter>Module Files\ixx</Filter>
     </ClCompile>
-            <ClCompile Include="$(MSBuildThisFileDirectory)modules\aengine.aversion.ixx">
+            <ClCompile Include="$(MSBuildThisFileDirectory)modules\aengine.version.ixx">
       <Filter>Module Files\ixx</Filter>
     </ClCompile>
     <ClCompile Include="$(MSBuildThisFileDirectory)modules\aeventsystem.ixx">
