@@ -16,7 +16,6 @@ set(CMAKE_CXX_EXTENSIONS OFF)
 
 set(ALMONDSHELL_SOURCES
     src/aengine.cpp
-    src/acontext.cpp
     src/aeditor.cpp
     src/agui.cpp
     src/afontrenderer.cpp
@@ -48,6 +47,12 @@ set(ALMONDSHELL_MODULE_FILES
     ${ALMONDSHELL_MODULE_DIR}/aengine.updater.ixx
     ${ALMONDSHELL_MODULE_DIR}/aupdatesystem.ixx
     ${ALMONDSHELL_MODULE_DIR}/aengine.platform.ixx
+    ${ALMONDSHELL_MODULE_DIR}/aengine.context.ixx
+    ${ALMONDSHELL_MODULE_DIR}/aengine.context.cppm
+    ${ALMONDSHELL_MODULE_DIR}/aengine.context.opengl.ixx
+    ${ALMONDSHELL_MODULE_DIR}/aengine.context.sdl.ixx
+    ${ALMONDSHELL_MODULE_DIR}/aengine.context.raylib.ixx
+    ${ALMONDSHELL_MODULE_DIR}/aengine.context.software.ixx
     ${ALMONDSHELL_MODULE_DIR}/aengine.engine_components.ixx
     ${ALMONDSHELL_MODULE_DIR}/aengine.renderers.ixx
     ${ALMONDSHELL_MODULE_DIR}/aengine.menu.ixx
