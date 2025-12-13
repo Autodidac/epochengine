@@ -2,7 +2,7 @@ module;
 
 export module aengine.updater;
 
-import aupdatesystem;
+import aupdatesystem; // Primary updater implementation module
 
 export namespace almondnamespace::updater
 {
