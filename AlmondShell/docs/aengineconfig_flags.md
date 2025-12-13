@@ -55,6 +55,7 @@ Raylib distributes its own OpenGL loader on Linux, but AlmondShell now links the
 
 ## Change Log
 
+- **v0.72.6** – Synced configuration guidance with the current module/back-end layout, removed stale references to the prior snapshot, and aligned metadata with the v0.72.6 release.
 - **v0.72.5** – Finalised the context/back-end module conversion (`aengine.context`, `aengine.context.window`, `aengine.context.render`, and backend partitions) and refreshed documentation to advertise the import targets and module-aware build defaults.
 - **v0.72.1** – Tracked module coverage through the runtime and renderer interfaces, highlighted clean rebuild requirements when swapping compilers, and reinforced Modules TS flag usage across presets and manual invocations.
 - **v0.72.0** – Documented that module scanning now defaults on in presets and helper scripts (`CMAKE_CXX_SCAN_FOR_MODULES` with the `CMAKE_EXPERIMENTAL_CXX_MODULE_DYNDEP` fallback) and that VS 2022, clang, and GCC builds should compile with their Modules TS flags enabled.

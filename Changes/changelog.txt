@@ -1,5 +1,9 @@
 # Changelog
 
+## [v0.72.6]
+- Realigned engine metadata with the published snapshot so version helpers, release notes, and documentation all advertise v0.72.6 together.
+- Refreshed the README, engine analysis, and configuration guide to remove outdated v0.72.5 references and clarify the current module/back-end layout.
+
 ## [v0.72.5]
 - Completed the module conversion for the context and backend stack, covering the multiplexer, render/window wiring, and the OpenGL/SDL3/Raylib/software renderer integrations with importable `.ixx` partitions (`aengine.context`, `aengine.context.window`, `aengine.context.render`, and backend-specific targets).
 - Documented the new module coverage and import targets across the README and release notes so downstream consumers can target the contexts/backends directly without legacy headers.

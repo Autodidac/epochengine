@@ -74,13 +74,13 @@ flowchart LR
 
 ---
 
-## Current Snapshot (v0.72.5)
+## Current Snapshot (v0.72.6)
 
-- ✅ **Context/back-end module coverage** – The multiplexer, window/render wiring, and backend bindings (OpenGL, SDL3, Raylib, and the software renderer) now ship as `.ixx` partitions so module consumers can `import aengine.context`, `import aengine.context.window`, `import aengine.context.render`, or target backend-specific modules without relying on legacy headers. Mirrored headers (e.g., `aengine.hpp`, `aplatform.hpp`, `acontext*.hpp`) remain wired into the matching partitions for compatibility.
+- ✅ **Version metadata alignment** – `aversion.hpp`, the README snapshot, and the changelog now advertise the v0.72.6 release together so tooling, banners, and docs stay in lockstep.
+- ✅ **Documentation refresh** – Cleaned up the README, engine analysis brief, configuration flag guide, and release notes to reflect the current module layout and build defaults instead of the stale v0.72.5 references.
+- ✅ **Context/back-end module coverage** – The multiplexer, window/render wiring, and backend bindings (OpenGL, SDL3, Raylib, and the software renderer) continue to ship as `.ixx` partitions so module consumers can `import aengine.context`, `import aengine.context.window`, `import aengine.context.render`, or target backend-specific modules without relying on legacy headers. Mirrored headers (e.g., `aengine.hpp`, `aplatform.hpp`, `acontext*.hpp`) remain wired into the matching partitions for compatibility.
 - ✅ **Module conversion momentum** – Additional header-only partitions continue migrating into the module set to keep BMI coverage aligned with the runtime surface, with migration status reflected across the docs.
 - ✅ **Build stability fixes** – Linux and Windows builds pick up the latest module-aware configurations by default, tightening dependency scanning and clearing residual configuration drift.
-- ✅ **Module migration guidance** – Fresh-build steps call out when to clear cached CMake state, how to enable dependency scanning on legacy CMake releases, and which compilers have been validated for the milestone.
-- ✅ **Documentation refresh** – Version metadata, the engine analysis brief, and the configuration flag guide are aligned on the v0.72.5 snapshot and the expanded context/back-end module coverage.
 
 Refer to [`Changes/changelog.txt`](Changes/changelog.txt) for the full history of fixes and enhancements.
 
