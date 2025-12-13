@@ -68,10 +68,10 @@ Asset producers can run off the main thread via the coroutine-enabled `taskgraph
 - **Roadmap Traceability** – The existing `roadmap.txt` lacked granular prompts or acceptance checks per phase, making automation hand-offs hard to script.
 - **Testing Surface** – No automated smoke tests or CI hooks are defined for the critical updater and renderer paths, leaving regression risk high during phase transitions.
 
-## Recent Progress (v0.72.4)
+## Recent Progress (v0.72.5)
 
-- Continued migrating legacy headers into `.ixx` partitions so module coverage mirrors the runtime surface and BMI scanning remains predictable across toolchains.
-- Hardened the default build paths on Linux and Windows by keeping module-aware configuration flags in sync, trimming residual configuration drift that could trip clean builds.
+- Completed the module conversion for the context/back-end stack (`aengine.context`, `aengine.context.window`, `aengine.context.render`, and the OpenGL/SDL3/Raylib/software renderer partitions) so module consumers can import the runtime surface directly without legacy headers.
+- Synced the accompanying documentation and release notes with the new module coverage and build defaults to keep downstream packagers aligned on the v0.72.5 snapshot.
 
 ## Recent Progress (v0.62.0)
 
