@@ -21,24 +21,21 @@
  *   See LICENSE file for full terms.                         *
  *                                                            *
  **************************************************************/
-// amovementevent.hpp - shim header to import the MovementEvent module
-#pragma once
-
-#if defined(__cpp_modules) && __cpp_modules >= 201907L && !defined(ALMOND_FORCE_LEGACY_HEADERS)
-import amovementevent;
-#else
+module;
 
 #include "aplatform.hpp"      // Must always come first for platform defines
 
-#include <cstddef>
-#include <iostream>
+export module amovementevent;
 
-namespace almondnamespace
+import <iostream>;
+import aecs;
+
+export namespace almondnamespace
 {
     class MovementEvent
     {
     public:
-        MovementEvent(std::size_t entityId, float deltaX, float deltaY)
+        MovementEvent(ecs::Entity entityId, float deltaX, float deltaY)
             : entityId(entityId)
             , deltaX(deltaX)
             , deltaY(deltaY)
@@ -51,7 +48,7 @@ namespace almondnamespace
                 << ", Amount: (" << deltaX << ", " << deltaY << ")\n";
         }
 
-        std::size_t getEntityId() const
+        ecs::Entity getEntityId() const
         {
             return entityId;
         }
@@ -65,10 +62,8 @@ namespace almondnamespace
         }
 
     private:
-        std::size_t entityId; // ID of the entity to move
-        float       deltaX;   // Change in X position
-        float       deltaY;   // Change in Y position
+        ecs::Entity entityId{}; // ID of the entity to move
+        float deltaX{ 0.f };    // Change in X position
+        float deltaY{ 0.f };    // Change in Y position
     };
 } // namespace almondnamespace
-
-#endif
