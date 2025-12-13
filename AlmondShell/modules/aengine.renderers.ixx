@@ -3,16 +3,28 @@ module;
 export module aengine:renderers;
 
 #ifdef ALMOND_USING_SDL
-import aengine.sdl.context;
+import asdlcontext;
+import asdlcontextrenderer;
+import asdltextures;
 #endif
 #ifdef ALMOND_USING_SFML
-import "asfmlcontext.hpp";
+import asfmlcontext;
+import asfmlrenderer;
+import asfmltextures;
 #endif
 #ifdef ALMOND_USING_SOFTWARE_RENDERER
-import "asoftrenderer_context.hpp";
+import asoftrenderer_context;
+import asoftrenderer_renderer;
+import asoftrenderer_textures;
+import asoftrenderer_quad;
+import asoftrenderer_state;
 #endif
 #ifdef ALMOND_USING_RAYLIB
-import "araylibcontext.hpp";
+import araylibcontext;
+import araylibcontextinput;
+import araylibrenderer;
+import araylibtextures;
+import araylibstate;
 #endif
 
 export namespace almondnamespace

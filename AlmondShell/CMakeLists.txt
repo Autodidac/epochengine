@@ -41,78 +41,9 @@ endif()
 add_executable(almondshell ${ALMONDSHELL_SOURCES})
 
 set(ALMONDSHELL_MODULE_DIR ${CMAKE_CURRENT_SOURCE_DIR}/modules)
-set(ALMONDSHELL_MODULE_FILES
-    ${ALMONDSHELL_MODULE_DIR}/aengine.ixx
-    ${ALMONDSHELL_MODULE_DIR}/aengine.cli.ixx
-    ${ALMONDSHELL_MODULE_DIR}/aengine.updater.ixx
-    ${ALMONDSHELL_MODULE_DIR}/aupdatesystem.ixx
-    ${ALMONDSHELL_MODULE_DIR}/aengine.platform.ixx
-    ${ALMONDSHELL_MODULE_DIR}/aengine.context.ixx
-    ${ALMONDSHELL_MODULE_DIR}/aengine.context.cppm
-    ${ALMONDSHELL_MODULE_DIR}/aengine.context.commandqueue.ixx
-    ${ALMONDSHELL_MODULE_DIR}/aengine.context.control.ixx
-    ${ALMONDSHELL_MODULE_DIR}/aengine.context.multiplexer.ixx
-    ${ALMONDSHELL_MODULE_DIR}/aengine.context.render.ixx
-    ${ALMONDSHELL_MODULE_DIR}/aengine.context.state.ixx
-    ${ALMONDSHELL_MODULE_DIR}/aengine.context.type.ixx
-    ${ALMONDSHELL_MODULE_DIR}/aengine.context.window.ixx
-    ${ALMONDSHELL_MODULE_DIR}/aengine.context.opengl.ixx
-    ${ALMONDSHELL_MODULE_DIR}/aengine.context.sdl.ixx
-    ${ALMONDSHELL_MODULE_DIR}/aengine.context.raylib.ixx
-    ${ALMONDSHELL_MODULE_DIR}/aengine.context.software.ixx
-    ${ALMONDSHELL_MODULE_DIR}/aallocator.ixx
-    ${ALMONDSHELL_MODULE_DIR}/aapplicationmodule.ixx
-    ${ALMONDSHELL_MODULE_DIR}/aengine.atlasmanager.ixx
-    ${ALMONDSHELL_MODULE_DIR}/aatlasmanager.ixx
-    ${ALMONDSHELL_MODULE_DIR}/aatlastexture.ixx
-    ${ALMONDSHELL_MODULE_DIR}/aengine.engine_components.ixx
-    ${ALMONDSHELL_MODULE_DIR}/aengine.renderers.ixx
-    ${ALMONDSHELL_MODULE_DIR}/aimageloader.ixx
-    ${ALMONDSHELL_MODULE_DIR}/aimagewriter.ixx
-    ${ALMONDSHELL_MODULE_DIR}/aimageatlaswriter.ixx
-    ${ALMONDSHELL_MODULE_DIR}/aengine.opengl.context.ixx
-    ${ALMONDSHELL_MODULE_DIR}/aengine.opengl.renderer.ixx
-    ${ALMONDSHELL_MODULE_DIR}/aengine.opengl.textures.ixx
-    ${ALMONDSHELL_MODULE_DIR}/aengine.sdl.context.ixx
-    ${ALMONDSHELL_MODULE_DIR}/aengine.sdl.renderer.ixx
-    ${ALMONDSHELL_MODULE_DIR}/aengine.sdl.textures.ixx
-    ${ALMONDSHELL_MODULE_DIR}/aengine.menu.ixx
-    ${ALMONDSHELL_MODULE_DIR}/aengine.input.ixx
-    ${ALMONDSHELL_MODULE_DIR}/aenduserapplication.ixx
-    ${ALMONDSHELL_MODULE_DIR}/aengine.version.ixx
-    ${ALMONDSHELL_MODULE_DIR}/atexture.ixx
-    ${ALMONDSHELL_MODULE_DIR}/ascene.ixx
-    ${ALMONDSHELL_MODULE_DIR}/amovementevent.ixx
-    ${ALMONDSHELL_MODULE_DIR}/aecs.ixx
-    ${ALMONDSHELL_MODULE_DIR}/aecs.components.ixx
-    ${ALMONDSHELL_MODULE_DIR}/aecs.internal_private.ixx
-    ${ALMONDSHELL_MODULE_DIR}/aecs.storage.ixx
-    ${ALMONDSHELL_MODULE_DIR}/aengine.updater.config.ixx
-    ${ALMONDSHELL_MODULE_DIR}/aengine.updater.tools.ixx
-    ${ALMONDSHELL_MODULE_DIR}/almond.core.types.ixx
-    ${ALMONDSHELL_MODULE_DIR}/almond.core.time.ixx
-    ${ALMONDSHELL_MODULE_DIR}/almond.core.logger.ixx
-    ${ALMONDSHELL_MODULE_DIR}/almond.core.utilities.ixx
-    ${ALMONDSHELL_MODULE_DIR}/autilities.ixx
-    ${ALMONDSHELL_MODULE_DIR}/almond.softrenderer.state.ixx
-    ${ALMONDSHELL_MODULE_DIR}/aeventsystem.ixx
-    ${ALMONDSHELL_MODULE_DIR}/acommandline.ixx
-    ${ALMONDSHELL_MODULE_DIR}/asdlstate.ixx
-    ${ALMONDSHELL_MODULE_DIR}/abuildsystem.ixx
-    ${ALMONDSHELL_MODULE_DIR}/acompiler.ixx
-    ${ALMONDSHELL_MODULE_DIR}/aengineconfig.ixx
-    ${ALMONDSHELL_MODULE_DIR}/aentitycomponentmanager.ixx
-    ${ALMONDSHELL_MODULE_DIR}/aentitycomponents.ixx
-    ${ALMONDSHELL_MODULE_DIR}/aentityhistory.ixx
-    ${ALMONDSHELL_MODULE_DIR}/afilewatch.ixx
-    ${ALMONDSHELL_MODULE_DIR}/aframework.ixx
-    ${ALMONDSHELL_MODULE_DIR}/aatomicfunction.ixx
-    ${ALMONDSHELL_MODULE_DIR}/ampmcboundedqueue.ixx
-    ${ALMONDSHELL_MODULE_DIR}/ataskgraphwithdot.ixx
-    ${ALMONDSHELL_MODULE_DIR}/arobusttime.ixx
-    ${ALMONDSHELL_MODULE_DIR}/ascriptingsystem.ixx
-    ${ALMONDSHELL_MODULE_DIR}/astringconverter.ixx
-)
+file(GLOB ALMONDSHELL_MODULE_FILES ${ALMONDSHELL_MODULE_DIR}/*.ixx)
+list(SORT ALMONDSHELL_MODULE_FILES)
+
 set(ALMONDSHELL_MODULE_HEADERS
     ${ALMONDSHELL_MODULE_DIR}/almond.core.time.hpp
 )
