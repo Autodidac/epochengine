@@ -274,10 +274,30 @@
     <ClCompile Include="$(MSBuildThisFileDirectory)modules\aengine.context.state.ixx" />
     <ClCompile Include="$(MSBuildThisFileDirectory)modules\aengine.context.type.ixx" />
     <ClCompile Include="$(MSBuildThisFileDirectory)modules\aengine.context.window.ixx" />
-    <ClCompile Include="$(MSBuildThisFileDirectory)modules\aengine.context.opengl.ixx" />
-    <ClCompile Include="$(MSBuildThisFileDirectory)modules\aengine.context.sdl.ixx" />
-    <ClCompile Include="$(MSBuildThisFileDirectory)modules\aengine.context.raylib.ixx" />
-    <ClCompile Include="$(MSBuildThisFileDirectory)modules\aengine.context.software.ixx" />
+    <ClCompile Include="$(MSBuildThisFileDirectory)modules\aengine.context.opengl.ixx">
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|x64'">true</ExcludedFromBuild>
+    </ClCompile>
+    <ClCompile Include="$(MSBuildThisFileDirectory)modules\aengine.context.sdl.ixx">
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|x64'">true</ExcludedFromBuild>
+    </ClCompile>
+    <ClCompile Include="$(MSBuildThisFileDirectory)modules\aengine.context.raylib.ixx">
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|x64'">true</ExcludedFromBuild>
+    </ClCompile>
+    <ClCompile Include="$(MSBuildThisFileDirectory)modules\aengine.context.software.ixx">
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|x64'">true</ExcludedFromBuild>
+    </ClCompile>
     <ClCompile Include="$(MSBuildThisFileDirectory)modules\aengine.atlasmanager.ixx" />
     <ClCompile Include="$(MSBuildThisFileDirectory)modules\aengine.updater.ixx" />
     <ClCompile Include="$(MSBuildThisFileDirectory)modules\aenduserapplication.ixx" />

@@ -575,9 +575,6 @@
     <ClCompile Include="$(MSBuildThisFileDirectory)modules\aengine.context.ixx">
       <Filter>Module Files\ixx</Filter>
     </ClCompile>
-    <ClCompile Include="$(MSBuildThisFileDirectory)modules\aengine.context.cppm">
-      <Filter>Module Files\ixx</Filter>
-    </ClCompile>
     <ClCompile Include="$(MSBuildThisFileDirectory)modules\aengine.context.opengl.ixx">
       <Filter>Module Files\ixx</Filter>
     </ClCompile>
@@ -611,7 +608,7 @@
     <ClCompile Include="$(MSBuildThisFileDirectory)modules\asdlstate.ixx">
       <Filter>Module Files\ixx</Filter>
     </ClCompile>
-            <ClCompile Include="$(MSBuildThisFileDirectory)modules\aengine.aversion.ixx">
+    <ClCompile Include="$(MSBuildThisFileDirectory)modules\aengine.aversion.ixx">
       <Filter>Module Files\ixx</Filter>
     </ClCompile>
     <ClCompile Include="$(MSBuildThisFileDirectory)modules\aeventsystem.ixx">
@@ -673,6 +670,9 @@
     </ClCompile>
     <ClCompile Include="$(MSBuildThisFileDirectory)modules\aengine.sdl.textures.ixx">
       <Filter>Module Files\ixx</Filter>
+    </ClCompile>
+    <ClCompile Include="$(MSBuildThisFileDirectory)modules\aengine.context.cppm">
+      <Filter>Module Files\cppm</Filter>
     </ClCompile>
   </ItemGroup>
 </Project>

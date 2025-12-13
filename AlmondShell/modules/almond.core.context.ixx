@@ -30,8 +30,8 @@ import <utility>;
 import <vector>;
 
 // Project modules (these must be modules too; do NOT include headers)
-import almond.core.context_type;    // ContextType
-import almond.core.command_queue;   // CommandQueue
+import aengine.context.type;    // ContextType
+import aengine.context.commandqueue;   // CommandQueue
 import almond.core.atomic_function; // AlmondAtomicFunction
 import almond.gfx.atlas_texture;    // TextureAtlas
 import almond.gfx.sprite_handle;    // SpriteHandle
