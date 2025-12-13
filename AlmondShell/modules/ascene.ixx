@@ -56,7 +56,7 @@ export namespace almondnamespace::scene
     // ------------------------------------------------------------
 
     inline Scene::Scene(Logger* L, Timer* C, LogLevel sceneLevel)
-        : reg(Components::make_registry(L, C))
+        : reg(ecs::make_registry<ecs::Position, ecs::LoggerComponent>(L, C))
         , loaded(false)
         , logger(L)
         , clock(C)
@@ -74,7 +74,7 @@ export namespace almondnamespace::scene
     {
         log("[Scene] Unloaded", LogLevel::INFO);
         loaded = false;
-        reg = Components::make_registry(nullptr, nullptr);
+        reg = ecs::make_registry<ecs::Position, ecs::LoggerComponent>(nullptr, nullptr);
     }
 
     inline ecs::Entity Scene::createEntity()
