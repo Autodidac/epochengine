@@ -1,6 +1,4 @@
-export module aengine.updater;
-
-import aupdatesystem;
+export module aupdatesystem;
 
 import <filesystem>;
 import <regex>;
