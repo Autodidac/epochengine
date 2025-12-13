@@ -265,6 +265,12 @@
     <ClCompile Include="$(MSBuildThisFileDirectory)modules\aengine.menu.ixx" />
     <ClCompile Include="$(MSBuildThisFileDirectory)modules\aengine.platform.ixx" />
     <ClCompile Include="$(MSBuildThisFileDirectory)modules\aengine.renderers.ixx" />
+    <ClCompile Include="$(MSBuildThisFileDirectory)modules\aengine.context.ixx" />
+    <ClCompile Include="$(MSBuildThisFileDirectory)modules\aengine.context.cppm" />
+    <ClCompile Include="$(MSBuildThisFileDirectory)modules\aengine.context.opengl.ixx" />
+    <ClCompile Include="$(MSBuildThisFileDirectory)modules\aengine.context.sdl.ixx" />
+    <ClCompile Include="$(MSBuildThisFileDirectory)modules\aengine.context.raylib.ixx" />
+    <ClCompile Include="$(MSBuildThisFileDirectory)modules\aengine.context.software.ixx" />
     <ClCompile Include="$(MSBuildThisFileDirectory)modules\aengine.updater.ixx" />
     <ClCompile Include="$(MSBuildThisFileDirectory)modules\aenduserapplication.ixx" />
     <ClCompile Include="$(MSBuildThisFileDirectory)modules\aengine.updater.tools.ixx" />
@@ -283,12 +289,6 @@
     <ClCompile Include="$(MSBuildThisFileDirectory)modules\almond.core.types.ixx" />
     <ClCompile Include="$(MSBuildThisFileDirectory)modules\almond.core.utilities.ixx" />
     <ClCompile Include="$(MSBuildThisFileDirectory)src\acompiler.cpp" />
-    <ClCompile Include="$(MSBuildThisFileDirectory)src\acontext.cpp">
-      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">false</ExcludedFromBuild>
-      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">false</ExcludedFromBuild>
-      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">false</ExcludedFromBuild>
-      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|x64'">false</ExcludedFromBuild>
-    </ClCompile>
     <ClCompile Include="$(MSBuildThisFileDirectory)src\acontextmultiplexer_linux.cpp" />
     <ClCompile Include="$(MSBuildThisFileDirectory)src\acontextmultiplexer_win.cpp" />
     <ClCompile Include="$(MSBuildThisFileDirectory)src\aeditor.cpp" />
