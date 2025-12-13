@@ -3,7 +3,27 @@
 │  NOTE: The ECS, component, and engine systems are now consumed via `import`
 │  rather than `#include`. Pull the consolidated surface from `import aengine;`
 │  or target partitions such as `import aengine.engine_components;` and
-│  `import aengine.platform;` instead of the legacy umbrella headers.
+│  `import aengine.platform;` instead of the legacy umbrella headers. Legacy
+│  headers stay mirrored behind the module surface (for example
+│  `aengine.hpp`, `acontext.hpp`, and `aplatform.hpp` are imported inside their
+│  matching modules) so downstream users can mix `import` and `#include` during
+│  migration.
+│
+│  Module consumption quick-start
+│  • Importers: `aengine` (aggregate), `aengine.engine_components`,
+│    `aengine.platform`, `aengine.renderers`, `aengine.context`/`*.context.*`,
+│    `aengine.menu`, `aengine.input`, `aengine.cli`, and the updater partitions
+│    (`aengine.updater`, `.updater.config`, `.updater.tools`). Renderer-specific
+│    partitions include `aengine.opengl.*`, `aengine.sdl.*`, and
+│    `aengine.context.raylib`/`aengine.context.software`.
+│  • CMake flags: configure with C++23 plus `-DCMAKE_CXX_SCAN_FOR_MODULES=ON`
+│    (or `-DCMAKE_EXPERIMENTAL_CXX_MODULE_DYNDEP=ON` on 3.27–3.28) and a
+│    module-capable compiler (`/std:c++latest` on MSVC, `-fmodules-ts` on
+│    clang/GCC). Presets and build scripts set these by default.
+│  • Mirrored headers: aengine.hpp, aplatform.hpp, acontext*.hpp, awindowdata.hpp,
+│    acommandline.hpp, aguimenu.hpp, aatlasmanager.hpp, aopenglcontext.hpp, and
+│    the legacy aentity*/acomponent* headers are imported inside their matching
+│    partitions to keep macros and types aligned for mixed builds.
 │
 │── include/
 │   │── abuildsystem.hpp          # Build system utilities
@@ -64,14 +84,67 @@
 │   │── avulkantriangle.hpp       # Vulkan triangle rendering
 │
 │── modules/
-│   │── aengine.ixx                   # Primary module interface aggregating core engine partitions
-│   │── aengine.cli.ixx               # CLI-facing module surface for the runtime
-│   │── aengine.engine_components.ixx # ECS and component module partition
-│   │── aengine.input.ixx             # Input handling module partition
-│   │── aengine.menu.ixx              # Menu and overlay module partition
-│   │── aengine.platform.ixx          # Platform/windowing abstractions
-│   │── aengine.renderers.ixx         # Renderer module partition entry point
-│   │── aengine.updater.ixx           # Updater module partition
+│   │── Aggregates & platform surfaces
+│   │   │── aengine.ixx                   # `import aengine;` aggregate (mirrors aengine.hpp)
+│   │   │── aengine.platform.ixx          # Platform/windowing abstractions (imports aplatform.hpp, acontext*.hpp)
+│   │   │── aengine.renderers.ixx         # Renderer entry (wraps aopengl*/avulkan* headers)
+│   │   │── aengine.menu.ixx              # Menu/overlay partition (mirrors aguimenu.hpp)
+│   │   │── aengine.input.ixx             # Input handling partition
+│   │   │── aengine.cli.ixx               # CLI entrypoints and updater hooks (mirrors acommandline.hpp)
+│   │   │── aengine.version.ixx           # Version metadata surface
+│   │
+│   │── ECS & runtime partitions
+│   │   │── aengine.engine_components.ixx # ECS/components (mirrors aentity*/acomponent* headers)
+│   │   │── aecs.ixx / aecs.components.ixx# ECS entrypoints and component definitions
+│   │   │── aecs.storage.ixx              # ECS storage helpers
+│   │   │── aecs.internal_private.ixx     # Internal ECS plumbing
+│   │
+│   │── Context stack
+│   │   │── aengine.context.ixx               # Context bootstrap helpers
+│   │   │── aengine.context.commandqueue.ixx  # Command queue helpers
+│   │   │── aengine.context.control.ixx       # Context control plane
+│   │   │── aengine.context.multiplexer.ixx   # Context multiplexer partition
+│   │   │── aengine.context.state.ixx         # Shared context state (mirrors acontext.hpp/acontextwindow.hpp)
+│   │   │── aengine.context.type.ixx          # Context type definitions
+│   │   │── aengine.context.window.ixx        # Window abstractions (mirrors awindowdata.hpp)
+│   │   │── aengine.context.render.ixx        # Render-facing context helpers
+│   │   │── aengine.context.cppm              # Legacy bridge for context import scanning
+│   │
+│   │── Backend bindings
+│   │   │── aengine.context.opengl.ixx        # OpenGL context helpers (mirrors aopenglcontext.hpp)
+│   │   │── aengine.context.raylib.ixx        # Raylib context binding
+│   │   │── aengine.context.sdl.ixx           # SDL3 context binding
+│   │   │── aengine.context.software.ixx      # Software renderer context binding
+│   │   │── aengine.opengl.context.ixx        # OpenGL backend wiring
+│   │   │── aengine.opengl.renderer.ixx       # OpenGL renderer bindings
+│   │   │── aengine.opengl.textures.ixx       # OpenGL texture helpers
+│   │   │── aengine.sdl.context.ixx           # SDL renderer context
+│   │   │── aengine.sdl.renderer.ixx          # SDL renderer bindings
+│   │   │── aengine.sdl.textures.ixx          # SDL texture helpers
+│
+│   │── Updater and tooling
+│   │   │── aengine.updater.ixx               # Updater controls (imports aupdatesystem.ixx/aupdateconfig.hpp)
+│   │   │── aengine.updater.config.ixx        # Standalone updater config partition
+│   │   │── aengine.updater.tools.ixx         # Helper utilities for updater builds
+│   │   │── aupdatesystem.ixx                 # Updater implementation surface
+│
+│   │── Shared utilities
+│   │   │── aallocator.ixx                    # General-purpose allocator helpers
+│   │   │── aatlasmanager.ixx                 # Atlas manager surface (mirrors aatlasmanager.hpp)
+│   │   │── aatlastexture.ixx                 # Atlas texture helpers
+│   │   │── aengine.atlasmanager.ixx          # Atlas helpers exposed via `import aengine;`
+│   │   │── aenduserapplication.ixx           # Launcher/application scaffolding
+│   │   │── aapplicationmodule.ixx            # Application module helper
+│   │   │── amovementevent.ixx                # Movement event surface
+│   │   │── aimageatlaswriter.ixx             # Atlas writer helper
+│   │   │── aimageloader.ixx                  # Image loader surface
+│   │   │── aimagewriter.ixx                  # Image writer helper
+│   │   │── ascene.ixx                        # Scene helpers
+│   │   │── atexture.ixx                      # Texture helpers
+│   │   │── autilities.ixx                    # Utility helpers
+│   │   │── almond.core.*.ixx                 # Core logger/time/types/utilities partitions
+│   │   │── almond.softrenderer.state.ixx     # Software renderer state helpers
+│   │   │── asdlstate.ixx                     # SDL state helpers
 │
 │── src/
 │   │── acompiler.cpp             # Compiler-related implementation

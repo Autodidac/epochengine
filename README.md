@@ -21,7 +21,7 @@ The runtime is designed for rapid iteration with hot-reloadable scripting, a sel
 - 🧱 **Static Linking First**
   AlmondShell's runtime is delivered as a fully static target, ensuring deterministic deployment, predictable performance, and portability across distribution channels.
 - 📚 **Module-Based Core**
-  The engine now ships as C++23 modules so ECS partitions and runtime systems can be imported directly (for example `import aengine;`, `import aengine.engine_components;`, or `import aengine.renderers;`) without juggling umbrella headers. Context and backend wiring now sit on module surfaces as well (`import aengine.context;`, `import aengine.context.window;`, `import aengine.context.render;`, `import aengine.context.opengl;`, `import aengine.context.sdl;`, `import aengine.context.raylib;`, `import aengine.context.software;`) so downstream engines can target specific environments without touching legacy includes.
+  The engine now ships as C++23 modules so ECS partitions and runtime systems can be imported directly. Pull the aggregate via `import aengine;` or target partitions such as `import aengine.engine_components;`, `import aengine.platform;`, `import aengine.renderers;`, `import aengine.menu;`, `import aengine.input;`, or the updater slices (`import aengine.updater;`, `.updater.config`, `.updater.tools`). Context/back-end wiring sits on module surfaces as well: `import aengine.context;`, `import aengine.context.window;`, `import aengine.context.render;`, `import aengine.context.opengl;`, `import aengine.context.sdl;`, `import aengine.context.raylib;`, `import aengine.context.software;`, plus backend entries under `aengine.opengl.*` and `aengine.sdl.*` for renderer-specific imports. Legacy headers remain mirrored inside the modules (for example `aengine.hpp`, `aplatform.hpp`, `acontext*.hpp`, `aguimenu.hpp`, `acommandline.hpp`) so mixed include/import consumers stay compatible during migration.
 - 🧠 **Functional Flow**
   Systems are composed in a functional style that favours pure interfaces and immutable data where possible, simplifying reasoning about complex runtime state.
 
@@ -76,7 +76,7 @@ flowchart LR
 
 ## Current Snapshot (v0.72.5)
 
-- ✅ **Context/back-end module coverage** – The multiplexer, window/render wiring, and backend bindings (OpenGL, SDL3, Raylib, and the software renderer) now ship as `.ixx` partitions so module consumers can `import aengine.context`, `import aengine.context.window`, `import aengine.context.render`, or target backend-specific modules without relying on legacy headers.
+- ✅ **Context/back-end module coverage** – The multiplexer, window/render wiring, and backend bindings (OpenGL, SDL3, Raylib, and the software renderer) now ship as `.ixx` partitions so module consumers can `import aengine.context`, `import aengine.context.window`, `import aengine.context.render`, or target backend-specific modules without relying on legacy headers. Mirrored headers (e.g., `aengine.hpp`, `aplatform.hpp`, `acontext*.hpp`) remain wired into the matching partitions for compatibility.
 - ✅ **Module conversion momentum** – Additional header-only partitions continue migrating into the module set to keep BMI coverage aligned with the runtime surface, with migration status reflected across the docs.
 - ✅ **Build stability fixes** – Linux and Windows builds pick up the latest module-aware configurations by default, tightening dependency scanning and clearing residual configuration drift.
 - ✅ **Module migration guidance** – Fresh-build steps call out when to clear cached CMake state, how to enable dependency scanning on legacy CMake releases, and which compilers have been validated for the milestone.
@@ -145,7 +145,7 @@ See [`Changes/roadmap.txt`](Changes/roadmap.txt) and [`AlmondShell/docs/engine_a
     └── almondshell.bmp
 ```
 
-Refer to `AlmondShell/docs/file_structure.txt` for a more exhaustive tour of the available modules and helper tooling, and `AlmondShell/docs/tools_list.txt` for environment prerequisites.
+Refer to `AlmondShell/docs/file_structure.txt` for an exhaustive module map (including mirrored legacy headers and import guidance) and `AlmondShell/docs/tools_list.txt` for environment prerequisites.
 
 ## API Documentation
 
