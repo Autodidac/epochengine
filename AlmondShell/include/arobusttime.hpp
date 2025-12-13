@@ -26,7 +26,8 @@
 #if defined(__cpp_modules) && __cpp_modules >= 201907L && !defined(ALMOND_FORCE_LEGACY_HEADERS)
 import almond.core.time;
 #else
-// Legacy builds fall back to including the module interface directly to keep
-// timer utilities unified under almond.core.time.
-#include "../modules/almond.core.time.ixx"
+// Legacy builds fall back to including a header-equivalent version of the
+// time utilities so consumers without module BMI support can still access the
+// timer helpers.
+#include "../modules/almond.core.time.hpp"
 #endif
