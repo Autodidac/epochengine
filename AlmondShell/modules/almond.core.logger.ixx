@@ -32,80 +32,83 @@ module;
 
 export module almond.core.logger;
 
-import almond.core.time;
+import almond.core.timing;
 
 export namespace almondnamespace
 {
-    enum class LogLevel
+    namespace logger
     {
-        INFO,
-        WARN,
-        ALMOND_ERROR
-    };
-
-    class Logger
-    {
-    public:
-        Logger(const std::string& filename, LogLevel level = LogLevel::INFO)
-            : logFile(filename, std::ios::app), logFileName(filename), logLevel(level)
+        enum class LogLevel
         {
-            std::cout << "Attempting to open log file: " << filename << std::endl;
+            INFO,
+            WARN,
+            ALMOND_ERROR
+        };
 
-            std::filesystem::path logPath(filename);
-            const auto parentPath = logPath.parent_path();
-            if (!parentPath.empty() && !std::filesystem::exists(parentPath))
+        class Logger
+        {
+        public:
+            Logger(const std::string& filename, LogLevel level = LogLevel::INFO)
+                : logFile(filename, std::ios::app), logFileName(filename), logLevel(level)
             {
-                throw std::runtime_error("Directory for log file does not exist: " + parentPath.string());
+                std::cout << "Attempting to open log file: " << filename << std::endl;
+
+                std::filesystem::path logPath(filename);
+                const auto parentPath = logPath.parent_path();
+                if (!parentPath.empty() && !std::filesystem::exists(parentPath))
+                {
+                    throw std::runtime_error("Directory for log file does not exist: " + parentPath.string());
+                }
+
+                if (!logFile.is_open()) {
+                    std::cerr << "Failed to open log file: " << filename << std::endl;
+                    throw std::runtime_error("Could not open log file: " + filename);
+                }
             }
 
-            if (!logFile.is_open()) {
-                std::cerr << "Failed to open log file: " << filename << std::endl;
-                throw std::runtime_error("Could not open log file: " + filename);
-            }
-        }
-
-        ~Logger()
-        {
-            if (logFile.is_open())
+            ~Logger()
             {
-                logFile.close();
+                if (logFile.is_open())
+                {
+                    logFile.close();
+                }
             }
-        }
 
-        inline static Logger& GetInstance(const std::string& logFileName)
-        {
-            static Logger instance(logFileName);
-            return instance;
-        }
-
-        void log(const std::string& message, LogLevel level = LogLevel::INFO)
-        {
-            std::lock_guard<std::mutex> lock(mutex);
-
-            if (level >= logLevel) {
-                logFile << timing::getCurrentTimeString() << " [" << logLevelToString(level) << "] - " << message << std::endl;
+            inline static Logger& GetInstance(const std::string& logFileName)
+            {
+                static Logger instance(logFileName);
+                return instance;
             }
-        }
 
-        std::string getLogFileName() const
-        {
-            return logFileName;
-        }
+            void log(const std::string& message, LogLevel level = LogLevel::INFO)
+            {
+                std::lock_guard<std::mutex> lock(mutex);
 
-    private:
-        std::ofstream logFile;
-        std::mutex mutex;
-        std::string logFileName;
-        LogLevel logLevel;
-
-        std::string logLevelToString(LogLevel level) const
-        {
-            switch (level) {
-            case LogLevel::INFO: return "INFO";
-            case LogLevel::WARN: return "WARN";
-            case LogLevel::ALMOND_ERROR: return "ERROR";
-            default: return "UNKNOWN";
+                if (level >= logLevel) {
+                    logFile << timing::getCurrentTimeString() << " [" << logLevelToString(level) << "] - " << message << std::endl;
+                }
             }
-        }
-    };
+
+            std::string getLogFileName() const
+            {
+                return logFileName;
+            }
+
+        private:
+            std::ofstream logFile;
+            std::mutex mutex;
+            std::string logFileName;
+            LogLevel logLevel;
+
+            std::string logLevelToString(LogLevel level) const
+            {
+                switch (level) {
+                case LogLevel::INFO: return "INFO";
+                case LogLevel::WARN: return "WARN";
+                case LogLevel::ALMOND_ERROR: return "ERROR";
+                default: return "UNKNOWN";
+                }
+            }
+        };
+    }
 } // namespace almondnamespace

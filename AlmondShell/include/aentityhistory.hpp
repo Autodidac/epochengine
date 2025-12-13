@@ -26,7 +26,7 @@
 
 #include "aplatform.hpp"      // must always come first
 #include "alogger.hpp"        // Logger
-import almond.core.time;
+import almond.core.timing;
 
 #include <mutex>
 #include <unordered_map>

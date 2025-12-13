@@ -28,7 +28,8 @@
 
 #if defined(ALMOND_USING_SDL)
 
-import almond.core.time;
+import almond.core.timing;
+
 #include "acontextwindow.hpp"
 
 #include <array>

@@ -26,7 +26,7 @@
 
 #include "aplatform.hpp"
 #include "aengineconfig.hpp"    // brings in <windows.h>, <glad/glad.h>, etc.
-import almond.core.time;
+import almond.core.timing;
 #include "aopenglplatform.hpp"
 
 #if defined(__linux__)
@@ -43,6 +43,8 @@ import almond.core.time;
 
 namespace almondnamespace::openglstate
 {
+	using namespace almondnamespace::timing;
+
     struct OpenGL4State
     {
 #ifdef ALMOND_USING_WINMAIN

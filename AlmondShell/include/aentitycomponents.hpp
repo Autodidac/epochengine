@@ -27,7 +27,7 @@
 #include "aplatform.hpp"      // Must always come first for platform defines
 
 #include "alogger.hpp"        // LogLevel
-import almond.core.time;
+import almond.core.timing;
 
 #include <vector>
 #include <string>

@@ -29,13 +29,17 @@ import <string_view>;
 
 import :storage;
 import almond.core.logger;
-import almond.core.time;
+import almond.core.timing;
 import aeventsystem;
 
 namespace almondnamespace::ecs::_detail
 {
-    inline void notify(almondnamespace::Logger* log,
-        almondnamespace::timing::Timer* clk,
+	using namespace almondnamespace::logger;
+    using namespace almondnamespace::timing;
+    //using namespace almondnamespace::ecs;
+
+    inline void notify(Logger* log,
+        Timer* clk,
         Entity e,
         std::string_view action,
         std::string_view comp)

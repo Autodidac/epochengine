@@ -26,7 +26,7 @@
 
 import ascene;
 #include "aplatformpump.hpp"
-import almond.core.time;
+import almond.core.timing;
 #include "acontext.hpp"
 #include "agamecore.hpp"
 #include "aeventsystem.hpp"

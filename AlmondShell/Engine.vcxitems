@@ -35,7 +35,12 @@
     <ClInclude Include="$(MSBuildThisFileDirectory)include\acontextcontrol.hpp" />
     <ClInclude Include="$(MSBuildThisFileDirectory)include\adiagnostics.hpp" />
     <ClInclude Include="$(MSBuildThisFileDirectory)include\aimageatlaswriter.hpp" />
-    <ClInclude Include="$(MSBuildThisFileDirectory)include\abuildsystem.hpp" />
+    <ClInclude Include="$(MSBuildThisFileDirectory)include\abuildsystem.hpp">
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|x64'">true</ExcludedFromBuild>
+    </ClInclude>
     <ClInclude Include="$(MSBuildThisFileDirectory)include\acellularsim.hpp" />
     <ClInclude Include="$(MSBuildThisFileDirectory)include\acodeinspector.hpp" />
     <ClInclude Include="$(MSBuildThisFileDirectory)include\acommandline.hpp" />
@@ -43,7 +48,12 @@
     <ClInclude Include="$(MSBuildThisFileDirectory)include\acontextstate.hpp" />
     <ClInclude Include="$(MSBuildThisFileDirectory)include\aenginehandles.hpp" />
     <ClInclude Include="$(MSBuildThisFileDirectory)include\aentitycomponentmanager.hpp" />
-    <ClInclude Include="$(MSBuildThisFileDirectory)include\acontext.hpp" />
+    <ClInclude Include="$(MSBuildThisFileDirectory)include\acontext.hpp">
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|x64'">true</ExcludedFromBuild>
+    </ClInclude>
     <ClInclude Include="$(MSBuildThisFileDirectory)include\acontextwindow.hpp" />
     <ClInclude Include="$(MSBuildThisFileDirectory)include\aeditor.hpp" />
     <ClInclude Include="$(MSBuildThisFileDirectory)include\aengine.hpp" />
@@ -69,10 +79,20 @@
     <ClInclude Include="$(MSBuildThisFileDirectory)include\aguimenu.hpp" />
     <ClInclude Include="$(MSBuildThisFileDirectory)include\aimageloader.hpp" />
     <ClInclude Include="$(MSBuildThisFileDirectory)include\aimagewriter.hpp" />
-    <ClInclude Include="$(MSBuildThisFileDirectory)include\ainput.hpp" />
+    <ClInclude Include="$(MSBuildThisFileDirectory)include\ainput.hpp">
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|x64'">true</ExcludedFromBuild>
+    </ClInclude>
     <ClInclude Include="$(MSBuildThisFileDirectory)include\almondengine.hpp" />
     <ClInclude Include="$(MSBuildThisFileDirectory)include\almondshell.hpp" />
-    <ClInclude Include="$(MSBuildThisFileDirectory)include\alogger.hpp" />
+    <ClInclude Include="$(MSBuildThisFileDirectory)include\alogger.hpp">
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|x64'">true</ExcludedFromBuild>
+    </ClInclude>
     <ClInclude Include="$(MSBuildThisFileDirectory)include\amatch3like.hpp">
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">false</ExcludedFromBuild>
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">false</ExcludedFromBuild>
@@ -118,10 +138,20 @@
     <ClInclude Include="$(MSBuildThisFileDirectory)include\araylibrenderer.hpp" />
     <ClInclude Include="$(MSBuildThisFileDirectory)include\araylibstate.hpp" />
     <ClInclude Include="$(MSBuildThisFileDirectory)include\araylibtextures.hpp" />
-    <ClInclude Include="$(MSBuildThisFileDirectory)include\arobusttime.hpp" />
+    <ClInclude Include="$(MSBuildThisFileDirectory)include\arobusttime.hpp">
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|x64'">true</ExcludedFromBuild>
+    </ClInclude>
     <ClInclude Include="$(MSBuildThisFileDirectory)include\asandsim.hpp" />
     <ClInclude Include="$(MSBuildThisFileDirectory)include\asaveloadsystem.hpp" />
-    <ClInclude Include="$(MSBuildThisFileDirectory)include\ascene.hpp" />
+    <ClInclude Include="$(MSBuildThisFileDirectory)include\ascene.hpp">
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|x64'">true</ExcludedFromBuild>
+    </ClInclude>
     <ClInclude Include="$(MSBuildThisFileDirectory)include\asceneserializer.hpp" />
     <ClInclude Include="$(MSBuildThisFileDirectory)include\ascenesnapshot.hpp" />
     <ClInclude Include="$(MSBuildThisFileDirectory)include\ascriptingsystem.hpp" />
@@ -145,7 +175,12 @@
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">false</ExcludedFromBuild>
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|x64'">false</ExcludedFromBuild>
     </ClInclude>
-    <ClInclude Include="$(MSBuildThisFileDirectory)include\asoftrenderer_state.hpp" />
+    <ClInclude Include="$(MSBuildThisFileDirectory)include\asoftrenderer_state.hpp">
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|x64'">true</ExcludedFromBuild>
+    </ClInclude>
     <ClInclude Include="$(MSBuildThisFileDirectory)include\asokobanlike.hpp">
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">false</ExcludedFromBuild>
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">false</ExcludedFromBuild>
@@ -162,9 +197,19 @@
     <ClInclude Include="$(MSBuildThisFileDirectory)include\atypes.hpp" />
     <ClInclude Include="$(MSBuildThisFileDirectory)include\atypesposix.hpp" />
     <ClInclude Include="$(MSBuildThisFileDirectory)include\atypeswin32.hpp" />
-    <ClInclude Include="$(MSBuildThisFileDirectory)include\aupdateconfig.hpp" />
+    <ClInclude Include="$(MSBuildThisFileDirectory)include\aupdateconfig.hpp">
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|x64'">true</ExcludedFromBuild>
+    </ClInclude>
     <ClInclude Include="$(MSBuildThisFileDirectory)include\autilities.hpp" />
-    <ClInclude Include="$(MSBuildThisFileDirectory)include\aversion.hpp" />
+    <ClInclude Include="$(MSBuildThisFileDirectory)include\aversion.hpp">
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|x64'">true</ExcludedFromBuild>
+    </ClInclude>
     <ClInclude Include="$(MSBuildThisFileDirectory)include\avulkanglfwsetup.hpp" />
     <ClInclude Include="$(MSBuildThisFileDirectory)include\avulkanquad.hpp" />
     <ClInclude Include="$(MSBuildThisFileDirectory)include\avulkanrenderer.hpp" />
@@ -222,9 +267,13 @@
     <ClCompile Include="$(MSBuildThisFileDirectory)modules\aengine.renderers.ixx" />
     <ClCompile Include="$(MSBuildThisFileDirectory)modules\aengine.updater.ixx" />
     <ClCompile Include="$(MSBuildThisFileDirectory)modules\aenduserapplication.ixx" />
+    <ClCompile Include="$(MSBuildThisFileDirectory)modules\aengine.updater.tools.ixx" />
     <ClCompile Include="$(MSBuildThisFileDirectory)modules\aeventsystem.ixx" />
+    <ClCompile Include="$(MSBuildThisFileDirectory)modules\almond.core.context.ixx" />
+    <ClCompile Include="$(MSBuildThisFileDirectory)modules\almond.softrenderer.state.ixx" />
     <ClCompile Include="$(MSBuildThisFileDirectory)modules\ascene.ixx" />
-    <ClCompile Include="$(MSBuildThisFileDirectory)modules\aversion.ixx" />
+    <ClCompile Include="$(MSBuildThisFileDirectory)modules\aengine.updater.config.ixx" />
+    <ClCompile Include="$(MSBuildThisFileDirectory)modules\aengine.aversion.ixx" />
     <ClCompile Include="$(MSBuildThisFileDirectory)modules\asdlstate.ixx" />
     <ClCompile Include="$(MSBuildThisFileDirectory)modules\aupdatesystem.ixx" />
     <ClCompile Include="$(MSBuildThisFileDirectory)modules\aecs.ixx" />

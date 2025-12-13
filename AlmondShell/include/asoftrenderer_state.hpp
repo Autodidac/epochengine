@@ -26,7 +26,9 @@
 
 #include "aplatform.hpp"
 #include "aengineconfig.hpp"    // brings in <windows.h>, <glad/glad.h>, etc.
-import almond.core.time;
+
+import almond.core.timing;
+import aengine.updater.tools;
 
 //#include "asoftrenderer_renderer.hpp"
 //#include "asoftrenderer_textures.hpp"
@@ -76,6 +78,7 @@ namespace almondnamespace::anativecontext
         // Timing
         almondnamespace::timing::Timer pollTimer = almondnamespace::timing::createTimer(1.0);
         almondnamespace::timing::Timer fpsTimer = almondnamespace::timing::createTimer(1.0);
+
         int frameCount = 0;
 
         // Cube rotation

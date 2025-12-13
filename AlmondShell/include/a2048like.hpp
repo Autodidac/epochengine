@@ -28,7 +28,7 @@
 #include "ainput.hpp"
 #include "agamecore.hpp"
 #include "aplatformpump.hpp"
-import almond.core.time;
+import almond.core.timing;
 #include "aatlasmanager.hpp"
 #include "aspritepool.hpp"
 import ascene;

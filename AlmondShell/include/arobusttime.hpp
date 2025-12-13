@@ -24,10 +24,10 @@
 #pragma once
 
 #if defined(__cpp_modules) && __cpp_modules >= 201907L && !defined(ALMOND_FORCE_LEGACY_HEADERS)
-import almond.core.time;
+import almond.core.timing;
 #else
 // Legacy builds fall back to including a header-equivalent version of the
 // time utilities so consumers without module BMI support can still access the
 // timer helpers.
-#include "../modules/almond.core.time.hpp"
+#include "../modules/almond.core.timing.hpp"
 #endif

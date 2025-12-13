@@ -25,7 +25,7 @@
 
 #include "aplatform.hpp"
 #include "aengineconfig.hpp"
-import almond.core.time;
+import almond.core.timing;
 #include "acommandline.hpp"
 
 #include <array>

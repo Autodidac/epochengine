@@ -35,7 +35,12 @@
 
 #include "aplatformpump.hpp"    // platform::pump_events()
 #include "aatlasmanager.hpp"
-import almond.core.time;
+
+namespace almondnamespace::timing
+{
+    struct Timer;   // forward declaration ONLY
+}
+
 #include "ainput.hpp"
 
 #include "aopengltextures.hpp" // ensure_uploaded, AtlasGPU, gpu_atlases

@@ -25,7 +25,7 @@
 #pragma once
 
 #include "aplatformpump.hpp"
-import almond.core.time;
+import almond.core.timing;
 #include "acontext.hpp"
 #include "ainput.hpp"
 #include "agamecore.hpp"

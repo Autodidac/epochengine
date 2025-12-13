@@ -30,7 +30,7 @@
 #include "aentitycomponents.hpp"    // Position, History, LoggerComponent
 #include "aeventsystem.hpp"         // push_event
 #include "alogger.hpp"
-import almond.core.time;
+import almond.core.timing;
 
 import aecs;                        // reg_ex<…>
 

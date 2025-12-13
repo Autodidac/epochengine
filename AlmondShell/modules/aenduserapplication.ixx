@@ -7,7 +7,7 @@ import "aapplicationmodule.hpp";
 import "acontext.hpp";
 import aeventsystem;
 //import "ainput.hpp";
-import almond.core.time;
+import almond.core.timing;
 
 namespace almondnamespace::app
 {

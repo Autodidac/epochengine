@@ -27,7 +27,7 @@
 
 #if defined(ALMOND_USING_SFML)
 
-import almond.core.time;
+import almond.core.timing;
 #include "acontextwindow.hpp"
 
 #include <array>

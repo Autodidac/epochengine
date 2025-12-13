@@ -14,7 +14,7 @@ import <array>;
 import <bitset>;
 import <functional>;
 import <SDL3/SDL.h>;
-import almond.core.time;
+import almond.core.timing;
 
 export namespace almondnamespace::sdlcontext::state
 {

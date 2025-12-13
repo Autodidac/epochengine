@@ -39,7 +39,7 @@ export import :components;
 export import :storage;
 
 import aeventsystem;
-import almond.core.time;
+import almond.core.timing;
 import almond.core.logger;
 
 export namespace almondnamespace::ecs
@@ -49,13 +49,13 @@ export namespace almondnamespace::ecs
     {
         ComponentStorage storage;
         Entity nextID{ 1 };
-        almondnamespace::Logger* log{ nullptr };
+        almondnamespace::logger::Logger* log{ nullptr };
         almondnamespace::timing::Timer* clk{ nullptr };
     };
 
     template<typename... Cs>
     [[nodiscard]] inline reg_ex<Cs...> make_registry(
-        almondnamespace::Logger* L = nullptr,
+        almondnamespace::logger::Logger* L = nullptr,
         almondnamespace::timing::Timer* C = nullptr)
     {
         return { {}, 1, L, C };
@@ -63,7 +63,7 @@ export namespace almondnamespace::ecs
 
     namespace _detail
     {
-        inline void notify(almondnamespace::Logger* log,
+        inline void notify(almondnamespace::logger::Logger* log,
             almondnamespace::timing::Timer* clk,
             Entity e,
             std::string_view action,

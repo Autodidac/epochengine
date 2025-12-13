@@ -4,7 +4,7 @@ module;
 #include "aplatformpump.hpp"
 #undef ALMOND_PLATFORM_PUMP_DECLARE_ONLY
 
-export module aengine:platform;
+export module aengine.platform;
 
 import "aplatform.hpp";
 import "aengineconfig.hpp";

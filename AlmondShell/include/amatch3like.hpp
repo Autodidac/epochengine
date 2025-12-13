@@ -25,6 +25,7 @@
 #pragma once
 
 import ascene;
+
 #include "aeventsystem.hpp"
 #include "aplatformpump.hpp"
 #include "acontext.hpp"

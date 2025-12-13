@@ -28,10 +28,12 @@ import <utility>;
 import <vector>;
 
 import almond.core.logger;
-import almond.core.time;
+import almond.core.timing;
 
 export namespace almondnamespace::ecs
 {
+    using namespace almondnamespace::logger;
+	using namespace almondnamespace::timing;
     // ─── Position ─────────────────────────────────────────────────────────
     struct Position { float x{ 0 }, y{ 0 }; };
 
@@ -46,7 +48,7 @@ export namespace almondnamespace::ecs
     // Stores per-entity logging preferences (file, level, clock pointer)
     struct LoggerComponent {
         std::string       file;
-        almondnamespace::LogLevel          level{ almondnamespace::LogLevel::INFO };
-        almondnamespace::timing::Timer* clock{};
+        LogLevel          level{ LogLevel::INFO };
+        Timer* clock{};
     };
 }

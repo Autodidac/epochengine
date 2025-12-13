@@ -33,7 +33,7 @@
 #include "awindowdata.hpp"
 
 #include "acontextwindow.hpp"
-import almond.core.time;
+import almond.core.timing;
 #include "aimageloader.hpp"
 #include "araylibtextures.hpp" // AtlasGPU, gpu_atlases, ensure_uploaded
 #include "araylibstate.hpp"    // brings in the actual inline s_raylibstate

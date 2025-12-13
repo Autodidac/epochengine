@@ -26,7 +26,7 @@
 
 #include "acontext.hpp"
 #include "aplatformpump.hpp"
-import almond.core.time;
+import almond.core.timing;
 #include "ainput.hpp"
 #include "agamecore.hpp"
 #include "aatlasmanager.hpp"
