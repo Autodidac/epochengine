@@ -145,6 +145,20 @@
 │   │   │── almond.core.*.ixx                 # Core logger/time/types/utilities partitions
 │   │   │── almond.softrenderer.state.ixx     # Software renderer state helpers
 │   │   │── asdlstate.ixx                     # SDL state helpers
+│   │   │── abuildsystem.ixx                  # Module mirror of include/abuildsystem.hpp
+│   │   │── acompiler.ixx                     # Module mirror of include/acompiler.hpp
+│   │   │── aengineconfig.ixx                 # Module mirror of include/aengineconfig.hpp
+│   │   │── aentitycomponentmanager.ixx       # Module mirror of include/aentitycomponentmanager.hpp
+│   │   │── aentitycomponents.ixx             # Module mirror of include/aentitycomponents.hpp
+│   │   │── aentityhistory.ixx                # Module mirror of include/aentityhistory.hpp
+│   │   │── afilewatch.ixx                    # Module mirror of include/afilewatch.hpp
+│   │   │── aframework.ixx                    # Module mirror of include/aframework.hpp
+│   │   │── aatomicfunction.ixx               # Module mirror of include/aatomicfunction.hpp
+│   │   │── ampmcboundedqueue.ixx             # Module mirror of include/ampmcboundedqueue.hpp
+│   │   │── ataskgraphwithdot.ixx             # Module mirror of include/ataskgraphwithdot.hpp
+│   │   │── arobusttime.ixx                   # Module mirror of include/arobusttime.hpp
+│   │   │── ascriptingsystem.ixx              # Module mirror of include/ascriptingsystem.hpp
+│   │   │── astringconverter.ixx              # Module mirror of include/astringconverter.hpp
 │
 │── src/
 │   │── acompiler.cpp             # Compiler-related implementation

@@ -98,6 +98,20 @@ set(ALMONDSHELL_MODULE_FILES
     ${ALMONDSHELL_MODULE_DIR}/aeventsystem.ixx
     ${ALMONDSHELL_MODULE_DIR}/acommandline.ixx
     ${ALMONDSHELL_MODULE_DIR}/asdlstate.ixx
+    ${ALMONDSHELL_MODULE_DIR}/abuildsystem.ixx
+    ${ALMONDSHELL_MODULE_DIR}/acompiler.ixx
+    ${ALMONDSHELL_MODULE_DIR}/aengineconfig.ixx
+    ${ALMONDSHELL_MODULE_DIR}/aentitycomponentmanager.ixx
+    ${ALMONDSHELL_MODULE_DIR}/aentitycomponents.ixx
+    ${ALMONDSHELL_MODULE_DIR}/aentityhistory.ixx
+    ${ALMONDSHELL_MODULE_DIR}/afilewatch.ixx
+    ${ALMONDSHELL_MODULE_DIR}/aframework.ixx
+    ${ALMONDSHELL_MODULE_DIR}/aatomicfunction.ixx
+    ${ALMONDSHELL_MODULE_DIR}/ampmcboundedqueue.ixx
+    ${ALMONDSHELL_MODULE_DIR}/ataskgraphwithdot.ixx
+    ${ALMONDSHELL_MODULE_DIR}/arobusttime.ixx
+    ${ALMONDSHELL_MODULE_DIR}/ascriptingsystem.ixx
+    ${ALMONDSHELL_MODULE_DIR}/astringconverter.ixx
 )
 set(ALMONDSHELL_MODULE_HEADERS
     ${ALMONDSHELL_MODULE_DIR}/almond.core.time.hpp
