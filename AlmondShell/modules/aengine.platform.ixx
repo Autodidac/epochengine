@@ -14,7 +14,7 @@ import aengine.updater;
 import "aupdateconfig.hpp";
 
 import "aguimenu.hpp";
-import "aapplicationmodule.hpp";
+import aapplicationmodule;
 import aenduserapplication;
 import "awindowdata.hpp";
 import "acontext.hpp";
