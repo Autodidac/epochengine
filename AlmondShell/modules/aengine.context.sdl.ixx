@@ -6,12 +6,12 @@ import <string>;
 import <utility>;
 
 import aengine.input;
-import "acontext.hpp";
-import "acontextmultiplexer.hpp";
-import "aatlasmanager.hpp";
-import "asdlcontext.hpp";
-import "asdlcontextrenderer.hpp";
-import "asdltextures.hpp";
+import aengine.context;
+import aengine.context.multiplexer;
+import aengine.atlasmanager;
+import aengine.sdl.context;
+import aengine.sdl.renderer;
+import aengine.sdl.textures;
 
 export module aengine.context:sdl;
 
