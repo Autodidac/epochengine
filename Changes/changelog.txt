@@ -1,5 +1,9 @@
 # Changelog
 
+## [v0.72.4]
+- Continued converting legacy headers into `.ixx` partitions so module coverage mirrors the runtime surface and BMI scanning stays predictable across toolchains.
+- Tightened build presets on Linux and Windows to default to the refreshed module-aware flags, clearing residual configuration drift uncovered during clean builds.
+
 ## [v0.72.3]
 - Migrated the SDL state module implementation from a standalone `.cppm` to the standard `.ixx` layout so BMI scanners, MSBuild
   filters, and downstream consumers see a consistent module surface across the engine.
