@@ -6,11 +6,11 @@ import <string>;
 import <utility>;
 
 import aengine.input;
-import "acontext.hpp";
-import "acontextmultiplexer.hpp";
-import "aopenglcontext.hpp";
-import "aopenglrenderer.hpp";
-import "aopengltextures.hpp";
+import aengine.context;
+import aengine.context.multiplexer;
+import aengine.opengl.context;
+import aengine.opengl.renderer;
+import aengine.opengl.textures;
 
 export module aengine.context:opengl;
 

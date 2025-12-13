@@ -3,7 +3,7 @@ module;
 export module aengine:renderers;
 
 #ifdef ALMOND_USING_SDL
-import "asdlcontext.hpp";
+import aengine.sdl.context;
 #endif
 #ifdef ALMOND_USING_SFML
 import "asfmlcontext.hpp";
