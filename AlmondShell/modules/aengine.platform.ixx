@@ -21,7 +21,7 @@ import "acontext.hpp";
 import "acontextmultiplexer.hpp";
 import "acontextwindow.hpp";
 import "ainput.hpp";
-import aversion;
+import aengine.version;
 
 export namespace almondnamespace
 {

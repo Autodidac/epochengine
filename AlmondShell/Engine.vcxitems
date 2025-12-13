@@ -287,7 +287,7 @@
     <ClCompile Include="$(MSBuildThisFileDirectory)modules\almond.softrenderer.state.ixx" />
     <ClCompile Include="$(MSBuildThisFileDirectory)modules\ascene.ixx" />
     <ClCompile Include="$(MSBuildThisFileDirectory)modules\aengine.updater.config.ixx" />
-    <ClCompile Include="$(MSBuildThisFileDirectory)modules\aengine.aversion.ixx" />
+    <ClCompile Include="$(MSBuildThisFileDirectory)modules\aengine.version.ixx" />
     <ClCompile Include="$(MSBuildThisFileDirectory)modules\asdlstate.ixx" />
     <ClCompile Include="$(MSBuildThisFileDirectory)modules\aupdatesystem.ixx" />
     <ClCompile Include="$(MSBuildThisFileDirectory)modules\aecs.ixx" />
