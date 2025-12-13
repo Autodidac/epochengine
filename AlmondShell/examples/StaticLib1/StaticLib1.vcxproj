@@ -171,7 +171,7 @@
     <ClCompile Update="C:\Users\iammi\source\repos\epochengine\AlmondShell\modules\aecs.internal_private.ixx">
       <FileType>Document</FileType>
     </ClCompile>
-    <ClCompile Update="C:\Users\iammi\source\repos\epochengine\AlmondShell\modules\aengine.aversion.ixx">
+    <ClCompile Update="C:\Users\iammi\source\repos\epochengine\AlmondShell\modules\aengine.version.ixx">
       <FileType>Document</FileType>
     </ClCompile>
     <ClCompile Update="C:\Users\iammi\source\repos\epochengine\AlmondShell\modules\aengine.updater.config.ixx">

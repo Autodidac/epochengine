@@ -72,17 +72,20 @@ set(ALMONDSHELL_MODULE_FILES
     ${ALMONDSHELL_MODULE_DIR}/aengine.menu.ixx
     ${ALMONDSHELL_MODULE_DIR}/aengine.input.ixx
     ${ALMONDSHELL_MODULE_DIR}/aenduserapplication.ixx
-    ${ALMONDSHELL_MODULE_DIR}/aversion.ixx
+    ${ALMONDSHELL_MODULE_DIR}/aengine.version.ixx
     ${ALMONDSHELL_MODULE_DIR}/ascene.ixx
     ${ALMONDSHELL_MODULE_DIR}/amovementevent.ixx
     ${ALMONDSHELL_MODULE_DIR}/aecs.ixx
     ${ALMONDSHELL_MODULE_DIR}/aecs.components.ixx
     ${ALMONDSHELL_MODULE_DIR}/aecs.internal_private.ixx
     ${ALMONDSHELL_MODULE_DIR}/aecs.storage.ixx
+    ${ALMONDSHELL_MODULE_DIR}/aengine.updater.config.ixx
+    ${ALMONDSHELL_MODULE_DIR}/aengine.updater.tools.ixx
     ${ALMONDSHELL_MODULE_DIR}/almond.core.types.ixx
     ${ALMONDSHELL_MODULE_DIR}/almond.core.time.ixx
     ${ALMONDSHELL_MODULE_DIR}/almond.core.logger.ixx
     ${ALMONDSHELL_MODULE_DIR}/almond.core.utilities.ixx
+    ${ALMONDSHELL_MODULE_DIR}/almond.softrenderer.state.ixx
     ${ALMONDSHELL_MODULE_DIR}/aeventsystem.ixx
     ${ALMONDSHELL_MODULE_DIR}/acommandline.ixx
     ${ALMONDSHELL_MODULE_DIR}/asdlstate.ixx

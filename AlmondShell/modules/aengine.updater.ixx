@@ -3,6 +3,8 @@ module;
 export module aengine.updater;
 
 import aengine.update.system; // Primary updater implementation module
+export import aengine.updater.config;
+export import aengine.updater.tools;
 
 export namespace almondnamespace::updater
 {
