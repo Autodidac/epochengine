@@ -60,9 +60,16 @@ set(ALMONDSHELL_MODULE_FILES
     ${ALMONDSHELL_MODULE_DIR}/aengine.context.sdl.ixx
     ${ALMONDSHELL_MODULE_DIR}/aengine.context.raylib.ixx
     ${ALMONDSHELL_MODULE_DIR}/aengine.context.software.ixx
+    ${ALMONDSHELL_MODULE_DIR}/aallocator.ixx
+    ${ALMONDSHELL_MODULE_DIR}/aapplicationmodule.ixx
     ${ALMONDSHELL_MODULE_DIR}/aengine.atlasmanager.ixx
+    ${ALMONDSHELL_MODULE_DIR}/aatlasmanager.ixx
+    ${ALMONDSHELL_MODULE_DIR}/aatlastexture.ixx
     ${ALMONDSHELL_MODULE_DIR}/aengine.engine_components.ixx
     ${ALMONDSHELL_MODULE_DIR}/aengine.renderers.ixx
+    ${ALMONDSHELL_MODULE_DIR}/aimageloader.ixx
+    ${ALMONDSHELL_MODULE_DIR}/aimagewriter.ixx
+    ${ALMONDSHELL_MODULE_DIR}/aimageatlaswriter.ixx
     ${ALMONDSHELL_MODULE_DIR}/aengine.opengl.context.ixx
     ${ALMONDSHELL_MODULE_DIR}/aengine.opengl.renderer.ixx
     ${ALMONDSHELL_MODULE_DIR}/aengine.opengl.textures.ixx
@@ -73,6 +80,7 @@ set(ALMONDSHELL_MODULE_FILES
     ${ALMONDSHELL_MODULE_DIR}/aengine.input.ixx
     ${ALMONDSHELL_MODULE_DIR}/aenduserapplication.ixx
     ${ALMONDSHELL_MODULE_DIR}/aengine.version.ixx
+    ${ALMONDSHELL_MODULE_DIR}/atexture.ixx
     ${ALMONDSHELL_MODULE_DIR}/ascene.ixx
     ${ALMONDSHELL_MODULE_DIR}/amovementevent.ixx
     ${ALMONDSHELL_MODULE_DIR}/aecs.ixx
@@ -85,6 +93,7 @@ set(ALMONDSHELL_MODULE_FILES
     ${ALMONDSHELL_MODULE_DIR}/almond.core.time.ixx
     ${ALMONDSHELL_MODULE_DIR}/almond.core.logger.ixx
     ${ALMONDSHELL_MODULE_DIR}/almond.core.utilities.ixx
+    ${ALMONDSHELL_MODULE_DIR}/autilities.ixx
     ${ALMONDSHELL_MODULE_DIR}/almond.softrenderer.state.ixx
     ${ALMONDSHELL_MODULE_DIR}/aeventsystem.ixx
     ${ALMONDSHELL_MODULE_DIR}/acommandline.ixx
