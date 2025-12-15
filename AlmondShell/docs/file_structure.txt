@@ -11,11 +11,12 @@
 │
 │  Module consumption quick-start
 │  • Importers: `aengine` (aggregate), `aengine.engine_components`,
-│    `aengine.platform`, `aengine.renderers`, `aengine.context`/`*.context.*`,
-│    `aengine.menu`, `aengine.input`, `aengine.cli`, and the updater partitions
-│    (`aengine.updater`, `.updater.config`, `.updater.tools`). Renderer-specific
-│    partitions include `aengine.opengl.*`, `aengine.sdl.*`, and
-│    `aengine.context.raylib`/`aengine.context.software`.
+│    `aengine.platform`, `aengine.commandqueue`, `aengine.systems`,
+│    `aengine.context`/`*.context.*`, `aengine.gui.menu`, `aengine.input`,
+│    `aengine.cli`, and the updater partitions (`aengine.updater`,
+│    `.updater.config`, `.updater.system`, `.updater.tools`).
+│    Renderer-specific partitions include `aengine.opengl.*`, `aengine.sdl.*`,
+│    and `aengine.context.raylib`/`aengine.context.software`.
 │  • CMake flags: configure with C++23 plus `-DCMAKE_CXX_SCAN_FOR_MODULES=ON`
 │    (or `-DCMAKE_EXPERIMENTAL_CXX_MODULE_DYNDEP=ON` on 3.27–3.28) and a
 │    module-capable compiler (`/std:c++latest` on MSVC, `-fmodules-ts` on
@@ -87,8 +88,11 @@
 │   │── Aggregates & platform surfaces
 │   │   │── aengine.ixx                   # `import aengine;` aggregate (mirrors aengine.hpp)
 │   │   │── aengine.platform.ixx          # Platform/windowing abstractions (imports aplatform.hpp, acontext*.hpp)
-│   │   │── aengine.renderers.ixx         # Renderer entry (wraps aopengl*/avulkan* headers)
-│   │   │── aengine.menu.ixx              # Menu/overlay partition (mirrors aguimenu.hpp)
+│   │   │── aengine.commandqueue.ixx      # Shared command queue helpers (mirrors acommandqueue headers)
+│   │   │── aengine.bindings.ixx          # Engine binding helpers
+│   │   │── aengine.handles.ixx           # Handle utilities
+│   │   │── aengine.systems.ixx           # System entry helpers
+│   │   │── aengine.gui.menu.ixx          # Menu/overlay partition (mirrors aguimenu.hpp)
 │   │   │── aengine.input.ixx             # Input handling partition
 │   │   │── aengine.cli.ixx               # CLI entrypoints and updater hooks (mirrors acommandline.hpp)
 │   │   │── aengine.version.ixx           # Version metadata surface
@@ -125,6 +129,7 @@
 │   │── Updater and tooling
 │   │   │── aengine.updater.ixx               # Updater controls (imports aupdatesystem.ixx/aupdateconfig.hpp)
 │   │   │── aengine.updater.config.ixx        # Standalone updater config partition
+│   │   │── aengine.updater.system.ixx        # Updater system partition
 │   │   │── aengine.updater.tools.ixx         # Helper utilities for updater builds
 │   │   │── aupdatesystem.ixx                 # Updater implementation surface
 │
@@ -142,7 +147,11 @@
 │   │   │── ascene.ixx                        # Scene helpers
 │   │   │── atexture.ixx                      # Texture helpers
 │   │   │── autilities.ixx                    # Utility helpers
-│   │   │── almond.core.*.ixx                 # Core logger/time/types/utilities partitions
+│   │   │── aengine.core.logger.ixx           # Core logger utilities
+│   │   │── aengine.core.time.ixx             # Core timing utilities
+│   │   │── aengine.core.types.ixx            # Core type helpers
+│   │   │── aengine.core.utilities.ixx        # Core utility helpers
+│   │   │── aengine.diagnostics.ixx           # Diagnostic helpers
 │   │   │── almond.softrenderer.state.ixx     # Software renderer state helpers
 │   │   │── asdlstate.ixx                     # SDL state helpers
 │   │   │── abuildsystem.ixx                  # Module mirror of include/abuildsystem.hpp
