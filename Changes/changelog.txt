@@ -1,5 +1,9 @@
 # Changelog
 
+## [v0.72.7]
+- Added module partitions for the command queue, menu overlay, diagnostics, binding/handle helpers, and updater system so module consumers can import `aengine.commandqueue`, `aengine.systems`, `aengine.gui.menu`, `aengine.bindings`, `aengine.handles`, and `aengine.updater.system` instead of falling back to legacy headers.
+- Synced the README snapshot, module mapping docs, and version helpers to advertise the v0.72.7 tag with the expanded module surface and mirrored header coverage.
+
 ## [v0.72.6]
 - Realigned engine metadata with the published snapshot so version helpers, release notes, and documentation all advertise v0.72.6 together.
 - Refreshed the README, engine analysis, and configuration guide to remove outdated v0.72.5 references and clarify the current module/back-end layout.

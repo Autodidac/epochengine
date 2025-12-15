@@ -68,10 +68,10 @@ Asset producers can run off the main thread via the coroutine-enabled `taskgraph
 - **Roadmap Traceability** – The existing `roadmap.txt` lacked granular prompts or acceptance checks per phase, making automation hand-offs hard to script.
 - **Testing Surface** – No automated smoke tests or CI hooks are defined for the critical updater and renderer paths, leaving regression risk high during phase transitions.
 
-## Recent Progress (v0.72.6)
+## Recent Progress (v0.72.7)
 
-- Realigned engine metadata (`aversion.hpp`) with the published snapshot so runtime banners and docs agree on the v0.72.6 release.
-- Refreshed the README, configuration flag guide, and release notes to remove stale v0.72.5 references and clarify the current module/back-end layout.
+- Added module partitions for the command queue, menu overlay, diagnostics, binding/handle helpers, and updater system so importers can target the new `aengine.*` modules directly instead of relying on mirrored headers.
+- Synced the README snapshot, configuration flag guide, and release notes with the v0.72.7 metadata and expanded module surface so runtime banners and docs stay aligned.
 
 ## Recent Progress (v0.62.0)
 

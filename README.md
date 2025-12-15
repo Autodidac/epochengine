@@ -74,12 +74,12 @@ flowchart LR
 
 ---
 
-## Current Snapshot (v0.72.6)
+## Current Snapshot (v0.72.7)
 
-- ✅ **Version metadata alignment** – `aversion.hpp`, the README snapshot, and the changelog now advertise the v0.72.6 release together so tooling, banners, and docs stay in lockstep.
-- ✅ **Documentation refresh** – Cleaned up the README, engine analysis brief, configuration flag guide, and release notes to reflect the current module layout and build defaults instead of the stale v0.72.5 references.
+- ✅ **Version metadata alignment** – `aversion.hpp`, the README snapshot, and the changelog now advertise the v0.72.7 release together so banners, tooling, and docs agree on the published tag.
+- ✅ **Broader module surface** – New module partitions cover the command queue, updater system, menu overlay, diagnostics, and binding/handle helpers (`import aengine.commandqueue`, `aengine.systems`, `aengine.gui.menu`, `aengine.updater.system`, `aengine.bindings`, `aengine.handles`), keeping the module tree aligned with the mirrored headers for mixed import/include builds.
 - ✅ **Context/back-end module coverage** – The multiplexer, window/render wiring, and backend bindings (OpenGL, SDL3, Raylib, and the software renderer) continue to ship as `.ixx` partitions so module consumers can `import aengine.context`, `import aengine.context.window`, `import aengine.context.render`, or target backend-specific modules without relying on legacy headers. Mirrored headers (e.g., `aengine.hpp`, `aplatform.hpp`, `acontext*.hpp`) remain wired into the matching partitions for compatibility.
-- ✅ **Module conversion momentum** – Additional header-only partitions continue migrating into the module set to keep BMI coverage aligned with the runtime surface, with migration status reflected across the docs.
+- ✅ **Module documentation refresh** – The module-mapping docs and README notes now reflect the expanded partition list so downstream packagers can target the new imports directly.
 - ✅ **Build stability fixes** – Linux and Windows builds pick up the latest module-aware configurations by default, tightening dependency scanning and clearing residual configuration drift.
 
 Refer to [`Changes/changelog.txt`](Changes/changelog.txt) for the full history of fixes and enhancements.
