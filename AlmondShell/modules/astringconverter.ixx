@@ -22,7 +22,7 @@ export namespace almondnamespace::text {
             wide.data(), static_cast<int>(wide.size()),
             nullptr, 0, nullptr, nullptr);
         if (size <= 0) return {};
-        std::string out(static_cast<size_t>(size), '\\0');
+        std::string out(static_cast<size_t>(size), L'\\0');
         // Convert
         int written = ::WideCharToMultiByte(CP_UTF8, WC_ERR_INVALID_CHARS,
             wide.data(), static_cast<int>(wide.size()),

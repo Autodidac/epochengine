@@ -26,7 +26,7 @@ module;
 #include <cstddef>
 #include <cstdint>
 
-export module almond.core.types;
+export module aengine.core.types;
 
 export namespace almondnamespace
 {

@@ -23,64 +23,91 @@ module;
  *   See LICENSE file for full terms.                         *
  *                                                            *
  **************************************************************/
-// aengine.opengl.context module interface
-#include "aplatform.hpp"
-#include "aengineconfig.hpp"    // brings in <windows.h>, <glad/glad.h>, etc.
+ // acontext.opengl.context.ixx
+export module acontext.opengl.context;
 
-export module aengine.opengl.context;
+import aengine.platform;   
 
-#if defined(ALMOND_USING_OPENGL)
-
-//#include "acontext.hpp"       // Context, ContextType
-//#include "acontextmultiplexer.hpp" // BackendMap, windows
-#include "awindowdata.hpp"
-
-#include "aplatformpump.hpp"    // platform::pump_events()
-#include "aatlasmanager.hpp"
-
-namespace almondnamespace::timing
-{
-    struct Timer;   // forward declaration ONLY
-}
-
-#include "ainput.hpp"
-
-#include "aopengltextures.hpp" // ensure_uploaded, AtlasGPU, gpu_atlases
-#include "aopenglplatform.hpp"
-
-#include <algorithm>
-#include <format>
-#include <iostream>
-#include <stdexcept>
-#include <functional>
-//#include <mutex>
-//#include <queue>
-#include <vector>
-//#include <cstdint>
-#include <utility>
-#include <string>
-//#include <cstdio>
-
-#if defined(__linux__)
-#    include <X11/Xlib.h>
-#    include <X11/Xutil.h>
-#    include <GL/glx.h>
-#    include <GL/glxext.h>
+#if defined(_WIN32)
+//import <Windows.h>;
+//import <glad/glad.h>;
+//import <GL/wglext.h>;
+// 
+// replaces <Windows.h>, X11, etc.  
+#elif defined(__linux__)
+import <glad/glad.h>;
+import <X11/Xlib.h>;
+import <X11/Xutil.h>;
+import <GL/glx.h>;
+import <GL/glxext.h>;
 #endif
+
+// ------------------------------------------------------------
+// Core platform + engine modules
+// ------------------------------------------------------------
+import aengine.config;          // replaces aengineconfig.hpp
+import aengine.windowdata;      // replaces awindowdata.hpp
+import aengine.platform.pump;   // replaces aplatformpump.hpp
+import aengine.atlas.manager;   // replaces aatlasmanager.hpp
+import aengine.input;           // replaces ainput.hpp
+
+// ------------------------------------------------------------
+// OpenGL backend modules
+// ------------------------------------------------------------
+import aengine.opengl.textures; // replaces aopengltextures.hpp
+import aengine.opengl.platform; // replaces aopenglplatform.hpp
+
+// ------------------------------------------------------------
+// Standard library
+// ------------------------------------------------------------
+import <algorithm>;
+import <format>;
+import <functional>;
+import <iostream>;
+import <stdexcept>;
+import <string>;
+import <utility>;
+import <vector>;
+
+// Engine modules
+import aengine.core.timing;
+import aengine.context;
+
+//namespace almondnamespace::timing
+//{
+//    struct Timer; // forward decl only
+//}
 
 export namespace almondnamespace::openglcontext
 {
+#if defined(ALMOND_USING_OPENGL)
+
+    // Build-safe stubs when OpenGL backend is disabled.
+    inline bool opengl_initialize(std::shared_ptr<core::Context>, HWND = nullptr, unsigned int = 0, unsigned int = 0,
+        std::function<void(int, int)> = nullptr)
+    {
+        return false;
+    }
+    inline void opengl_present() {}
+    inline int  opengl_get_width() { return 1; }
+    inline int  opengl_get_height() { return 1; }
+    inline void opengl_clear(std::shared_ptr<core::Context>) {}
+    inline bool opengl_process(std::shared_ptr<core::Context>, core::CommandQueue&) { return false; }
+    inline void opengl_cleanup(std::shared_ptr<core::Context>) {}
+
+#else
+
     namespace detail
     {
 #if defined(__linux__)
         inline ::Window to_xwindow(HWND handle) noexcept
         {
-            return static_cast<::Window>(reinterpret_cast<uintptr_t>(handle));
+            return static_cast<::Window>(reinterpret_cast<std::uintptr_t>(handle));
         }
 
         inline HWND from_xwindow(::Window window) noexcept
         {
-            return reinterpret_cast<HWND>(static_cast<uintptr_t>(window));
+            return reinterpret_cast<HWND>(static_cast<std::uintptr_t>(window));
         }
 #endif
 
@@ -102,23 +129,20 @@ export namespace almondnamespace::openglcontext
         {
             PlatformGL::PlatformGLContext result{};
             if (!ctx)
-            {
                 return result;
-            }
 
 #if defined(_WIN32)
             result.device = ctx->hdc;
             result.context = ctx->hglrc;
 #elif defined(__linux__)
             result.display = static_cast<Display*>(ctx->hdc);
-            result.drawable = static_cast<GLXDrawable>(reinterpret_cast<uintptr_t>(ctx->hwnd));
+            result.drawable = static_cast<GLXDrawable>(reinterpret_cast<std::uintptr_t>(ctx->hwnd));
             result.context = static_cast<GLXContext>(ctx->hglrc);
 #endif
             return result;
         }
     }
 
-    // — Helpers
     inline void* LoadGLFunc(const char* name)
     {
         return PlatformGL::get_proc_address(name);
@@ -129,11 +153,13 @@ export namespace almondnamespace::openglcontext
         GLuint shader = glCreateShader(type);
         glShaderSource(shader, 1, &src, nullptr);
         glCompileShader(shader);
+
         GLint compiled = 0;
         glGetShaderiv(shader, GL_COMPILE_STATUS, &compiled);
-        if (!compiled) {
+        if (!compiled)
+        {
             char log[512]{};
-            glGetShaderInfoLog(shader, sizeof(log), nullptr, log);
+            glGetShaderInfoLog(shader, static_cast<GLsizei>(sizeof(log)), nullptr, log);
             throw std::runtime_error(std::format("Shader compile error: {}\nSource:\n{}", log, src));
         }
         return shader;
@@ -143,17 +169,21 @@ export namespace almondnamespace::openglcontext
     {
         GLuint vertexShader = compileShader(GL_VERTEX_SHADER, vsSrc);
         GLuint fragmentShader = compileShader(GL_FRAGMENT_SHADER, fsSrc);
+
         GLuint program = glCreateProgram();
         glAttachShader(program, vertexShader);
         glAttachShader(program, fragmentShader);
         glLinkProgram(program);
+
         GLint linked = 0;
         glGetProgramiv(program, GL_LINK_STATUS, &linked);
-        if (!linked) {
+        if (!linked)
+        {
             char log[512]{};
-            glGetProgramInfoLog(program, sizeof(log), nullptr, log);
+            glGetProgramInfoLog(program, static_cast<GLsizei>(sizeof(log)), nullptr, log);
             throw std::runtime_error(std::format("Program link error: {}", log));
         }
+
         glDeleteShader(vertexShader);
         glDeleteShader(fragmentShader);
         return program;
@@ -161,23 +191,20 @@ export namespace almondnamespace::openglcontext
 
     inline void destroy_quad_pipeline(almondnamespace::openglstate::OpenGL4State& glState) noexcept
     {
-        if (glState.shader && glIsProgram(glState.shader)) {
+        if (glState.shader && glIsProgram(glState.shader))
             glDeleteProgram(glState.shader);
-        }
+
         glState.shader = 0;
         glState.uUVRegionLoc = -1;
         glState.uTransformLoc = -1;
         glState.uSamplerLoc = -1;
 
-        if (glState.vao && glIsVertexArray(glState.vao)) {
+        if (glState.vao && glIsVertexArray(glState.vao))
             glDeleteVertexArrays(1, &glState.vao);
-        }
-        if (glState.vbo && glIsBuffer(glState.vbo)) {
+        if (glState.vbo && glIsBuffer(glState.vbo))
             glDeleteBuffers(1, &glState.vbo);
-        }
-        if (glState.ebo && glIsBuffer(glState.ebo)) {
+        if (glState.ebo && glIsBuffer(glState.ebo))
             glDeleteBuffers(1, &glState.ebo);
-        }
 
         glState.vao = 0;
         glState.vbo = 0;
@@ -186,12 +213,7 @@ export namespace almondnamespace::openglcontext
 
     inline const char* select_glsl_version(GLint major, GLint minor)
     {
-        struct VersionCandidate
-        {
-            GLint major;
-            GLint minor;
-            const char* shaderVersion;
-        };
+        struct VersionCandidate { GLint major; GLint minor; const char* shaderVersion; };
 
         static constexpr VersionCandidate versions[] = {
             {4, 6, "#version 460 core"},
@@ -204,13 +226,9 @@ export namespace almondnamespace::openglcontext
             {3, 3, "#version 330 core"},
         };
 
-        for (const auto& candidate : versions)
-        {
-            if (major > candidate.major || (major == candidate.major && minor >= candidate.minor))
-            {
-                return candidate.shaderVersion;
-            }
-        }
+        for (const auto& c : versions)
+            if (major > c.major || (major == c.major && minor >= c.minor))
+                return c.shaderVersion;
 
         return "#version 330 core";
     }
@@ -222,13 +240,11 @@ export namespace almondnamespace::openglcontext
 
         std::string_view sv{ versionStr };
 
-        // Trim leading whitespace
         const auto first_non_ws = sv.find_first_not_of(" \t\n\r");
         if (first_non_ws == std::string_view::npos)
             return { 0, 0 };
         sv.remove_prefix(first_non_ws);
 
-        // Find first digit (skip "OpenGL ES ", "OpenGL ES 3.2", etc.)
         const auto first_digit = sv.find_first_of("0123456789");
         if (first_digit == std::string_view::npos)
             return { 0, 0 };
@@ -241,27 +257,26 @@ export namespace almondnamespace::openglcontext
         std::string_view major_part = sv.substr(0, dot_pos);
         sv.remove_prefix(dot_pos + 1);
 
-        // Minor is the consecutive digits after the dot
         const auto minor_end = sv.find_first_not_of("0123456789");
         std::string_view minor_part = sv.substr(0, minor_end);
 
-        auto parse_decimal = [](std::string_view part, GLint& out) noexcept -> bool {
-            if (part.empty())
-                return false;
-
-            GLint value = 0;
-            for (unsigned char ch : part)
+        auto parse_decimal = [](std::string_view part, GLint& out) noexcept -> bool
             {
-                if (ch < '0' || ch > '9')
+                if (part.empty())
                     return false;
-                value = static_cast<GLint>(value * 10 + (ch - '0'));
-            }
-            out = value;
-            return true;
+
+                GLint value = 0;
+                for (unsigned char ch : part)
+                {
+                    if (ch < '0' || ch > '9')
+                        return false;
+                    value = static_cast<GLint>(value * 10 + (ch - '0'));
+                }
+                out = value;
+                return true;
             };
 
-        GLint major = 0;
-        GLint minor = 0;
+        GLint major = 0, minor = 0;
         if (!parse_decimal(major_part, major) || !parse_decimal(minor_part, minor))
             return { 0, 0 };
 
@@ -272,7 +287,8 @@ export namespace almondnamespace::openglcontext
     {
         destroy_quad_pipeline(glState);
 
-        try {
+        try
+        {
             GLint major = 0;
             GLint minor = 0;
             glGetIntegerv(GL_MAJOR_VERSION, &major);
@@ -281,9 +297,9 @@ export namespace almondnamespace::openglcontext
             if (major == 0 && minor == 0)
             {
                 const auto* versionStr = reinterpret_cast<const char*>(glGetString(GL_VERSION));
-                auto [parsedMajor, parsedMinor] = parse_gl_version_string(versionStr);
-                major = parsedMajor;
-                minor = parsedMinor;
+                auto [pm, pn] = parse_gl_version_string(versionStr);
+                major = pm;
+                minor = pn;
             }
 
             if (major == 0 && minor == 0)
@@ -299,35 +315,37 @@ export namespace almondnamespace::openglcontext
 
             std::string vs_source = std::string(versionDirective) + R"(
 
-        layout(location = 0) in vec2 aPos;       // [-0.5..0.5] quad coords
-        layout(location = 1) in vec2 aTexCoord;  // [0..1] UV coords
+layout(location = 0) in vec2 aPos;       // [-0.5..0.5] quad coords
+layout(location = 1) in vec2 aTexCoord;  // [0..1] UV coords
 
-        uniform vec4 uTransform; // xy = center in NDC, zw = size in NDC
-        uniform vec4 uUVRegion;  // xy = UV offset, zw = UV size
+uniform vec4 uTransform; // xy = center in NDC, zw = size in NDC
+uniform vec4 uUVRegion;  // xy = UV offset, zw = UV size
 
-        out vec2 vUV;
+out vec2 vUV;
 
-        void main() {
-            vec2 pos = aPos * uTransform.zw + uTransform.xy;
-            gl_Position = vec4(pos, 0.0, 1.0);
-            vUV = uUVRegion.xy + aTexCoord * uUVRegion.zw;
-        }
-    )";
+void main() {
+    vec2 pos = aPos * uTransform.zw + uTransform.xy;
+    gl_Position = vec4(pos, 0.0, 1.0);
+    vUV = uUVRegion.xy + aTexCoord * uUVRegion.zw;
+}
+)";
 
             std::string fs_source = std::string(versionDirective) + R"(
-        in vec2 vUV;
-        out vec4 outColor;
 
-        uniform sampler2D uTexture;
+in vec2 vUV;
+out vec4 outColor;
 
-        void main() {
-            outColor = texture(uTexture, vUV);
-        }
-    )";
+uniform sampler2D uTexture;
+
+void main() {
+    outColor = texture(uTexture, vUV);
+}
+)";
 
             glState.shader = linkProgram(vs_source.c_str(), fs_source.c_str());
         }
-        catch (const std::exception& ex) {
+        catch (const std::exception& ex)
+        {
             std::cerr << "[OpenGL] Failed to build quad pipeline: " << ex.what() << "\n";
             destroy_quad_pipeline(glState);
             return false;
@@ -337,7 +355,8 @@ export namespace almondnamespace::openglcontext
         glState.uTransformLoc = glGetUniformLocation(glState.shader, "uTransform");
         glState.uSamplerLoc = glGetUniformLocation(glState.shader, "uTexture");
 
-        if (glState.uSamplerLoc >= 0) {
+        if (glState.uSamplerLoc >= 0)
+        {
             glUseProgram(glState.shader);
             glUniform1i(glState.uSamplerLoc, 0);
             glUseProgram(0);
@@ -347,7 +366,8 @@ export namespace almondnamespace::openglcontext
         glGenBuffers(1, &glState.vbo);
         glGenBuffers(1, &glState.ebo);
 
-        if (!glState.vao || !glState.vbo || !glState.ebo) {
+        if (!glState.vao || !glState.vbo || !glState.ebo)
+        {
             std::cerr << "[OpenGL] Failed to allocate quad geometry buffers\n";
             destroy_quad_pipeline(glState);
             return false;
@@ -357,27 +377,25 @@ export namespace almondnamespace::openglcontext
         glBindBuffer(GL_ARRAY_BUFFER, glState.vbo);
 
         constexpr float quadVerts[] = {
-            -0.5f, -0.5f,    0.0f, 0.0f,
-             0.5f, -0.5f,    1.0f, 0.0f,
-             0.5f,  0.5f,    1.0f, 1.0f,
-            -0.5f,  0.5f,    0.0f, 1.0f
+            -0.5f, -0.5f, 0.0f, 0.0f,
+             0.5f, -0.5f, 1.0f, 0.0f,
+             0.5f,  0.5f, 1.0f, 1.0f,
+            -0.5f,  0.5f, 0.0f, 1.0f
         };
 
-        glBufferData(GL_ARRAY_BUFFER, sizeof(quadVerts), quadVerts, GL_STATIC_DRAW);
+        glBufferData(GL_ARRAY_BUFFER, static_cast<GLsizeiptr>(sizeof(quadVerts)), quadVerts, GL_STATIC_DRAW);
 
         glEnableVertexAttribArray(0);
-        glVertexAttribPointer(0, 2, GL_FLOAT, GL_FALSE, 4 * sizeof(float), (void*)0);
+        glVertexAttribPointer(0, 2, GL_FLOAT, GL_FALSE, 4 * static_cast<GLsizei>(sizeof(float)), (void*)0);
 
         glEnableVertexAttribArray(1);
-        glVertexAttribPointer(1, 2, GL_FLOAT, GL_FALSE, 4 * sizeof(float), (void*)(2 * sizeof(float)));
+        glVertexAttribPointer(1, 2, GL_FLOAT, GL_FALSE, 4 * static_cast<GLsizei>(sizeof(float)),
+            (void*)(2 * sizeof(float)));
 
         glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, glState.ebo);
 
-        constexpr unsigned int quadIndices[] = {
-            0, 1, 2,
-            2, 3, 0
-        };
-        glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(quadIndices), quadIndices, GL_STATIC_DRAW);
+        constexpr unsigned int quadIndices[] = { 0, 1, 2, 2, 3, 0 };
+        glBufferData(GL_ELEMENT_ARRAY_BUFFER, static_cast<GLsizeiptr>(sizeof(quadIndices)), quadIndices, GL_STATIC_DRAW);
 
         glBindVertexArray(0);
         glBindBuffer(GL_ARRAY_BUFFER, 0);
@@ -400,7 +418,6 @@ export namespace almondnamespace::openglcontext
         return build_quad_pipeline(glState);
     }
 
-    // — Engine hooks
     inline bool opengl_initialize(std::shared_ptr<core::Context> ctx,
         HWND parentWnd = nullptr,
         unsigned int w = 800,
@@ -423,6 +440,7 @@ export namespace almondnamespace::openglcontext
         ctx->virtualHeight = ctx->height;
         ctx->framebufferWidth = ctx->width;
         ctx->framebufferHeight = ctx->height;
+
         glState.width = w;
         glState.height = h;
         ctx->onResize = std::move(onResize);
@@ -430,8 +448,9 @@ export namespace almondnamespace::openglcontext
         PlatformGL::ScopedContext contextGuard;
 
 #if defined(_WIN32)
-        HWND resolvedHwnd = nullptr;
-        HDC resolvedHdc = nullptr;
+
+        HWND  resolvedHwnd = nullptr;
+        HDC   resolvedHdc = nullptr;
         HGLRC resolvedHglrc = nullptr;
 
         if (ctx && ctx->windowData)
@@ -474,7 +493,7 @@ export namespace almondnamespace::openglcontext
             glState.hwnd = CreateWindowExW(
                 0, L"AlmondChild", L"working",
                 WS_CHILD | WS_VISIBLE | WS_BORDER,
-                CW_USEDEFAULT, CW_USEDEFAULT, w, h,
+                CW_USEDEFAULT, CW_USEDEFAULT, static_cast<int>(w), static_cast<int>(h),
                 glState.parent, nullptr, nullptr, nullptr);
         }
 
@@ -490,12 +509,9 @@ export namespace almondnamespace::openglcontext
             {
                 const int logicalW = static_cast<int>((std::max)(static_cast<LONG>(1), client.right - client.left));
                 const int logicalH = static_cast<int>((std::max)(static_cast<LONG>(1), client.bottom - client.top));
-                ctx->width = logicalW;
-                ctx->height = logicalH;
-                ctx->virtualWidth = logicalW;
-                ctx->virtualHeight = logicalH;
-                ctx->framebufferWidth = logicalW;
-                ctx->framebufferHeight = logicalH;
+                ctx->width = logicalW; ctx->height = logicalH;
+                ctx->virtualWidth = logicalW; ctx->virtualHeight = logicalH;
+                ctx->framebufferWidth = logicalW; ctx->framebufferHeight = logicalH;
                 glState.width = static_cast<unsigned int>(logicalW);
                 glState.height = static_cast<unsigned int>(logicalH);
             }
@@ -505,9 +521,13 @@ export namespace almondnamespace::openglcontext
         if (!glState.hdc)
             throw std::runtime_error("GetDC failed");
 
-        PIXELFORMATDESCRIPTOR pfd = { sizeof(pfd), 1,
+        PIXELFORMATDESCRIPTOR pfd = {
+            sizeof(pfd), 1,
             PFD_DRAW_TO_WINDOW | PFD_SUPPORT_OPENGL | PFD_DOUBLEBUFFER,
-            PFD_TYPE_RGBA, 32, 0,0,0,0,0,0,0,0,0,24,0,0,0,0,0,0,0 };
+            PFD_TYPE_RGBA, 32,
+            0,0,0,0,0,0,0,0,0,
+            24,0,0,0,0,0,0,0
+        };
 
         int pf = ChoosePixelFormat(glState.hdc, &pfd);
         if (!pf)
@@ -561,9 +581,11 @@ export namespace almondnamespace::openglcontext
         std::cerr << "[OpenGL Init] Final handles: hwnd=" << glState.hwnd
             << " hdc=" << glState.hdc
             << " hglrc=" << glState.hglrc << "\n";
+
 #elif defined(__linux__)
+
         Display* display = static_cast<Display*>(ctx ? ctx->hdc : nullptr);
-        ::Window window = ctx && ctx->hwnd ? detail::to_xwindow(ctx->hwnd) : 0;
+        ::Window   window = (ctx && ctx->hwnd) ? detail::to_xwindow(ctx->hwnd) : 0;
         GLXContext glxContext = static_cast<GLXContext>(ctx ? ctx->hglrc : nullptr);
 
         if (!display)
@@ -579,6 +601,7 @@ export namespace almondnamespace::openglcontext
         }
 
         const int screen = DefaultScreen(display);
+
         int fbCount = 0;
         static int visualAttribs[] = {
             GLX_X_RENDERABLE, True,
@@ -597,8 +620,7 @@ export namespace almondnamespace::openglcontext
         GLXFBConfig* configs = glXChooseFBConfig(display, screen, visualAttribs, &fbCount);
         if (!configs || fbCount == 0)
         {
-            if (configs)
-                XFree(configs);
+            if (configs) XFree(configs);
             throw std::runtime_error("[OpenGLContext] glXChooseFBConfig failed");
         }
 
@@ -630,8 +652,8 @@ export namespace almondnamespace::openglcontext
                 display,
                 RootWindow(display, vi->screen),
                 0, 0,
-                static_cast<int>(w),
-                static_cast<int>(h),
+                static_cast<unsigned int>(w),
+                static_cast<unsigned int>(h),
                 0,
                 vi->depth,
                 InputOutput,
@@ -672,7 +694,9 @@ export namespace almondnamespace::openglcontext
 
         if (!glxContext)
         {
-            auto createContextAttribs = reinterpret_cast<PFNGLXCREATECONTEXTATTRIBSARBPROC>(LoadGLFunc("glXCreateContextAttribsARB"));
+            auto createContextAttribs =
+                reinterpret_cast<PFNGLXCREATECONTEXTATTRIBSARBPROC>(LoadGLFunc("glXCreateContextAttribsARB"));
+
             int contextAttribs[] = {
                 GLX_CONTEXT_MAJOR_VERSION_ARB, 3,
                 GLX_CONTEXT_MINOR_VERSION_ARB, 3,
@@ -681,19 +705,14 @@ export namespace almondnamespace::openglcontext
             };
 
             if (createContextAttribs)
-            {
                 glxContext = createContextAttribs(display, glState.fbConfig, nullptr, True, contextAttribs);
-            }
 
             if (!glxContext)
-            {
                 glxContext = glXCreateNewContext(display, glState.fbConfig, GLX_RGBA_TYPE, nullptr, True);
-            }
 
             if (!glxContext)
-            {
                 throw std::runtime_error("[OpenGLContext] Failed to create GLX context");
-            }
+
             glState.ownsContext = true;
         }
         else
@@ -725,10 +744,7 @@ export namespace almondnamespace::openglcontext
             << " drawable=" << glState.drawable
             << " context=" << glxContext << "\n";
 #else
-        (void)ctx;
-        (void)parentWnd;
-        (void)w;
-        (void)h;
+        (void)ctx; (void)parentWnd; (void)w; (void)h;
         throw std::runtime_error("[OpenGLContext] Unsupported platform");
 #endif
 
@@ -750,45 +766,50 @@ export namespace almondnamespace::openglcontext
         return true;
     }
 
-    inline void opengl_present() {
+    inline void opengl_present()
+    {
         auto& backend = opengltextures::get_opengl_backend();
         auto& glState = backend.glState;
         const auto ctx = detail::state_to_platform_context(glState);
         PlatformGL::swap_buffers(ctx);
     }
 
-    //   inline void opengl_pump() { almondnamespace::platform::pump_events(); }
-    inline int  opengl_get_width() {
+    inline int opengl_get_width()
+    {
         auto& backend = opengltextures::get_opengl_backend();
 #if defined(_WIN32)
         RECT r{ 0, 0, 0, 0 };
-        if (backend.glState.hwnd && GetClientRect(backend.glState.hwnd, &r)) {
+        if (backend.glState.hwnd && GetClientRect(backend.glState.hwnd, &r))
+        {
             backend.glState.width = static_cast<unsigned int>((std::max)(static_cast<LONG>(1), r.right - r.left));
             return static_cast<int>(backend.glState.width);
         }
 #else
-        if (backend.glState.width > 0) {
+        if (backend.glState.width > 0)
             return static_cast<int>(backend.glState.width);
-        }
 #endif
         return (std::max)(1, core::cli::window_width);
     }
-    inline int  opengl_get_height() {
+
+    inline int opengl_get_height()
+    {
         auto& backend = opengltextures::get_opengl_backend();
 #if defined(_WIN32)
         RECT r{ 0, 0, 0, 0 };
-        if (backend.glState.hwnd && GetClientRect(backend.glState.hwnd, &r)) {
+        if (backend.glState.hwnd && GetClientRect(backend.glState.hwnd, &r))
+        {
             backend.glState.height = static_cast<unsigned int>((std::max)(static_cast<LONG>(1), r.bottom - r.top));
             return static_cast<int>(backend.glState.height);
         }
 #else
-        if (backend.glState.height > 0) {
+        if (backend.glState.height > 0)
             return static_cast<int>(backend.glState.height);
-        }
 #endif
         return (std::max)(1, core::cli::window_height);
     }
-    inline void opengl_clear(std::shared_ptr<core::Context> ctx) {
+
+    inline void opengl_clear(std::shared_ptr<core::Context> ctx)
+    {
         const int fbW = (std::max)(1, ctx ? ctx->framebufferWidth : 0);
         const int fbH = (std::max)(1, ctx ? ctx->framebufferHeight : 0);
         glViewport(0, 0, fbW, fbH);
@@ -796,9 +817,6 @@ export namespace almondnamespace::openglcontext
         glClear(GL_COLOR_BUFFER_BIT);
     }
 
-    // ------------------------------------------------------
-    // Per-frame process: clear, run commands, swap
-    // ------------------------------------------------------
     inline bool opengl_process(std::shared_ptr<core::Context> ctx, core::CommandQueue& queue)
     {
         auto& backend = opengltextures::get_opengl_backend();
@@ -812,12 +830,9 @@ export namespace almondnamespace::openglcontext
             {
                 const int logicalW = static_cast<int>((std::max)(static_cast<LONG>(1), client.right - client.left));
                 const int logicalH = static_cast<int>((std::max)(static_cast<LONG>(1), client.bottom - client.top));
-                ctx->width = logicalW;
-                ctx->height = logicalH;
-                ctx->virtualWidth = logicalW;
-                ctx->virtualHeight = logicalH;
-                ctx->framebufferWidth = logicalW;
-                ctx->framebufferHeight = logicalH;
+                ctx->width = logicalW; ctx->height = logicalH;
+                ctx->virtualWidth = logicalW; ctx->virtualHeight = logicalH;
+                ctx->framebufferWidth = logicalW; ctx->framebufferHeight = logicalH;
                 glState.width = static_cast<unsigned int>(logicalW);
                 glState.height = static_cast<unsigned int>(logicalH);
             }
@@ -902,14 +917,14 @@ export namespace almondnamespace::openglcontext
         std::vector<const TextureAtlas*> atlasesToReload;
         for (auto& [atlas, gpu] : backend.gpu_atlases)
         {
-            const bool handleMissing = gpu.textureHandle == 0;
-            const bool handleValid = !handleMissing && glIsTexture(gpu.textureHandle) == GL_TRUE;
-            if (handleMissing || !handleValid)
+            const bool missing = gpu.textureHandle == 0;
+            const bool valid = !missing && glIsTexture(gpu.textureHandle) == GL_TRUE;
+
+            if (missing || !valid)
             {
-                if (handleValid)
-                {
+                if (valid)
                     glDeleteTextures(1, &gpu.textureHandle);
-                }
+
                 gpu.textureHandle = 0;
                 gpu.version = 0;
                 atlasesToReload.push_back(atlas);
@@ -917,10 +932,8 @@ export namespace almondnamespace::openglcontext
         }
 
         for (const TextureAtlas* atlas : atlasesToReload)
-        {
             if (atlas)
                 opengltextures::upload_atlas_to_gpu(*atlas);
-        }
 
         opengl_clear(ctx);
 
@@ -932,59 +945,62 @@ export namespace almondnamespace::openglcontext
             return true;
         }
 
-        ctx->is_key_held = [](almondnamespace::input::Key key) -> bool {
-            return almondnamespace::input::is_key_held(key);
-        };
-        ctx->is_key_down = [](almondnamespace::input::Key key) -> bool {
-            return almondnamespace::input::is_key_down(key);
-        };
-        ctx->is_mouse_button_held = [](almondnamespace::input::MouseButton btn) -> bool {
-            return almondnamespace::input::is_mouse_button_held(btn);
-        };
-        ctx->is_mouse_button_down = [](almondnamespace::input::MouseButton btn) -> bool {
-            return almondnamespace::input::is_mouse_button_down(btn);
-        };
+        ctx->is_key_held = [](almondnamespace::input::Key key) -> bool { return almondnamespace::input::is_key_held(key); };
+        ctx->is_key_down = [](almondnamespace::input::Key key) -> bool { return almondnamespace::input::is_key_down(key); };
+        ctx->is_mouse_button_held = [](almondnamespace::input::MouseButton btn) -> bool { return almondnamespace::input::is_mouse_button_held(btn); };
+        ctx->is_mouse_button_down = [](almondnamespace::input::MouseButton btn) -> bool { return almondnamespace::input::is_mouse_button_down(btn); };
 
         queue.drain();
         PlatformGL::swap_buffers(contextGuard.target());
         return true;
     }
 
-
-    inline void opengl_cleanup(std::shared_ptr<core::Context> ctx) {
+    inline void opengl_cleanup(std::shared_ptr<core::Context> ctx)
+    {
         auto& backend = opengltextures::get_opengl_backend();
         auto& glState = backend.glState;
 
 #if defined(_WIN32)
         PlatformGL::clear_current();
-        if (glState.hglrc) {
+
+        if (glState.hglrc)
+        {
             wglDeleteContext(glState.hglrc);
             glState.hglrc = nullptr;
         }
-        if (glState.hdc && glState.hwnd) {
+
+        if (glState.hdc && glState.hwnd)
             ReleaseDC(glState.hwnd, glState.hdc);
-        }
+
         glState.hdc = nullptr;
         glState.hwnd = nullptr;
         glState.parent = nullptr;
-        ctx->hwnd = nullptr;
-        ctx->hdc = nullptr;
-        ctx->hglrc = nullptr;
+
+        if (ctx)
+        {
+            ctx->hwnd = nullptr;
+            ctx->hdc = nullptr;
+            ctx->hglrc = nullptr;
+        }
+
 #elif defined(__linux__)
         PlatformGL::clear_current();
-        if (glState.ownsContext && glState.display && glState.glxContext) {
+
+        if (glState.ownsContext && glState.display && glState.glxContext)
             glXDestroyContext(glState.display, glState.glxContext);
-        }
-        if (glState.ownsWindow && glState.display && glState.window) {
+
+        if (glState.ownsWindow && glState.display && glState.window)
             XDestroyWindow(glState.display, glState.window);
-        }
-        if (glState.ownsColormap && glState.display && glState.colormap) {
+
+        if (glState.ownsColormap && glState.display && glState.colormap)
+        {
             XFreeColormap(glState.display, glState.colormap);
             glState.colormap = 0;
         }
-        if (glState.ownsDisplay && glState.display) {
+
+        if (glState.ownsDisplay && glState.display)
             XCloseDisplay(glState.display);
-        }
+
         glState.display = nullptr;
         glState.window = 0;
         glState.drawable = 0;
@@ -994,15 +1010,17 @@ export namespace almondnamespace::openglcontext
         glState.ownsWindow = false;
         glState.ownsContext = false;
         glState.ownsColormap = false;
-        ctx->hwnd = nullptr;
-        ctx->hdc = nullptr;
-        ctx->hglrc = nullptr;
+
+        if (ctx)
+        {
+            ctx->hwnd = nullptr;
+            ctx->hdc = nullptr;
+            ctx->hglrc = nullptr;
+        }
 #else
         (void)ctx;
 #endif
     }
 
-
-} // namespace almond::opengl
-
 #endif // ALMOND_USING_OPENGL
+}

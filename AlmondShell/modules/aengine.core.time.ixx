@@ -29,7 +29,7 @@ module;
 #include <string_view>
 #include <unordered_map>
 
-export module almond.core.timing;
+export module aengine.core.time;
 
 export namespace almondnamespace
 {

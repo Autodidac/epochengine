@@ -21,14 +21,15 @@
  *   See LICENSE file for full terms.                         *
  *                                                            *
  **************************************************************/
-export module aecs:components;
+module;
+export module aecs.components;
 
 import <string>;
 import <utility>;
 import <vector>;
 
-import almond.core.logger;
-import almond.core.timing;
+import aengine.core.logger;
+import aengine.core.time;
 
 export namespace almondnamespace::ecs
 {

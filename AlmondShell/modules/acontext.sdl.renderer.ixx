@@ -2,19 +2,20 @@ module;
 
 #include "aengineconfig.hpp"
 
+export module aengine.sdl.renderer;
+
+import std;
 import <iostream>;
 import <stdexcept>;
 import <SDL3/SDL.h>;
 
 import asdlstate;
 
-export module aengine.sdl.renderer;
-
 #if defined(ALMOND_USING_SDL)
 
 namespace almondnamespace::sdlcontext
 {
-    using almondnamespace::sdlcontext::state::s_sdlstate;
+   // using almondnamespace::sdlcontext::state::SDL3State::s_sdlstate;
 
     struct RendererContext
     {

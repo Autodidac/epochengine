@@ -21,123 +21,178 @@
  *   See LICENSE file for full terms.                         *
  *                                                            *
  **************************************************************/
+ // aecs.ixx — C++23 module conversion of aecs.hpp
+module;
 export module aecs;
 
-import <concepts>;
-import <format>;
-import <functional>;
-import <memory>;
-import <ranges>;
+// ─────────────────────────────────────────────────────────────
+// STANDARD LIBRARY
+// ─────────────────────────────────────────────────────────────
+import <typeinfo>;
 import <string>;
 import <string_view>;
-import <typeinfo>;
+import <format>;
 import <utility>;
 import <vector>;
-import <unordered_map>;
+import <cassert>;
 
-export import :components;
-export import :storage;
+// ─────────────────────────────────────────────────────────────
+// ENGINE / FRAMEWORK MODULES
+// These MUST already be real modules.
+// No textual includes remain.
+// ─────────────────────────────────────────────────────────────
+import aentity.component.manager;   // ComponentStorage + add/get/has/remove
+import aeventsystem;              // events::push_event
+import aengine.core.logger;                   // Logger, LogLevel
+import aengine.core.time;               // time::Timer, time helpers
+import aentityhistory;            // EntityID, history tracking
 
-import aeventsystem;
-import almond.core.timing;
-import almond.core.logger;
 
+// ─────────────────────────────────────────────────────────────
 export namespace almondnamespace::ecs
 {
-    template<typename... Cs>
-    struct reg_ex
+    // Public alias
+    using Entity = EntityID;
+
+    // ─────────────────────────────────────────────────────────
+    // REGISTRY
+    // Holds storage + ID counter + optional logging/time hooks
+    // ─────────────────────────────────────────────────────────
+
+    export template<typename... Cs>
+        struct reg_ex
     {
-        ComponentStorage storage;
-        Entity nextID{ 1 };
-        almondnamespace::logger::Logger* log{ nullptr };
-        almondnamespace::timing::Timer* clk{ nullptr };
+        ComponentStorage storage{};
+        EntityID         nextID{ 1 };
+        logger::Logger* log{ nullptr };
+        timing::Timer* clk{ nullptr };
     };
 
-    template<typename... Cs>
-    [[nodiscard]] inline reg_ex<Cs...> make_registry(
-        almondnamespace::logger::Logger* L = nullptr,
-        almondnamespace::timing::Timer* C = nullptr)
+    // ─────────────────────────────────────────────────────────
+    // REGISTRY FACTORY
+    // ─────────────────────────────────────────────────────────
+
+    export template<typename... Cs>
+        [[nodiscard]] inline reg_ex<Cs...> make_registry(
+            logger::Logger* L = nullptr,
+            timing::Timer* C = nullptr)
     {
-        return { {}, 1, L, C };
+        return reg_ex<Cs...>{ {}, 1, L, C };
     }
 
-    namespace _detail
+    // ─────────────────────────────────────────────────────────
+    // INTERNAL NOTIFICATION
+    // ─────────────────────────────────────────────────────────
+    namespace detail
     {
-        inline void notify(almondnamespace::logger::Logger* log,
-            almondnamespace::timing::Timer* clk,
-            Entity e,
+        template<typename... Cs>
+        inline void notify(
+            reg_ex<Cs...>& R,
             std::string_view action,
-            std::string_view comp = "")
+            Entity e,
+            std::string_view comp = {})
         {
-            if (!log || !clk) return;
+            if (!R.log || !R.clk)
+                return;
 
-            auto ts = timing::getCurrentTimeString();
-            log->log(std::format("[ECS] {}{} entity={} at {}",
-                action,
-                comp.empty() ? "" : std::format(":{}", comp),
-                e, ts));
+            const auto ts = timing::getCurrentTimeString();
+
+            R.log->log(
+                std::format(
+                    "[ECS] {}{} entity={} at {}",
+                    action,
+                    comp.empty() ? "" : std::format(":{}", comp),
+                    e,
+                    ts));
 
             events::push_event(events::Event{
                 events::EventType::Custom,
-                { {"ecs_action", std::string(action)},
-                  {"entity",     std::to_string(e)},
-                  {"component",  std::string(comp)},
-                  {"timing",       ts} },
-                0.f, 0.f });
+                {
+                    {"ecs_action", std::string(action)},
+                    {"entity",     std::to_string(e)},
+                    {"component",  std::string(comp)},
+                    {"time",       ts}
+                },
+                0.f,
+                0.f
+                });
         }
-    }
+    } // namespace detail
 
-    template<typename... Cs>
-    inline Entity create_entity(reg_ex<Cs...>& R)
+    // ─────────────────────────────────────────────────────────
+    // ENTITY LIFECYCLE
+    // ─────────────────────────────────────────────────────────
+
+    export template<typename... Cs>
+        inline Entity create_entity(reg_ex<Cs...>& R)
     {
-        Entity e = R.nextID++;
-        _detail::notify(R.log, R.clk, e, "createEntity");
+        const Entity e = R.nextID++;
+        detail::notify(R, "createEntity", e);
         return e;
     }
 
-    template<typename... Cs>
-    inline void destroy_entity(reg_ex<Cs...>& R, Entity e)
+    export template<typename... Cs>
+        inline void destroy_entity(reg_ex<Cs...>& R, Entity e)
     {
-        (remove_component<Cs>(R.storage, e), ...);
-        _detail::notify(R.log, R.clk, e, "destroyEntity");
+        // Remove all registered component types
+        (remove_component<Cs>(R, e), ...);
+        detail::notify(R, "destroyEntity", e);
     }
 
-    template<typename C, typename... Cs>
-    inline void add_component(reg_ex<Cs...>& R, Entity e, C c)
+    // ─────────────────────────────────────────────────────────
+    // COMPONENT API
+    // ─────────────────────────────────────────────────────────
+
+    export template<typename C, typename... Cs>
+        inline void add_component(reg_ex<Cs...>& R, Entity e, C c)
     {
-        ::almondnamespace::ecs::add_component<C>(R.storage, e, std::move(c));
-        _detail::notify(R.log, R.clk, e, "addComponent", typeid(C).name());
+        ::almondnamespace::ecs::add_component<C>(
+            R.storage, e, std::move(c));
+
+        detail::notify(R, "addComponent", e, typeid(C).name());
     }
 
-    template<typename C, typename... Cs>
-    inline void remove_component(reg_ex<Cs...>& R, Entity e)
+    export template<typename C, typename... Cs>
+        inline void remove_component(reg_ex<Cs...>& R, Entity e)
     {
-        ::almondnamespace::ecs::remove_component<C>(R.storage, e);
-        _detail::notify(R.log, R.clk, e, "removeComponent", typeid(C).name());
+        ::almondnamespace::ecs::remove_component<C>(
+            R.storage, e);
+
+        detail::notify(R, "removeComponent", e, typeid(C).name());
     }
 
-    template<typename C, typename... Cs>
-    [[nodiscard]] inline bool has_component(const reg_ex<Cs...>& R, Entity e)
+    export template<typename C, typename... Cs>
+        [[nodiscard]] inline bool has_component(
+            const reg_ex<Cs...>& R,
+            Entity e)
     {
-        return ::almondnamespace::ecs::has_component<C>(R.storage, e);
+        return ::almondnamespace::ecs::has_component<C>(
+            R.storage, e);
     }
 
-    template<typename C, typename... Cs>
-    [[nodiscard]] inline C& get_component(reg_ex<Cs...>& R, Entity e)
+    export template<typename C, typename... Cs>
+        [[nodiscard]] inline C& get_component(
+            reg_ex<Cs...>& R,
+            Entity e)
     {
-        return ::almondnamespace::ecs::get_component<C>(R.storage, e);
+        return ::almondnamespace::ecs::get_component<C>(
+            R.storage, e);
     }
 
-    template<typename... Vs, typename... Cs, typename Fn>
-    inline void view(reg_ex<Cs...>& R, Fn&& fn)
+    // ─────────────────────────────────────────────────────────
+    // VIEW / ITERATION
+    // ─────────────────────────────────────────────────────────
+
+    export template<typename... Vs, typename... Cs, typename Fn>
+        inline void view(reg_ex<Cs...>& R, Fn&& fn)
     {
         for (auto& [ent, compMap] : R.storage)
         {
-            (void)compMap;
             if ((has_component<Vs>(R, ent) && ...))
             {
                 fn(ent, get_component<Vs>(R, ent)...);
             }
         }
     }
-}
+
+} // namespace almondnamespace::ecs

@@ -1,3 +1,4 @@
+module;
 export module aimageloader;
 
 import <algorithm>;

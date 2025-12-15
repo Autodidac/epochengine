@@ -1,5 +1,3 @@
-module;
-
 /**************************************************************
  *   █████╗ ██╗     ███╗   ███╗   ███╗   ██╗    ██╗██████╗    *
  *  ██╔══██╗██║     ████╗ ████║ ██╔═══██╗████╗  ██║██╔══██╗   *
@@ -23,6 +21,8 @@ module;
  *   See LICENSE file for full terms.                         *
  *                                                            *
  **************************************************************/
+module;
+
 // aengine.opengl.textures module interface
 #include "aplatform.hpp"
 #include "aengineconfig.hpp"
@@ -34,16 +34,22 @@ export module aengine.opengl.textures;
 
 #include "aopenglplatform.hpp"
 //#include "aopenglcontext.hpp"
-#include "aopenglstate.hpp"
+//#include "aopenglstate.hpp"
 
-#include "acontext.hpp"
-#include "acontextmultiplexer.hpp"
-#include "aatlasmanager.hpp"
+//#include "acontext.hpp"
+//#include "acontextmultiplexer.hpp"
+//#include "aatlasmanager.hpp"
 #include "aatlastexture.hpp"
-#include "aimageloader.hpp"
+//#include "aimageloader.hpp"
 #include "atexture.hpp"
-#include "aspritehandle.hpp"
-#include "acommandline.hpp"
+//#include "aspritehandle.hpp"
+//#include "acommandline.hpp"
+
+import aengine.context;
+import aengine.context.multiplexer;
+
+import acontext.opengl.state;
+import acontext.opengl.context;
 
 
 #include <atomic>

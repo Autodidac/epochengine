@@ -28,8 +28,8 @@ import <string>;
 import <string_view>;
 
 import :storage;
-import almond.core.logger;
-import almond.core.timing;
+import aengine.core.logger;
+import aengine.core.time;
 import aeventsystem;
 
 namespace almondnamespace::ecs::_detail

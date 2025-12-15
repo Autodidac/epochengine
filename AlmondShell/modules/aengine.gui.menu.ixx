@@ -1,4 +1,4 @@
-﻿export module aengine.menu;
+﻿export module aengine.gui.menu;
 
 import <algorithm>;
 import <array>;

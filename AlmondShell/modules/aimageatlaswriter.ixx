@@ -1,3 +1,5 @@
+module;
+
 export module aimageatlaswriter;
 
 import <filesystem>;

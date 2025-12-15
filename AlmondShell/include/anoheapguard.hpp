@@ -23,9 +23,9 @@
  **************************************************************/
 // almond_noheap_guard.hpp
 #pragma once
-#include <cstddef>
+//#include <cstddef>
 
-void* operator new (std::size_t) = delete;
-void* operator new[](std::size_t) = delete;
-void  operator delete (void*, std::size_t) = delete;
-void  operator delete[](void*, std::size_t) = delete;
+//void* operator new (std::size_t) = delete;
+//void* operator new[](std::size_t) = delete;
+//void  operator delete (void*, std::size_t) = delete;
+//void  operator delete[](void*, std::size_t) = delete;

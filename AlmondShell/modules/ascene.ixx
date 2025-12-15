@@ -1,22 +1,30 @@
+// ascene.ixx
 module;
 
-#include <memory>
-#include <string>
-#include <utility>
+// Centralized platform glue (no OS headers here)
+import aengine.platform;
+
+// Engine modules (must already be modules)
+import aentitycomponents;     // Position, etc.
+import aecs;                  // ecs::reg_ex, create_entity, etc.
+import amovementevent;        // MovementEvent
+import aengine.core.time;    // time::Timer
+import acontext;              // core::Context
+import awindowdata;           // core::WindowData
+import aengine.core.logger;    // Logger, LogLevel
+
+// STL
+import std;
 
 export module ascene;
 
-// Engine modules
-import aecs;
-import almond.core.logger;
-import almond.core.timing;
-import amovementevent;   // MUST be a module, not a header
-
 export namespace almondnamespace::scene
 {
-    using almondnamespace::timing::Timer;
+    using almondnamespace::ecs::Entity;
+    using almondnamespace::ecs::reg_ex;
     using almondnamespace::logger::Logger;
     using almondnamespace::logger::LogLevel;
+    using almondnamespace::timing::Timer;
 
     // ------------------------------------------------------------
     // SCENE
@@ -25,105 +33,145 @@ export namespace almondnamespace::scene
     export class Scene
     {
     public:
-        Scene(Logger* logger,
-            Timer* clock,
-            LogLevel sceneLevel);
+        // Explicit component list keeps ECS compile-time and honest
+        using Registry = reg_ex<
+            ecs::Position,
+            ecs::History,
+            ecs::LoggerComponent
+        >;
 
-        void load();
-        void unload();
-
-        ecs::Entity createEntity();
-        void destroyEntity(ecs::Entity e);
-
-        void applyMovementEvent(const MovementEvent& ev);
-
-        [[nodiscard]]
-        std::unique_ptr<Scene> clone() const;
-
-    private:
-        void log(const std::string& msg, LogLevel lvl) const;
-
-    private:
-        ecs::registry reg{};
-        bool          loaded{ false };
-        Logger* logger{ nullptr };
-        Timer* clock{ nullptr };
-        LogLevel      sceneLogLevel{ LogLevel::INFO };
-    };
-
-    // ------------------------------------------------------------
-    // IMPLEMENTATION
-    // ------------------------------------------------------------
-
-    inline Scene::Scene(Logger* L, Timer* C, LogLevel sceneLevel)
-        : reg(ecs::make_registry<ecs::Position, ecs::LoggerComponent>(L, C))
-        , loaded(false)
-        , logger(L)
-        , clock(C)
-        , sceneLogLevel(sceneLevel)
-    {
-    }
-
-    inline void Scene::load()
-    {
-        log("[Scene] Loaded", LogLevel::INFO);
-        loaded = true;
-    }
-
-    inline void Scene::unload()
-    {
-        log("[Scene] Unloaded", LogLevel::INFO);
-        loaded = false;
-        reg = ecs::make_registry<ecs::Position, ecs::LoggerComponent>(nullptr, nullptr);
-    }
-
-    inline ecs::Entity Scene::createEntity()
-    {
-        ecs::Entity e = ecs::create_entity(reg);
-        log("[Scene] Created entity " + std::to_string(e), LogLevel::INFO);
-        return e;
-    }
-
-    inline void Scene::destroyEntity(ecs::Entity e)
-    {
-        ecs::destroy_entity(reg, e);
-        log("[Scene] Destroyed entity " + std::to_string(e), LogLevel::INFO);
-    }
-
-    inline void Scene::applyMovementEvent(const MovementEvent& ev)
-    {
-        const ecs::Entity id = ev.getEntityId();
-
-        if (ecs::has_component<ecs::Position>(reg, id))
+        Scene(
+            Logger* L = nullptr,
+            Timer* C = nullptr,
+            LogLevel sceneLevel = LogLevel::INFO)
+            : reg(ecs::make_registry<
+                ecs::Position,
+                ecs::History,
+                ecs::LoggerComponent>(nullptr, nullptr)) // ECS silent by default
+            , loaded(false)
+            , logger(L)
+            , clock(C)
+            , sceneLogLevel(sceneLevel)
         {
-            auto& pos = ecs::get_component<ecs::Position>(reg, id);
-            pos.x += ev.getDeltaX();
-            pos.y += ev.getDeltaY();
-
-            log(
-                "[Scene] Moved entity " + std::to_string(id) +
-                " by (" +
-                std::to_string(ev.getDeltaX()) + ", " +
-                std::to_string(ev.getDeltaY()) + ")",
-                LogLevel::INFO
-            );
         }
-    }
 
-    inline std::unique_ptr<Scene> Scene::clone() const
-    {
-        auto newScene =
-            std::make_unique<Scene>(logger, clock, sceneLogLevel);
+        // Non-copyable, movable
+        Scene(const Scene&) = delete;
+        Scene& operator=(const Scene&) = delete;
+        Scene(Scene&&) noexcept = default;
+        Scene& operator=(Scene&&) noexcept = default;
 
-        log("[Scene] Cloned scene", LogLevel::INFO);
-        // NOTE: ECS deep copy intentionally omitted
-        return newScene;
-    }
+        virtual ~Scene() = default;
 
-    inline void Scene::log(const std::string& msg, LogLevel lvl) const
-    {
-        if (logger && lvl >= sceneLogLevel)
-            logger->log(msg, lvl);
-    }
+        // --------------------------------------------------------
+        // Lifecycle
+        // --------------------------------------------------------
+
+        virtual void load()
+        {
+            log("[Scene] Loaded", LogLevel::INFO);
+            loaded = true;
+        }
+
+        virtual void unload()
+        {
+            log("[Scene] Unloaded", LogLevel::INFO);
+            loaded = false;
+
+            // Reset registry, keep silence
+            reg = ecs::make_registry<
+                ecs::Position,
+                ecs::History,
+                ecs::LoggerComponent>(nullptr, nullptr);
+        }
+
+        // Per-frame hook (override in derived scenes)
+        virtual bool frame(
+            std::shared_ptr<almondnamespace::core::Context>,
+            almondnamespace::core::WindowData*)
+        {
+            return true; // default: no-op
+        }
+
+        // --------------------------------------------------------
+        // Entity management
+        // --------------------------------------------------------
+
+        Entity createEntity()
+        {
+            Entity e = ecs::create_entity(reg);
+            log("[Scene] Created entity " + std::to_string(e), LogLevel::INFO);
+            return e;
+        }
+
+        void destroyEntity(Entity e)
+        {
+            ecs::destroy_entity(reg, e);
+            log("[Scene] Destroyed entity " + std::to_string(e), LogLevel::INFO);
+        }
+
+        // --------------------------------------------------------
+        // Events
+        // --------------------------------------------------------
+
+        void applyMovementEvent(const MovementEvent& ev)
+        {
+            const Entity id = ev.getEntityId();
+
+            if (ecs::has_component<ecs::Position>(reg, id))
+            {
+                auto& pos = ecs::get_component<ecs::Position>(reg, id);
+                pos.x += ev.getDeltaX();
+                pos.y += ev.getDeltaY();
+
+                log(
+                    "[Scene] Moved entity " + std::to_string(id) +
+                    " by (" +
+                    std::to_string(ev.getDeltaX()) + "," +
+                    std::to_string(ev.getDeltaY()) + ")",
+                    LogLevel::INFO);
+            }
+        }
+
+        // --------------------------------------------------------
+        // Cloning
+        // --------------------------------------------------------
+
+        virtual std::unique_ptr<Scene> clone() const
+        {
+            auto newScene =
+                std::make_unique<Scene>(logger, clock, sceneLogLevel);
+
+            log("[Scene] Cloned scene", LogLevel::INFO);
+            // ECS deep copy intentionally omitted
+            return newScene;
+        }
+
+        // --------------------------------------------------------
+        // Accessors
+        // --------------------------------------------------------
+
+        [[nodiscard]] bool isLoaded() const noexcept { return loaded; }
+
+        Registry& registry() noexcept { return reg; }
+        const Registry& registry() const noexcept { return reg; }
+
+        void     setLogLevel(LogLevel lvl) noexcept { sceneLogLevel = lvl; }
+        LogLevel getLogLevel() const noexcept { return sceneLogLevel; }
+
+    protected:
+        void log(const std::string& msg, LogLevel lvl) const
+        {
+            if (logger && lvl >= sceneLogLevel)
+                logger->log(msg, lvl);
+        }
+
+    private:
+        Registry  reg{};
+        bool      loaded{ false };
+        Logger* logger{ nullptr }; // optional shared logger
+        Timer* clock{ nullptr };  // optional time reference
+        LogLevel  sceneLogLevel{ LogLevel::INFO };
+    };
 
 } // namespace almondnamespace::scene

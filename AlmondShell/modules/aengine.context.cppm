@@ -13,8 +13,8 @@
  *                                                            *
  **************************************************************/
 // aengine.context.cppm
-
 module;
+export module aengine.context;
 
 import <algorithm>;
 import <cstdint>;
@@ -63,19 +63,18 @@ import "acustomrenderer.hpp";
 import "acustomtextures.hpp";
 #endif
 
-module aengine.context;
 
 #if defined(ALMOND_USING_OPENGL)
-import :opengl;
+import acontext.opengl.context;
 #endif
 #if defined(ALMOND_USING_SDL)
-import :sdl;
+import acontext.sdl.context;
 #endif
 #if defined(ALMOND_USING_RAYLIB)
-import :raylib;
+import acontext.raylib.context;
 #endif
 #if defined(ALMOND_USING_SOFTWARE_RENDERER)
-import :software;
+import acontext.software.context;
 #endif
 
 namespace

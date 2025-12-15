@@ -1,6 +1,6 @@
 ﻿module;
 
-export module aengine.update.system;
+export module aengine.updater.system;
 
 import <filesystem>;
 import <regex>;
@@ -14,7 +14,7 @@ import <string>;
 import aengine.updater.tools;
 import aengine.updater.config;
 
-export namespace almondnamespace::cmds::updater
+export namespace almondnamespace::updater
 {
     // ─────────────────────────────────────────────
     // Results / channels

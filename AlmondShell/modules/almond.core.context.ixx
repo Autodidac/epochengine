@@ -12,7 +12,7 @@
  *   SPDX-License-Identifier: LicenseRef-MIT-NoSell           *
  *                                                            *
  **************************************************************/
-
+module;
 export module almond.core.context;
 
 // Standard library (header units or std module; keep consistent project-wide)
@@ -32,11 +32,16 @@ import <vector>;
 // Project modules (these must be modules too; do NOT include headers)
 import aengine.context.type;    // ContextType
 import aengine.context.commandqueue;   // CommandQueue
-import almond.core.atomic_function; // AlmondAtomicFunction
-import almond.gfx.atlas_texture;    // TextureAtlas
-import almond.gfx.sprite_handle;    // SpriteHandle
-import almond.gfx.image_data;       // ImageData
+import aatomicfunction; // AlmondAtomicFunction
+//import aengine.input;                // input::Key, input::MouseButton, input::mouseX/mouseY + helpers
 import aengine.input;                // input::Key, input::MouseButton, input::mouseX/mouseY + helpers
+
+//import almond.gfx.atlas_texture;    // TextureAtlas
+//import almond.gfx.sprite_handle;    // SpriteHandle
+//import almond.gfx.image_data;       // ImageData
+import aatlas.texture;    // TextureAtlas
+import aspritehandle;    // SpriteHandle
+import aimageloader;       // ImageData
 
 export namespace almondnamespace::core
 {

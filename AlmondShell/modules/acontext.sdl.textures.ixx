@@ -1,12 +1,21 @@
 module;
 
-#include "aplatform.hpp"
-#include "aengineconfig.hpp"
-#include "aatlasmanager.hpp"
-#include "aatlastexture.hpp"
-#include "aimageloader.hpp"
-#include "atexture.hpp"
-import aengine.sdl.renderer;
+//#include "aplatform.hpp"
+//#include "aengineconfig.hpp"
+//#include "aatlasmanager.hpp"
+//#include "aatlastexture.hpp"
+//#include "aimageloader.hpp"
+//#include "atexture.hpp"
+export module aengine.sdl.textures;
+
+import aengine.platform;
+import aengine.config;
+import aatlas.manager;
+import aatlas.texture;
+import aimageloader;
+import atexture;
+
+import acontext.sdl.renderer;
 import asdlstate;
 
 import <SDL3/SDL.h>;
@@ -25,7 +34,6 @@ import <string_view>;
 import <unordered_map>;
 import <vector>;
 
-export module aengine.sdl.textures;
 
 #ifdef ALMOND_USING_SDL
 export namespace almondnamespace::sdltextures

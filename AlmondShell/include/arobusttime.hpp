@@ -29,5 +29,5 @@ import almond.core.timing;
 // Legacy builds fall back to including a header-equivalent version of the
 // time utilities so consumers without module BMI support can still access the
 // timer helpers.
-#include "../modules/almond.core.timing.hpp"
+//#include "../modules/almond.core.timing.hpp"
 #endif

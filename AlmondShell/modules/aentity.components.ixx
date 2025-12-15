@@ -2,6 +2,6 @@ module;
 
 #include "aentitycomponents.hpp"
 
-export module aentitycomponents;
+export module aentity.components;
 
 export import "aentitycomponents.hpp";

@@ -30,9 +30,9 @@ module;
 #include <stdexcept>
 #include <string>
 
-export module almond.core.logger;
+export module aengine.core.logger;
 
-import almond.core.timing;
+import aengine.core.time;
 
 export namespace almondnamespace
 {

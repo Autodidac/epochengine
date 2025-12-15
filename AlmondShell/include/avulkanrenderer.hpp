@@ -30,8 +30,8 @@
 #pragma once
 
 #include "aengineconfig.hpp"
-#include "atextureatlas.hpp"
-#include "atexturecache.hpp"
+//#include "atextureatlas.hpp"
+//#include "atexturecache.hpp"
 
 #include <iostream>
 #include <stdexcept>

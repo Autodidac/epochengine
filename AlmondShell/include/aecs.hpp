@@ -23,9 +23,9 @@
  **************************************************************/
 // aecs.hpp
 #pragma once
-
-#if defined(__cpp_modules) && __cpp_modules >= 201907L && !defined(ALMOND_FORCE_LEGACY_HEADERS)
-import aecs;
-#else
-#   error "The ECS API now relies on the aecs module; enable C++20 modules or set ALMOND_FORCE_LEGACY_HEADERS to use a legacy header."
-#endif
+//
+//#if defined(__cpp_modules) && __cpp_modules >= 201907L && !defined(ALMOND_FORCE_LEGACY_HEADERS)
+//import aecs;
+//#else
+//#   error "The ECS API now relies on the aecs module; enable C++20 modules or set ALMOND_FORCE_LEGACY_HEADERS to use a legacy header."
+//#endif
