@@ -1,5 +1,9 @@
 # Changelog
 
+## [v0.72.8]
+- Converted additional legacy headers into module partitions so atlas utilities (`aatlasmanager.hpp`, `aatlastexture.hpp`) now expose `import aatlas.manager;` / `import aatlas.texture;`, the CLI surface is mirrored via `import acommandline;`, ECS mirrors (`import aentity.*`) stay in sync, and umbrella aggregates (`import almondengine;`, `import almondshell;`) mirror the legacy includes.
+- Synced version metadata and documentation (README snapshot, engine analysis, module map) to advertise v0.72.8 with the refreshed import surface.
+
 ## [v0.72.7]
 - Added module partitions for the command queue, menu overlay, diagnostics, binding/handle helpers, and updater system so module consumers can import `aengine.commandqueue`, `aengine.systems`, `aengine.gui.menu`, `aengine.bindings`, `aengine.handles`, and `aengine.updater.system` instead of falling back to legacy headers.
 - Synced the README snapshot, module mapping docs, and version helpers to advertise the v0.72.7 tag with the expanded module surface and mirrored header coverage.

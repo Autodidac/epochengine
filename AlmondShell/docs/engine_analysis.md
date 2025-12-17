@@ -68,6 +68,11 @@ Asset producers can run off the main thread via the coroutine-enabled `taskgraph
 - **Roadmap Traceability** – The existing `roadmap.txt` lacked granular prompts or acceptance checks per phase, making automation hand-offs hard to script.
 - **Testing Surface** – No automated smoke tests or CI hooks are defined for the critical updater and renderer paths, leaving regression risk high during phase transitions.
 
+## Recent Progress (v0.72.8)
+
+- Converted additional legacy headers into module partitions so atlas utilities (`aatlasmanager.hpp`, `aatlastexture.hpp`) now expose `import aatlas.manager;` / `import aatlas.texture;`, the CLI surface is mirrored by `import acommandline;`, and ECS aliases such as `import aentity.*` sit alongside umbrella aggregates (`import almondengine;`, `import almondshell;`).
+- Synced the README snapshot, configuration flag guide, and release notes with the v0.72.8 metadata and refreshed import map so runtime banners and docs stay aligned on the new module surfaces.
+
 ## Recent Progress (v0.72.7)
 
 - Added module partitions for the command queue, menu overlay, diagnostics, binding/handle helpers, and updater system so importers can target the new `aengine.*` modules directly instead of relying on mirrored headers.

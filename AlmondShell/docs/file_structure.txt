@@ -5,16 +5,19 @@
 │  or target partitions such as `import aengine.engine_components;` and
 │  `import aengine.platform;` instead of the legacy umbrella headers. Legacy
 │  headers stay mirrored behind the module surface (for example
-│  `aengine.hpp`, `acontext.hpp`, and `aplatform.hpp` are imported inside their
-│  matching modules) so downstream users can mix `import` and `#include` during
+│  `aengine.hpp`, `acontext.hpp`, `aatlasmanager.hpp`, `aatlastexture.hpp`,
+│  `acommandline.hpp`, and `aplatform.hpp` are imported inside their matching
+│  modules) so downstream users can mix `import` and `#include` during
 │  migration.
 │
 │  Module consumption quick-start
-│  • Importers: `aengine` (aggregate), `aengine.engine_components`,
-│    `aengine.platform`, `aengine.commandqueue`, `aengine.systems`,
-│    `aengine.context`/`*.context.*`, `aengine.gui.menu`, `aengine.input`,
-│    `aengine.cli`, and the updater partitions (`aengine.updater`,
-│    `.updater.config`, `.updater.system`, `.updater.tools`).
+│  • Importers: `aengine` (aggregate), `almondengine`/`almondshell` (umbrella
+│    aliases), `aengine.engine_components`, `aengine.platform`,
+│    `aengine.commandqueue`, `aengine.systems`, `aengine.context`/`*.context.*`,
+│    `aengine.gui.menu`, `aengine.input`, `aengine.cli`, direct module mirrors
+│    for legacy headers like `import aatlas.manager;`, `import aatlas.texture;`,
+│    `import acommandline;`, `import aentity.*`, and the updater partitions
+│    (`aengine.updater`, `.updater.config`, `.updater.system`, `.updater.tools`).
 │    Renderer-specific partitions include `aengine.opengl.*`, `aengine.sdl.*`,
 │    and `aengine.context.raylib`/`aengine.context.software`.
 │  • CMake flags: configure with C++23 plus `-DCMAKE_CXX_SCAN_FOR_MODULES=ON`
@@ -87,6 +90,8 @@
 │── modules/
 │   │── Aggregates & platform surfaces
 │   │   │── aengine.ixx                   # `import aengine;` aggregate (mirrors aengine.hpp)
+│   │   │── almondengine.ixx              # `import almondengine;` aggregate (legacy umbrella alias)
+│   │   │── almondshell.ixx               # `import almondshell;` aggregate (legacy umbrella alias)
 │   │   │── aengine.platform.ixx          # Platform/windowing abstractions (imports aplatform.hpp, acontext*.hpp)
 │   │   │── aengine.commandqueue.ixx      # Shared command queue helpers (mirrors acommandqueue headers)
 │   │   │── aengine.bindings.ixx          # Engine binding helpers
@@ -135,9 +140,11 @@
 │
 │   │── Shared utilities
 │   │   │── aallocator.ixx                    # General-purpose allocator helpers
-│   │   │── aatlasmanager.ixx                 # Atlas manager surface (mirrors aatlasmanager.hpp)
-│   │   │── aatlastexture.ixx                 # Atlas texture helpers
+│   │   │── aatlas.manager.ixx                # Atlas manager surface (mirrors aatlasmanager.hpp)
+│   │   │── aatlas.texture.ixx                # Atlas texture helpers (mirrors aatlastexture.hpp)
 │   │   │── aengine.atlasmanager.ixx          # Atlas helpers exposed via `import aengine;`
+│   │   │── acommandline.ixx                  # CLI parser mirror (`import acommandline;`)
+│   │   │── almond.core.context.ixx           # Core context utilities exposed via almond.* alias imports
 │   │   │── aenduserapplication.ixx           # Launcher/application scaffolding
 │   │   │── aapplicationmodule.ixx            # Application module helper
 │   │   │── amovementevent.ixx                # Movement event surface
