@@ -20,7 +20,7 @@ import aengine.platform;          // replaces aplatform.hpp (ordering handled by
 import aentity.components;         // Position, History, LoggerComponent
 import aeventsystem;              // events::push_event
 import alogger;                   // Logger, LogLevel
-import almond.core.timing;        // Timer, time helpers
+import aengine.core.time;        // Timer, time helpers
 import aecs;                      // reg_ex, Entity, ECS core API
 
 

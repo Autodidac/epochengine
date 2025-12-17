@@ -6,7 +6,7 @@ import <functional>;
 import <memory>;
 import <vector>;
 
-import almond.core.timing;
+import aengine.core.time;
 import aengine.platform;
 
 #if defined(ALMOND_USING_SOFTWARE_RENDERER)
