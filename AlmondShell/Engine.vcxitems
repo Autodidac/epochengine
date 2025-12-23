@@ -744,7 +744,6 @@
     <ClCompile Include="$(MSBuildThisFileDirectory)modules\acodeinspector.ixx" />
     <ClCompile Include="$(MSBuildThisFileDirectory)modules\acommandline.ixx" />
     <ClCompile Include="$(MSBuildThisFileDirectory)modules\aengine.commandqueue.ixx" />
-    <ClCompile Include="$(MSBuildThisFileDirectory)modules\acontext.ixx" />
     <ClCompile Include="$(MSBuildThisFileDirectory)modules\acontext.control.ixx" />
     <ClCompile Include="$(MSBuildThisFileDirectory)modules\aengine.diagnostics.ixx" />
     <ClCompile Include="$(MSBuildThisFileDirectory)modules\aecs.components.ixx" />
@@ -806,7 +805,6 @@
     <ClCompile Include="$(MSBuildThisFileDirectory)modules\aimagewriter.ixx" />
     <ClCompile Include="$(MSBuildThisFileDirectory)modules\almond.core.context.ixx" />
     <ClCompile Include="$(MSBuildThisFileDirectory)modules\acontext.softrenderer.state.ixx" />
-    <ClCompile Include="$(MSBuildThisFileDirectory)modules\almondengine.ixx" />
     <ClCompile Include="$(MSBuildThisFileDirectory)modules\almondshell.ixx" />
     <ClCompile Include="$(MSBuildThisFileDirectory)modules\alogger.ixx" />
     <ClCompile Include="$(MSBuildThisFileDirectory)modules\amatch3like.ixx" />
