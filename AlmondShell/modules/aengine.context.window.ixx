@@ -1,76 +1,98 @@
 module;
+
+#include "aplatform.hpp"
+#include "aengineconfig.hpp"
+#include "aengine.hpp"
+
+#include <string_view>
+#include <stdexcept>
+
 export module aengine.context.window;
 
-//#include <memory>
-//#include <functional>
-//#include <atomic>
-//#include <string>
-//
-//#if defined(_WIN32)
-//#    include <windows.h>
-//#else
-//#    include <cstdint>
-//using HWND = void*;
-//using HDC = void*;
-//using HGLRC = void*;
-//#endif
-//
-//#include "acontexttype.hpp"  // for ContextType
-//#include "acommandqueue.hpp" // for CommandQueue
-//
-//namespace almondnamespace::core 
-//{
-//    struct Context; // forward declaration
-//    class MultiContextManager; // Forward declare MultiContextManager for ResizeCallback
-//
-//    struct WindowData
-//    {
-//        HWND hwnd{};
-//        HDC  hdc{};
-//        HGLRC glContext{};
-//        bool running = true;
-//        bool clicked = false;
-//        bool usesSharedContext = false;
-//        std::shared_ptr<Context> context;
-//        almondnamespace::core::ContextType type { almondnamespace::core::ContextType::OpenGL };
-//
-//        std::wstring titleWide;
-//        std::string  titleNarrow;
-//
-//        int width = 0;
-//        int height = 0;
-//
-//        using ResizeCallback = std::function<void(int, int)>;
-//        ResizeCallback onResize;
-//
-//        using ThreadInitializeCallback = std::function<bool(const std::shared_ptr<Context>&)>;
-//        ThreadInitializeCallback threadInitialize;
-//
-//        CommandQueue commandQueue;
-//
-//        std::atomic<bool> paused{ false };
-//        std::atomic<bool> quiesced{ false };
-//
-//        WindowData() = default;
-//        WindowData(HWND h, HDC dc, HGLRC ctx, bool shared, almondnamespace::core::ContextType t)
-//            : hwnd(h), hdc(dc), glContext(ctx), usesSharedContext(shared), type(t) {
-//        }
-//
-//        // Non-copyable, non-movable
-//        WindowData(const WindowData&) = delete;
-//        WindowData& operator=(const WindowData&) = delete;
-//        WindowData(WindowData&&) = delete;
-//        WindowData& operator=(WindowData&&) = delete;
-//
-//        // Forwarding convenience
-//        void EnqueueCommand(std::function<void()> cmd) {
-//            commandQueue.enqueue(std::move(cmd));
-//        }
-//
-//        bool DrainCommands() {
-//            return commandQueue.drain();
-//        }
-//
-//    };
-//
-//} // namespace almondshell::core
+export namespace almondnamespace::contextwindow
+{
+    struct WindowData final {
+#if defined(_WIN32)
+#ifndef ALMOND_MAIN_HEADLESS
+        HWND hwnd = nullptr;
+        HWND hwndChild = nullptr;
+        HDC hdc = nullptr;
+        HGLRC glrc = nullptr;
+#endif
+#endif
+
+#if defined(ALMOND_USING_SDL)
+        SDL_Window* sdl_window = nullptr;
+        SDL_GLContext sdl_glrc = nullptr;
+#endif
+
+#if defined(ALMOND_USING_SFML)
+        sf::RenderWindow* sfml_window = nullptr;
+        sf::Context sfml_context;
+#endif
+
+        int width = DEFAULT_WINDOW_WIDTH;
+        int height = DEFAULT_WINDOW_HEIGHT;
+
+        bool should_close = false;
+
+        static inline WindowData* s_instance = nullptr;
+
+        static void set_global_instance(WindowData* instance) {
+            s_instance = instance;
+        }
+
+        static WindowData* get_global_instance() noexcept {
+            return s_instance;
+        }
+
+#if defined(_WIN32) && !defined(ALMOND_MAIN_HEADLESS)
+        void setParentHandle(HWND hwndValue) noexcept { hwnd = hwndValue; }
+        void setChildHandle(HWND hwndValue) noexcept { hwndChild = hwndValue; }
+
+        HWND getParentHandle() const noexcept { return hwnd; }
+#endif
+
+#if defined(_WIN32)
+        static HWND getWindowHandle() noexcept {
+            return s_instance ? s_instance->hwnd : nullptr;
+        }
+
+        static HWND getChildHandle() noexcept {
+            return s_instance ? s_instance->hwndChild : nullptr;
+        }
+#endif
+
+        void set_size(int w, int h) noexcept {
+            width = w;
+            height = h;
+        }
+
+        void set_should_close(bool value) noexcept {
+            should_close = value;
+        }
+
+        bool get_should_close() const noexcept {
+            return should_close;
+        }
+
+        void set_window_title(std::string_view title) noexcept {
+        }
+
+#if defined(ALMOND_USING_SDL)
+        static SDL_Window* getSDLWindow() noexcept {
+            return s_instance ? s_instance->sdl_window : nullptr;
+        }
+#endif
+
+#if defined(ALMOND_USING_SFML)
+        sf::RenderWindow* getSFMLWindow() {
+            if (!s_instance) throw std::runtime_error("WindowData is null!");
+            return s_instance->sfml_window;
+        }
+#endif
+
+        [[nodiscard]] int get_width() const noexcept { return width; }
+        [[nodiscard]] int get_height() const noexcept { return height; }
+    };
+}

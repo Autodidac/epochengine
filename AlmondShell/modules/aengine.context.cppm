@@ -34,7 +34,7 @@ import aengine.input;
 
 import "aplatform.hpp";
 import "aengineconfig.hpp";
-import "acontextwindow.hpp";
+import aengine.context.window;
 import "acontextmultiplexer.hpp";
 import "adiagnostics.hpp";
 import "aimageloader.hpp";
