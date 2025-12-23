@@ -14,7 +14,7 @@
  **************************************************************/
 // aengine.context.cppm
 module;
-export module aengine.context;
+module aengine.context;
 
 import <algorithm>;
 import <cstdint>;
@@ -30,7 +30,6 @@ import <string>;
 import <utility>;
 import <vector>;
 
-import aengine.context;
 import aengine.input;
 
 import "aplatform.hpp";
