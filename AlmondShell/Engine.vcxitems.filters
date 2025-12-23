@@ -184,6 +184,9 @@
     <Filter Include="Module Files\ixx\platform">
       <UniqueIdentifier>{a2017f7c-ed47-428d-a368-49f143de6297}</UniqueIdentifier>
     </Filter>
+    <Filter Include="Module Files\ixx\gui">
+      <UniqueIdentifier>{2ccfdfe5-0684-44e3-9d28-f15617a73c33}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="$(MSBuildThisFileDirectory)include\almondengine.hpp">
@@ -608,9 +611,6 @@
     <ClCompile Include="$(MSBuildThisFileDirectory)modules\aeditor.ixx">
       <Filter>Module Files\ixx</Filter>
     </ClCompile>
-    <ClCompile Include="$(MSBuildThisFileDirectory)modules\agui.ixx">
-      <Filter>Module Files\ixx</Filter>
-    </ClCompile>
     <ClCompile Include="$(MSBuildThisFileDirectory)modules\anet.ixx">
       <Filter>Module Files\ixx</Filter>
     </ClCompile>
@@ -635,16 +635,10 @@
     <ClCompile Include="$(MSBuildThisFileDirectory)modules\aengine.ixx">
       <Filter>Module Files\ixx\core</Filter>
     </ClCompile>
-    <ClCompile Include="$(MSBuildThisFileDirectory)modules\aengine.platform.ixx">
-      <Filter>Module Files\ixx\core</Filter>
-    </ClCompile>
     <ClCompile Include="$(MSBuildThisFileDirectory)modules\aengine.systems.ixx">
       <Filter>Module Files\ixx\core</Filter>
     </ClCompile>
     <ClCompile Include="$(MSBuildThisFileDirectory)modules\aengine.version.ixx">
-      <Filter>Module Files\ixx\core</Filter>
-    </ClCompile>
-    <ClCompile Include="$(MSBuildThisFileDirectory)modules\aengineconfig.ixx">
       <Filter>Module Files\ixx\core</Filter>
     </ClCompile>
     <ClCompile Include="$(MSBuildThisFileDirectory)modules\a2048like.ixx">
@@ -689,7 +683,7 @@
     <ClCompile Include="$(MSBuildThisFileDirectory)modules\aatomicfunction.ixx">
       <Filter>Module Files\ixx\utilities</Filter>
     </ClCompile>
-    <ClCompile Include="$(MSBuildThisFileDirectory)modules\acommandline.ixx">
+    <ClCompile Include="$(MSBuildThisFileDirectory)modules\aengine.core.commandline.ixx">
       <Filter>Module Files\ixx\utilities</Filter>
     </ClCompile>
     <ClCompile Include="$(MSBuildThisFileDirectory)modules\acodeinspector.ixx">
@@ -983,9 +977,6 @@
     <ClCompile Include="$(MSBuildThisFileDirectory)modules\ampmcboundedqueue.ixx">
       <Filter>Module Files\ixx\multithreading</Filter>
     </ClCompile>
-    <ClCompile Include="$(MSBuildThisFileDirectory)modules\aengine.gui.menu.ixx">
-      <Filter>Module Files\ixx</Filter>
-    </ClCompile>
     <ClCompile Include="$(MSBuildThisFileDirectory)modules\acompiler.ixx">
       <Filter>Module Files\ixx\scripting</Filter>
     </ClCompile>
@@ -1000,6 +991,18 @@
     </ClCompile>
     <ClCompile Include="$(MSBuildThisFileDirectory)modules\aengine.core.context.ixx">
       <Filter>Module Files\ixx\core</Filter>
+    </ClCompile>
+    <ClCompile Include="$(MSBuildThisFileDirectory)modules\aengine.platform.ixx">
+      <Filter>Module Files\ixx\platform</Filter>
+    </ClCompile>
+    <ClCompile Include="$(MSBuildThisFileDirectory)modules\aengine.config.ixx">
+      <Filter>Module Files\ixx\core</Filter>
+    </ClCompile>
+    <ClCompile Include="$(MSBuildThisFileDirectory)modules\aengine.gui.ixx">
+      <Filter>Module Files\ixx\gui</Filter>
+    </ClCompile>
+    <ClCompile Include="$(MSBuildThisFileDirectory)modules\aengine.gui.menu.ixx">
+      <Filter>Module Files\ixx\gui</Filter>
     </ClCompile>
   </ItemGroup>
 </Project>

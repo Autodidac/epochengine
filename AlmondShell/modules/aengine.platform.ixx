@@ -2,7 +2,7 @@ module;
 export module aengine.platform;
 
 import aengine.context;
-import awindowdata;
+import aengine.context.window;
 import aengine.gui.menu;
 import aplatformpump;
 
@@ -11,12 +11,12 @@ export namespace almondnamespace
     namespace core
     {
         using almondnamespace::core::Context;
-        using almondnamespace::core::WindowData;
+        using almondnamespace::contextwindow::WindowData;
     }
 
     namespace menu
     {
-        using almondnamespace::menu::MenuOverlay;
+        using almondnamespace::contextwindow::MenuOverlay;
     }
 
     namespace updater

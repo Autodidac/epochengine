@@ -1,6 +1,7 @@
+module;
 export module aengine.cli;
 
-import acommandline;
+import aengine.core.commandline;
 
 export namespace almondnamespace::core::cli
 {

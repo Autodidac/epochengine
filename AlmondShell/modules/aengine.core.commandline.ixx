@@ -1,4 +1,4 @@
-export module acommandline;
+export module aengine.core.commandline;
 
 import <algorithm>;
 import <filesystem>;

@@ -742,7 +742,7 @@
     <ClCompile Include="$(MSBuildThisFileDirectory)modules\aatlas.texture.ixx" />
     <ClCompile Include="$(MSBuildThisFileDirectory)modules\acellularsim.ixx" />
     <ClCompile Include="$(MSBuildThisFileDirectory)modules\acodeinspector.ixx" />
-    <ClCompile Include="$(MSBuildThisFileDirectory)modules\acommandline.ixx" />
+    <ClCompile Include="$(MSBuildThisFileDirectory)modules\aengine.core.commandline.ixx" />
     <ClCompile Include="$(MSBuildThisFileDirectory)modules\aengine.commandqueue.ixx" />
     <ClCompile Include="$(MSBuildThisFileDirectory)modules\aengine.core.context.ixx" />
     <ClCompile Include="$(MSBuildThisFileDirectory)modules\aengine.diagnostics.ixx" />
@@ -798,7 +798,7 @@
     <ClCompile Include="$(MSBuildThisFileDirectory)modules\afontrenderer.ixx" />
     <ClCompile Include="$(MSBuildThisFileDirectory)modules\afroggerlike.ixx" />
     <ClCompile Include="$(MSBuildThisFileDirectory)modules\agamecore.ixx" />
-    <ClCompile Include="$(MSBuildThisFileDirectory)modules\agui.ixx" />
+    <ClCompile Include="$(MSBuildThisFileDirectory)modules\aengine.gui.ixx" />
     <ClCompile Include="$(MSBuildThisFileDirectory)modules\aimageatlaswriter.ixx" />
     <ClCompile Include="$(MSBuildThisFileDirectory)modules\aimageloader.ixx" />
     <ClCompile Include="$(MSBuildThisFileDirectory)modules\aimagewriter.ixx" />
@@ -871,7 +871,7 @@
     <ClCompile Include="$(MSBuildThisFileDirectory)modules\acontext.sdl.renderer.ixx" />
     <ClCompile Include="$(MSBuildThisFileDirectory)modules\acontext.sdl.textures.ixx" />
     <ClCompile Include="$(MSBuildThisFileDirectory)modules\acompiler.ixx" />
-    <ClCompile Include="$(MSBuildThisFileDirectory)modules\aengineconfig.ixx" />
+    <ClCompile Include="$(MSBuildThisFileDirectory)modules\aengine.config.ixx" />
     <ClCompile Include="$(MSBuildThisFileDirectory)modules\aentity.component.manager.ixx" />
     <ClCompile Include="$(MSBuildThisFileDirectory)modules\aentity.components.ixx" />
     <ClCompile Include="$(MSBuildThisFileDirectory)modules\aentityhistory.ixx" />

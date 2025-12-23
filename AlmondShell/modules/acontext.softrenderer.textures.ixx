@@ -1,10 +1,10 @@
 module;
 
-#include "aplatform.hpp"
-#include "aengineconfig.hpp"
-#include "aatlastexture.hpp"
-#include "asoftrenderer_state.hpp"
-#include "ainput.hpp"
+//#include "aplatform.hpp"
+//#include "aengineconfig.hpp"
+//#include "aatlastexture.hpp"
+//#include "asoftrenderer_state.hpp"
+//#include "ainput.hpp"
 
 #include <algorithm>
 #include <cstdint>
@@ -13,6 +13,12 @@ module;
 #include <vector>
 
 export module acontext.softrenderer.textures;
+
+import aatlas.texture;        // TextureAtlas
+import acontext.softrenderer.state;   // SoftRendState
+import aengine.platform;    // almondnamespace
+import aengine.input;       // almondnamespace::input
+import aengine.config; // almondnamespace::input
 
 export namespace almondnamespace::anativecontext
 {

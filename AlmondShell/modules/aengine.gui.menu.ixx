@@ -1,4 +1,4 @@
-﻿export module aengine.gui.menu;
+﻿module;
 
 import <algorithm>;
 import <array>;
@@ -16,13 +16,16 @@ import <tuple>;
 import <utility>;
 import <vector>;
 
+export module aengine.gui.menu;
+
 // Engine modules (replace these with your actual module names)
-import aengine.types;                // replaces atypes.hpp
+import aengine.core.types;                // replaces atypes.hpp
 import aengine.context;              // replaces acontext.hpp
-import aengine.contextmultiplexer;   // replaces acontextmultiplexer.hpp
-import aengine.commandline;          // replaces acommandline.hpp
+import aengine.context.multiplexer;   // replaces acontextmultiplexer.hpp
+import aengine.core.commandline;          // replaces acommandline.hpp
 import aengine.input;                // replaces ainput.hpp
 import aengine.gui;                  // replaces agui.hpp
+
 
 export namespace almondnamespace::menu
 {
@@ -37,7 +40,7 @@ export namespace almondnamespace::menu
     {
         Choice      choice{};
         std::string label{};
-        gui::Vec2   size{};
+        almondnamespace::gui::Vec2   size{};
     };
 
     export struct MenuOverlay

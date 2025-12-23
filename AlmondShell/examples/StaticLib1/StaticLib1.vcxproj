@@ -252,7 +252,13 @@
     <ClCompile Update="C:\Users\iammi\source\repos\epochengine\AlmondShell\modules\aengine.commandqueue.ixx">
       <FileType>Document</FileType>
     </ClCompile>
+    <ClCompile Update="C:\Users\iammi\source\repos\epochengine\AlmondShell\modules\aengine.config.ixx">
+      <FileType>Document</FileType>
+    </ClCompile>
     <ClCompile Update="C:\Users\iammi\source\repos\epochengine\AlmondShell\modules\aengine.context.window.ixx">
+      <FileType>Document</FileType>
+    </ClCompile>
+    <ClCompile Update="C:\Users\iammi\source\repos\epochengine\AlmondShell\modules\aengine.core.commandline.ixx">
       <FileType>Document</FileType>
     </ClCompile>
     <ClCompile Update="C:\Users\iammi\source\repos\epochengine\AlmondShell\modules\aengine.core.logger.ixx">
@@ -268,6 +274,9 @@
       <FileType>Document</FileType>
     </ClCompile>
     <ClCompile Update="C:\Users\iammi\source\repos\epochengine\AlmondShell\modules\aengine.diagnostics.ixx">
+      <FileType>Document</FileType>
+    </ClCompile>
+    <ClCompile Update="C:\Users\iammi\source\repos\epochengine\AlmondShell\modules\aengine.gui.ixx">
       <FileType>Document</FileType>
     </ClCompile>
     <ClCompile Update="C:\Users\iammi\source\repos\epochengine\AlmondShell\modules\aengine.gui.menu.ixx">

@@ -34,7 +34,7 @@ import aengine.context.type;    // ContextType
 import aengine.context.commandqueue;   // CommandQueue
 import aatomicfunction; // AlmondAtomicFunction
 //import aengine.input;                // input::Key, input::MouseButton, input::mouseX/mouseY + helpers
-import aengine.input;                // input::Key, input::MouseButton, input::mouseX/mouseY + helpers
+import aengine.core.input;                // input::Key, input::MouseButton, input::mouseX/mouseY + helpers
 
 //import almond.gfx.atlas_texture;    // TextureAtlas
 //import almond.gfx.sprite_handle;    // SpriteHandle
