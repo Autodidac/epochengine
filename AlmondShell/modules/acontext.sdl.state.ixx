@@ -2,7 +2,6 @@ module;
 
 #include "aplatform.hpp"
 #include "aengineconfig.hpp"
-#include "acontextwindow.hpp"
 
 export module asdlstate;
 
@@ -15,6 +14,7 @@ import <bitset>;
 import <functional>;
 import <SDL3/SDL.h>;
 import aengine.core.time;
+import aengine.context.window;
 
 export namespace almondnamespace::sdlcontext::state
 {
