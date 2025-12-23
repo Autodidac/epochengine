@@ -294,6 +294,9 @@
     <ClCompile Update="C:\Users\iammi\source\repos\epochengine\AlmondShell\modules\aengine.updater.config.ixx">
       <FileType>Document</FileType>
     </ClCompile>
+    <ClCompile Update="C:\Users\iammi\source\repos\epochengine\AlmondShell\modules\aengine.windowdata.ixx">
+      <FileType>Document</FileType>
+    </ClCompile>
     <ClCompile Update="C:\Users\iammi\source\repos\epochengine\AlmondShell\modules\aentity.component.manager.ixx">
       <FileType>Document</FileType>
     </ClCompile>

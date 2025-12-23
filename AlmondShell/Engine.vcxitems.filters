@@ -617,9 +617,6 @@
     <ClCompile Include="$(MSBuildThisFileDirectory)modules\asaveloadsystem.ixx">
       <Filter>Module Files\ixx</Filter>
     </ClCompile>
-    <ClCompile Include="$(MSBuildThisFileDirectory)modules\awindowdata.ixx">
-      <Filter>Module Files\ixx</Filter>
-    </ClCompile>
     <ClCompile Include="$(MSBuildThisFileDirectory)modules\aengine.atlasmanager.ixx">
       <Filter>Module Files\ixx\core</Filter>
     </ClCompile>

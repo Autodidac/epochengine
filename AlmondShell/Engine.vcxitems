@@ -891,7 +891,6 @@
     <ClCompile Include="$(MSBuildThisFileDirectory)modules\avulkanswapchain.ixx" />
     <ClCompile Include="$(MSBuildThisFileDirectory)modules\avulkantexture.ixx" />
     <ClCompile Include="$(MSBuildThisFileDirectory)modules\avulkantriangle.ixx" />
-    <ClCompile Include="$(MSBuildThisFileDirectory)modules\awindowdata.ixx" />
     <ClCompile Include="$(MSBuildThisFileDirectory)src\acompiler.cpp" />
     <ClCompile Include="$(MSBuildThisFileDirectory)src\acontextmultiplexer_linux.cpp" />
     <ClCompile Include="$(MSBuildThisFileDirectory)src\acontextmultiplexer_win.cpp" />
