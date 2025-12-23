@@ -617,9 +617,6 @@
     <ClCompile Include="$(MSBuildThisFileDirectory)modules\asaveloadsystem.ixx">
       <Filter>Module Files\ixx</Filter>
     </ClCompile>
-    <ClCompile Include="$(MSBuildThisFileDirectory)modules\aengine.atlasmanager.ixx">
-      <Filter>Module Files\ixx\core</Filter>
-    </ClCompile>
     <ClCompile Include="$(MSBuildThisFileDirectory)modules\aengine.bindings.ixx">
       <Filter>Module Files\ixx\core</Filter>
     </ClCompile>
@@ -730,9 +727,6 @@
     </ClCompile>
     <ClCompile Include="$(MSBuildThisFileDirectory)modules\amipmapatlas.ixx">
       <Filter>Module Files\ixx\utilities</Filter>
-    </ClCompile>
-    <ClCompile Include="$(MSBuildThisFileDirectory)modules\almond.core.context.ixx">
-      <Filter>Module Files\ixx\core</Filter>
     </ClCompile>
     <ClCompile Include="$(MSBuildThisFileDirectory)modules\aimageatlaswriter.ixx">
       <Filter>Module Files\ixx\textures</Filter>
@@ -992,9 +986,6 @@
     <ClCompile Include="$(MSBuildThisFileDirectory)modules\aengine.gui.menu.ixx">
       <Filter>Module Files\ixx</Filter>
     </ClCompile>
-    <ClCompile Include="$(MSBuildThisFileDirectory)modules\acontext.control.ixx">
-      <Filter>Module Files\ixx\core\backbone\context</Filter>
-    </ClCompile>
     <ClCompile Include="$(MSBuildThisFileDirectory)modules\acompiler.ixx">
       <Filter>Module Files\ixx\scripting</Filter>
     </ClCompile>
@@ -1006,6 +997,9 @@
     </ClCompile>
     <ClCompile Include="$(MSBuildThisFileDirectory)modules\almondshell.ixx">
       <Filter>Module Files\ixx</Filter>
+    </ClCompile>
+    <ClCompile Include="$(MSBuildThisFileDirectory)modules\aengine.core.context.ixx">
+      <Filter>Module Files\ixx\core</Filter>
     </ClCompile>
   </ItemGroup>
 </Project>
