@@ -45,10 +45,10 @@ import <GL/glxext.h>;
 // ------------------------------------------------------------
 // Core platform + engine modules
 // ------------------------------------------------------------
-import aengine.config;          // replaces aengineconfig.hpp
-import aengine.windowdata;      // replaces awindowdata.hpp
-import aengine.platform.pump;   // replaces aplatformpump.hpp
-import aengine.atlas.manager;   // replaces aatlasmanager.hpp
+import aengineconfig;           // replaces aengineconfig.hpp
+import awindowdata;             // replaces awindowdata.hpp
+import aplatformpump;           // replaces aplatformpump.hpp
+import aengine.atlasmanager;    // replaces aatlasmanager.hpp
 import aengine.input;           // replaces ainput.hpp
 
 // ------------------------------------------------------------
@@ -70,7 +70,7 @@ import <utility>;
 import <vector>;
 
 // Engine modules
-import aengine.core.timing;
+import aengine.core.time;
 import aengine.context;
 
 //namespace almondnamespace::timing
