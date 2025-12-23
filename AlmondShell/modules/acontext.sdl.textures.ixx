@@ -9,7 +9,7 @@ module;
 export module aengine.sdl.textures;
 
 import aengine.platform;
-import aengine.config;
+import aengineconfig;
 import aatlas.manager;
 import aatlas.texture;
 import aimageloader;
