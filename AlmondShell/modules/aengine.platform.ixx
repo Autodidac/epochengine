@@ -1,20 +1,9 @@
 module;
 export module aengine.platform;
 
-import aengineconfig;
-import aengine.cli;
-import aengine.updater.system;
-import aengine.updater.config;
-
-//import aguimenu;
-import aapplicationmodule;
-import aenduserapplication;
-import awindowdata;
 import acontext;
-import aengine.context.multiplexer;
-import aengine.context.window;
-//import aengine.input;
-import aengine.version;
+import awindowdata;
+import aengine.gui.menu;
 import aplatformpump;
 
 export namespace almondnamespace

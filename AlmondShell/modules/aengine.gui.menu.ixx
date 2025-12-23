@@ -17,7 +17,6 @@ import <utility>;
 import <vector>;
 
 // Engine modules (replace these with your actual module names)
-import aengine.platform;             // replaces aplatform.hpp / aengineconfig.hpp include soup
 import aengine.types;                // replaces atypes.hpp
 import aengine.context;              // replaces acontext.hpp
 import aengine.contextmultiplexer;   // replaces acontextmultiplexer.hpp
