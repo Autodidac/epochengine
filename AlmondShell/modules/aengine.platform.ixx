@@ -1,10 +1,11 @@
 module;
+
 export module aengine.platform;
 
 import aengine.context;
 import aengine.context.window;
-import aengine.gui.menu;
 import aplatformpump;
+import aengine.gui.menu;
 
 export namespace almondnamespace
 {
@@ -16,7 +17,7 @@ export namespace almondnamespace
 
     namespace menu
     {
-        using almondnamespace::contextwindow::MenuOverlay;
+        using almondnamespace::menu::MenuOverlay;
     }
 
     namespace updater
@@ -31,7 +32,7 @@ export namespace almondnamespace
     }
 }
 
-export bool almondnamespace::platform::pump_events()
-{
-    return pump_events_impl();
-}
+//export bool almondnamespace::platform::pump_events()
+//{
+//    return pump_events_impl();
+//}
