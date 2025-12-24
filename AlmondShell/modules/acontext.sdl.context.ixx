@@ -28,9 +28,11 @@ import aengine.sdl.textures;
 
 export module aengine.sdl.context;
 
+export import "asdlcontext.hpp";
+
 #if defined(ALMOND_USING_SDL)
 
-namespace almondnamespace::sdlcontext
+export namespace almondnamespace::sdlcontext
 {
     struct SDLState {
         SDL_Window* window = nullptr;
@@ -405,4 +407,3 @@ namespace almondnamespace::sdlcontext
 }
 
 #endif
-
