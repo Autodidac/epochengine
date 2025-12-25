@@ -1,19 +1,5 @@
-﻿/**************************************************************
- *   █████╗ ██╗     ███╗   ███╗   ███╗   ██╗    ██╗██████╗    *
- *  ██╔══██╗██║     ████╗ ████║ ██╔═══██╗████╗  ██║██╔══██╗   *
- *  ███████║██║     ██╔████╔██║ ██║   ██║██╔██╗ ██║██║  ██║   *
- *  ██╔══██║██║     ██║╚██╔╝██║ ██║   ██║██║╚██╗██║██║  ██║   *
- *  ██║  ██║███████╗██║ ╚═╝ ██║ ╚██████╔╝██║ ╚████║██████╔╝   *
- *  ╚═╝  ╚═╝╚══════╝╚═╝     ╚═╝  ╚═════╝ ╚═╝  ╚═══╝╚═════╝    *
- *                                                            *
- *   This file is part of the Almond Project.                 *
- *   AlmondShell - Modular C++ Framework                      *
- *                                                            *
- *   SPDX-License-Identifier: LicenseRef-MIT-NoSell           *
- *                                                            *
- **************************************************************/
- // aengine.context.ixx
-
+﻿ // aengine.context.ixx
+module;
 export module aengine.context;
 
 import <map>;
@@ -22,6 +8,8 @@ import <shared_mutex>;
 
 export import aengine.context.type;
 export import aengine.context.state;
+import aengine.core.context;    // Context, BackendState
+
 //export import aengine.context.commandqueue;
 
 export namespace almondnamespace::core

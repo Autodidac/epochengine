@@ -25,7 +25,12 @@
     <ClInclude Include="$(MSBuildThisFileDirectory)src\resource.h" />
   </ItemGroup>
   <ItemGroup>
-    <Image Include="$(MSBuildThisFileDirectory)src\icon.ico" />
+    <Image Include="$(MSBuildThisFileDirectory)src\icon.ico">
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|x64'">true</ExcludedFromBuild>
+    </Image>
   </ItemGroup>
   <ItemGroup>
     <None Include="$(MSBuildThisFileDirectory)modules\.gitkeep">
@@ -48,12 +53,12 @@
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="$(MSBuildThisFileDirectory)modules\a2048like.ixx" />
-    <ClCompile Include="$(MSBuildThisFileDirectory)modules\aallocator.ixx" />
+    <ClCompile Include="$(MSBuildThisFileDirectory)modules\autility.allocator.ixx" />
     <ClCompile Include="$(MSBuildThisFileDirectory)modules\aapplicationmodule.ixx" />
     <ClCompile Include="$(MSBuildThisFileDirectory)modules\aatlas.manager.ixx" />
     <ClCompile Include="$(MSBuildThisFileDirectory)modules\aatlas.texture.ixx" />
     <ClCompile Include="$(MSBuildThisFileDirectory)modules\acellularsim.ixx" />
-    <ClCompile Include="$(MSBuildThisFileDirectory)modules\acodeinspector.ixx" />
+    <ClCompile Include="$(MSBuildThisFileDirectory)modules\autility.codeinspector.ixx" />
     <ClCompile Include="$(MSBuildThisFileDirectory)modules\aengine.core.commandline.ixx" />
     <ClCompile Include="$(MSBuildThisFileDirectory)modules\aengine.core.context.ixx" />
     <ClCompile Include="$(MSBuildThisFileDirectory)modules\aengine.diagnostics.ixx" />
@@ -120,7 +125,7 @@
     <ClCompile Include="$(MSBuildThisFileDirectory)modules\amipmapatlas.ixx" />
     <ClCompile Include="$(MSBuildThisFileDirectory)modules\amovementevent.ixx" />
     <ClCompile Include="$(MSBuildThisFileDirectory)modules\anet.ixx" />
-    <ClCompile Include="$(MSBuildThisFileDirectory)modules\anoheapguard.ixx" />
+    <ClCompile Include="$(MSBuildThisFileDirectory)modules\aautility.noheapguard.ixx" />
     <ClCompile Include="$(MSBuildThisFileDirectory)modules\acontext.noop.context.ixx" />
     <ClCompile Include="$(MSBuildThisFileDirectory)modules\aopenglcontext.ixx" />
     <ClCompile Include="$(MSBuildThisFileDirectory)modules\aopenglfreetype.ixx" />
@@ -180,16 +185,16 @@
     <ClCompile Include="$(MSBuildThisFileDirectory)modules\acontext.sdl.context.ixx" />
     <ClCompile Include="$(MSBuildThisFileDirectory)modules\acontext.sdl.renderer.ixx" />
     <ClCompile Include="$(MSBuildThisFileDirectory)modules\acontext.sdl.textures.ixx" />
-    <ClCompile Include="$(MSBuildThisFileDirectory)modules\acompiler.ixx" />
+    <ClCompile Include="$(MSBuildThisFileDirectory)modules\aengine.scripting.compiler.ixx" />
     <ClCompile Include="$(MSBuildThisFileDirectory)modules\aengine.config.ixx" />
     <ClCompile Include="$(MSBuildThisFileDirectory)modules\aentity.component.manager.ixx" />
     <ClCompile Include="$(MSBuildThisFileDirectory)modules\aentityhistory.ixx" />
-    <ClCompile Include="$(MSBuildThisFileDirectory)modules\afilewatch.ixx" />
+    <ClCompile Include="$(MSBuildThisFileDirectory)modules\autility.filewatch.ixx" />
     <ClCompile Include="$(MSBuildThisFileDirectory)modules\aframework.ixx" />
-    <ClCompile Include="$(MSBuildThisFileDirectory)modules\aatomicfunction.ixx" />
+    <ClCompile Include="$(MSBuildThisFileDirectory)modules\autility.atomicfunction.ixx" />
     <ClCompile Include="$(MSBuildThisFileDirectory)modules\ampmcboundedqueue.ixx" />
     <ClCompile Include="$(MSBuildThisFileDirectory)modules\ascriptingsystem.ixx" />
-    <ClCompile Include="$(MSBuildThisFileDirectory)modules\astringconverter.ixx" />
+    <ClCompile Include="$(MSBuildThisFileDirectory)modules\autility.string.converter.ixx" />
     <ClCompile Include="$(MSBuildThisFileDirectory)modules\avulkanglfwsetup.ixx" />
     <ClCompile Include="$(MSBuildThisFileDirectory)modules\avulkanquad.ixx" />
     <ClCompile Include="$(MSBuildThisFileDirectory)modules\avulkanrenderer.ixx" />
@@ -197,15 +202,16 @@
     <ClCompile Include="$(MSBuildThisFileDirectory)modules\avulkanswapchain.ixx" />
     <ClCompile Include="$(MSBuildThisFileDirectory)modules\avulkantexture.ixx" />
     <ClCompile Include="$(MSBuildThisFileDirectory)modules\avulkantriangle.ixx" />
+    <ClCompile Include="$(MSBuildThisFileDirectory)src modules\aengine.scripting.compiler.cppm" />
     <ClCompile Include="$(MSBuildThisFileDirectory)src\acompiler.cpp" />
     <ClCompile Include="$(MSBuildThisFileDirectory)src\acontextmultiplexer_linux.cpp" />
-    <ClCompile Include="$(MSBuildThisFileDirectory)src\acontextmultiplexer_win.cpp" />
+    <ClCompile Include="$(MSBuildThisFileDirectory)src\acontextmultiplexer_win.cppm" />
     <ClCompile Include="$(MSBuildThisFileDirectory)src\aeditor.cpp" />
     <ClCompile Include="$(MSBuildThisFileDirectory)src\aengine.cpp" />
     <ClCompile Include="$(MSBuildThisFileDirectory)src\afilewatch.cpp" />
     <ClCompile Include="$(MSBuildThisFileDirectory)src\afontrenderer.cpp" />
     <ClCompile Include="$(MSBuildThisFileDirectory)src\aopenglplatform_linux.cpp" />
-    <ClCompile Include="$(MSBuildThisFileDirectory)src\aopenglplatform_win.cpp" />
+    <ClCompile Include="$(MSBuildThisFileDirectory)src\aopenglplatform_win.cppm" />
     <ClCompile Include="$(MSBuildThisFileDirectory)src\ascriptingsystem.cpp" />
     <ClCompile Include="$(MSBuildThisFileDirectory)src\agui.cpp" />
     <ClCompile Include="$(MSBuildThisFileDirectory)src\scripts\editor_launcher.ascript.cpp">
@@ -214,6 +220,5 @@
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">true</ExcludedFromBuild>
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|x64'">true</ExcludedFromBuild>
     </ClCompile>
-    <ClCompile Include="$(MSBuildThisFileDirectory)src\updater_bootstrap.cpp" />
   </ItemGroup>
 </Project>

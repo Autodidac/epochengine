@@ -33,7 +33,7 @@ module;
 #include "acontextmultiplexer.hpp"
 #include "ainput.hpp"
 
-module aengine;
+export module aengine;
 
 import <chrono>;
 import <exception>;
@@ -50,11 +50,11 @@ import <unordered_map>;
 import <utility>;
 import <vector>;
 
-import :platform;
-import :engine_components;
-import :renderers;
-import :menu;
-import :input;
+import aengine.platform;
+import aengine.engine_components;
+//import aengine.renderers;
+import aengine.gui.menu;
+import aengine.input;
 //import :scenes;
 //import :gui;
 //import :menu;

@@ -9,7 +9,7 @@ module;
 #include <locale>
 #endif
 
-export module astringconverter;
+export module autility.string.converter;
 
 export namespace almondnamespace::text {
 #if defined(_WIN32)

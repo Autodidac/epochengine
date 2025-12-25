@@ -6,7 +6,7 @@ module;
 #include <string>
 #include <vector>
 
-export module acompiler;
+export module aengine.scripting.compiler;
 
 export namespace almondnamespace::compiler {
 

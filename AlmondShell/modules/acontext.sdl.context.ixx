@@ -6,6 +6,8 @@ module;
 
 #define SDL_MAIN_HANDLED
 
+export module aengine.sdl.context;
+
 import aengine.config;
 import aengine.platform;
 
@@ -26,7 +28,6 @@ import asdlstate;
 import aengine.sdl.renderer;
 import aengine.sdl.textures;
 
-export module aengine.sdl.context;
 
 #if defined(ALMOND_USING_SDL)
 

@@ -8,7 +8,7 @@ export module aengine.input;
 // ------------------------------------------------------------
 // Engine / framework modules (no includes)
 // ------------------------------------------------------------
-import aengine.platform;
+//import aengine.platform;
 
 import aengine.context.window;
 import aengine.context.state;

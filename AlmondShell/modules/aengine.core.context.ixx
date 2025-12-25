@@ -34,7 +34,7 @@ import aimageloader;       // ImageData
 export namespace almondnamespace::core
 {
     struct WindowData; // forward declaration (definition lives elsewhere)
-
+	//using almondnamespace::contextwindow::WindowData;   
     // ======================================================
     // Context: core per-backend state
     //
@@ -43,7 +43,7 @@ export namespace almondnamespace::core
     // - Backends must provide mouse position in CLIENT coords
     //   via get_mouse_position callback when they need it.
     // ======================================================
-    export struct Context
+    export class Context
     {
         // --- Backend render hooks (fast raw function pointers) ---
         using InitializeFunc = void(*)();

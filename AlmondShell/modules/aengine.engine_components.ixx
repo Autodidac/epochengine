@@ -1,6 +1,6 @@
 module;
 
-export module aengine:engine_components;
+export module aengine.engine_components;
 //
 //import ascene;
 //import aupdatesystem;
