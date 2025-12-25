@@ -99,6 +99,9 @@
     <ClInclude Include="$(MSBuildThisFileDirectory)src\resource.h">
       <Filter>Resource Files</Filter>
     </ClInclude>
+    <ClInclude Include="$(MSBuildThisFileDirectory)include\aframework.hpp">
+      <Filter>Header Files</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <Image Include="$(MSBuildThisFileDirectory)src\icon.ico">
@@ -269,9 +272,6 @@
     <ClCompile Include="$(MSBuildThisFileDirectory)modules\aengine.core.logger.ixx">
       <Filter>Module Files\ixx\utilities</Filter>
     </ClCompile>
-    <ClCompile Include="$(MSBuildThisFileDirectory)modules\alogger.ixx">
-      <Filter>Module Files\ixx\utilities</Filter>
-    </ClCompile>
     <ClCompile Include="$(MSBuildThisFileDirectory)modules\aengine.core.utilities.ixx">
       <Filter>Module Files\ixx\utilities</Filter>
     </ClCompile>
@@ -431,9 +431,6 @@
     <ClCompile Include="$(MSBuildThisFileDirectory)modules\aengine.input.ixx">
       <Filter>Module Files\ixx\input</Filter>
     </ClCompile>
-    <ClCompile Include="$(MSBuildThisFileDirectory)modules\aengine.commandqueue.ixx">
-      <Filter>Module Files\ixx\core\backbone\context</Filter>
-    </ClCompile>
     <ClCompile Include="$(MSBuildThisFileDirectory)modules\aengine.context.commandqueue.ixx">
       <Filter>Module Files\ixx\core\backbone\context</Filter>
     </ClCompile>
@@ -491,9 +488,6 @@
     <ClCompile Include="$(MSBuildThisFileDirectory)modules\aentity.component.manager.ixx">
       <Filter>Module Files\ixx\ecs</Filter>
     </ClCompile>
-    <ClCompile Include="$(MSBuildThisFileDirectory)modules\aentity.components.ixx">
-      <Filter>Module Files\ixx\ecs</Filter>
-    </ClCompile>
     <ClCompile Include="$(MSBuildThisFileDirectory)modules\aentityhistory.ixx">
       <Filter>Module Files\ixx\ecs</Filter>
     </ClCompile>
@@ -520,9 +514,6 @@
     </ClCompile>
     <ClCompile Include="$(MSBuildThisFileDirectory)modules\ascriptingsystem.ixx">
       <Filter>Module Files\ixx\scripting</Filter>
-    </ClCompile>
-    <ClCompile Include="$(MSBuildThisFileDirectory)modules\ataskgraphwithdot.ixx">
-      <Filter>Module Files\ixx\multithreading</Filter>
     </ClCompile>
     <ClCompile Include="$(MSBuildThisFileDirectory)modules\atypes.ixx">
       <Filter>Module Files\ixx\platform</Filter>
@@ -562,6 +553,9 @@
     </ClCompile>
     <ClCompile Include="$(MSBuildThisFileDirectory)modules\aengine.gui.ixx">
       <Filter>Module Files\ixx\gui</Filter>
+    </ClCompile>
+    <ClCompile Include="$(MSBuildThisFileDirectory)modules\aengine.taskgraph.dotsystem.ixx">
+      <Filter>Module Files\ixx\multithreading</Filter>
     </ClCompile>
   </ItemGroup>
 </Project>

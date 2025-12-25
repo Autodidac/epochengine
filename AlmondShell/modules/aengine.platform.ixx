@@ -5,7 +5,7 @@ export module aengine.platform;
 import aengine.context;
 import aengine.context.window;
 import aplatformpump;
-import aengine.gui.menu;
+//import aengine.gui.menu;
 
 export namespace almondnamespace
 {
@@ -17,7 +17,7 @@ export namespace almondnamespace
 
     namespace menu
     {
-        using almondnamespace::menu::MenuOverlay;
+       // using almondnamespace::menu::MenuOverlay;
     }
 
     namespace updater

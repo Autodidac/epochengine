@@ -20,6 +20,9 @@ import aengine.platform;    // almondnamespace
 import aengine.input;       // almondnamespace::input
 import aengine.config; // almondnamespace::input
 
+
+#if defined(ALMOND_USING_SOFTWARE_RENDERER)
+
 export namespace almondnamespace::anativecontext
 {
     // ─── Texture container for software backend ───────────────
@@ -59,3 +62,4 @@ export namespace almondnamespace::anativecontext
         almondnamespace::anativecontext::SoftRendState srState;
     };
 } // namespace almondnamespace::anativecontext
+#endif

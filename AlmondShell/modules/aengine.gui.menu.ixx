@@ -1,17 +1,18 @@
 module; // REQUIRED global module fragment
 
+export module aengine.gui.menu;
+
 // ------------------------------------------------------------
 // Engine headers (header units, order-sensitive)
 // ------------------------------------------------------------
-import "aplatform.hpp";          // must be first
-import "aengineconfig.hpp";
-import "atypes.hpp";
 
-import "acontext.hpp";
-import "acontextmultiplexer.hpp";
-import "acommandline.hpp";
-import "ainput.hpp";
-import "agui.hpp";
+import aengine.config;
+
+import aengine.context;
+import aengine.context.multiplexer;
+import aengine.cli;
+import aengine.input;
+import aengine.gui;
 
 // ------------------------------------------------------------
 // Standard library
@@ -27,12 +28,6 @@ import <iomanip>;
 import <iostream>;
 import <memory>;
 import <sstream>;
-
-// ============================================================
-// Named module
-// ============================================================
-
-export module aengine.gui.menu;
 
 // ============================================================
 // Menu

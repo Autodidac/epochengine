@@ -1,5 +1,3 @@
-module;
-
 /**************************************************************
  *   █████╗ ██╗     ███╗   ███╗   ███╗   ██╗    ██╗██████╗    *
  *  ██╔══██╗██║     ████╗ ████║ ██╔═══██╗████╗  ██║██╔══██╗   *
@@ -24,6 +22,8 @@ module;
  *                                                            *
  **************************************************************/
  // acontext.opengl.context.ixx
+module;
+#include <wtypes.h>
 export module acontext.opengl.context;
 
 import aengine.platform;   
@@ -45,17 +45,19 @@ import <GL/glxext.h>;
 // ------------------------------------------------------------
 // Core platform + engine modules
 // ------------------------------------------------------------
-import aengineconfig;           // replaces aengineconfig.hpp
-import awindowdata;             // replaces awindowdata.hpp
+import aengine.config;           // replaces aengineconfig.hpp
+import aengine.context.window;   // replaces awindowdata.hpp
 import aplatformpump;           // replaces aplatformpump.hpp
-import aengine.atlasmanager;    // replaces aatlasmanager.hpp
+import aatlas.manager;    // replaces aatlasmanager.hpp
 import aengine.input;           // replaces ainput.hpp
+import aengine.context.commandqueue; // replaces acommandqueue.hpp  
+
 
 // ------------------------------------------------------------
 // OpenGL backend modules
 // ------------------------------------------------------------
 import aengine.opengl.textures; // replaces aopengltextures.hpp
-import aengine.opengl.platform; // replaces aopenglplatform.hpp
+//import aengine.opengl.platform; // replaces aopenglplatform.hpp
 
 // ------------------------------------------------------------
 // Standard library
@@ -80,7 +82,7 @@ import aengine.context;
 
 export namespace almondnamespace::openglcontext
 {
-#if defined(ALMOND_USING_OPENGL)
+#if defined(_WIN32)
 
     // Build-safe stubs when OpenGL backend is disabled.
     inline bool opengl_initialize(std::shared_ptr<core::Context>, HWND = nullptr, unsigned int = 0, unsigned int = 0,

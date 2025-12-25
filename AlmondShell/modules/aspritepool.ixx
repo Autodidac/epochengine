@@ -21,8 +21,9 @@ import <cstdint>;
 // ────────────────────────────────────────────────────────────
 
 import aspritehandle;          // SpriteHandle
-import aenginesystems;         // Task
-import ataskgraphwithdot;      // taskgraph::TaskGraph, Node
+import aengine.systems;         // Task
+import ampmcboundedqueue;
+import aengine.taskgraph.dotsystem;      // taskgraph::TaskGraph, Node
 
 // ────────────────────────────────────────────────────────────
 

@@ -21,7 +21,8 @@
  *   See LICENSE file for full terms.                         *
  *                                                            *
  **************************************************************/
-export module aecs:storage;
+module;
+export module aecs.storage;
 
 import <cassert>;
 import <cstddef>;

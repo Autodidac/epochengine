@@ -1,7 +1,5 @@
 ﻿module;
 
-#include "aentity.hpp"
-
 export module aentity;
 
 // ─────────────────────────────────────────────────────────────
@@ -17,18 +15,18 @@ import <format>;
 // No textual includes remain.
 // ─────────────────────────────────────────────────────────────
 import aengine.platform;          // replaces aplatform.hpp (ordering handled by BMI)
-import aentity.components;         // Position, History, LoggerComponent
+import aengine.core.logger;    // Logger, LogLevel
 import aeventsystem;              // events::push_event
-import alogger;                   // Logger, LogLevel
 import aengine.core.time;        // Timer, time helpers
 import aecs;                      // reg_ex, Entity, ECS core API
+import aecs.components;         // Position, History, LoggerComponent
 
 
 // ─────────────────────────────────────────────────────────────
 export namespace almondnamespace::ecs
 {
     using almondnamespace::timing::Timer;
-    using almondnamespace::LogLevel;
+    using almondnamespace::logger::LogLevel;
 
     // ─────────────────────────────────────────────────────────
     // SPAWN ENTITY
@@ -87,7 +85,7 @@ export namespace almondnamespace::ecs
         pos.y += dy;
 
         auto& lc = get_component<LoggerComponent>(R, e);
-        almondnamespace::Logger logger{ lc.file, *lc.clock, lc.level };
+        almondnamespace::logger::Logger logger{ lc.file, *lc.clock, lc.level };
 
         const std::string ts = lc.clock->getCurrentTimeString();
         logger.log(std::format(
@@ -126,7 +124,7 @@ export namespace almondnamespace::ecs
         pos.y = py;
 
         auto& lc = get_component<LoggerComponent>(R, e);
-        almondnamespace::Logger logger{ lc.file, *lc.clock, lc.level };
+        almondnamespace::logger::Logger logger{ lc.file, *lc.clock, lc.level };
 
         const std::string ts = lc.clock->getCurrentTimeString();
         logger.log(std::format(

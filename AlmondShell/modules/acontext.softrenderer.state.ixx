@@ -1,4 +1,5 @@
-﻿export module almond.softrenderer.state;
+﻿module;
+export module acontext.softrenderer.state;
 
 import <array>;
 import <bitset>;

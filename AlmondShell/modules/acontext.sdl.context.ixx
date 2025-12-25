@@ -1,13 +1,13 @@
 module;
 
-#include "aengineconfig.hpp"
-#include "aplatform.hpp"
-
 #ifndef SDL_WINDOW_FULLSCREEN_DESKTOP
 #define SDL_WINDOW_FULLSCREEN_DESKTOP 1
 #endif
 
 #define SDL_MAIN_HANDLED
+
+import aengine.config;
+import aengine.platform;
 
 import <algorithm>;
 import <functional>;
@@ -21,14 +21,12 @@ import aengine.context;
 import aengine.context.window;
 import aengine.context.commandqueue;
 import aengine.context.control;
-import aengine.atlasmanager;
+import aatlas.manager;
 import asdlstate;
 import aengine.sdl.renderer;
 import aengine.sdl.textures;
 
 export module aengine.sdl.context;
-
-export import "asdlcontext.hpp";
 
 #if defined(ALMOND_USING_SDL)
 

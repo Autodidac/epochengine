@@ -21,7 +21,7 @@
  **************************************************************/
 //main.cpp - the console demonstration of Almond Shell / Almond Engine
 
-#include "almondshell.hpp"
+//#include "almondshell.hpp"
 
 #include <chrono>
 #include <filesystem>

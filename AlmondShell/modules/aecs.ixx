@@ -46,7 +46,7 @@ import aeventsystem;              // events::push_event
 import aengine.core.logger;                   // Logger, LogLevel
 import aengine.core.time;               // time::Timer, time helpers
 import aentityhistory;            // EntityID, history tracking
-
+import aecs.storage;               // ComponentStorage
 
 // ─────────────────────────────────────────────────────────────
 export namespace almondnamespace::ecs

@@ -1,25 +1,60 @@
 module;
 
+#include <wtypes.h>
+#include <cstdint>
+
 export module aengine;
 
-export import aengine.platform;
-export import aengine.engine_components;
-export import aengine.renderers;
-export import aengine.menu;
-export import aengine.input;
-export import aengine.aallocator;
-export import aengine.aatlasmanager;
-export import aengine.aatlastexture;
-export import aengine.aimageloader;
-export import aengine.aimageatlaswriter;
-export import aengine.aimagewriter;
-export import aengine.atexture;
-export import aengine.autilities;
+//import aengine.platform;
+import aengine.config;
+
+//export import aengine.platform;
+//export import aengine.engine_components;
+//export import aengine.renderers;
+//export import aengine.menu;
+//export import aengine.input;
+//export import aengine.aallocator;
+//export import aengine.aatlasmanager;
+//export import aengine.aatlastexture;
+//export import aengine.aimageloader;
+//export import aengine.aimageatlaswriter;
+//export import aengine.aimagewriter;
+//export import aengine.atexture;
+//export import aengine.autilities;
 
 //#include "aengine.hpp"          // DEFAULT_WINDOW_WIDTH, DEFAULT_WINDOW_HEIGHT
 
+// Window dimensions
+//inline constexpr int DEFAULT_WINDOW_WIDTH = 1024;
+//inline constexpr int DEFAULT_WINDOW_HEIGHT = 768;
+export inline constexpr int DEFAULT_WINDOW_WIDTH = 1920;
+export inline constexpr int DEFAULT_WINDOW_HEIGHT = 1080;
+//inline constexpr int DEFAULT_WINDOW_WIDTH = 2048;
+//inline constexpr int DEFAULT_WINDOW_HEIGHT = 1080;
+//inline constexpr int DEFAULT_WINDOW_WIDTH = 2732;
+//inline constexpr int DEFAULT_WINDOW_HEIGHT = 1536;
+
+//inline constexpr int DEFAULT_WINDOW_WIDTH = 3840;
+//inline constexpr int DEFAULT_WINDOW_HEIGHT = 2160;
+//inline constexpr int DEFAULT_WINDOW_WIDTH = 4096;
+//inline constexpr int DEFAULT_WINDOW_HEIGHT = 2160;
+
+#if defined(_WIN32) && defined(ALMOND_USING_WINMAIN)
+
+// Max string length for title and class name
+#define MAX_LOADSTRING 100
+
 export namespace almondnamespace::core
 {
+    // Forward declarations of Win32 functions
+    ATOM RegisterWindowClass(HINSTANCE hInstance, LPCWSTR window_name, LPCWSTR child_name);
+    void PrintLastWin32Error(const wchar_t* lpszFunction);
+    void ShowConsole();
     void RunEngine();
-    void StartEngine();
 }
+
+#endif
+#if defined(_WIN32)
+export HWND InitWindowInstance(HINSTANCE hInstance, int nCmdShow, LPCWSTR szWindowClass, LPCWSTR szTitle, int32_t windowWidth, int32_t windowHeight);
+#endif
+

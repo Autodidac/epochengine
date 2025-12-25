@@ -23,11 +23,11 @@
  **************************************************************/
 module;
 
-#include "aplatform.hpp"      // Must always come first for platform defines
-
 export module amovementevent;
 
 import <iostream>;
+
+import aengine.platform;
 import aecs;
 
 export namespace almondnamespace

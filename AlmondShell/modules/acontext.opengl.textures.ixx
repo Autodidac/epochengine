@@ -24,11 +24,13 @@
 module;
 
 // aengine.opengl.textures module interface
-#include "aplatform.hpp"
-#include "aengineconfig.hpp"
+
 //#include "atypes.hpp"
 
 export module aengine.opengl.textures;
+
+import aengine.platform;
+import aengine.config;
 
 #ifdef ALMOND_USING_OPENGL
 

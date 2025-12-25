@@ -1,9 +1,10 @@
 module;
 
-#include "aplatform.hpp"
-#include "aengineconfig.hpp"
-
 export module asdlstate;
+
+import aengine.platform;
+import aengine.config;
+
 
 #if defined(_WIN32)
 import <Windows.h>;
@@ -91,7 +92,7 @@ export namespace almondnamespace::sdlcontext::state
         HDC hdc() const noexcept { return window.hdc; }
         HGLRC glrc() const noexcept { return window.glrc; }
 #endif
-        SDL_Window* sdl_window() const noexcept { return window.sdl_window; }
+        //SDL_Window* sdl_window() const noexcept { return window.getWindowHandle; }
     };
 
     SDL3State& get_sdl_state() noexcept;

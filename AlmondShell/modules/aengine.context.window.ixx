@@ -1,17 +1,20 @@
 module;
 
-#include "aplatform.hpp"
-#include "aengineconfig.hpp"
-#include "aengine.hpp"
-
 #include <string_view>
 #include <stdexcept>
+#include <wtypes.h>
 
 export module aengine.context.window;
 
+import aframework;
+import aengine.config;
+import aengine;
+//import aengine.platform;
+//import aengine;
+
 export namespace almondnamespace::contextwindow
 {
-    struct WindowData final {
+    export struct WindowData final {
 #if defined(_WIN32)
 #ifndef ALMOND_MAIN_HEADLESS
         HWND hwnd = nullptr;

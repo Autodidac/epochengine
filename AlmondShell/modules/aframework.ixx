@@ -29,7 +29,7 @@ module; // global module fragment — REQUIRED for Win32 headers
 // Named module
 // ============================================================
 
-export module almond.platform.win32;
+export module aframework;
 
 // ============================================================
 // Public surface (intentionally minimal)

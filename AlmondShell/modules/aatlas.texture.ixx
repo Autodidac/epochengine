@@ -127,6 +127,32 @@ export namespace almondnamespace
         TextureAtlas(TextureAtlas&&) = delete;
         TextureAtlas& operator=(TextureAtlas&&) = delete;
 
+        bool init(const AtlasConfig& config)
+        {
+            name = config.name;
+            index = config.index;
+            width = config.width;
+            height = config.height;
+            has_mipmaps = config.generate_mipmaps;
+
+            pixel_data.clear();
+            pixel_data.resize(
+                static_cast<std::size_t>(width) * height * 4, 0
+            );
+
+            occupancy.clear();
+            occupancy.assign(height, std::vector<bool>(width, false));
+
+            {
+                std::unique_lock lock(entriesMutex);
+                entries.clear();
+                lookup.clear();
+            }
+
+            version = 0;
+            return true;
+        }
+
         [[nodiscard]] size_t entry_count() const noexcept
         {
             std::shared_lock lock(entriesMutex);

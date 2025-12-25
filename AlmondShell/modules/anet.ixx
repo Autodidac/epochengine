@@ -1,8 +1,5 @@
 module;
 
-#include "aplatform.hpp"
-#include "aengineconfig.hpp"
-
 // anet.hpp — Hybrid transport shim for Almond / Epoch Engine
 //
 // • Default: SteamNetworkingSockets (relay, P2P, NAT punch, QUIC)
@@ -24,7 +21,7 @@ module;
 #define _WIN32_WINNT 0x0A00
 #endif
 
-//#include <asio.hpp>
+#include <asio.hpp>
 
 #include <cstddef>
 #include <cstdint>
@@ -45,6 +42,9 @@ module;
 #endif
 
 export module anet;
+
+import aengine.platform;
+import aengine.config;
 
 export namespace almondnamespace::net {
 

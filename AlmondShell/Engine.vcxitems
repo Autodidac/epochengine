@@ -20,6 +20,7 @@
     <ProjectCapability Include="SourceItemsFromImports" />
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="$(MSBuildThisFileDirectory)include\aframework.hpp" />
     <ClInclude Include="$(MSBuildThisFileDirectory)src\pch.h" />
     <ClInclude Include="$(MSBuildThisFileDirectory)src\resource.h" />
   </ItemGroup>
@@ -54,7 +55,6 @@
     <ClCompile Include="$(MSBuildThisFileDirectory)modules\acellularsim.ixx" />
     <ClCompile Include="$(MSBuildThisFileDirectory)modules\acodeinspector.ixx" />
     <ClCompile Include="$(MSBuildThisFileDirectory)modules\aengine.core.commandline.ixx" />
-    <ClCompile Include="$(MSBuildThisFileDirectory)modules\aengine.commandqueue.ixx" />
     <ClCompile Include="$(MSBuildThisFileDirectory)modules\aengine.core.context.ixx" />
     <ClCompile Include="$(MSBuildThisFileDirectory)modules\aengine.diagnostics.ixx" />
     <ClCompile Include="$(MSBuildThisFileDirectory)modules\aecs.components.ixx" />
@@ -97,6 +97,7 @@
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">true</ExcludedFromBuild>
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|x64'">true</ExcludedFromBuild>
     </ClCompile>
+    <ClCompile Include="$(MSBuildThisFileDirectory)modules\aengine.taskgraph.dotsystem.ixx" />
     <ClCompile Include="$(MSBuildThisFileDirectory)modules\aengine.updater.ixx" />
     <ClCompile Include="$(MSBuildThisFileDirectory)modules\aenduserapplication.ixx" />
     <ClCompile Include="$(MSBuildThisFileDirectory)modules\aengine.updater.tools.ixx" />
@@ -114,7 +115,6 @@
     <ClCompile Include="$(MSBuildThisFileDirectory)modules\aimagewriter.ixx" />
     <ClCompile Include="$(MSBuildThisFileDirectory)modules\acontext.softrenderer.state.ixx" />
     <ClCompile Include="$(MSBuildThisFileDirectory)modules\almondshell.ixx" />
-    <ClCompile Include="$(MSBuildThisFileDirectory)modules\alogger.ixx" />
     <ClCompile Include="$(MSBuildThisFileDirectory)modules\amatch3like.ixx" />
     <ClCompile Include="$(MSBuildThisFileDirectory)modules\aminesweeperlike.ixx" />
     <ClCompile Include="$(MSBuildThisFileDirectory)modules\amipmapatlas.ixx" />
@@ -183,13 +183,11 @@
     <ClCompile Include="$(MSBuildThisFileDirectory)modules\acompiler.ixx" />
     <ClCompile Include="$(MSBuildThisFileDirectory)modules\aengine.config.ixx" />
     <ClCompile Include="$(MSBuildThisFileDirectory)modules\aentity.component.manager.ixx" />
-    <ClCompile Include="$(MSBuildThisFileDirectory)modules\aentity.components.ixx" />
     <ClCompile Include="$(MSBuildThisFileDirectory)modules\aentityhistory.ixx" />
     <ClCompile Include="$(MSBuildThisFileDirectory)modules\afilewatch.ixx" />
     <ClCompile Include="$(MSBuildThisFileDirectory)modules\aframework.ixx" />
     <ClCompile Include="$(MSBuildThisFileDirectory)modules\aatomicfunction.ixx" />
     <ClCompile Include="$(MSBuildThisFileDirectory)modules\ampmcboundedqueue.ixx" />
-    <ClCompile Include="$(MSBuildThisFileDirectory)modules\ataskgraphwithdot.ixx" />
     <ClCompile Include="$(MSBuildThisFileDirectory)modules\ascriptingsystem.ixx" />
     <ClCompile Include="$(MSBuildThisFileDirectory)modules\astringconverter.ixx" />
     <ClCompile Include="$(MSBuildThisFileDirectory)modules\avulkanglfwsetup.ixx" />

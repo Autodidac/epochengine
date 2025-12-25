@@ -9,7 +9,10 @@ module;
 export module aengine.sdl.textures;
 
 import aengine.platform;
-import aengineconfig;
+import aengine.config;
+
+#if defined(ALMOND_USING_SDL)
+
 import aatlas.manager;
 import aatlas.texture;
 import aimageloader;
@@ -34,8 +37,6 @@ import <string_view>;
 import <unordered_map>;
 import <vector>;
 
-
-#ifdef ALMOND_USING_SDL
 export namespace almondnamespace::sdltextures
 {
     using Handle = uint32_t;

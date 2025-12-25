@@ -1,5 +1,7 @@
 ﻿module;
 
+#include <wtypes.h>
+
 // ainput.ixx
 export module aengine.input;
 

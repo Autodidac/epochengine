@@ -22,7 +22,7 @@ import <shared_mutex>;
 
 export import aengine.context.type;
 export import aengine.context.state;
-export import aengine.context.commandqueue;
+//export import aengine.context.commandqueue;
 
 export namespace almondnamespace::core
 {

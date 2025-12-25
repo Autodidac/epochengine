@@ -1,20 +1,20 @@
 ﻿// aatlas.manager.ixx
 module;
+export module aatlas.manager;
 
 // Keep platform glue centralized (your request: platform should own the OS headers).
 import aengine.platform;
 
 // Engine-facing modules (convert these headers to modules with these names, or rename imports to match yours)
 import aspritepool;         // SpriteHandle, allocate()
-import aatlastexture;       // TextureAtlas, AtlasConfig, Texture, u8/u32/u64
+import aatlas.texture;       // TextureAtlas, AtlasConfig, Texture, u8/u32/u64
 import aspriteregistry;     // SpriteRegistry
 import aspritehandle;       // SpriteHandle definition (if split)
-import acontexttype;        // core::ContextType (or wherever you keep it)
+import aengine.context.type;        // core::ContextType (or wherever you keep it)
 
 // STL
 import std;
 
-export module aatlas.manager;
 
 export namespace almondnamespace::atlasmanager
 {
@@ -199,31 +199,46 @@ export namespace almondnamespace::atlasmanager
         AtlasConfig copy = config;
         copy.index = nextAtlasIndex.fetch_add(1, std::memory_order_relaxed);
 
-        TextureAtlas atlas = TextureAtlas::create(copy);
-        if (atlas.index < 0)
-        {
-            std::cerr << "[create_atlas] Failed to initialize atlas '" << config.name << "'\n";
-            return false;
-        }
-
         std::unique_lock atlasLock(atlasMutex);
-        auto [it, inserted] = atlas_map.emplace(config.name, std::move(atlas));
+
+        // Construct the atlas IN PLACE (no move, no copy)
+        auto [it, inserted] =
+            atlas_map.emplace(
+                std::piecewise_construct,
+                std::forward_as_tuple(config.name),
+                std::forward_as_tuple() // default-construct TextureAtlas
+            );
+
         if (!inserted)
         {
-            std::cerr << "[create_atlas] Atlas already exists: " << config.name << "\n";
+            std::cerr << "[create_atlas] Atlas already exists: "
+                << config.name << "\n";
             return false;
         }
 
-        TextureAtlas& storedAtlas = it->second;
+        TextureAtlas& atlas = it->second;
+
+        // Initialize after construction
+        if (!atlas.init(copy))
+        {
+            atlas_map.erase(it);
+            std::cerr << "[create_atlas] Failed to initialize atlas '"
+                << config.name << "'\n";
+            return false;
+        }
+
         update_atlas_vector_locked();
         atlasLock.unlock();
 
         {
             std::unique_lock registrarLock(registrarMutex);
-            registrar_map.emplace(config.name, std::make_unique<AtlasRegistrar>(storedAtlas));
+            registrar_map.emplace(
+                config.name,
+                std::make_unique<AtlasRegistrar>(atlas)
+            );
         }
 
-        notify_backends_of_new_atlas(storedAtlas);
+        notify_backends_of_new_atlas(atlas);
         return true;
     }
 

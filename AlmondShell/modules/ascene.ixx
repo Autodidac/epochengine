@@ -1,22 +1,23 @@
 // ascene.ixx
 module;
+export module ascene;
 
 // Centralized platform glue (no OS headers here)
 import aengine.platform;
 
 // Engine modules (must already be modules)
-import aentitycomponents;     // Position, etc.
 import aecs;                  // ecs::reg_ex, create_entity, etc.
+import aecs.components;     // Position, etc.
 import amovementevent;        // MovementEvent
+
 import aengine.core.time;    // time::Timer
-import acontext;              // core::Context
-import awindowdata;           // core::WindowData
+import aengine.context;              // core::Context
+import aengine.context.window; // core::WindowData
 import aengine.core.logger;    // Logger, LogLevel
 
 // STL
 import std;
 
-export module ascene;
 
 export namespace almondnamespace::scene
 {
