@@ -5,11 +5,15 @@
 - **Versioned Core** – `include/aversion.hpp` exposes inline getters for the semantic version components, enabling compile-time inspection of the running revision.
 - **Context Management** – `src/acontext.cpp` and `include/acontextmultiplexer.hpp` orchestrate the per-backend render contexts and their window lifecycles, while `include/acontextwindow.hpp` encapsulates platform window data.
 - **Hot-Reload Pipeline** – `src/ascriptingsystem.cpp` drives compilation and loading of `.ascript.cpp` files via the task graph scheduler, handing control to `ScriptScheduler` nodes created in `include/ascriptingsystem.hpp`.
-- **C++23 Modules Under `modules/`** – Module interface units such as `aengine.ixx`, `aengine.renderers.ixx`, and `aengine.platform.ixx` live alongside the legacy headers. Use these partitions for module-aware builds while keeping `include/` for transitional header-based consumers.
+- **C++23 Modules Under `modules/`** – Module interface units such as `aengine.ixx`, `aengine.engine_components.ixx`, `aengine.platform.ixx`, and the `aengine.context.*`/`acontext.*` partitions live alongside the legacy headers. Use these partitions for module-aware builds while keeping `include/` for transitional header-based consumers.
 
 ## Build Tooling Overview
 - **CMake-first configuration** – `CMakeLists.txt` paired with `CMakePresets.json` drives the portable build, with module scanning flags required on module-capable toolchains.
 - **Visual Studio/MSBuild support** – `Engine.vcxitems` and its companion filters file expose the same sources to MSBuild-based workflows, keeping parity with the CMake configuration.
+
+## C++23 Conversion Status
+
+The authoritative module surface currently consists of 129 module interface units (`AlmondShell/modules/*.ixx`) plus nine module implementation units (`AlmondShell/src modules/*.cppm`). Coverage spans the core engine aggregates (`aengine`, `almondshell`), ECS (`aecs.*`, `aentity.*`), context stack (`aengine.context.*`), backends (`acontext.*`, `aopengl*`, `asdl*`, `asfml*`, `avulkan*`), GUI/menu surfaces, tooling, and the updater. Remaining header-only surfaces are the include-only APIs in `include/` that have not yet been promoted to dedicated module partitions; these stay available through legacy `#include` usage or through the aggregate imports while the conversion finishes.
 
 ## MultiContextManager Startup Sequence
 
@@ -70,7 +74,7 @@ Asset producers can run off the main thread via the coroutine-enabled `taskgraph
 
 ## Recent Progress (v0.72.8)
 
-- Converted additional legacy headers into module partitions so atlas utilities (`aatlasmanager.hpp`, `aatlastexture.hpp`) now expose `import aatlas.manager;` / `import aatlas.texture;`, the CLI surface is mirrored by `import acommandline;`, and ECS aliases such as `import aentity.*` sit alongside umbrella aggregates (`import almondengine;`, `import almondshell;`).
+- Converted additional legacy headers into module partitions so atlas utilities (`aatlasmanager.hpp`, `aatlastexture.hpp`) now expose `import aatlas.manager;` / `import aatlas.texture;`, the CLI surface is mirrored by `import aengine.core.commandline;`, and ECS aliases such as `import aentity;`, `import aentity.component.manager;`, and `import aecs.*` sit alongside the umbrella aggregate (`import almondshell;`).
 - Synced the README snapshot, configuration flag guide, and release notes with the v0.72.8 metadata and refreshed import map so runtime banners and docs stay aligned on the new module surfaces.
 
 ## Recent Progress (v0.72.7)
