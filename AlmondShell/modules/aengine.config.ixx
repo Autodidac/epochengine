@@ -31,8 +31,6 @@ module; // REQUIRED global module fragment (macros + platform headers live here)
 // Engine Context Config
 // ------------------------------------------------------------
 
-#define ALMOND_SINGLE_PARENT 1
-
 #define ALMOND_USING_SDL 1
 // #define ALMOND_USING_RAYLIB 1
 #define ALMOND_USING_SOFTWARE_RENDERER 1

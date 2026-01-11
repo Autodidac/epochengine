@@ -6,8 +6,8 @@ import <string>;
 import <utility>;
 
 import aengine.input;
-import "acontext.hpp";
-import "acontextmultiplexer.hpp";
+import aengine.context;
+import aengine.context.multiplexer;
 import "asoftrenderer_context.hpp";
 import "asoftrenderer_renderer.hpp";
 import "asoftrenderer_textures.hpp";

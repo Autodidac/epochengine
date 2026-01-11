@@ -15,12 +15,12 @@ import aengine.core.context;    // Context, BackendState
 export namespace almondnamespace::core
 {
     // Globals: exported declarations, single definition lives in aengine.context.cppm.
-    extern std::map<ContextType, BackendState> g_backends;
+    extern std::map<ContextType, context::BackendState> g_backends;
     extern std::shared_mutex                   g_backendsMutex;
 
     // API
-    void AddContextForBackend(ContextType type, std::shared_ptr<Context> context);
+    void AddContextForBackend(ContextType type, std::shared_ptr<context::Context> context);
     void InitializeAllContexts();
     bool ProcessAllContexts();
-    std::shared_ptr<Context> CloneContext(const Context& prototype);
+    std::shared_ptr<context::Context> CloneContext(const context::Context& prototype);
 }

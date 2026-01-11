@@ -1,142 +1,80 @@
-module; // global module fragment — REQUIRED
 
-// ---- standard library ----
-#include <cstddef>
-#include <cstdint>
-#include <memory>
-#include <optional>
-#include <span>
-#include <string>
-#include <string_view>
+export module aengine.gui;
 
-// ============================================================
-// Named module
-// ============================================================
+import aengine.core.context;
+import aspritehandle; // must export SpriteHandle (you have aspritehandle.ixx)
 
-export module almond.gui;
-
-// ---- forward declarations (cross-module) ----
-export namespace almondnamespace::core {
-    struct Context;
-}
-
-export namespace almondnamespace {
-    struct SpriteHandle;
-}
-
-// ============================================================
-// GUI CORE
-// ============================================================
+import <cstdint>;
+import <memory>;
+import <optional>;
+import <string>;
+import <string_view>;
+import <vector>;
 
 export namespace almondnamespace::gui
 {
+    // ---- Basic math / data types (were in agui.hpp) ----
     export struct Vec2
     {
-        float x{ 0.0f };
-        float y{ 0.0f };
+        float x{};
+        float y{};
 
-        constexpr Vec2() noexcept = default;
-        constexpr Vec2(float x_, float y_) noexcept : x(x_), y(y_) {}
+        constexpr Vec2() = default;
+        constexpr Vec2(float _x, float _y) : x(_x), y(_y) {}
 
-        [[nodiscard]] constexpr Vec2 operator+(const Vec2& other) const noexcept
-        {
-            return { x + other.x, y + other.y };
-        }
-
-        constexpr Vec2& operator+=(const Vec2& other) noexcept
-        {
-            x += other.x;
-            y += other.y;
-            return *this;
-        }
+        constexpr Vec2& operator+=(Vec2 rhs) noexcept { x += rhs.x; y += rhs.y; return *this; }
+        friend constexpr Vec2 operator+(Vec2 a, Vec2 b) noexcept { a += b; return a; }
     };
 
     struct Color
     {
-        float r{ 1.0f };
-        float g{ 1.0f };
-        float b{ 1.0f };
-        float a{ 1.0f };
+        std::uint8_t r{}, g{}, b{}, a{ 255 };
     };
 
     enum class EventType : std::uint8_t
     {
-        None,
+        None = 0,
+        MouseMove,
         MouseDown,
         MouseUp,
-        MouseMove,
         KeyDown,
         KeyUp,
         TextInput
     };
 
-    struct InputEvent
+    export struct InputEvent
     {
-        EventType     type{ EventType::None };
-        Vec2          mouse_pos{};
-        std::uint8_t  mouse_button{ 0 };
-        std::uint32_t key{ 0 };
-        bool          shift{ false };
-        bool          ctrl{ false };
-        bool          alt{ false };
-        std::string   text{};
+        EventType type{ EventType::None };
+        Vec2 mouse_pos{};
+        int key{};                 // platform-agnostic key code (legacy behavior)
+        std::string text{};        // for TextInput
     };
 
-    void push_input(const InputEvent& e) noexcept;
-
-    void begin_frame(
-        const std::shared_ptr<almondnamespace::core::Context>& ctx,
-        float dt,
-        Vec2 mouse_pos,
-        bool mouse_down
-    ) noexcept;
-
-    void end_frame() noexcept;
-
-    void begin_window(std::string_view title, Vec2 position, Vec2 size) noexcept;
-    void end_window() noexcept;
-
-    void set_cursor(Vec2 position) noexcept;
-    void advance_cursor(Vec2 delta) noexcept;
-
-    [[nodiscard]] bool button(std::string_view label, Vec2 size) noexcept;
-    [[nodiscard]] bool image_button(const almondnamespace::SpriteHandle& sprite, Vec2 size) noexcept;
-
-    struct WidgetBounds
+    export struct WidgetBounds
     {
         Vec2 position{};
         Vec2 size{};
     };
 
-    [[nodiscard]] std::optional<WidgetBounds> last_button_bounds() noexcept;
-
     struct EditBoxResult
     {
-        bool active{ false };
-        bool changed{ false };
-        bool submitted{ false };
+        bool active{};
+        bool changed{};
+        bool submitted{};
     };
-
-    [[nodiscard]] EditBoxResult edit_box(
-        std::string& text,
-        Vec2 size,
-        std::size_t max_chars = 256,
-        bool multiline = false
-    ) noexcept;
-
-    void text_box(std::string_view text, Vec2 size) noexcept;
-    void label(std::string_view text) noexcept;
 
     struct ConsoleWindowOptions
     {
-        std::string_view              title{};
-        Vec2                          position{};
-        Vec2                          size{};
-        std::span<const std::string>  lines{};
-        std::size_t                   max_visible_lines{ 128 };
+        std::string_view title{};
+        Vec2 position{};
+        Vec2 size{};
+
+        const std::vector<std::string>& lines;
+        std::size_t max_visible_lines{ 200 };
+
         std::string* input{ nullptr };
-        std::size_t                   max_input_chars{ 256 };
-        bool                          multiline_input{ false };
+        std::size_t max_input_chars{ 4096 };
+        bool multiline_input{ false };
     };
 
     struct ConsoleWindowResult
@@ -144,40 +82,38 @@ export namespace almondnamespace::gui
         EditBoxResult input{};
     };
 
-    [[nodiscard]] ConsoleWindowResult
-        console_window(const ConsoleWindowOptions& options) noexcept;
+    // ---- Public API ----
+    export void push_input(const InputEvent& e) noexcept;
 
-    [[nodiscard]] float line_height() noexcept;
-    [[nodiscard]] float glyph_width() noexcept;
-}
+    export void begin_frame(const std::shared_ptr<core::Context>& ctx,
+        float dt,
+        Vec2 mouse_pos,
+        bool mouse_down) noexcept;
 
-// ============================================================
-// UI façade
-// ============================================================
+    export void end_frame() noexcept;
 
-export namespace almondnamespace::ui
-{
-    using vec2 = gui::Vec2;
-    using color = gui::Color;
-    using event_type = gui::EventType;
-    using input_event = gui::InputEvent;
+    export void begin_window(std::string_view title, Vec2 position, Vec2 size) noexcept;
+    export void end_window() noexcept;
 
-    using gui::begin_frame;
-    using gui::end_frame;
-    using gui::begin_window;
-    using gui::end_window;
-    using gui::button;
-    using gui::image_button;
-    using gui::EditBoxResult;
-    using gui::edit_box;
-    using gui::text_box;
-    using gui::label;
-    using gui::set_cursor;
-    using gui::advance_cursor;
-    using gui::ConsoleWindowOptions;
-    using gui::ConsoleWindowResult;
-    using gui::console_window;
-    using gui::push_input;
-    using gui::line_height;
-    using gui::glyph_width;
+    export void set_cursor(Vec2 position) noexcept;
+    export void advance_cursor(Vec2 delta) noexcept;
+
+    export bool button(std::string_view label, Vec2 size) noexcept;
+    export bool image_button(const SpriteHandle& sprite, Vec2 size) noexcept;
+
+    export EditBoxResult edit_box(std::string& text,
+        Vec2 size,
+        std::size_t max_chars = 0,
+        bool multiline = false) noexcept;
+
+    export void text_box(std::string_view text, Vec2 size) noexcept;
+
+    export ConsoleWindowResult console_window(const ConsoleWindowOptions& options) noexcept;
+
+    export void label(std::string_view text) noexcept;
+
+    export float line_height() noexcept;
+    export float glyph_width() noexcept;
+
+    export std::optional<WidgetBounds> last_button_bounds() noexcept;
 }

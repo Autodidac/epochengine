@@ -1,6 +1,4 @@
-
 module;
-
 
 #include <atomic>
 #include <functional>
@@ -16,7 +14,7 @@ module;
 #   include <windowsx.h>
 #   include <shellapi.h>
 #   include <commctrl.h>
-#else //generic definitions for non-Windows platforms
+#else
 #   include <cstdint>
 struct POINT { long x{}; long y{}; };
 using HINSTANCE = void*;
@@ -45,39 +43,42 @@ using HGLRC = void*;
 
 export module aengine.context.multiplexer;
 
-//#include "aplatform.hpp"        // must be first for platform defines
-//#include "aengineconfig.hpp"
-
 import aengine.platform;
 import aengine.config;
 
-namespace almondnamespace::core
+// Import the *real* types instead of fake forward decls.
+import aengine.context.type;         // almondnamespace::core::ContextType
+import aengine.context.commandqueue; // almondnamespace::core::CommandQueue
+import aengine.context.window;       // almondnamespace::core::WindowData
+import aengine.core.context;         // almondnamespace::context::Context
+
+export namespace almondnamespace::core
 {
-    class Context;
-    enum class ContextType : int;
-    struct CommandQueue;
-    struct WindowData;
+    // Keep legacy naming: "core::Context" refers to the real Context type.
+    export using Context = almondnamespace::context::Context;
 
 #if defined(_WIN32)
-    export extern std::unordered_map<HWND, std::thread> gThreads;
 
-    struct DragState {
+    export struct DragState
+    {
         bool dragging = false;
         POINT lastMousePos{};
         HWND draggedWindow = nullptr;
         HWND originalParent = nullptr;
     };
-    export extern DragState gDragState;
+
+    export std::unordered_map<HWND, std::thread>& Threads() noexcept;
+    export DragState& Drag() noexcept;
 
     export void MakeDockable(HWND hwnd, HWND parent);
-#endif
 
-#if defined(_WIN32)
     export class MultiContextManager
     {
     public:
         static void ShowConsole();
-        bool Initialize(HINSTANCE hInst,
+
+        bool Initialize(
+            HINSTANCE hInst,
             int RayLibWinCount = 0,
             int SDLWinCount = 0,
             int SFMLWinCount = 0,
@@ -90,10 +91,16 @@ namespace almondnamespace::core
         void StopRunning() noexcept;
 
         using ResizeCallback = std::function<void(int, int)>;
-        void AddWindow(HWND hwnd, HWND parent, HDC hdc, HGLRC glContext,
+
+        void AddWindow(
+            HWND hwnd,
+            HWND parent,
+            HDC hdc,
+            HGLRC glContext,
             bool usesSharedContext,
             ResizeCallback onResize,
             ContextType type);
+
         void RemoveWindow(HWND hwnd);
         void ArrangeDockedWindowsGrid();
         void HandleResize(HWND hwnd, int width, int height);
@@ -105,8 +112,8 @@ namespace almondnamespace::core
         using RenderCommand = std::function<void()>;
         void EnqueueRenderCommand(HWND hwnd, RenderCommand cmd);
 
-        static void SetCurrent(std::shared_ptr<core::Context> ctx);
-        static std::shared_ptr<core::Context> GetCurrent();
+        static void SetCurrent(std::shared_ptr<Context> ctx);
+        static std::shared_ptr<Context> GetCurrent();
 
         static LRESULT CALLBACK ParentProc(HWND, UINT, WPARAM, LPARAM);
         static LRESULT CALLBACK ChildProc(HWND, UINT, WPARAM, LPARAM);
@@ -117,8 +124,9 @@ namespace almondnamespace::core
 
         WindowData* findWindowByHWND(HWND hwnd);
         const WindowData* findWindowByHWND(HWND hwnd) const;
-        WindowData* findWindowByContext(const std::shared_ptr<core::Context>& ctx);
-        const WindowData* findWindowByContext(const std::shared_ptr<core::Context>& ctx) const;
+
+        WindowData* findWindowByContext(const std::shared_ptr<Context>& ctx);
+        const WindowData* findWindowByContext(const std::shared_ptr<Context>& ctx) const;
 
     private:
         std::vector<std::unique_ptr<WindowData>> windows;
@@ -133,7 +141,7 @@ namespace almondnamespace::core
         HGLRC CreateSharedGLContext(HDC hdc);
         int get_title_bar_thickness(const HWND window_handle);
 
-        inline static thread_local std::shared_ptr<core::Context> currentContext{};
+        inline static thread_local std::shared_ptr<Context> currentContext{};
         inline static MultiContextManager* s_activeInstance = nullptr;
     };
 
@@ -146,7 +154,9 @@ namespace almondnamespace::core
         using RenderCommand = std::function<void()>;
 
         static void ShowConsole();
-        bool Initialize(HINSTANCE hInst,
+
+        bool Initialize(
+            HINSTANCE hInst,
             int RayLibWinCount = 0,
             int SDLWinCount = 0,
             int SFMLWinCount = 0,
@@ -162,6 +172,7 @@ namespace almondnamespace::core
             bool usesSharedContext,
             ResizeCallback onResize,
             ContextType type);
+
         void RemoveWindow(HWND hwnd);
         void ArrangeDockedWindowsGrid() {}
         void HandleResize(HWND hwnd, int width, int height);
@@ -172,13 +183,13 @@ namespace almondnamespace::core
 
         void EnqueueRenderCommand(HWND hwnd, RenderCommand cmd);
 
-        static void SetCurrent(std::shared_ptr<core::Context> ctx);
-        static std::shared_ptr<core::Context> GetCurrent();
+        static void SetCurrent(std::shared_ptr<Context> ctx);
+        static std::shared_ptr<Context> GetCurrent();
 
         WindowData* findWindowByHWND(HWND hwnd);
         const WindowData* findWindowByHWND(HWND hwnd) const;
-        WindowData* findWindowByContext(const std::shared_ptr<core::Context>& ctx);
-        const WindowData* findWindowByContext(const std::shared_ptr<core::Context>& ctx) const;
+        WindowData* findWindowByContext(const std::shared_ptr<Context>& ctx);
+        const WindowData* findWindowByContext(const std::shared_ptr<Context>& ctx) const;
 
     private:
         void RenderLoop(WindowData& win);
@@ -198,12 +209,15 @@ namespace almondnamespace::core
         Atom wmDeleteMessage = 0;
         XVisualInfo visualInfo{};
 
-        inline static thread_local std::shared_ptr<core::Context> currentContext{};
+        inline static thread_local std::shared_ptr<Context> currentContext{};
         inline static MultiContextManager* s_activeInstance = nullptr;
 
         friend MultiContextManager* GetActiveMultiContextManager() noexcept;
         friend void HandleX11Configure(::Window window, int width, int height);
     };
+
+    export MultiContextManager* GetActiveMultiContextManager() noexcept;
+    export void HandleX11Configure(::Window window, int width, int height);
 
 #else
 
@@ -223,7 +237,6 @@ namespace almondnamespace::core
         void RemoveWindow(HWND) {}
         void ArrangeDockedWindowsGrid() {}
         void StartRenderThreads() {}
-
         void HandleResize(HWND, int, int) {}
 
         HWND GetParentWindow() const { return nullptr; }
@@ -231,8 +244,8 @@ namespace almondnamespace::core
 
         void EnqueueRenderCommand(HWND, RenderCommand) {}
 
-        static void SetCurrent(std::shared_ptr<core::Context> ctx) { s_currentContext = std::move(ctx); }
-        static std::shared_ptr<core::Context> GetCurrent() { return s_currentContext; }
+        static void SetCurrent(std::shared_ptr<Context> ctx) { s_currentContext = std::move(ctx); }
+        static std::shared_ptr<Context> GetCurrent() { return s_currentContext; }
 
         static LRESULT CALLBACK ParentProc(HWND, UINT, WPARAM, LPARAM) { return 0; }
         static LRESULT CALLBACK ChildProc(HWND, UINT, WPARAM, LPARAM) { return 0; }
@@ -240,18 +253,13 @@ namespace almondnamespace::core
 
         WindowData* findWindowByHWND(HWND) { return nullptr; }
         const WindowData* findWindowByHWND(HWND) const { return nullptr; }
-        WindowData* findWindowByContext(const std::shared_ptr<core::Context>&) { return nullptr; }
-        const WindowData* findWindowByContext(const std::shared_ptr<core::Context>&) const { return nullptr; }
+        WindowData* findWindowByContext(const std::shared_ptr<Context>&) { return nullptr; }
+        const WindowData* findWindowByContext(const std::shared_ptr<Context>&) const { return nullptr; }
 
     private:
         inline static const std::vector<std::unique_ptr<WindowData>> s_emptyWindows{};
-        inline static thread_local std::shared_ptr<core::Context> s_currentContext{};
+        inline static thread_local std::shared_ptr<Context> s_currentContext{};
     };
 
-#endif
-
-#if defined(__linux__)
-    export MultiContextManager* GetActiveMultiContextManager() noexcept;
-    export void HandleX11Configure(::Window window, int width, int height);
 #endif
 } // namespace almondnamespace::core

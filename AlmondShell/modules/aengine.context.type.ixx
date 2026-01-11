@@ -8,7 +8,7 @@ export namespace almondnamespace::core
 #undef None
 #endif
 
-    enum class ContextType
+    export enum class ContextType
     {
         None = 0,
         OpenGL,

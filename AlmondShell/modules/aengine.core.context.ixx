@@ -1,5 +1,8 @@
-﻿
-module;
+﻿module;
+
+#if defined(_WIN32) && !defined(ALMOND_MAIN_HEADLESS)
+#   include <windows.h> // HWND/HDC/HGLRC
+#endif
 
 export module aengine.core.context;
 
@@ -18,37 +21,41 @@ import <utility>;
 import <vector>;
 
 // Project modules (these must be modules too; do NOT include headers)
-import aengine.context.type;    // ContextType
-import aengine.context.commandqueue;   // CommandQueue
-import aatomicfunction; // AlmondAtomicFunction
-//import aengine.input;                // input::Key, input::MouseButton, input::mouseX/mouseY + helpers
-import aengine.input;                // input::Key, input::MouseButton, input::mouseX/mouseY + helpers
+import aengine.context.type;         // ContextType
+import aengine.context.commandqueue; // CommandQueue
+import aatomicfunction;              // AlmondAtomicFunction
+import aengine.context.window;       // core::WindowData
+import aengine.input;                // input::Key, input::MouseButton, mouseX/mouseY + helpers
+import aatlas.texture;               // TextureAtlas
+import aspritehandle;                // SpriteHandle
+import aimageloader;                 // ImageData
 
-//import almond.gfx.atlas_texture;    // TextureAtlas
-//import almond.gfx.sprite_handle;    // SpriteHandle
-//import almond.gfx.image_data;       // ImageData
-import aatlas.texture;    // TextureAtlas
-import aspritehandle;    // SpriteHandle
-import aimageloader;       // ImageData
-
+// -----------------------------------------------------------------------------
+// Canonical namespace for Context in the engine is almondnamespace::core.
+// Provide a compatibility alias namespace almondnamespace::context below.
+// -----------------------------------------------------------------------------
 export namespace almondnamespace::core
 {
-    struct WindowData; // forward declaration (definition lives elsewhere)
-	//using almondnamespace::contextwindow::WindowData;   
+    // Forward decl for friend (the definition lives in your multiplexer module)
+    class MultiContextManager;
+
     // ======================================================
     // Context: core per-backend state
     //
     // IMPORTANT:
-    // - This is platform-agnostic. No Win32/X11 calls here.
-    // - Backends must provide mouse position in CLIENT coords
-    //   via get_mouse_position callback when they need it.
+    // - This is platform-agnostic conceptually, but legacy Win32 fields are
+    //   provided (guarded) because existing multiplexer code expects them.
+    // - Backends must provide mouse position in CLIENT coords via callback.
     // ======================================================
     export class Context
     {
+        friend class MultiContextManager;
+
+    public:
         // --- Backend render hooks (fast raw function pointers) ---
         using InitializeFunc = void(*)();
         using CleanupFunc = void(*)();
-        using ProcessFunc = bool(*)(std::shared_ptr<core::Context>, CommandQueue&);
+        using ProcessFunc = bool(*)(std::shared_ptr<Context>, core::CommandQueue&);
         using ClearFunc = void(*)();
         using PresentFunc = void(*)();
         using GetWidthFunc = int(*)();
@@ -63,64 +70,34 @@ export namespace almondnamespace::core
         using AddAtlasFunc = std::uint32_t(*)(const TextureAtlas&);
         using AddModelFunc = int(*)(const char*, const char*);
 
-        // Native backend handles (opaque here; interpreted by backend/platform code)
-        void* native_window = nullptr;
-        void* native_drawable = nullptr; // e.g. HDC / GLXDrawable / etc.
-        void* native_gl_context = nullptr; // e.g. HGLRC / GLXContext / etc.
-
-        WindowData* windowData = nullptr;
-
-        // logical canvas
-        int width = 400;
-        int height = 300;
-
-        // physical framebuffer size
-        int framebufferWidth = 400;
-        int framebufferHeight = 300;
-
-        // virtual design canvas
-        int virtualWidth = 400;
-        int virtualHeight = 300;
-
-        ContextType  type = almondnamespace::core::ContextType::Custom;
-        std::string  backendName{};
-
-        // --- Backend function pointers ---
-        InitializeFunc  initialize = nullptr;
-        CleanupFunc     cleanup = nullptr;
-        ProcessFunc     process = nullptr;
-        ClearFunc       clear = nullptr;
-        PresentFunc     present = nullptr;
-        GetWidthFunc    get_width = nullptr;
-        GetHeightFunc   get_height = nullptr;
-        RegistryGetFunc registry_get = nullptr;
-        DrawSpriteFunc  draw_sprite = nullptr;
-        AddModelFunc    add_model = nullptr;
-
-        // --- Input hooks (std::function for flexibility) ---
-        std::function<bool(input::Key)>                 is_key_held;
-        std::function<bool(input::Key)>                 is_key_down;
-        std::function<void(int&, int&)>                 get_mouse_position; // must be client coords
-        std::function<bool(input::MouseButton)>         is_mouse_button_held;
-        std::function<bool(input::MouseButton)>         is_mouse_button_down;
-
-        // --- High-level callbacks ---
-        AlmondAtomicFunction<std::uint32_t(TextureAtlas&, std::string, const ImageData&)> add_texture;
-        AlmondAtomicFunction<std::uint32_t(const TextureAtlas&)>                         add_atlas;
-        std::function<void(int, int)>                                                    onResize;
-
         Context() = default;
 
-        Context(std::string name, ContextType t,
-            InitializeFunc init, CleanupFunc cln, ProcessFunc proc,
-            ClearFunc clr, PresentFunc pres, GetWidthFunc gw, GetHeightFunc gh,
-            RegistryGetFunc rg, DrawSpriteFunc ds,
-            AddTextureFunc at, AddAtlasFunc aa, AddModelFunc am)
+        Context(std::string name,
+            core::ContextType t,
+            InitializeFunc init,
+            CleanupFunc cln,
+            ProcessFunc proc,
+            ClearFunc clr,
+            PresentFunc pres,
+            GetWidthFunc gw,
+            GetHeightFunc gh,
+            RegistryGetFunc rg,
+            DrawSpriteFunc ds,
+            AddTextureFunc at,
+            AddAtlasFunc aa,
+            AddModelFunc am)
             : type(t),
             backendName(std::move(name)),
-            initialize(init), cleanup(cln), process(proc), clear(clr),
-            present(pres), get_width(gw), get_height(gh),
-            registry_get(rg), draw_sprite(ds), add_model(am)
+            initialize(init),
+            cleanup(cln),
+            process(proc),
+            clear(clr),
+            present(pres),
+            get_width(gw),
+            get_height(gh),
+            registry_get(rg),
+            draw_sprite(ds),
+            add_model(am)
         {
             add_texture.store(at);
             add_atlas.store(aa);
@@ -131,7 +108,7 @@ export namespace almondnamespace::core
         void cleanup_safe()    const noexcept { if (cleanup) cleanup(); }
 
         // implemented out-of-line (keeps module interface lean)
-        bool process_safe(std::shared_ptr<core::Context> ctx, CommandQueue& queue);
+        bool process_safe(std::shared_ptr<Context> ctx, core::CommandQueue& queue);
 
         void clear_safe()   const noexcept { if (clear) clear(); }
         void present_safe() const noexcept { if (present) present(); }
@@ -204,6 +181,60 @@ export namespace almondnamespace::core
         {
             return add_model ? add_model(name, path) : -1;
         }
+
+    private:
+        // Native backend handles (opaque here; interpreted by backend/platform code)
+        void* native_window = nullptr;
+        void* native_drawable = nullptr; // e.g. HDC / GLXDrawable / etc.
+        void* native_gl_context = nullptr; // e.g. HGLRC / GLXContext / etc.
+
+        // Legacy Win32 mirrors (EXIST ONLY because your Win multiplexer expects them)
+#if defined(_WIN32) && !defined(ALMOND_MAIN_HEADLESS)
+        HWND  hwnd = nullptr;
+        HDC   hdc = nullptr;
+        HGLRC hglrc = nullptr;
+#endif
+
+        WindowData* windowData = nullptr;
+
+        // logical canvas
+        int width = 400;
+        int height = 300;
+
+        // physical framebuffer size
+        int framebufferWidth = 400;
+        int framebufferHeight = 300;
+
+        // virtual design canvas
+        int virtualWidth = 400;
+        int virtualHeight = 300;
+
+        ContextType type = ContextType::Custom;
+        std::string       backendName{};
+
+        // --- Backend function pointers ---
+        InitializeFunc  initialize = nullptr;
+        CleanupFunc     cleanup = nullptr;
+        ProcessFunc     process = nullptr;
+        ClearFunc       clear = nullptr;
+        PresentFunc     present = nullptr;
+        GetWidthFunc    get_width = nullptr;
+        GetHeightFunc   get_height = nullptr;
+        RegistryGetFunc registry_get = nullptr;
+        DrawSpriteFunc  draw_sprite = nullptr;
+        AddModelFunc    add_model = nullptr;
+
+        // --- Input hooks (std::function for flexibility) ---
+        std::function<bool(input::Key)>         is_key_held;
+        std::function<bool(input::Key)>         is_key_down;
+        std::function<void(int&, int&)>         get_mouse_position; // must be client coords
+        std::function<bool(input::MouseButton)> is_mouse_button_held;
+        std::function<bool(input::MouseButton)> is_mouse_button_down;
+
+        // --- High-level callbacks ---
+        core::AlmondAtomicFunction<std::uint32_t(TextureAtlas&, std::string, const ImageData&)> add_texture;
+        core::AlmondAtomicFunction<std::uint32_t(const TextureAtlas&)>                         add_atlas;
+        std::function<void(int, int)>                                                          onResize;
     };
 
     // ======================================================
@@ -211,21 +242,40 @@ export namespace almondnamespace::core
     // ======================================================
     export struct BackendState
     {
-        std::shared_ptr<Context>                 master;
-        std::vector<std::shared_ptr<Context>>    duplicates;
+        std::shared_ptr<Context>              master;
+        std::vector<std::shared_ptr<Context>> duplicates;
 
         // opaque per-backend storage (cast in backends)
         std::unique_ptr<void, void(*)(void*)> data{ nullptr, [](void*) {} };
     };
 
-    export using BackendMap = std::map<ContextType, BackendState>;
+    export using BackendMap = std::map<core::ContextType, BackendState>;
 
     // Central registry (defined in ONE .cpp/.ixx implementation unit)
-    export extern BackendMap         g_backends;
-    export extern std::shared_mutex  g_backendsMutex;
+    export extern BackendMap        g_backends;
+    export extern std::shared_mutex g_backendsMutex;
 
     export void InitializeAllContexts();
     export std::shared_ptr<Context> CloneContext(const Context& prototype);
-    export void AddContextForBackend(ContextType type, std::shared_ptr<Context> context);
+    export void AddContextForBackend(core::ContextType type, std::shared_ptr<Context> context);
     export bool ProcessAllContexts();
+}
+
+// -----------------------------------------------------------------------------
+// Compatibility namespace: old code referring to almondnamespace::context::Context
+// keeps working without duplicating the type.
+// -----------------------------------------------------------------------------
+export namespace almondnamespace::context
+{
+    export using Context = almondnamespace::core::Context;
+    export using BackendState = almondnamespace::core::BackendState;
+    export using BackendMap = almondnamespace::core::BackendMap;
+
+    export using almondnamespace::core::g_backends;
+    export using almondnamespace::core::g_backendsMutex;
+
+    export using almondnamespace::core::InitializeAllContexts;
+    export using almondnamespace::core::CloneContext;
+    export using almondnamespace::core::AddContextForBackend;
+    export using almondnamespace::core::ProcessAllContexts;
 }

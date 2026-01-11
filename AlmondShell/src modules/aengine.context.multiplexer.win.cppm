@@ -16,12 +16,12 @@ module;
 #   include <shellapi.h>
 #   pragma comment(lib, "comctl32.lib")
 
-#   include "aopenglcontext.hpp"
-#   include "asdlcontext.hpp"
-#   include "asfmlcontext.hpp"
-#   include "araylibcontext.hpp"
-#   include "asoftrenderer_context.hpp"
-#   include "acommandline.hpp"
+//#   include "aopenglcontext.hpp"
+//#   include "asdlcontext.hpp"
+//#   include "asfmlcontext.hpp"
+//#   include "araylibcontext.hpp"
+//#   include "asoftrenderer_context.hpp"
+//#   include "acommandline.hpp"
 
 #   include <stdexcept>
 #   include <algorithm>
@@ -35,13 +35,30 @@ module;
 #   include <functional>
 #   include <chrono>
 #   include <iostream>
+
+#include <glad/glad.h>
+
 #endif
 
-export module aengine.context.multiplexer;
+export module aengine.context.multiplexer:win;
 
 import aengine.platform;
 import aengine.config;
 import autility.string.converter;
+
+import acontext.opengl.context;
+import acontext.sdl.context;
+//import acontext.sfml.context;
+import acontext.raylib.context;
+import acontext.softrenderer.context;
+
+import aengine.context.multiplexer;
+import aengine.context.window;
+import aengine.context.type;
+import aengine.context.commandqueue;
+
+import aengine.cli;
+
 
 #if defined(_WIN32)
 
@@ -88,7 +105,7 @@ namespace
 }
 
 // Exported API surface must be in an exported namespace (your request).
-export namespace almondnamespace::core
+namespace almondnamespace::core
 {
     void MakeDockable(HWND hwnd, HWND parent)
     {
@@ -104,7 +121,7 @@ export namespace almondnamespace::core
 #endif
     }
 
-    namespace
+    namespace backend
     {
         std::wstring_view BackendDisplayName(ContextType type) noexcept
         {
@@ -149,9 +166,35 @@ export namespace almondnamespace::core
     // These are in your pasted file as TU-globals inside the export namespace.
     // That keeps the surface consistent (though globals in an export namespace are still exported symbols).
     std::unordered_map<HWND, std::thread> gThreads{};
-    DragState gDragState{};
+    almondnamespace::core::DragState gDragState{};
 
-    WindowData* MultiContextManager::findWindowByHWND(HWND hwnd) {
+    //inline  std::unordered_map<HWND, std::thread> s_threads{};
+    //inline  DragState s_drag{};
+
+
+    //// Exported ABI surface:
+    //std::unordered_map<HWND, std::thread>& almondnamespace::core::Threads() noexcept
+    //{
+    //    return s_threads;
+    //}
+
+    //almondnamespace::core::DragState& almondnamespace::core::Drag() noexcept
+    //{
+    //    return s_drag;
+    //}
+
+    WindowData* MultiContextManager::findWindowByHWND(HWND hwnd) 
+    {
+        std::scoped_lock lock(windowsMutex);
+        auto it = std::find_if(windows.begin(), windows.end(),
+            [hwnd](const std::unique_ptr<core::WindowData>& w) {
+                return w && w->hwnd == hwnd;
+            });
+        return (it != windows.end()) ? it->get() : nullptr;
+    }
+
+    const WindowData* MultiContextManager::findWindowByHWND(HWND hwnd) const 
+    {
         std::scoped_lock lock(windowsMutex);
         auto it = std::find_if(windows.begin(), windows.end(),
             [hwnd](const std::unique_ptr<WindowData>& w) {
@@ -160,16 +203,7 @@ export namespace almondnamespace::core
         return (it != windows.end()) ? it->get() : nullptr;
     }
 
-    const WindowData* MultiContextManager::findWindowByHWND(HWND hwnd) const {
-        std::scoped_lock lock(windowsMutex);
-        auto it = std::find_if(windows.begin(), windows.end(),
-            [hwnd](const std::unique_ptr<WindowData>& w) {
-                return w && w->hwnd == hwnd;
-            });
-        return (it != windows.end()) ? it->get() : nullptr;
-    }
-
-    WindowData* MultiContextManager::findWindowByContext(const std::shared_ptr<core::Context>& ctx) {
+    WindowData* MultiContextManager::findWindowByContext(const std::shared_ptr<Context>& ctx) {
         if (!ctx) return nullptr;
         std::scoped_lock lock(windowsMutex);
         auto it = std::find_if(windows.begin(), windows.end(),
@@ -179,7 +213,7 @@ export namespace almondnamespace::core
         return (it != windows.end()) ? it->get() : nullptr;
     }
 
-    const WindowData* MultiContextManager::findWindowByContext(const std::shared_ptr<core::Context>& ctx) const {
+    const WindowData* MultiContextManager::findWindowByContext(const std::shared_ptr<Context>& ctx) const {
         if (!ctx) return nullptr;
         std::scoped_lock lock(windowsMutex);
         auto it = std::find_if(windows.begin(), windows.end(),
@@ -190,11 +224,11 @@ export namespace almondnamespace::core
     }
 
     // ---------------- MultiContextManager (static) ----------------
-    inline void almondnamespace::core::MultiContextManager::SetCurrent(std::shared_ptr<core::Context> ctx) {
+    void almondnamespace::core::MultiContextManager::SetCurrent(std::shared_ptr<Context> ctx) {
         currentContext = std::move(ctx);
     }
 
-    std::shared_ptr<almondnamespace::core::Context> almondnamespace::core::MultiContextManager::GetCurrent() {
+    std::shared_ptr<Context> almondnamespace::core::MultiContextManager::GetCurrent() {
         return currentContext;
     }
 
@@ -394,7 +428,7 @@ export namespace almondnamespace::core
 
                 for (int i = 0; i < count; ++i)
                 {
-                    const std::wstring windowTitle = BuildChildWindowTitle(type, i);
+                    const std::wstring windowTitle = backend::BuildChildWindowTitle(type, i);
                     const std::string narrowTitle = almondnamespace::text::narrow_utf8(windowTitle);
                     HWND hwnd = CreateWindowExW(0, L"AlmondChild", windowTitle.c_str(),
                         (parent ? WS_CHILD | WS_VISIBLE : WS_OVERLAPPEDWINDOW | WS_VISIBLE),
@@ -481,7 +515,7 @@ export namespace almondnamespace::core
                     int width = static_cast<int>((std::max)(static_cast<LONG>(1), rc.right - rc.left));
                     int height = static_cast<int>((std::max)(static_cast<LONG>(1), rc.bottom - rc.top));
 
-                    ResolveClientSize(hwnd, width, height);
+                    backend::ResolveClientSize(hwnd, width, height);
                     ctx->width = width;
                     ctx->height = height;
 
@@ -505,7 +539,7 @@ export namespace almondnamespace::core
                             narrowTitle = createdTitles[i];
                         }
                         else {
-                            narrowTitle = almondnamespace::text::narrow_utf8(BuildChildWindowTitle(type, static_cast<int>(i)));
+                            narrowTitle = almondnamespace::text::narrow_utf8(backend::BuildChildWindowTitle(type, static_cast<int>(i)));
                         }
                     }
 
@@ -559,11 +593,12 @@ export namespace almondnamespace::core
                             }
 
                             if (previous && previous != actualHwnd) {
-                                if (gThreads.contains(previous)) {
-                                    auto node = gThreads.extract(previous);
+                                auto& threads = Threads();
+                                if (threads.contains(previous)) {
+                                    auto node = threads.extract(previous);
                                     if (!node.empty()) {
                                         node.key() = actualHwnd;
-                                        gThreads.insert(std::move(node));
+                                        threads.insert(std::move(node));
                                     }
                                 }
                                 ::DestroyWindow(previous);
@@ -615,6 +650,15 @@ export namespace almondnamespace::core
                             ctx, hostParent, ctx->width, ctx->height, w->onResize, narrowTitle);
                         break;
 #endif
+					case ContextType::Custom:
+						// Custom backend initialization can be handled here if needed
+						break;
+					case ContextType::Vulkan:
+                        break;
+					case ContextType::DirectX:
+                        break;
+					case ContextType::Noop:
+                        break;
                     default:
                         break;
                     }
@@ -794,8 +838,9 @@ export namespace almondnamespace::core
             windows.emplace_back(std::move(winPtr));
         }
 
-        if (!gThreads.contains(hwnd) && rawWinPtr) {
-            gThreads[hwnd] = std::thread([this, rawWinPtr]() {
+        auto& threads = Threads();
+        if (!threads.contains(hwnd) && rawWinPtr) {
+            threads[hwnd] = std::thread([this, rawWinPtr]() {
                 RenderLoop(*rawWinPtr);
                 });
         }
@@ -809,7 +854,7 @@ export namespace almondnamespace::core
 
         int clampedWidth = (std::max)(1, width);
         int clampedHeight = (std::max)(1, height);
-        ResolveClientSize(hwnd, clampedWidth, clampedHeight);
+        backend::ResolveClientSize(hwnd, clampedWidth, clampedHeight);
 
         std::function<void(int, int)> resizeCallback;
         WindowData* window = nullptr;
@@ -850,24 +895,47 @@ export namespace almondnamespace::core
         }
     }
 
-    void MultiContextManager::StartRenderThreads() {
-        std::scoped_lock lock(windowsMutex);
-        for (const auto& w : windows) {
-            if (!gThreads.contains(w->hwnd)) {
-#if ALMOND_SINGLE_PARENT
-                gThreads[w->hwnd] = std::thread([this, hwnd = w->hwnd]() {
-                    auto it = std::find_if(windows.begin(), windows.end(),
-                        [hwnd](const std::unique_ptr<WindowData>& w) { return w->hwnd == hwnd; });
-                    if (it != windows.end()) RenderLoop(**it);
-                    });
-#else
-                gThreads[w->hwnd] = std::thread([this, hwnd = w->hwnd]() {
-                    auto it = std::find_if(windows.begin(), windows.end(),
-                        [hwnd](const std::unique_ptr<WindowData>& w) { return w->hwnd == hwnd; });
-                    if (it != windows.end()) RenderLoop(**it);
-                    });
-#endif
+    void MultiContextManager::StartRenderThreads()
+    {
+        // Snapshot HWNDs under the mutex; don't spawn threads while holding the lock.
+        std::vector<HWND> hwnds;
+        {
+            std::scoped_lock lock(windowsMutex);
+            hwnds.reserve(windows.size());
+            for (const auto& w : windows) {
+                if (w && w->hwnd) {
+                    hwnds.push_back(w->hwnd);
+                }
             }
+        }
+
+        auto& threads = Threads();
+
+        for (HWND hwnd : hwnds)
+        {
+            if (threads.contains(hwnd)) {
+                continue;
+            }
+
+            threads[hwnd] = std::thread([this, hwnd]()
+                {
+                    WindowData* win = nullptr;
+
+                    {
+                        std::scoped_lock lock(windowsMutex);
+                        auto it = std::find_if(
+                            windows.begin(), windows.end(),
+                            [hwnd](const std::unique_ptr<WindowData>& w) { return w && w->hwnd == hwnd; });
+
+                        if (it != windows.end()) {
+                            win = it->get();
+                        }
+                    }
+
+                    if (win) {
+                        RenderLoop(*win);
+                    }
+                });
         }
     }
 
@@ -905,11 +973,12 @@ export namespace almondnamespace::core
             windows.erase(it);
         }
 
-        if (gThreads.contains(hwnd)) {
-            if (gThreads[hwnd].joinable()) {
-                gThreads[hwnd].join();
+        auto& threads = Threads();
+        if (threads.contains(hwnd)) {
+            if (threads[hwnd].joinable()) {
+                threads[hwnd].join();
             }
-            gThreads.erase(hwnd);
+            threads.erase(hwnd);
         }
 
         if (removedWindow) {
@@ -1080,7 +1149,7 @@ export namespace almondnamespace::core
 
     LRESULT CALLBACK MultiContextManager::ChildProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
     {
-        static DragState& drag = gDragState;
+        static DragState& drag = Drag();
         if (msg == WM_NCCREATE)
         {
             auto* cs = reinterpret_cast<CREATESTRUCT*>(lParam);

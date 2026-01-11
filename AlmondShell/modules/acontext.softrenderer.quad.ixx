@@ -1,4 +1,4 @@
 module;
 
-export module asoftrenderer_quad;
+export module acontext.softrenderer.quad;
 

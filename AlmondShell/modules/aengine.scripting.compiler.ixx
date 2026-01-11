@@ -8,7 +8,8 @@ module;
 
 export module aengine.scripting.compiler;
 
-export namespace almondnamespace::compiler {
+export namespace almondnamespace::compiler 
+{
 
     export bool compile_script_to_dll(const std::filesystem::path& input, const std::filesystem::path& output) {
         std::vector<std::string> clangArgs = {

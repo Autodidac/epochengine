@@ -39,7 +39,6 @@
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">true</ExcludedFromBuild>
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|x64'">true</ExcludedFromBuild>
     </None>
-    <None Include="$(MSBuildThisFileDirectory)modules\aengine.gui.menu.ixx" />
     <None Include="$(MSBuildThisFileDirectory)src\WinResource.aps" />
     <None Include="$(MSBuildThisFileDirectory)vcpkg.json">
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">true</ExcludedFromBuild>
@@ -53,6 +52,8 @@
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="$(MSBuildThisFileDirectory)modules\a2048like.ixx" />
+    <ClCompile Include="$(MSBuildThisFileDirectory)modules\acontext.raylib.contextinput.ixx" />
+    <ClCompile Include="$(MSBuildThisFileDirectory)modules\aengine.gui.menu.ixx" />
     <ClCompile Include="$(MSBuildThisFileDirectory)modules\autility.allocator.ixx" />
     <ClCompile Include="$(MSBuildThisFileDirectory)modules\aapplicationmodule.ixx" />
     <ClCompile Include="$(MSBuildThisFileDirectory)modules\aatlas.manager.ixx" />
@@ -90,11 +91,11 @@
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">true</ExcludedFromBuild>
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|x64'">true</ExcludedFromBuild>
     </ClCompile>
-    <ClCompile Include="$(MSBuildThisFileDirectory)modules\aengine.context.raylib.ixx">
-      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">true</ExcludedFromBuild>
-      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">true</ExcludedFromBuild>
-      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">true</ExcludedFromBuild>
-      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|x64'">true</ExcludedFromBuild>
+    <ClCompile Include="$(MSBuildThisFileDirectory)modules\acontext.raylib.context.ixx">
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">false</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">false</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">false</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|x64'">false</ExcludedFromBuild>
     </ClCompile>
     <ClCompile Include="$(MSBuildThisFileDirectory)modules\aengine.context.software.ixx">
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">true</ExcludedFromBuild>
@@ -111,7 +112,7 @@
     <ClCompile Include="$(MSBuildThisFileDirectory)modules\aengine.systems.ixx" />
     <ClCompile Include="$(MSBuildThisFileDirectory)modules\aentity.ixx" />
     <ClCompile Include="$(MSBuildThisFileDirectory)modules\aeventsystem.ixx" />
-    <ClCompile Include="$(MSBuildThisFileDirectory)modules\afontrenderer.ixx" />
+    <ClCompile Include="$(MSBuildThisFileDirectory)modules\afont.renderer.ixx" />
     <ClCompile Include="$(MSBuildThisFileDirectory)modules\afroggerlike.ixx" />
     <ClCompile Include="$(MSBuildThisFileDirectory)modules\agamecore.ixx" />
     <ClCompile Include="$(MSBuildThisFileDirectory)modules\aengine.gui.ixx" />
@@ -127,7 +128,6 @@
     <ClCompile Include="$(MSBuildThisFileDirectory)modules\anet.ixx" />
     <ClCompile Include="$(MSBuildThisFileDirectory)modules\aautility.noheapguard.ixx" />
     <ClCompile Include="$(MSBuildThisFileDirectory)modules\acontext.noop.context.ixx" />
-    <ClCompile Include="$(MSBuildThisFileDirectory)modules\aopenglcontext.ixx" />
     <ClCompile Include="$(MSBuildThisFileDirectory)modules\aopenglfreetype.ixx" />
     <ClCompile Include="$(MSBuildThisFileDirectory)modules\aopenglplatform.ixx" />
     <ClCompile Include="$(MSBuildThisFileDirectory)modules\aopenglquad.ixx" />
@@ -137,11 +137,10 @@
     <ClCompile Include="$(MSBuildThisFileDirectory)modules\aopengltriangle.ixx" />
     <ClCompile Include="$(MSBuildThisFileDirectory)modules\apacmanlike.ixx" />
     <ClCompile Include="$(MSBuildThisFileDirectory)modules\aplatformpump.ixx" />
-    <ClCompile Include="$(MSBuildThisFileDirectory)modules\araylibcontext.ixx" />
-    <ClCompile Include="$(MSBuildThisFileDirectory)modules\araylibcontextinput.ixx" />
-    <ClCompile Include="$(MSBuildThisFileDirectory)modules\araylibrenderer.ixx" />
-    <ClCompile Include="$(MSBuildThisFileDirectory)modules\araylibstate.ixx" />
-    <ClCompile Include="$(MSBuildThisFileDirectory)modules\araylibtextures.ixx" />
+    <ClCompile Include="$(MSBuildThisFileDirectory)modules\acontext.raylib.input.ixx" />
+    <ClCompile Include="$(MSBuildThisFileDirectory)modules\acontext.raylib.renderer.ixx" />
+    <ClCompile Include="$(MSBuildThisFileDirectory)modules\acontext.raylib.state.ixx" />
+    <ClCompile Include="$(MSBuildThisFileDirectory)modules\acontext.raylib.textures.ixx" />
     <ClCompile Include="$(MSBuildThisFileDirectory)modules\asandsim.ixx" />
     <ClCompile Include="$(MSBuildThisFileDirectory)modules\asaveloadsystem.ixx" />
     <ClCompile Include="$(MSBuildThisFileDirectory)modules\ascene.ixx" />
@@ -202,18 +201,22 @@
     <ClCompile Include="$(MSBuildThisFileDirectory)modules\avulkanswapchain.ixx" />
     <ClCompile Include="$(MSBuildThisFileDirectory)modules\avulkantexture.ixx" />
     <ClCompile Include="$(MSBuildThisFileDirectory)modules\avulkantriangle.ixx" />
+    <ClCompile Include="$(MSBuildThisFileDirectory)src modules\acompiler.cppm" />
+    <ClCompile Include="$(MSBuildThisFileDirectory)src modules\aengine.context.multiplexer.win.cppm" />
+    <ClCompile Include="$(MSBuildThisFileDirectory)src modules\aeditor.cppm">
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|x64'">true</ExcludedFromBuild>
+    </ClCompile>
+    <ClCompile Include="$(MSBuildThisFileDirectory)src modules\aengine.cppm" />
+    <ClCompile Include="$(MSBuildThisFileDirectory)src modules\aengine.gui.cppm" />
     <ClCompile Include="$(MSBuildThisFileDirectory)src modules\aengine.scripting.compiler.cppm" />
-    <ClCompile Include="$(MSBuildThisFileDirectory)src\acompiler.cpp" />
+    <ClCompile Include="$(MSBuildThisFileDirectory)src modules\afilewatch.cppm" />
+    <ClCompile Include="$(MSBuildThisFileDirectory)src modules\afont.renderer.cppm" />
+    <ClCompile Include="$(MSBuildThisFileDirectory)src modules\aopenglplatform_win.cppm" />
     <ClCompile Include="$(MSBuildThisFileDirectory)src\acontextmultiplexer_linux.cpp" />
-    <ClCompile Include="$(MSBuildThisFileDirectory)src\acontextmultiplexer_win.cppm" />
-    <ClCompile Include="$(MSBuildThisFileDirectory)src\aeditor.cpp" />
-    <ClCompile Include="$(MSBuildThisFileDirectory)src\aengine.cpp" />
-    <ClCompile Include="$(MSBuildThisFileDirectory)src\afilewatch.cpp" />
-    <ClCompile Include="$(MSBuildThisFileDirectory)src\afontrenderer.cpp" />
     <ClCompile Include="$(MSBuildThisFileDirectory)src\aopenglplatform_linux.cpp" />
-    <ClCompile Include="$(MSBuildThisFileDirectory)src\aopenglplatform_win.cppm" />
-    <ClCompile Include="$(MSBuildThisFileDirectory)src\ascriptingsystem.cpp" />
-    <ClCompile Include="$(MSBuildThisFileDirectory)src\agui.cpp" />
     <ClCompile Include="$(MSBuildThisFileDirectory)src\scripts\editor_launcher.ascript.cpp">
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">true</ExcludedFromBuild>
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">true</ExcludedFromBuild>

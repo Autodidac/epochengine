@@ -1,4 +1,5 @@
 ﻿module;
+
 export module acontext.softrenderer.state;
 
 import <array>;

@@ -1,4 +1,6 @@
+
 module; // REQUIRED global module fragment
+
 
 export module aengine.gui.menu;
 
@@ -13,6 +15,9 @@ import aengine.context.multiplexer;
 import aengine.cli;
 import aengine.input;
 import aengine.gui;
+import aengine.context.window;
+import aengine.core.context;
+import aengine.context.type;
 
 // ------------------------------------------------------------
 // Standard library
@@ -87,7 +92,7 @@ export namespace almondnamespace::menu
 
         // ----------------------------------------------------
         void recompute_layout(
-            std::shared_ptr<core::Context> ctx,
+            std::shared_ptr<context::Context> ctx,
             int widthPixels,
             int heightPixels)
         {
@@ -244,7 +249,7 @@ export namespace almondnamespace::menu
             if (selection >= size_t(totalItems))
                 selection = size_t(totalItems - 1);
 
-            const bool flipVertical = ctx && ctx->type == core::ContextType::OpenGL;
+           // const bool flipVertical = ctx && ctx ->type == core::ContextType::OpenGL;
 
             auto position_for_index = [&](int idx) {
                 return cachedPositions[idx];

@@ -6,7 +6,7 @@ module;
 
 #define SDL_MAIN_HANDLED
 
-export module aengine.sdl.context;
+export module acontext.sdl.context;
 
 import aengine.config;
 import aengine.platform;
@@ -24,7 +24,7 @@ import aengine.context.window;
 import aengine.context.commandqueue;
 import aengine.context.control;
 import aatlas.manager;
-import asdlstate;
+import aacontext.sdl.state;
 import aengine.sdl.renderer;
 import aengine.sdl.textures;
 
