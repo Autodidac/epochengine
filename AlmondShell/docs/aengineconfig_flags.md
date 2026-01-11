@@ -55,6 +55,7 @@ Raylib distributes its own OpenGL loader on Linux, but AlmondShell now links the
 
 ## Change Log
 
+- **v0.72.8** – Noted that updater/config metadata should mirror the runtime version helpers so launch manifests track the v0.72.8 release tag.
 - **v0.72.7** – Documented the expanded module surface (command queue, systems, menu overlay, diagnostics, and updater system partitions) and aligned metadata with the v0.72.7 release.
 - **v0.72.5** – Finalised the context/back-end module conversion (`aengine.context`, `aengine.context.window`, `aengine.context.render`, and backend partitions) and refreshed documentation to advertise the import targets and module-aware build defaults.
 - **v0.72.1** – Tracked module coverage through the runtime and renderer interfaces, highlighted clean rebuild requirements when swapping compilers, and reinforced Modules TS flag usage across presets and manual invocations.

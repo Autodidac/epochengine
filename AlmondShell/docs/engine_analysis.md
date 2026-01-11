@@ -75,6 +75,7 @@ Asset producers can run off the main thread via the coroutine-enabled `taskgraph
 ## Recent Progress (v0.72.8)
 
 - Converted additional legacy headers into module partitions so atlas utilities (`aatlasmanager.hpp`, `aatlastexture.hpp`) now expose `import aatlas.manager;` / `import aatlas.texture;`, the CLI surface is mirrored by `import aengine.core.commandline;`, and ECS aliases such as `import aentity;`, `import aentity.component.manager;`, and `import aecs.*` sit alongside the umbrella aggregate (`import almondshell;`).
+- Confirmed updater/configuration guidance references the runtime version helpers so launcher manifests keep matching the v0.72.8 tag.
 - Synced the README snapshot, configuration flag guide, and release notes with the v0.72.8 metadata and refreshed import map so runtime banners and docs stay aligned on the new module surfaces.
 
 ## Recent Progress (v0.72.7)
