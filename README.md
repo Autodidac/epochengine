@@ -77,6 +77,7 @@ flowchart LR
 ## Current Snapshot (v0.72.8)
 
 - ✅ **Version metadata alignment** – `aversion.hpp`, the README snapshot, and the changelog now advertise the v0.72.8 release together so banners, tooling, and docs agree on the published tag.
+- ✅ **Updater metadata consistency** – Updater/configuration guidance now calls out that version strings are sourced from the runtime helpers, so manifests and launcher metadata should mirror the v0.72.8 tag.
 - ✅ **Header-to-module conversions** – Atlas helpers (`aatlasmanager.hpp`, `aatlastexture.hpp`) and CLI plumbing (`acommandline.hpp`) are now first-class module partitions (`import aatlas.manager;`, `import aatlas.texture;`, `import aengine.core.commandline;`) alongside new ECS mirrors (`import aentity;`, `import aentity.component.manager;`, `import aecs.*`) and the umbrella alias (`import almondshell;`) to simplify mixed import/include builds.
 - ✅ **Module documentation refresh** – The module-mapping docs and README notes now reflect the expanded partition list so downstream packagers can target the new imports directly.
 - ✅ **Context/back-end module coverage** – The multiplexer, window/render wiring, and backend bindings (OpenGL, SDL3, Raylib, and the software renderer) continue to ship as `.ixx` partitions so module consumers can `import aengine.context`, `import aengine.context.window`, `import aengine.context.render`, or target backend-specific modules without relying on legacy headers. Mirrored headers (e.g., `aengine.hpp`, `aplatform.hpp`, `acontext*.hpp`) remain wired into the matching partitions for compatibility.
@@ -341,8 +342,9 @@ These two adjustments let you run uncertified binaries, including the updater th
 
 On launch the updater:
 1. Reads the remote configuration targets defined in `include/aupdateconfig.hpp` (for example the `include/config.hpp` manifest in the release repository).
-2. Downloads and applies updates when available.
-3. Starts the engine runtime, which in turn loads `src/scripts/editor_launcher.ascript.cpp` and watches for changes. Editing the script triggers automatic recompilation within the running session, with `ScriptLoadReport` diagnostics surfacing reload status in the console.
+2. Ensures manifest version strings mirror the runtime helpers (currently v0.72.8) so update checks and diagnostics report the same release tag.
+3. Downloads and applies updates when available.
+4. Starts the engine runtime, which in turn loads `src/scripts/editor_launcher.ascript.cpp` and watches for changes. Editing the script triggers automatic recompilation within the running session, with `ScriptLoadReport` diagnostics surfacing reload status in the console.
 
 Release binaries are not currently published while the runtime is under active development. Build from source using the steps above until the release automation in the roadmap is complete.
 

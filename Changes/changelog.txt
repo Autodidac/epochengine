@@ -3,6 +3,7 @@
 ## [v0.72.8]
 - Converted additional legacy headers into module partitions so atlas utilities (`aatlasmanager.hpp`, `aatlastexture.hpp`) now expose `import aatlas.manager;` / `import aatlas.texture;`, the CLI surface is mirrored via `import acommandline;`, ECS mirrors (`import aentity.*`) stay in sync, and umbrella aggregates (`import almondengine;`, `import almondshell;`) mirror the legacy includes.
 - Synced version metadata and documentation (README snapshot, engine analysis, module map) to advertise v0.72.8 with the refreshed import surface.
+- Confirmed updater/configuration guidance pulls version strings from the runtime helpers so launch manifests match v0.72.8.
 
 ## [v0.72.7]
 - Added module partitions for the command queue, menu overlay, diagnostics, binding/handle helpers, and updater system so module consumers can import `aengine.commandqueue`, `aengine.systems`, `aengine.gui.menu`, `aengine.bindings`, `aengine.handles`, and `aengine.updater.system` instead of falling back to legacy headers.
@@ -43,7 +44,7 @@
 - Adopted the C++23 module toolchain and documented the migration steps (fresh build trees, module-aware CMake configuration,
   and compiler requirements) so downstream packagers can rebuild AlmondShell with BMI-aware generators.
 - Raised the documented prerequisites to C++23-era compilers and CMake releases with module scanning enabled, refreshing the
-  README, configuration guide, and engine analysis to align with the v0.71.0 snapshot.
+  README, configuration guide, and engine analysis to align with the v0.71.0 release tag.
 
 ## [v0.70.3]
 - Re-synchronised every build entry point (CMake, shell scripts, VS Code tasks) to link against the standalone glad loader so Linux targets resolve `gladLoadGLLoader` without bespoke flags.
@@ -256,4 +257,3 @@
 - Documented the child-window scaling alignment and context refresh smoke coverage for Raylib, ensuring docked panes keep the design canvas while contexts rebound, and bumped the engine version to v0.62.6.
 - Fixed the OpenGL renderer to reference the shared context state when issuing quad and debug-outline draws, restored successful builds, refreshed the documentation, and bumped the engine version to v0.62.7.
 - Initialised the Linux software renderer alongside the multiplexer so menu runs stop crashing after Raylib boots, documented the workflow changes, and bumped the engine version to v0.70.0.
-
