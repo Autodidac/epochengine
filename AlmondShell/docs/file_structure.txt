@@ -11,15 +11,21 @@
 │  migration.
 │
 │  Module consumption quick-start
-│  • Importers: `aengine` (aggregate), `almondengine`/`almondshell` (umbrella
-│    aliases), `aengine.engine_components`, `aengine.platform`,
-│    `aengine.commandqueue`, `aengine.systems`, `aengine.context`/`*.context.*`,
-│    `aengine.gui.menu`, `aengine.input`, `aengine.cli`, direct module mirrors
-│    for legacy headers like `import aatlas.manager;`, `import aatlas.texture;`,
-│    `import acommandline;`, `import aentity.*`, and the updater partitions
-│    (`aengine.updater`, `.updater.config`, `.updater.system`, `.updater.tools`).
-│    Renderer-specific partitions include `aengine.opengl.*`, `aengine.sdl.*`,
-│    and `aengine.context.raylib`/`aengine.context.software`.
+│  • Importers: `aengine` (aggregate), `almondshell` (umbrella alias),
+│    `aengine.engine_components`, `aengine.platform`, `aengine.systems`,
+│    `aengine.gui`, `aengine.gui.menu`, `aengine.input`, `aengine.cli`,
+│    `aengine.version`, context surfaces (`aengine.context`,
+│    `.context.window`, `.context.render`, `.context.commandqueue`,
+│    `.context.control`, `.context.multiplexer`, `.context.state`,
+│    `.context.type`), backend bridges (`aengine.context.sdl`,
+│    `aengine.context.software`), renderer/context partitions under
+│    `acontext.opengl.*`, `acontext.sdl.*`, `acontext.raylib.*`,
+│    `acontext.softrenderer.*`, direct module mirrors for legacy headers like
+│    `import aatlas.manager;`, `import aatlas.texture;`,
+│    `import aengine.core.commandline;`, `import aentity;`,
+│    `import aentity.component.manager;`, `import aecs.*`, and the updater
+│    partitions (`aengine.updater`, `.updater.config`, `.updater.system`,
+│    `.updater.tools`).
 │  • CMake flags: configure with C++23 plus `-DCMAKE_CXX_SCAN_FOR_MODULES=ON`
 │    (or `-DCMAKE_EXPERIMENTAL_CXX_MODULE_DYNDEP=ON` on 3.27–3.28) and a
 │    module-capable compiler (`/std:c++latest` on MSVC, `-fmodules-ts` on
@@ -75,8 +81,6 @@
 │   │── atypeswin32.hpp           # Windows-specific types
 │   │── aui.hpp                   # UI utilities
 │   │── aupdateconfig.hpp         # Update configuration
-│   │── modules/aupdatesystem.ixx      # Update system (module interface)
-│   │   └─ modules/aupdatesystem.ixx  # Update system implementation
 │   │── autilities.hpp            # General utilities
 │   │── aversion.hpp              # Versioning utilities
 │   │── avulkanglfwsetup.hpp      # Vulkan GLFW setup
@@ -88,93 +92,148 @@
 │   │── avulkantriangle.hpp       # Vulkan triangle rendering
 │
 │── modules/
-│   │── Aggregates & platform surfaces
-│   │   │── aengine.ixx                   # `import aengine;` aggregate (mirrors aengine.hpp)
-│   │   │── almondengine.ixx              # `import almondengine;` aggregate (legacy umbrella alias)
-│   │   │── almondshell.ixx               # `import almondshell;` aggregate (legacy umbrella alias)
-│   │   │── aengine.platform.ixx          # Platform/windowing abstractions (imports aplatform.hpp, acontext*.hpp)
-│   │   │── aengine.commandqueue.ixx      # Shared command queue helpers (mirrors acommandqueue headers)
-│   │   │── aengine.bindings.ixx          # Engine binding helpers
-│   │   │── aengine.handles.ixx           # Handle utilities
-│   │   │── aengine.systems.ixx           # System entry helpers
-│   │   │── aengine.gui.menu.ixx          # Menu/overlay partition (mirrors aguimenu.hpp)
-│   │   │── aengine.input.ixx             # Input handling partition
-│   │   │── aengine.cli.ixx               # CLI entrypoints and updater hooks (mirrors acommandline.hpp)
-│   │   │── aengine.version.ixx           # Version metadata surface
-│   │
-│   │── ECS & runtime partitions
-│   │   │── aengine.engine_components.ixx # ECS/components (mirrors aentity*/acomponent* headers)
-│   │   │── aecs.ixx / aecs.components.ixx# ECS entrypoints and component definitions
-│   │   │── aecs.storage.ixx              # ECS storage helpers
-│   │   │── aecs.internal_private.ixx     # Internal ECS plumbing
-│   │
-│   │── Context stack
-│   │   │── aengine.context.ixx               # Context bootstrap helpers
-│   │   │── aengine.context.commandqueue.ixx  # Command queue helpers
-│   │   │── aengine.context.control.ixx       # Context control plane
-│   │   │── aengine.context.multiplexer.ixx   # Context multiplexer partition
-│   │   │── aengine.context.state.ixx         # Shared context state (mirrors acontext.hpp/acontextwindow.hpp)
-│   │   │── aengine.context.type.ixx          # Context type definitions
-│   │   │── aengine.context.window.ixx        # Window abstractions (mirrors awindowdata.hpp)
-│   │   │── aengine.context.render.ixx        # Render-facing context helpers
-│   │   │── aengine.context.cppm              # Legacy bridge for context import scanning
-│   │
-│   │── Backend bindings
-│   │   │── aengine.context.opengl.ixx        # OpenGL context helpers (mirrors aopenglcontext.hpp)
-│   │   │── aengine.context.raylib.ixx        # Raylib context binding
-│   │   │── aengine.context.sdl.ixx           # SDL3 context binding
-│   │   │── aengine.context.software.ixx      # Software renderer context binding
-│   │   │── aengine.opengl.context.ixx        # OpenGL backend wiring
-│   │   │── aengine.opengl.renderer.ixx       # OpenGL renderer bindings
-│   │   │── aengine.opengl.textures.ixx       # OpenGL texture helpers
-│   │   │── aengine.sdl.context.ixx           # SDL renderer context
-│   │   │── aengine.sdl.renderer.ixx          # SDL renderer bindings
-│   │   │── aengine.sdl.textures.ixx          # SDL texture helpers
+│   │── Module interface units (.ixx)
+│   │   │── a2048like.ixx
+│   │   │── aapplicationmodule.ixx
+│   │   │── aatlas.manager.ixx
+│   │   │── aatlas.texture.ixx
+│   │   │── aautility.noheapguard.ixx
+│   │   │── acellularsim.ixx
+│   │   │── acontext.noop.context.ixx
+│   │   │── acontext.opengl.context.ixx
+│   │   │── acontext.opengl.renderer.ixx
+│   │   │── acontext.opengl.textures.ixx
+│   │   │── acontext.raylib.context.ixx
+│   │   │── acontext.raylib.contextinput.ixx
+│   │   │── acontext.raylib.input.ixx
+│   │   │── acontext.raylib.renderer.ixx
+│   │   │── acontext.raylib.state.ixx
+│   │   │── acontext.raylib.textures.ixx
+│   │   │── acontext.sdl.context.ixx
+│   │   │── acontext.sdl.renderer.ixx
+│   │   │── acontext.sdl.state.ixx
+│   │   │── acontext.sdl.textures.ixx
+│   │   │── acontext.softrenderer.context.ixx
+│   │   │── acontext.softrenderer.quad.ixx
+│   │   │── acontext.softrenderer.renderer.ixx
+│   │   │── acontext.softrenderer.state.ixx
+│   │   │── acontext.softrenderer.textures.ixx
+│   │   │── aecs.components.ixx
+│   │   │── aecs.internal_private.ixx
+│   │   │── aecs.ixx
+│   │   │── aecs.storage.ixx
+│   │   │── aeditor.ixx
+│   │   │── aenduserapplication.ixx
+│   │   │── aengine.bindings.ixx
+│   │   │── aengine.cli.ixx
+│   │   │── aengine.config.ixx
+│   │   │── aengine.context.commandqueue.ixx
+│   │   │── aengine.context.control.ixx
+│   │   │── aengine.context.ixx
+│   │   │── aengine.context.multiplexer.ixx
+│   │   │── aengine.context.render.ixx
+│   │   │── aengine.context.sdl.ixx
+│   │   │── aengine.context.software.ixx
+│   │   │── aengine.context.state.ixx
+│   │   │── aengine.context.type.ixx
+│   │   │── aengine.context.window.ixx
+│   │   │── aengine.core.commandline.ixx
+│   │   │── aengine.core.context.ixx
+│   │   │── aengine.core.logger.ixx
+│   │   │── aengine.core.time.ixx
+│   │   │── aengine.core.types.ixx
+│   │   │── aengine.core.utilities.ixx
+│   │   │── aengine.diagnostics.ixx
+│   │   │── aengine.engine_components.ixx
+│   │   │── aengine.gui.ixx
+│   │   │── aengine.gui.menu.ixx
+│   │   │── aengine.handles.ixx
+│   │   │── aengine.input.ixx
+│   │   │── aengine.ixx
+│   │   │── aengine.platform.ixx
+│   │   │── aengine.scripting.compiler.ixx
+│   │   │── aengine.systems.ixx
+│   │   │── aengine.taskgraph.dotsystem.ixx
+│   │   │── aengine.updater.config.ixx
+│   │   │── aengine.updater.ixx
+│   │   │── aengine.updater.system.ixx
+│   │   │── aengine.updater.tools.ixx
+│   │   │── aengine.version.ixx
+│   │   │── aentity.component.manager.ixx
+│   │   │── aentity.ixx
+│   │   │── aentityhistory.ixx
+│   │   │── aeventsystem.ixx
+│   │   │── afont.renderer.ixx
+│   │   │── aframework.ixx
+│   │   │── afroggerlike.ixx
+│   │   │── agamecore.ixx
+│   │   │── aimageatlaswriter.ixx
+│   │   │── aimageloader.ixx
+│   │   │── aimagewriter.ixx
+│   │   │── almondshell.ixx
+│   │   │── amatch3like.ixx
+│   │   │── aminesweeperlike.ixx
+│   │   │── amipmapatlas.ixx
+│   │   │── amovementevent.ixx
+│   │   │── ampmcboundedqueue.ixx
+│   │   │── anet.ixx
+│   │   │── aopenglfreetype.ixx
+│   │   │── aopenglplatform.ixx
+│   │   │── aopenglquad.ixx
+│   │   │── aopenglrenderer.ixx
+│   │   │── aopenglstate.ixx
+│   │   │── aopengltextures.ixx
+│   │   │── aopengltriangle.ixx
+│   │   │── apacmanlike.ixx
+│   │   │── aplatformpump.ixx
+│   │   │── asandsim.ixx
+│   │   │── asaveloadsystem.ixx
+│   │   │── ascene.ixx
+│   │   │── asceneserializer.ixx
+│   │   │── ascenesnapshot.ixx
+│   │   │── ascriptingsystem.ixx
+│   │   │── asdlcontext.ixx
+│   │   │── asdlcontextrenderer.ixx
+│   │   │── asdltextures.ixx
+│   │   │── asfmlcontext.ixx
+│   │   │── asfmlrenderer.ixx
+│   │   │── asfmlstate.ixx
+│   │   │── asfmltextures.ixx
+│   │   │── aslidingpuzzlelike.ixx
+│   │   │── asnakelike.ixx
+│   │   │── asokobanlike.ixx
+│   │   │── aspritehandle.ixx
+│   │   │── aspritepool.ixx
+│   │   │── aspriteregistry.ixx
+│   │   │── atetrislike.ixx
+│   │   │── atexture.ixx
+│   │   │── atypes.ixx
+│   │   │── atypesposix.ixx
+│   │   │── atypeswin32.ixx
+│   │   │── autility.allocator.ixx
+│   │   │── autility.atomicfunction.ixx
+│   │   │── autility.codeinspector.ixx
+│   │   │── autility.filewatch.ixx
+│   │   │── autility.string.converter.ixx
+│   │   │── avulkanglfwsetup.ixx
+│   │   │── avulkanquad.ixx
+│   │   │── avulkanrenderer.ixx
+│   │   │── avulkanshaderpipeline.ixx
+│   │   │── avulkanswapchain.ixx
+│   │   │── avulkantexture.ixx
+│   │   │── avulkantriangle.ixx
 │
-│   │── Updater and tooling
-│   │   │── aengine.updater.ixx               # Updater controls (imports aupdatesystem.ixx/aupdateconfig.hpp)
-│   │   │── aengine.updater.config.ixx        # Standalone updater config partition
-│   │   │── aengine.updater.system.ixx        # Updater system partition
-│   │   │── aengine.updater.tools.ixx         # Helper utilities for updater builds
-│   │   │── aupdatesystem.ixx                 # Updater implementation surface
-│
-│   │── Shared utilities
-│   │   │── aallocator.ixx                    # General-purpose allocator helpers
-│   │   │── aatlas.manager.ixx                # Atlas manager surface (mirrors aatlasmanager.hpp)
-│   │   │── aatlas.texture.ixx                # Atlas texture helpers (mirrors aatlastexture.hpp)
-│   │   │── aengine.atlasmanager.ixx          # Atlas helpers exposed via `import aengine;`
-│   │   │── acommandline.ixx                  # CLI parser mirror (`import acommandline;`)
-│   │   │── almond.core.context.ixx           # Core context utilities exposed via almond.* alias imports
-│   │   │── aenduserapplication.ixx           # Launcher/application scaffolding
-│   │   │── aapplicationmodule.ixx            # Application module helper
-│   │   │── amovementevent.ixx                # Movement event surface
-│   │   │── aimageatlaswriter.ixx             # Atlas writer helper
-│   │   │── aimageloader.ixx                  # Image loader surface
-│   │   │── aimagewriter.ixx                  # Image writer helper
-│   │   │── ascene.ixx                        # Scene helpers
-│   │   │── atexture.ixx                      # Texture helpers
-│   │   │── autilities.ixx                    # Utility helpers
-│   │   │── aengine.core.logger.ixx           # Core logger utilities
-│   │   │── aengine.core.time.ixx             # Core timing utilities
-│   │   │── aengine.core.types.ixx            # Core type helpers
-│   │   │── aengine.core.utilities.ixx        # Core utility helpers
-│   │   │── aengine.diagnostics.ixx           # Diagnostic helpers
-│   │   │── almond.softrenderer.state.ixx     # Software renderer state helpers
-│   │   │── asdlstate.ixx                     # SDL state helpers
-│   │   │── abuildsystem.ixx                  # Module mirror of include/abuildsystem.hpp
-│   │   │── acompiler.ixx                     # Module mirror of include/acompiler.hpp
-│   │   │── aengineconfig.ixx                 # Module mirror of include/aengineconfig.hpp
-│   │   │── aentitycomponentmanager.ixx       # Module mirror of include/aentitycomponentmanager.hpp
-│   │   │── aentitycomponents.ixx             # Module mirror of include/aentitycomponents.hpp
-│   │   │── aentityhistory.ixx                # Module mirror of include/aentityhistory.hpp
-│   │   │── afilewatch.ixx                    # Module mirror of include/afilewatch.hpp
-│   │   │── aframework.ixx                    # Module mirror of include/aframework.hpp
-│   │   │── aatomicfunction.ixx               # Module mirror of include/aatomicfunction.hpp
-│   │   │── ampmcboundedqueue.ixx             # Module mirror of include/ampmcboundedqueue.hpp
-│   │   │── ataskgraphwithdot.ixx             # Module mirror of include/ataskgraphwithdot.hpp
-│   │   │── arobusttime.ixx                   # Module mirror of include/arobusttime.hpp
-│   │   │── ascriptingsystem.ixx              # Module mirror of include/ascriptingsystem.hpp
-│   │   │── astringconverter.ixx              # Module mirror of include/astringconverter.hpp
+│── src modules/
+│   │── Module implementation units (.cppm)
+│   │   │── acompiler.cppm
+│   │   │── aeditor.cppm
+│   │   │── aengine.context.multiplexer.win.cppm
+│   │   │── aengine.cppm
+│   │   │── aengine.gui.cppm
+│   │   │── aengine.scripting.compiler.cppm
+│   │   │── afilewatch.cppm
+│   │   │── afont.renderer.cppm
+│   │   │── aopenglplatform_win.cppm
 │
 │── src/
 │   │── acompiler.cpp             # Compiler-related implementation
