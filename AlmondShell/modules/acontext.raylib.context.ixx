@@ -32,7 +32,7 @@ import <raylib.h>;
 // ------------------------------------------------------------
 import aengine.platform;                 // replaces aplatform.hpp
 //import aengine.config;            // replaces aengineconfig.hpp
-import aengine.context;           // replaces acontext.hpp
+import aengine.core.context;           // replaces acontext.hpp
 import aengine.context.window;    // replaces awindowdata.hpp / acontextwindow.hpp
 import aengine.core.time;        // already used in your header
 import aimage.loader;              // replaces aimageloader.hpp

@@ -7,9 +7,6 @@
     <Filter Include="Resource Files">
       <UniqueIdentifier>{88d016ff-11dc-4da7-9ccf-b0f86a1f39e4}</UniqueIdentifier>
     </Filter>
-    <Filter Include="Header Files">
-      <UniqueIdentifier>{e556c93a-d317-4752-b807-f1dd084ff695}</UniqueIdentifier>
-    </Filter>
     <Filter Include="Source Files\crossplatform">
       <UniqueIdentifier>{81d9dae6-2dbe-49b5-8539-cbdf46301748}</UniqueIdentifier>
     </Filter>
@@ -91,8 +88,11 @@
     <Filter Include="Module Files\ixx\networking">
       <UniqueIdentifier>{017e96bf-6d1e-4f5c-9cee-a9d3e728f727}</UniqueIdentifier>
     </Filter>
-    <Filter Include="Module Files\ixx\core\utilities">
+    <Filter Include="Module Files\ixx\utilities">
       <UniqueIdentifier>{e0146995-fa5e-47b2-b274-9f032b8b2dc3}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Header Files">
+      <UniqueIdentifier>{e556c93a-d317-4752-b807-f1dd084ff695}</UniqueIdentifier>
     </Filter>
   </ItemGroup>
   <ItemGroup>
@@ -152,12 +152,6 @@
     <ClCompile Include="$(MSBuildThisFileDirectory)modules\asaveloadsystem.ixx">
       <Filter>Module Files\ixx</Filter>
     </ClCompile>
-    <ClCompile Include="$(MSBuildThisFileDirectory)modules\aengine.bindings.ixx">
-      <Filter>Module Files\ixx\core</Filter>
-    </ClCompile>
-    <ClCompile Include="$(MSBuildThisFileDirectory)modules\aengine.cli.ixx">
-      <Filter>Module Files\ixx\core</Filter>
-    </ClCompile>
     <ClCompile Include="$(MSBuildThisFileDirectory)modules\aengine.diagnostics.ixx">
       <Filter>Module Files\ixx\core</Filter>
     </ClCompile>
@@ -210,16 +204,16 @@
       <Filter>Module Files\ixx\games</Filter>
     </ClCompile>
     <ClCompile Include="$(MSBuildThisFileDirectory)modules\autility.allocator.ixx">
-      <Filter>Module Files\ixx\core\utilities</Filter>
+      <Filter>Module Files\ixx\utilities</Filter>
     </ClCompile>
     <ClCompile Include="$(MSBuildThisFileDirectory)modules\autility.atomicfunction.ixx">
-      <Filter>Module Files\ixx\core\utilities</Filter>
+      <Filter>Module Files\ixx\utilities</Filter>
     </ClCompile>
     <ClCompile Include="$(MSBuildThisFileDirectory)modules\aengine.core.commandline.ixx">
-      <Filter>Module Files\ixx\core\utilities</Filter>
+      <Filter>Module Files\ixx\utilities</Filter>
     </ClCompile>
     <ClCompile Include="$(MSBuildThisFileDirectory)modules\autility.codeinspector.ixx">
-      <Filter>Module Files\ixx\core\utilities</Filter>
+      <Filter>Module Files\ixx\utilities</Filter>
     </ClCompile>
     <ClCompile Include="$(MSBuildThisFileDirectory)modules\aenduserapplication.ixx">
       <Filter>Module Files\ixx\games</Filter>
@@ -228,22 +222,22 @@
       <Filter>Module Files\ixx\games</Filter>
     </ClCompile>
     <ClCompile Include="$(MSBuildThisFileDirectory)modules\aautility.noheapguard.ixx">
-      <Filter>Module Files\ixx\core\utilities</Filter>
+      <Filter>Module Files\ixx\utilities</Filter>
     </ClCompile>
     <ClCompile Include="$(MSBuildThisFileDirectory)modules\autility.filewatch.ixx">
-      <Filter>Module Files\ixx\core\utilities</Filter>
+      <Filter>Module Files\ixx\utilities</Filter>
     </ClCompile>
     <ClCompile Include="$(MSBuildThisFileDirectory)modules\aengine.core.time.ixx">
-      <Filter>Module Files\ixx\core\utilities</Filter>
+      <Filter>Module Files\ixx\utilities</Filter>
     </ClCompile>
     <ClCompile Include="$(MSBuildThisFileDirectory)modules\aengine.core.logger.ixx">
-      <Filter>Module Files\ixx\core\utilities</Filter>
+      <Filter>Module Files\ixx\utilities</Filter>
     </ClCompile>
     <ClCompile Include="$(MSBuildThisFileDirectory)modules\aengine.core.utilities.ixx">
-      <Filter>Module Files\ixx\core\utilities</Filter>
+      <Filter>Module Files\ixx\utilities</Filter>
     </ClCompile>
     <ClCompile Include="$(MSBuildThisFileDirectory)modules\aengine.core.types.ixx">
-      <Filter>Module Files\ixx\core\utilities</Filter>
+      <Filter>Module Files\ixx\utilities</Filter>
     </ClCompile>
     <ClCompile Include="$(MSBuildThisFileDirectory)modules\aimageatlaswriter.ixx">
       <Filter>Module Files\ixx\textures</Filter>
@@ -368,9 +362,6 @@
     <ClCompile Include="$(MSBuildThisFileDirectory)modules\aengine.context.control.ixx">
       <Filter>Module Files\ixx\core\context</Filter>
     </ClCompile>
-    <ClCompile Include="$(MSBuildThisFileDirectory)modules\aengine.context.ixx">
-      <Filter>Module Files\ixx\core\context</Filter>
-    </ClCompile>
     <ClCompile Include="$(MSBuildThisFileDirectory)modules\aengine.context.multiplexer.ixx">
       <Filter>Module Files\ixx\core\context</Filter>
     </ClCompile>
@@ -381,9 +372,6 @@
       <Filter>Module Files\ixx\core\context</Filter>
     </ClCompile>
     <ClCompile Include="$(MSBuildThisFileDirectory)modules\aengine.context.type.ixx">
-      <Filter>Module Files\ixx\core\context</Filter>
-    </ClCompile>
-    <ClCompile Include="$(MSBuildThisFileDirectory)modules\aengine.context.window.ixx">
       <Filter>Module Files\ixx\core\context</Filter>
     </ClCompile>
     <ClCompile Include="$(MSBuildThisFileDirectory)modules\acontext.noop.context.ixx">
@@ -453,7 +441,7 @@
       <Filter>Module Files\ixx\platform</Filter>
     </ClCompile>
     <ClCompile Include="$(MSBuildThisFileDirectory)modules\autility.string.converter.ixx">
-      <Filter>Module Files\ixx\core\utilities</Filter>
+      <Filter>Module Files\ixx\utilities</Filter>
     </ClCompile>
     <ClCompile Include="$(MSBuildThisFileDirectory)modules\ampmcboundedqueue.ixx">
       <Filter>Module Files\ixx\multithreading</Filter>
@@ -469,9 +457,6 @@
     </ClCompile>
     <ClCompile Include="$(MSBuildThisFileDirectory)modules\almondshell.ixx">
       <Filter>Module Files\ixx</Filter>
-    </ClCompile>
-    <ClCompile Include="$(MSBuildThisFileDirectory)modules\aengine.core.context.ixx">
-      <Filter>Module Files\ixx\core</Filter>
     </ClCompile>
     <ClCompile Include="$(MSBuildThisFileDirectory)modules\aengine.platform.ixx">
       <Filter>Module Files\ixx\platform</Filter>
@@ -529,6 +514,18 @@
     </ClCompile>
     <ClCompile Include="$(MSBuildThisFileDirectory)modules\ascripting.system.ixx">
       <Filter>Module Files\ixx\scripting</Filter>
+    </ClCompile>
+    <ClCompile Include="$(MSBuildThisFileDirectory)modules\aengine.context.window.ixx">
+      <Filter>Module Files\ixx\core\context</Filter>
+    </ClCompile>
+    <ClCompile Include="$(MSBuildThisFileDirectory)modules\aengine.core.context.ixx">
+      <Filter>Module Files\ixx\core</Filter>
+    </ClCompile>
+    <ClCompile Include="$(MSBuildThisFileDirectory)modules\aengine.cli.ixx">
+      <Filter>Module Files\ixx\utilities</Filter>
+    </ClCompile>
+    <ClCompile Include="$(MSBuildThisFileDirectory)modules\aengine.bindings.ixx">
+      <Filter>Module Files\ixx\utilities</Filter>
     </ClCompile>
   </ItemGroup>
 </Project>

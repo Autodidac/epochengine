@@ -41,6 +41,7 @@ export module atetrislike;
  // atetrislike.hpp
 
 import ascene;
+import aengine.core.logger;
 import aengine.core.time;
 import aspriteregistry;
 import atexture;
@@ -49,6 +50,7 @@ import agamecore;
 import aatlas.manager;
 import asprite.pool;
 import aplatformpump;
+import aengine.core.context;
 
 
 export namespace almondnamespace::tetrislike
@@ -69,7 +71,7 @@ export namespace almondnamespace::tetrislike
             game_over = false;
         }
 
-        bool frame(std::shared_ptr<core::Context> ctx, core::WindowData*) override {
+        bool frame(std::shared_ptr<context::Context> ctx, contextwindow::WindowData*) override {
             if (game_over) return false;
 
             //platformpump::pump_events();

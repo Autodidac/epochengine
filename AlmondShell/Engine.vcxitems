@@ -73,7 +73,6 @@
     <ClCompile Include="$(MSBuildThisFileDirectory)modules\aengine.input.ixx" />
     <ClCompile Include="$(MSBuildThisFileDirectory)modules\aengine.hpp" />
     <ClCompile Include="$(MSBuildThisFileDirectory)modules\aengine.platform.ixx" />
-    <ClCompile Include="$(MSBuildThisFileDirectory)modules\aengine.context.ixx" />
     <ClCompile Include="$(MSBuildThisFileDirectory)modules\aengine.context.cppm">
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">true</ExcludedFromBuild>
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">true</ExcludedFromBuild>

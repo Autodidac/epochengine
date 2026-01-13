@@ -31,16 +31,16 @@
  //    because your ContextType in your current modules is not an enum with those
  //    exact enumerators (or they’re not visible here). Default handles it.
  //
-#include "pch.h"
+//#include "pch.h"
 
-#include "..\include\aengine.hpp"
 #include "..\include\aengine.config.hpp"
+#include "..\include\aengine.hpp"
 
 #if defined(_WIN32)
 #   ifndef WIN32_LEAN_AND_MEAN
 #       define WIN32_LEAN_AND_MEAN
 #   endif
-#   define ALMOND_USING_WINMAIN
+//#   define ALMOND_USING_WINMAIN
 #   include <windows.h>
 #   include <shellapi.h>
 #endif
@@ -619,7 +619,7 @@ namespace urls
 }
 
 #if defined(_WIN32) && defined(ALMOND_USING_WINMAIN)
-int APIENTRY wWinMain(
+int WINAPI wWinMain(
     _In_     HINSTANCE hInstance,
     _In_opt_ HINSTANCE hPrevInstance,
     _In_     LPWSTR    lpCmdLine,

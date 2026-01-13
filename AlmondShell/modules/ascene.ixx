@@ -11,7 +11,7 @@ import aecs.components;     // Position, etc.
 import amovementevent;        // MovementEvent
 
 import aengine.core.time;    // time::Timer
-import aengine.context;              // core::Context
+import aengine.core.context;              // core::Context
 import aengine.context.window; // core::WindowData
 import aengine.core.logger;    // Logger, LogLevel
 

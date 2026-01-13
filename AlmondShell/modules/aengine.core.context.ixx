@@ -231,22 +231,22 @@ export namespace almondnamespace::core
         std::function<void(int, int)>                                                          onResize;
     };
 
-    export struct BackendState
+    struct BackendState
     {
         std::shared_ptr<Context>              master;
         std::vector<std::shared_ptr<Context>> duplicates;
         std::unique_ptr<void, void(*)(void*)> data{ nullptr, [](void*) {} };
     };
 
-    export using BackendMap = std::map<core::ContextType, BackendState>;
+    using BackendMap = std::map<core::ContextType, BackendState>;
 
-    export extern BackendMap        g_backends;
-    export extern std::shared_mutex g_backendsMutex;
+    extern BackendMap        g_backends;
+    extern std::shared_mutex g_backendsMutex;
 
-    export void InitializeAllContexts();
-    export std::shared_ptr<Context> CloneContext(const Context& prototype);
-    export void AddContextForBackend(core::ContextType type, std::shared_ptr<Context> context);
-    export bool ProcessAllContexts();
+    extern void InitializeAllContexts();
+    std::shared_ptr<Context> CloneContext(const Context& prototype);
+    void AddContextForBackend(core::ContextType type, std::shared_ptr<Context> context);
+    bool ProcessAllContexts();
 }
 
 export namespace almondnamespace::context

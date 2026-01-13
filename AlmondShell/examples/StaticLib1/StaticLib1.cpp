@@ -2,7 +2,9 @@
 
 #include "pch.h"
 #include "framework.h"
-//#include "aengine.hpp"
+//#include "..\..\include\aengine.hpp"
 //import aengine;
 
-void MyFunc(){};
+import almondshell; // import the module
+
+void RunEngine(){};

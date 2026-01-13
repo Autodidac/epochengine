@@ -29,6 +29,7 @@
 #ifndef ALMOND_MAIN_HANDLED // user defined if not using internal automatic entry point, similar to how SDL handles it
 #ifndef ALMOND_MAIN_HEADLESS // engine config defined if not using internal automatic entry point
 	#ifdef _WIN32 // Automatically use WinMain on Windows
+		
 		#define ALMOND_USING_WINMAIN // if using WinMain instead of int main
 	#endif
 #endif // ALMOND_MAIN_HEADLESS

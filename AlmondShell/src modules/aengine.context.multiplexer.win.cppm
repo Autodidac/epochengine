@@ -49,6 +49,8 @@ import aengine.platform;
 //import aengine.config;
 import autility.string.converter;
 
+import aengine.core.context;
+
 import acontext.opengl.context;
 import acontext.sdl.context;
 //import acontext.sfml.context;
@@ -206,7 +208,7 @@ namespace almondnamespace::core
         return (it != windows.end()) ? it->get() : nullptr;
     }
 
-    WindowData* MultiContextManager::findWindowByContext(const std::shared_ptr<Context>& ctx) {
+    WindowData* MultiContextManager::findWindowByContext(const std::shared_ptr<context::Context>& ctx) {
         if (!ctx) return nullptr;
         std::scoped_lock lock(windowsMutex);
         auto it = std::find_if(windows.begin(), windows.end(),
@@ -216,7 +218,7 @@ namespace almondnamespace::core
         return (it != windows.end()) ? it->get() : nullptr;
     }
 
-    const WindowData* MultiContextManager::findWindowByContext(const std::shared_ptr<Context>& ctx) const {
+    const WindowData* MultiContextManager::findWindowByContext(const std::shared_ptr<context::Context>& ctx) const {
         if (!ctx) return nullptr;
         std::scoped_lock lock(windowsMutex);
         auto it = std::find_if(windows.begin(), windows.end(),
@@ -227,7 +229,7 @@ namespace almondnamespace::core
     }
 
     // ---------------- MultiContextManager (static) ----------------
-    void almondnamespace::core::MultiContextManager::SetCurrent(std::shared_ptr<Context> ctx) {
+    void almondnamespace::core::MultiContextManager::SetCurrent(std::shared_ptr<context::Context> ctx) {
         currentContext = std::move(ctx);
     }
 
@@ -361,7 +363,7 @@ namespace almondnamespace::core
         RegisterParentClass(hInst, L"AlmondParent");
         RegisterChildClass(hInst, L"AlmondChild");
 
-        InitializeAllContexts();
+        almondnamespace::core::InitializeAllContexts();
 
         // ---------------- Parent (dock container) ----------------
         if (parented)
@@ -455,7 +457,7 @@ namespace almondnamespace::core
                     }
 #endif
 
-                    auto winPtr = std::make_unique<WindowData>(hwnd, hdc, glrc, true, type);
+                    auto winPtr = std::make_unique<contextwindow::WindowData>(hwnd, hdc, glrc, true, type);
                     winPtr->titleWide = windowTitle;
                     winPtr->titleNarrow = narrowTitle;
                     if (parent)
@@ -470,7 +472,7 @@ namespace almondnamespace::core
                     createdTitles.push_back(narrowTitle);
                 }
 
-                std::vector<std::shared_ptr<Context>> ctxs;
+                std::vector<std::shared_ptr<context::Context>> ctxs;
                 {
                     std::unique_lock lock(g_backendsMutex);
                     auto it = g_backends.find(type);
@@ -480,11 +482,11 @@ namespace almondnamespace::core
                         return;
                     }
 
-                    BackendState& state = it->second;
+                    core::BackendState& state = it->second;
                     ctxs.reserve(static_cast<size_t>(count));
                     ctxs.push_back(state.master);
 
-                    auto ensure_duplicate = [&](size_t index) -> std::shared_ptr<Context> {
+                    auto ensure_duplicate = [&](size_t index) -> std::shared_ptr<context::Context> {
                         if (index < state.duplicates.size()) {
                             auto& candidate = state.duplicates[index];
                             if (candidate && candidate->initialize) {
@@ -765,12 +767,12 @@ namespace almondnamespace::core
             InitializeAllContexts();
         }
 
-        std::shared_ptr<core::Context> ctx;
+        std::shared_ptr<context::Context> ctx;
         {
             std::unique_lock lock(g_backendsMutex);
-            auto& state = g_backends[type];
+            auto& state = core::g_backends[type];
             if (!state.master) {
-                ctx = std::make_shared<core::Context>();
+                ctx = std::make_shared<context::Context>();
                 ctx->type = type;
                 state.master = ctx;
             }
@@ -779,7 +781,7 @@ namespace almondnamespace::core
             }
             else {
                 auto it = std::find_if(state.duplicates.begin(), state.duplicates.end(),
-                    [](const std::shared_ptr<core::Context>& dup) {
+                    [](const std::shared_ptr<context::Context>& dup) {
                         return dup && !dup->windowData;
                     });
                 if (it != state.duplicates.end()) {

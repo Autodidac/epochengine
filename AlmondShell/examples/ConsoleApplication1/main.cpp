@@ -22,9 +22,6 @@
 //main.cpp - the console demonstration of Almond Shell / Almond Engine
 
 //#include "aengine.hpp"
-
-import almondshell; // import the module
-
 #include <chrono>
 #include <filesystem>
 #include <iostream>
@@ -32,11 +29,15 @@ import almondshell; // import the module
 #include <thread>
 #include <vector>
 
+import almondshell; // import the module
+
+
+
 //void test_linkage() {
 //    almondshell::opengl::s_state.shader = 42;  // Or just read a member
 //}
 
-static void RunEngine() {
+//static void RunEngine() {
 //    // 🔄 **Cleanup Restart Script on Restart & Old Files on Update**
 //#ifdef LEAVE_NO_FILES_ALWAYS_REDOWNLOAD
 //#if defined(_WIN32)
@@ -68,7 +69,7 @@ static void RunEngine() {
     // Lets Begin
     //TaskScheduler scheduler;
 
-    std::cout << "[Engine] Starting up...\n";
+ //   std::cout << "[Engine] Starting up...\n";
 
 
 
@@ -102,6 +103,6 @@ static void RunEngine() {
         if (std::chrono::duration_cast<std::chrono::minutes>(std::chrono::steady_clock::now() - start).count() > 10) break;
     }
 */
-    std::cout << "[Engine] Session ended.\n";
+  //  std::cout << "[Engine] Session ended.\n";
   //  return 0;
-}
+//}
