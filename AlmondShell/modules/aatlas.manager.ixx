@@ -6,7 +6,7 @@ export module aatlas.manager;
 import aengine.platform;
 
 // Engine-facing modules (convert these headers to modules with these names, or rename imports to match yours)
-import aspritepool;         // SpriteHandle, allocate()
+import asprite.pool;         // SpriteHandle, allocate()
 import aatlas.texture;       // TextureAtlas, AtlasConfig, Texture, u8/u32/u64
 import aspriteregistry;     // SpriteRegistry
 import aspritehandle;       // SpriteHandle definition (if split)
@@ -14,7 +14,6 @@ import aengine.context.type;        // core::ContextType (or wherever you keep i
 
 // STL
 import std;
-
 
 export namespace almondnamespace::atlasmanager
 {

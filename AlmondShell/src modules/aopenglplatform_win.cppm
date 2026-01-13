@@ -1,4 +1,6 @@
-#include "aopenglplatform.hpp"
+//#include "aopenglplatform.hpp"
+
+
 
 #if defined(ALMOND_USING_OPENGL) && defined(_WIN32)
 

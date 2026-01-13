@@ -1,5 +1,7 @@
 module;
 
+#include "aengine.hpp"          // DEFAULT_WINDOW_WIDTH, DEFAULT_WINDOW_HEIGHT
+
 export module aengine.core.commandline;
 
 import <algorithm>;
@@ -7,7 +9,7 @@ import <filesystem>;
 import <iostream>;
 import <string_view>;
 
-import aengine;
+//import aengine;
 import aengine.version;
 
 export namespace almondnamespace::core::cli 

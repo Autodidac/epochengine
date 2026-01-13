@@ -40,10 +40,13 @@ module;
 
 #endif
 
+// configuration
+#include "..\include\aengine.config.hpp" 		// for ALMOND_USING_SDL
+
 export module aengine.context.multiplexer:win;
 
 import aengine.platform;
-import aengine.config;
+//import aengine.config;
 import autility.string.converter;
 
 import acontext.opengl.context;

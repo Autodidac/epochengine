@@ -1,4 +1,4 @@
-﻿module;
+module;
 
 #if defined(_WIN32) && !defined(ALMOND_MAIN_HEADLESS)
 #   include <windows.h> // HWND/HDC/HGLRC
@@ -28,28 +28,16 @@ import aengine.context.window;       // core::WindowData
 import aengine.input;                // input::Key, input::MouseButton, mouseX/mouseY + helpers
 import aatlas.texture;               // TextureAtlas
 import aspritehandle;                // SpriteHandle
-import aimageloader;                 // ImageData
+import aimage.loader;                // ImageData
 
-// -----------------------------------------------------------------------------
-// Canonical namespace for Context in the engine is almondnamespace::core.
-// Provide a compatibility alias namespace almondnamespace::context below.
-// -----------------------------------------------------------------------------
 export namespace almondnamespace::core
 {
-    // Forward decl for friend (the definition lives in your multiplexer module)
     class MultiContextManager;
 
-    // ======================================================
-    // Context: core per-backend state
-    //
-    // IMPORTANT:
-    // - This is platform-agnostic conceptually, but legacy Win32 fields are
-    //   provided (guarded) because existing multiplexer code expects them.
-    // - Backends must provide mouse position in CLIENT coords via callback.
-    // ======================================================
     export class Context
     {
         friend class MultiContextManager;
+        friend class aengine;
 
     public:
         // --- Backend render hooks (fast raw function pointers) ---
@@ -111,6 +99,10 @@ export namespace almondnamespace::core
         bool process_safe(std::shared_ptr<Context> ctx, core::CommandQueue& queue);
 
         void clear_safe()   const noexcept { if (clear) clear(); }
+
+        // Back-compat: older call sites used ctx->clear_safe(ctx)
+        void clear_safe(std::shared_ptr<Context>) const noexcept { clear_safe(); }
+
         void present_safe() const noexcept { if (present) present(); }
 
         int get_width_safe()  const noexcept { return get_width ? get_width() : width; }
@@ -134,7 +126,6 @@ export namespace almondnamespace::core
                 return;
             }
 
-            // fallback: whatever the input system currently stores
             x = input::mouseX.load(std::memory_order_acquire);
             y = input::mouseY.load(std::memory_order_acquire);
         }
@@ -182,20 +173,23 @@ export namespace almondnamespace::core
             return add_model ? add_model(name, path) : -1;
         }
 
-    private:
-        // Native backend handles (opaque here; interpreted by backend/platform code)
-        void* native_window = nullptr;
-        void* native_drawable = nullptr; // e.g. HDC / GLXDrawable / etc.
-        void* native_gl_context = nullptr; // e.g. HGLRC / GLXContext / etc.
+        // -----------------------------------------------------------------
+        // Legacy public pointer:
+        // Many game/sample modules expect to read ctx->windowData.
+        // Keeping it public avoids churn while the engine is mid-migration.
+        // -----------------------------------------------------------------
+        WindowData* windowData = nullptr;
 
-        // Legacy Win32 mirrors (EXIST ONLY because your Win multiplexer expects them)
+    private:
+        void* native_window = nullptr;
+        void* native_drawable = nullptr;
+        void* native_gl_context = nullptr;
+
 #if defined(_WIN32) && !defined(ALMOND_MAIN_HEADLESS)
         HWND  hwnd = nullptr;
         HDC   hdc = nullptr;
         HGLRC hglrc = nullptr;
 #endif
-
-        WindowData* windowData = nullptr;
 
         // logical canvas
         int width = 400;
@@ -210,7 +204,7 @@ export namespace almondnamespace::core
         int virtualHeight = 300;
 
         ContextType type = ContextType::Custom;
-        std::string       backendName{};
+        std::string backendName{};
 
         // --- Backend function pointers ---
         InitializeFunc  initialize = nullptr;
@@ -237,21 +231,15 @@ export namespace almondnamespace::core
         std::function<void(int, int)>                                                          onResize;
     };
 
-    // ======================================================
-    // BackendState: holds master + duplicates for a backend
-    // ======================================================
     export struct BackendState
     {
         std::shared_ptr<Context>              master;
         std::vector<std::shared_ptr<Context>> duplicates;
-
-        // opaque per-backend storage (cast in backends)
         std::unique_ptr<void, void(*)(void*)> data{ nullptr, [](void*) {} };
     };
 
     export using BackendMap = std::map<core::ContextType, BackendState>;
 
-    // Central registry (defined in ONE .cpp/.ixx implementation unit)
     export extern BackendMap        g_backends;
     export extern std::shared_mutex g_backendsMutex;
 
@@ -261,10 +249,6 @@ export namespace almondnamespace::core
     export bool ProcessAllContexts();
 }
 
-// -----------------------------------------------------------------------------
-// Compatibility namespace: old code referring to almondnamespace::context::Context
-// keeps working without duplicating the type.
-// -----------------------------------------------------------------------------
 export namespace almondnamespace::context
 {
     export using Context = almondnamespace::core::Context;

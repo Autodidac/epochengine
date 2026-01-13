@@ -1,12 +1,10 @@
-module;
 
 #include <wtypes.h>
 #include <cstdint>
 
-export module aengine;
-
 //import aengine.platform;
-import aengine.config;
+//import aengine.config;
+#include "aengine.config.hpp" 		// for ALMOND_USING_SDL
 
 //export import aengine.platform;
 //export import aengine.engine_components;
@@ -27,8 +25,8 @@ import aengine.config;
 // Window dimensions
 //inline constexpr int DEFAULT_WINDOW_WIDTH = 1024;
 //inline constexpr int DEFAULT_WINDOW_HEIGHT = 768;
-export inline constexpr int DEFAULT_WINDOW_WIDTH = 1920;
-export inline constexpr int DEFAULT_WINDOW_HEIGHT = 1080;
+inline constexpr int DEFAULT_WINDOW_WIDTH = 1920;
+inline constexpr int DEFAULT_WINDOW_HEIGHT = 1080;
 //inline constexpr int DEFAULT_WINDOW_WIDTH = 2048;
 //inline constexpr int DEFAULT_WINDOW_HEIGHT = 1080;
 //inline constexpr int DEFAULT_WINDOW_WIDTH = 2732;
@@ -44,7 +42,7 @@ export inline constexpr int DEFAULT_WINDOW_HEIGHT = 1080;
 // Max string length for title and class name
 #define MAX_LOADSTRING 100
 
-export namespace almondnamespace::core
+namespace almondnamespace::core
 {
     // Forward declarations of Win32 functions
     ATOM RegisterWindowClass(HINSTANCE hInstance, LPCWSTR window_name, LPCWSTR child_name);
@@ -55,6 +53,6 @@ export namespace almondnamespace::core
 
 #endif
 #if defined(_WIN32)
-export HWND InitWindowInstance(HINSTANCE hInstance, int nCmdShow, LPCWSTR szWindowClass, LPCWSTR szTitle, int32_t windowWidth, int32_t windowHeight);
+extern HWND InitWindowInstance(HINSTANCE hInstance, int nCmdShow, LPCWSTR szWindowClass, LPCWSTR szTitle, int32_t windowWidth, int32_t windowHeight);
 #endif
 

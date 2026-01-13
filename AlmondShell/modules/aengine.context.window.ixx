@@ -1,5 +1,8 @@
 module;
 
+#include "aengine.hpp"          // DEFAULT_WINDOW_WIDTH, DEFAULT_WINDOW_HEIGHT
+#include "aengine.config.hpp" 		// for ALMOND_USING_SDL
+
 #include <string>
 #include <string_view>
 #include <stdexcept>
@@ -12,10 +15,10 @@ module;
 export module aengine.context.window;
 
 import aframework;
-import aengine.config;
+//import aengine.config;
 import aengine.context.type;          // ContextType
 import aengine.context.commandqueue;  // CommandQueue
-import aengine;                       // DEFAULT_WINDOW_WIDTH, DEFAULT_WINDOW_HEIGHT
+//import aengine;                       // DEFAULT_WINDOW_WIDTH, DEFAULT_WINDOW_HEIGHT
 
 import <functional>;
 import <memory>;                      // shared_ptr

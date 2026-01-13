@@ -26,11 +26,22 @@ module;
 // aengine.opengl.textures module interface
 
 //#include "atypes.hpp"
+#include "aengine.config.hpp" 		// for ALMOND_USING_SDL
 
-export module aengine.opengl.textures;
+#include <atomic>
+#include <format>
+#include <string>
+#include <vector>
+#include <iostream>
+#include <filesystem>
+#include <unordered_map>
+#include <mutex>
+#include <algorithm>
+
+export module acontext.opengl.textures;
 
 import aengine.platform;
-import aengine.config;
+//import aengine.config;
 
 #ifdef ALMOND_USING_OPENGL
 
@@ -51,18 +62,7 @@ import aengine.context;
 import aengine.context.multiplexer;
 
 import acontext.opengl.state;
-import acontext.opengl.context;
-
-
-#include <atomic>
-#include <format>
-#include <string>
-#include <vector>
-#include <iostream>
-#include <filesystem>
-#include <unordered_map>
-#include <mutex>
-#include <algorithm>
+//import acontext.opengl.context;
 
 export namespace almondnamespace::opengltextures
 {

@@ -1,6 +1,6 @@
 ﻿module;
 
-export module aspritepool;
+export module asprite.pool;
 
 // ────────────────────────────────────────────────────────────
 // Standard library

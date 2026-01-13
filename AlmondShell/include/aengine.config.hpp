@@ -54,10 +54,10 @@
 #define ALMOND_SINGLE_PARENT 1  // 0 = multiple top-level windows, 1 = single parent + children
 // Only one of each context will be used, if you want multiple contexts, you must define them in the engine config,
 
-#define ALMOND_USING_SDL 1
+//#define ALMOND_USING_SDL 1
 //#define ALMOND_USING_RAYLIB 1
 #define ALMOND_USING_SOFTWARE_RENDERER 1
-#define ALMOND_USING_OPENGL 1
+//#define ALMOND_USING_OPENGL 1
 
 #if defined(ALMOND_FORCE_DISABLE_SDL)
 #undef ALMOND_USING_SDL

@@ -28,8 +28,8 @@ import <iostream>;
 import aengine.platform;
 import acontext.opengl.context;
 import aspritehandle;
-import aopengltextures;
-import aopenglstate;
+import acontext.opengl.textures;
+import acontext.opengl.state;
 import aopenglquad;
 import aengine.cli;
 // ────────────────────────────────────────────────────────────

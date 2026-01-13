@@ -12,13 +12,15 @@ module;
 #include <unordered_map>
 #include <vector>
 
+
+#include "aengine.config.hpp" 		// for ALMOND_USING_SDL
 export module acontext.softrenderer.textures;
 
 import aatlas.texture;        // TextureAtlas
 import acontext.softrenderer.state;   // SoftRendState
 import aengine.platform;    // almondnamespace
 import aengine.input;       // almondnamespace::input
-import aengine.config; // almondnamespace::input
+//import aengine.config; // almondnamespace::input
 
 
 #if defined(ALMOND_USING_SOFTWARE_RENDERER)
@@ -58,8 +60,11 @@ export namespace almondnamespace::anativecontext
         // Map atlas → texture for caching
         std::unordered_map<const TextureAtlas*, TexturePtr> textures;
 
+#if defined(ALMOND_USING_SOFTWARE_RENDERER)
+
         // Renderer state (framebuffer, dimensions, etc.)
         almondnamespace::anativecontext::SoftRendState srState;
+#endif 
     };
 } // namespace almondnamespace::anativecontext
 #endif

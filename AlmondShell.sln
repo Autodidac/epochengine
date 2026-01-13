@@ -40,6 +40,9 @@ Global
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
 	EndGlobalSection
+	GlobalSection(ExtensibilityGlobals) = postSolution
+		SolutionGuid = {A93CAAE0-774C-4604-BA07-DC19B9D7FF22}
+	EndGlobalSection
 	GlobalSection(SharedMSBuildProjectFiles) = preSolution
 		AlmondShell\Engine.vcxitems*{b2f62625-abdc-43c1-9ac0-379c96b52a74}*SharedItemsImports = 9
 		AlmondShell\Engine.vcxitems*{bba639b7-2b54-4e38-90ac-667fc3303475}*SharedItemsImports = 4

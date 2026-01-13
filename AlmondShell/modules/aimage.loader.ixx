@@ -1,5 +1,5 @@
 module;
-export module aimageloader;
+export module aimage.loader;
 
 import <algorithm>;
 import <cstdint>;

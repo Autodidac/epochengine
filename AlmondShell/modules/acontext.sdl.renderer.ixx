@@ -1,8 +1,10 @@
 module;
 
-export module aengine.sdl.renderer;
+#include "aengine.config.hpp" 		// for ALMOND_USING_SDL
 
-import aengine.config;
+export module acontext.sdl.renderer;
+
+//import aengine.config;
 
 #if defined(ALMOND_USING_SDL)
 import std;
@@ -10,9 +12,7 @@ import <iostream>;
 import <stdexcept>;
 import <SDL3/SDL.h>;
 
-import asdlstate;
-
-
+import acontext.sdl.state;
 
 export namespace almondnamespace::sdlcontext
 {

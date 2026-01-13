@@ -5,10 +5,11 @@ module;
 #endif
 
 #define SDL_MAIN_HANDLED
+#include "aengine.config.hpp" 		// for ALMOND_USING_SDL
 
 export module acontext.sdl.context;
 
-import aengine.config;
+//import aengine.config;
 import aengine.platform;
 
 import <algorithm>;
@@ -24,15 +25,15 @@ import aengine.context.window;
 import aengine.context.commandqueue;
 import aengine.context.control;
 import aatlas.manager;
-import aacontext.sdl.state;
-import aengine.sdl.renderer;
-import aengine.sdl.textures;
+import acontext.sdl.state;
+import acontext.sdl.renderer;
+import acontext.sdl.textures;
 
 
-#if defined(ALMOND_USING_SDL)
 
 export namespace almondnamespace::sdlcontext
 {
+#if defined(ALMOND_USING_SDL)
     struct SDLState {
         SDL_Window* window = nullptr;
         SDL_Renderer* renderer = nullptr;
@@ -403,6 +404,7 @@ export namespace almondnamespace::sdlcontext
         (void)ctx;
         return sdlcontext.running;
     }
+#endif
+
 }
 
-#endif

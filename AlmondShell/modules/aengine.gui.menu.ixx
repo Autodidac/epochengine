@@ -1,14 +1,14 @@
 
 module; // REQUIRED global module fragment
 
-
+#include "aengine.config.hpp" 		// for ALMOND_USING_SDL
 export module aengine.gui.menu;
 
 // ------------------------------------------------------------
 // Engine headers (header units, order-sensitive)
 // ------------------------------------------------------------
 
-import aengine.config;
+//import aengine.config;
 
 import aengine.context;
 import aengine.context.multiplexer;

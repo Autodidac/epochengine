@@ -41,10 +41,12 @@ using HGLRC = void*;
 #   include <GL/glx.h>
 #endif
 
+#include "aengine.config.hpp" 		// for ALMOND_USING_SDL
+
 export module aengine.context.multiplexer;
 
 import aengine.platform;
-import aengine.config;
+//import aengine.config;
 
 // Import the *real* types instead of fake forward decls.
 import aengine.context.type;         // almondnamespace::core::ContextType

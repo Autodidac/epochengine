@@ -21,7 +21,9 @@
  **************************************************************/
 //main.cpp - the console demonstration of Almond Shell / Almond Engine
 
-//#include "almondshell.hpp"
+//#include "aengine.hpp"
+
+import almondshell; // import the module
 
 #include <chrono>
 #include <filesystem>
@@ -33,8 +35,6 @@
 //void test_linkage() {
 //    almondshell::opengl::s_state.shader = 42;  // Or just read a member
 //}
-
-
 
 static void RunEngine() {
 //    // 🔄 **Cleanup Restart Script on Restart & Old Files on Update**

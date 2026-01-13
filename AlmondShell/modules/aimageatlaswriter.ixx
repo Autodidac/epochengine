@@ -6,7 +6,7 @@ import <filesystem>;
 import <string>;
 import <vector>;
 
-import aimagewriter;
+import aimage.writer;
 
 export namespace almondnamespace::atlaswriter
 {

@@ -2,7 +2,7 @@
  *   This file is part of the Almond Project.                 *
  *   AlmondShell - Modular C++ Framework                      *
  **************************************************************/
-export module aeventsystem;
+export module aengine.eventsystem;
 
 import std;
 

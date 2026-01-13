@@ -2,8 +2,10 @@
 
 #if defined(_WIN32)
 #include <windows.h>
-#include <gl/gl.h>
+//#include <gl/gl.h>
 #endif
+
+#include "aengine.config.hpp" 		// for ALMOND_USING_SDL
 
 export module acontext.raylib.context;
 
@@ -29,11 +31,11 @@ import <raylib.h>;
 // Core platform + engine modules (C++23 imports)
 // ------------------------------------------------------------
 import aengine.platform;                 // replaces aplatform.hpp
-import aengine.config;            // replaces aengineconfig.hpp
+//import aengine.config;            // replaces aengineconfig.hpp
 import aengine.context;           // replaces acontext.hpp
 import aengine.context.window;    // replaces awindowdata.hpp / acontextwindow.hpp
 import aengine.core.time;        // already used in your header
-import aimageloader;              // replaces aimageloader.hpp
+import aimage.loader;              // replaces aimageloader.hpp
 import aatlas.manager;            // replaces aatlasmanager.hpp
 import aengine.core.commandline;              // replaces acommandline.hpp
 import aengine.input;             // replaces ainput.hpp

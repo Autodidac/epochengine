@@ -16,7 +16,7 @@ import <format>;
 // ─────────────────────────────────────────────────────────────
 import aengine.platform;          // replaces aplatform.hpp (ordering handled by BMI)
 import aengine.core.logger;    // Logger, LogLevel
-import aeventsystem;              // events::push_event
+import aengine.eventsystem;              // events::push_event
 import aengine.core.time;        // Timer, time helpers
 import aecs;                      // reg_ex, Entity, ECS core API
 import aecs.components;         // Position, History, LoggerComponent

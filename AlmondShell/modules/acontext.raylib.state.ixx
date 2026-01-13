@@ -1,6 +1,7 @@
 module;
-#include "aplatform.hpp"
-#include "aengineconfig.hpp"
+//#include "aplatform.hpp"
+//#include "aengineconfig.hpp"
+#include "aengine.config.hpp" 		// for ALMOND_USING_SDL
 
 #if defined(ALMOND_USING_RAYLIB)
 #include <raylib.h>
@@ -12,6 +13,10 @@ import <array>;
 import <bitset>;
 import <functional>;
 import <cstdint>;
+
+
+import aengine.platform;
+//import aengine.config;
 
 import aengine.core.time;
 import aengine.core.commandline;

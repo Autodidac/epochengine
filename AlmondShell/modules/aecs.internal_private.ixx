@@ -30,7 +30,7 @@ import <string_view>;
 import aecs.storage;
 import aengine.core.logger;
 import aengine.core.time;
-import aeventsystem;
+import aengine.eventsystem;
 
 namespace almondnamespace::ecs::_detail
 {

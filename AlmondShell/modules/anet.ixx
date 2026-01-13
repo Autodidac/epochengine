@@ -41,10 +41,13 @@ module;
 #include <steam/steamnetworkingsockets.h>
 #endif
 
+
+#include "aengine.config.hpp" 		// for ALMOND_USING_SDL
+
 export module anet;
 
 import aengine.platform;
-import aengine.config;
+//import aengine.config;
 
 export namespace almondnamespace::net {
 

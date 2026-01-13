@@ -1,32 +1,3 @@
-module;
-#include "aplatform.hpp"
-#include "aengineconfig.hpp"
-#include "atypes.hpp"
-
-#if defined(ALMOND_USING_RAYLIB)
-#include <raylib.h>
-#endif
-
-export module acontext.raylib.textures;
-
-import <atomic>;
-import <filesystem>;
-import <format>;
-import <string>;
-import <string_view>;
-import <vector>;
-import <unordered_map>;
-import <iostream>;
-import <mutex>;
-import <cstdint>;
-
-export import "araylibcontext.hpp";
-export import "araylibstate.hpp";
-export import "aatlasmanager.hpp";
-export import "aatlastexture.hpp";
-export import "aimageloader.hpp";
-export import "atexture.hpp";
-
 /**************************************************************
  *   █████╗ ██╗     ███╗   ███╗   ███╗   ██╗    ██╗██████╗    *
  *  ██╔══██╗██║     ████╗ ████║ ██╔═══██╗████╗  ██║██╔══██╗   *
@@ -50,6 +21,43 @@ export import "atexture.hpp";
  *   See LICENSE file for full terms.                         *
  *                                                            *
  **************************************************************/
+
+module;
+//#include "aplatform.hpp"
+//#include "aengineconfig.hpp"
+//#include "atypes.hpp"
+
+#if defined(ALMOND_USING_RAYLIB)
+#include <raylib.h>
+#endif
+
+#include "aengine.config.hpp" 		// for ALMOND_USING_SDL
+
+export module acontext.raylib.textures;
+
+import <atomic>;
+import <filesystem>;
+import <format>;
+import <string>;
+import <string_view>;
+import <vector>;
+import <unordered_map>;
+import <iostream>;
+import <mutex>;
+import <cstdint>;
+
+import aengine.platform;
+//import aengine.config;
+import aengine.core.types;
+
+
+//export import acontext.raylib.context;
+export import acontext.raylib.state;
+export import aatlas.manager;
+export import aatlas.texture;
+export import aimage.loader;
+export import atexture;
+
 #if defined(ALMOND_USING_RAYLIB)
 namespace almondnamespace::raylibtextures
 {

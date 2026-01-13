@@ -1,9 +1,11 @@
 module;
 
-export module aacontext.sdl.state;
+#include "aengine.hpp"          // DEFAULT_WINDOW_WIDTH, DEFAULT_WINDOW_HEIGHT
+
+export module acontext.sdl.state;
 
 import aengine.platform;
-import aengine.config;
+//import aengine.config;
 
 
 #if defined(_WIN32)
@@ -16,7 +18,7 @@ import <functional>;
 import <SDL3/SDL.h>;
 import aengine.core.time;
 import aengine.context.window;
-import aengine; // DEFAULT_WINDOW_WIDTH, DEFAULT_WINDOW_HEIGHT
+//import aengine; // DEFAULT_WINDOW_WIDTH, DEFAULT_WINDOW_HEIGHT
 
 export namespace almondnamespace::sdlcontext::state
 {

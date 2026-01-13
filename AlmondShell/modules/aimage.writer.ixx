@@ -1,4 +1,4 @@
-export module aimagewriter;
+export module aimage.writer;
 
 import <algorithm>;
 import <cstdint>;

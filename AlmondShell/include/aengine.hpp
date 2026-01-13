@@ -26,7 +26,7 @@
 
 #include "aplatform.hpp"
 // leave this here, avoid auto sorting incorrect order, platform always comes first
-#include "aengineconfig.hpp"
+#include "aengine.config.hpp"
 
 // Window dimensions
 //inline constexpr int DEFAULT_WINDOW_WIDTH = 1024;

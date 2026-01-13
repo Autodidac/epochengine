@@ -20,7 +20,7 @@ import <unordered_map>;
 // ────────────────────────────────────────────────────────────
 
 import aspritehandle;
-import aspritepool;
+import asprite.pool;
 
 // ────────────────────────────────────────────────────────────
 

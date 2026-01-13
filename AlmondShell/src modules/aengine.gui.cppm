@@ -26,18 +26,22 @@
  //
 module;
 
+// agui.cppm
 export module aengine.gui;
 
-import aatlas.manager;
+// NOTE:
+// Do NOT `import aengine.gui;` inside this module. A module cannot import itself.
+// If you need interface/impl separation, use partitions (`export module aengine.gui:...;`).
+
 import aengine.core.context;
 import aengine.context.window;
-import aspritepool;
+
+import aatlas.manager;
+import aatlas.texture;
+import asprite.pool;
 import aspriteregistry;
 import aspritehandle;
 import atexture;
-import aengine.gui; 
-import aengine.context.multiplexer;
-import aatlas.texture;
 
 import <algorithm>;
 import <array>;
@@ -57,373 +61,340 @@ import <unordered_map>;
 import <utility>;
 import <vector>;
 
-
-namespace almondnamespace::gui
+export namespace almondnamespace::gui
 {
+    using Context = almondnamespace::core::Context;
 
-        constexpr const char* kAtlasName = "__agui_builtin";
-        constexpr float       kContentPadding = 8.0f;
-        constexpr float       kFontScale = 1.0f;
-        constexpr float       kTitleScale = 1.4f;
-        constexpr float       kBoxInnerPadding = 6.0f;
-        constexpr float       kCaretBlinkPeriod = 1.0f;
-        constexpr int         kTabSpaces = 4;
+    constexpr const char* kAtlasName = "__agui_builtin";
+    constexpr float       kContentPadding = 8.0f;
+    constexpr float       kFontScale = 1.0f;
+    constexpr float       kTitleScale = 1.4f;
+    constexpr float       kBoxInnerPadding = 6.0f;
+    constexpr float       kCaretBlinkPeriod = 1.0f;
+    constexpr int         kTabSpaces = 4;
 
-        // With font renderer removed for now, use a simple monospace model.
-        constexpr float       kFallbackGlyphPx = 8.0f;
-        constexpr float       kFallbackLinePx = 16.0f;
+    constexpr float       kFallbackGlyphPx = 8.0f;
+    constexpr float       kFallbackLinePx = 16.0f;
 
-        struct GuiResources
+    // These types are assumed to already exist in your GUI interface.
+    // If they live elsewhere, keep the imports aligned.
+    export struct Vec2 { float x{}; float y{}; };
+    export inline Vec2 operator+(Vec2 a, Vec2 b) noexcept { return { a.x + b.x, a.y + b.y }; }
+    export inline Vec2& operator+=(Vec2& a, Vec2 b) noexcept { a.x += b.x; a.y += b.y; return a; }
+
+    export enum class EventType : std::uint8_t { MouseMove, MouseDown, MouseUp, KeyDown, TextInput };
+    export struct InputEvent
+    {
+        EventType type{};
+        Vec2 mouse_pos{};
+        int key{};
+        std::string text{};
+    };
+
+    export struct WidgetBounds { Vec2 pos{}; Vec2 size{}; };
+
+    export struct EditBoxResult { bool active{}; bool changed{}; bool submitted{}; };
+    export struct ConsoleWindowOptions
+    {
+        std::string_view title{ "Console" };
+        Vec2 position{};
+        Vec2 size{ 400, 300 };
+        std::vector<std::string> lines{};
+        std::string* input{};
+        std::size_t max_visible_lines{ 200 };
+        std::size_t max_input_chars{ 1024 };
+        bool multiline_input{};
+    };
+    export struct ConsoleWindowResult { EditBoxResult input{}; };
+
+    struct GuiResources
+    {
+        bool atlasBuilt = false;
+        TextureAtlas* atlas = nullptr;
+
+        SpriteHandle windowBackground{};
+        SpriteHandle buttonNormal{};
+        SpriteHandle buttonHover{};
+        SpriteHandle buttonActive{};
+        SpriteHandle textField{};
+        SpriteHandle textFieldActive{};
+        SpriteHandle panelBackground{};
+        SpriteHandle consoleBackground{};
+    };
+
+    inline GuiResources g_resources{};
+    inline std::mutex g_resourceMutex;
+
+    struct PtrHash { std::size_t operator()(const void* p) const noexcept { return std::hash<const void*>{}(p); } };
+
+    struct UploadState { bool guiAtlasUploaded = false; };
+
+    inline std::unordered_map<const void*, UploadState, PtrHash> g_uploadedContexts;
+    inline std::mutex g_uploadMutex;
+
+    struct FrameState
+    {
+        std::shared_ptr<core::Context> ctxShared{};
+        core::Context* ctx = nullptr;
+
+        Vec2 cursor{};
+        Vec2 origin{};
+        Vec2 windowSize{};
+        Vec2 mousePos{};
+
+        bool mouseDown = false;
+        bool prevMouseDown = false;
+        bool justReleased = false;
+        bool insideWindow = false;
+        bool justPressed = false;
+
+        std::optional<WidgetBounds> lastButtonBounds{};
+
+        float deltaTime = 0.0f;
+        float caretTimer = 0.0f;
+        bool caretVisible = true;
+
+        std::vector<InputEvent> events{};
+    };
+
+    thread_local FrameState g_frame{};
+    thread_local std::vector<InputEvent> g_pendingEvents{};
+    thread_local const void* g_activeWidget = nullptr;
+
+    [[nodiscard]] std::vector<std::uint8_t> make_solid_pixels(
+        std::uint8_t r, std::uint8_t g, std::uint8_t b, std::uint8_t a,
+        std::uint32_t w, std::uint32_t h)
+    {
+        std::vector<std::uint8_t> pixels(static_cast<std::size_t>(w) * h * 4, 0);
+        for (std::size_t idx = 0; idx < pixels.size(); idx += 4)
         {
-            bool atlasBuilt = false;
-            TextureAtlas* atlas = nullptr;
-
-            SpriteHandle windowBackground{};
-            SpriteHandle buttonNormal{};
-            SpriteHandle buttonHover{};
-            SpriteHandle buttonActive{};
-            SpriteHandle textField{};
-            SpriteHandle textFieldActive{};
-            SpriteHandle panelBackground{};
-            SpriteHandle consoleBackground{};
-        };
-
-        GuiResources g_resources{};
-        std::mutex g_resourceMutex;
-
-        struct PtrHash
-        {
-            std::size_t operator()(const void* p) const noexcept
-            {
-                return std::hash<const void*>{}(p);
-            }
-        };
-
-        struct UploadState
-        {
-            bool guiAtlasUploaded = false;
-        };
-
-        static std::unordered_map<const void*, UploadState, PtrHash> g_uploadedContexts;
-        static std::mutex g_uploadMutex;
-
-        struct FrameState
-        {
-            std::shared_ptr<core::Context> ctxShared{};
-            core::Context* ctx = nullptr;
-
-            almondnamespace::gui::Vec2 cursor{};
-            Vec2 origin{};
-            Vec2 windowSize{};
-            Vec2 mousePos{};
-
-            bool mouseDown = false;
-            bool prevMouseDown = false;
-            bool justReleased = false;
-            bool insideWindow = false;
-            bool justPressed = false;
-
-            std::optional<WidgetBounds> lastButtonBounds{};
-
-            float deltaTime = 0.0f;
-            float caretTimer = 0.0f;
-            bool caretVisible = true;
-
-            std::vector<InputEvent> events{};
-        };
-
-        thread_local FrameState g_frame{};
-        thread_local std::vector<InputEvent> g_pendingEvents{};
-        thread_local const void* g_activeWidget = nullptr;
-
-        [[nodiscard]] std::vector<std::uint8_t> make_solid_pixels(
-            std::uint8_t r, std::uint8_t g, std::uint8_t b, std::uint8_t a,
-            std::uint32_t w, std::uint32_t h)
-        {
-            std::vector<std::uint8_t> pixels(static_cast<std::size_t>(w) * h * 4, 0);
-            for (std::size_t idx = 0; idx < pixels.size(); idx += 4)
-            {
-                pixels[idx + 0] = r;
-                pixels[idx + 1] = g;
-                pixels[idx + 2] = b;
-                pixels[idx + 3] = a;
-            }
-            return pixels;
+            pixels[idx + 0] = r;
+            pixels[idx + 1] = g;
+            pixels[idx + 2] = b;
+            pixels[idx + 3] = a;
         }
+        return pixels;
+    }
 
-        [[nodiscard]] SpriteHandle add_sprite(
-            TextureAtlas& atlas,
-            const std::string& name,
-            const std::vector<std::uint8_t>& pixels,
-            std::uint32_t w, std::uint32_t h)
+    [[nodiscard]] SpriteHandle add_sprite(
+        TextureAtlas& atlas,
+        const std::string& name,
+        const std::vector<std::uint8_t>& pixels,
+        std::uint32_t w, std::uint32_t h)
+    {
+        Texture texture{};
+        texture.name = name;
+        texture.width = w;
+        texture.height = h;
+        texture.channels = 4;
+        texture.pixels = pixels;
+
+        auto entry = atlas.add_entry(name, texture);
+        if (!entry)
+            throw std::runtime_error("[agui] Failed to add atlas entry: " + name);
+
+        if (almondnamespace::spritepool::capacity == 0)
+            almondnamespace::spritepool::initialize(2048);
+
+        SpriteHandle handle = almondnamespace::spritepool::allocate();
+        if (!handle.is_valid())
+            throw std::runtime_error("[agui] Sprite pool exhausted while registering GUI sprite");
+
+        handle.atlasIndex = static_cast<std::uint32_t>(atlas.get_index());
+        handle.localIndex = static_cast<std::uint32_t>(entry->index);
+
+        almondnamespace::atlasmanager::registry.add(
+            name, handle,
+            entry->region.u1,
+            entry->region.v1,
+            entry->region.u2 - entry->region.u1,
+            entry->region.v2 - entry->region.v1);
+
+        return handle;
+    }
+
+    void ensure_resources()
+    {
+        std::scoped_lock lock(g_resourceMutex);
+
+        if (g_resources.atlasBuilt)
+            return;
+
+        auto atlasIt = almondnamespace::atlasmanager::atlas_map.find(kAtlasName);
+        if (atlasIt == almondnamespace::atlasmanager::atlas_map.end())
         {
-            Texture texture{};
-            texture.name = name;
-            texture.width = w;
-            texture.height = h;
-            texture.channels = 4;
-            texture.pixels = pixels;
+            almondnamespace::atlasmanager::create_atlas({
+                .name = kAtlasName,
+                .width = 512,
+                .height = 512,
+                .generate_mipmaps = false
+                });
 
-            auto entry = atlas.add_entry(name, texture);
-            if (!entry)
-                throw std::runtime_error("[agui] Failed to add atlas entry: " + name);
-
-            if (almondnamespace::spritepool::capacity == 0)
-                almondnamespace::spritepool::initialize(2048);
-
-            SpriteHandle handle = almondnamespace::spritepool::allocate();
-            if (!handle.is_valid())
-                throw std::runtime_error("[agui] Sprite pool exhausted while registering GUI sprite");
-
-            handle.atlasIndex = static_cast<std::uint32_t>(atlas.get_index());
-            handle.localIndex = static_cast<std::uint32_t>(entry->index);
-
-           almondnamespace::atlasmanager::registry.add(
-                name, handle,
-                entry->region.u1,
-                entry->region.v1,
-                entry->region.u2 - entry->region.u1,
-                entry->region.v2 - entry->region.v1);
-
-            return handle;
-        }
-
-        void ensure_resources()
-        {
-            std::scoped_lock lock(g_resourceMutex);
-
-            if (g_resources.atlasBuilt)
-                return;
-
-            auto atlasIt = almondnamespace::atlasmanager::atlas_map.find(kAtlasName);
+            atlasIt = almondnamespace::atlasmanager::atlas_map.find(kAtlasName);
             if (atlasIt == almondnamespace::atlasmanager::atlas_map.end())
-            {
-                almondnamespace::atlasmanager::create_atlas({
-                    .name = kAtlasName,
-                    .width = 512,
-                    .height = 512,
-                    .generate_mipmaps = false
-                    });
-
-                atlasIt = almondnamespace::atlasmanager::atlas_map.find(kAtlasName);
-                if (atlasIt == almondnamespace::atlasmanager::atlas_map.end())
-                    throw std::runtime_error("[agui] Unable to create GUI atlas");
-            }
-
-            TextureAtlas& atlas = atlasIt->second;
-            g_resources.atlas = &atlas;
-
-            g_resources.windowBackground = add_sprite(atlas, "__agui/window_bg",
-                make_solid_pixels(0x33, 0x35, 0x38, 0xFF, 8, 8), 8, 8);
-            g_resources.buttonNormal = add_sprite(atlas, "__agui/button_normal",
-                make_solid_pixels(0x5B, 0x5F, 0x66, 0xFF, 8, 8), 8, 8);
-            g_resources.buttonHover = add_sprite(atlas, "__agui/button_hover",
-                make_solid_pixels(0x76, 0x7C, 0x85, 0xFF, 8, 8), 8, 8);
-            g_resources.buttonActive = add_sprite(atlas, "__agui/button_active",
-                make_solid_pixels(0x94, 0x9A, 0xA3, 0xFF, 8, 8), 8, 8);
-            g_resources.textField = add_sprite(atlas, "__agui/text_field",
-                make_solid_pixels(0x2B, 0x2E, 0x33, 0xFF, 8, 8), 8, 8);
-            g_resources.textFieldActive = add_sprite(atlas, "__agui/text_field_active",
-                make_solid_pixels(0x3A, 0x3E, 0x45, 0xFF, 8, 8), 8, 8);
-            g_resources.panelBackground = add_sprite(atlas, "__agui/panel_bg",
-                make_solid_pixels(0x27, 0x29, 0x2E, 0xFF, 8, 8), 8, 8);
-            g_resources.consoleBackground = add_sprite(atlas, "__agui/console_bg",
-                make_solid_pixels(0x1F, 0x21, 0x26, 0xFF, 8, 8), 8, 8);
-
-            g_resources.atlasBuilt = true;
+                throw std::runtime_error("[agui] Unable to create GUI atlas");
         }
 
-        void ensure_backend_upload(core::Context& ctx)
+        TextureAtlas& atlas = atlasIt->second;
+        g_resources.atlas = &atlas;
+
+        g_resources.windowBackground = add_sprite(atlas, "__agui/window_bg",
+            make_solid_pixels(0x33, 0x35, 0x38, 0xFF, 8, 8), 8, 8);
+        g_resources.buttonNormal = add_sprite(atlas, "__agui/button_normal",
+            make_solid_pixels(0x5B, 0x5F, 0x66, 0xFF, 8, 8), 8, 8);
+        g_resources.buttonHover = add_sprite(atlas, "__agui/button_hover",
+            make_solid_pixels(0x76, 0x7C, 0x85, 0xFF, 8, 8), 8, 8);
+        g_resources.buttonActive = add_sprite(atlas, "__agui/button_active",
+            make_solid_pixels(0x94, 0x9A, 0xA3, 0xFF, 8, 8), 8, 8);
+        g_resources.textField = add_sprite(atlas, "__agui/text_field",
+            make_solid_pixels(0x2B, 0x2E, 0x33, 0xFF, 8, 8), 8, 8);
+        g_resources.textFieldActive = add_sprite(atlas, "__agui/text_field_active",
+            make_solid_pixels(0x3A, 0x3E, 0x45, 0xFF, 8, 8), 8, 8);
+        g_resources.panelBackground = add_sprite(atlas, "__agui/panel_bg",
+            make_solid_pixels(0x27, 0x29, 0x2E, 0xFF, 8, 8), 8, 8);
+        g_resources.consoleBackground = add_sprite(atlas, "__agui/console_bg",
+            make_solid_pixels(0x1F, 0x21, 0x26, 0xFF, 8, 8), 8, 8);
+
+        g_resources.atlasBuilt = true;
+    }
+
+    void ensure_backend_upload(Context& ctx)
+    {
+        ensure_resources();
+
+        std::scoped_lock lock(g_uploadMutex);
+        auto& state = g_uploadedContexts[&ctx];
+
+        if (!state.guiAtlasUploaded && g_resources.atlas)
         {
-            ensure_resources();
-
-            std::scoped_lock lock(g_uploadMutex);
-            auto& state = g_uploadedContexts[&ctx];
-
-            if (!state.guiAtlasUploaded && g_resources.atlas)
-            {
-                const std::uint32_t handle = ctx.add_atlas_safe(*g_resources.atlas);
-                if (handle == 0)
-                    throw std::runtime_error("[agui] Failed to upload GUI atlas for this context");
-                state.guiAtlasUploaded = true;
-            }
+            const std::uint32_t handle = ctx.add_atlas_safe(*g_resources.atlas);
+            if (handle == 0)
+                throw std::runtime_error("[agui] Failed to upload GUI atlas for this context");
+            state.guiAtlasUploaded = true;
         }
+    }
 
-        void draw_sprite(const SpriteHandle& handle, float x, float y, float w, float h)
+    void draw_sprite(const SpriteHandle& handle, float x, float y, float w, float h)
+    {
+        if (!handle.is_valid())
+            return;
+
+        Context* ctx = g_frame.ctx;
+        if (!ctx)
+            return;
+
+        // Context has no public command_queue() in your current build; draw immediately.
+        const auto& atlases = almondnamespace::atlasmanager::get_atlas_vector();
+        ctx->draw_sprite_safe(handle, atlases, x, y, w, h);
+    }
+
+    [[nodiscard]] bool point_in_rect(Vec2 p, float x, float y, float w, float h) noexcept
+    {
+        return (p.x >= x && p.x <= x + w && p.y >= y && p.y <= y + h);
+    }
+
+    [[nodiscard]] float base_line_height(float scale) noexcept { return kFallbackLinePx * scale; }
+    [[nodiscard]] float line_advance_amount(float scale) noexcept { return kFallbackLinePx * scale; }
+    [[nodiscard]] float space_advance(float scale) noexcept { return kFallbackGlyphPx * scale; }
+
+    [[nodiscard]] float measure_text_width(std::string_view text, float scale) noexcept
+    {
+        float current = 0.0f;
+        float maxWidth = 0.0f;
+        const float adv = space_advance(scale);
+
+        for (char ch : text)
         {
-            if (!handle.is_valid())
-                return;
-
-            Context* ctx = g_frame.ctx;
-            if (!ctx)
-                return;
-
-            bool queued = false;
-            if (ctx->windowData && g_frame.ctxShared)
-            {
-                auto ctxShared = g_frame.ctxShared;
-                ctx->windowData->commandQueue.enqueue([ctxShared, handle, x, y, w, h]()
-                    {
-                        if (!ctxShared) return;
-                        const auto& atlasesRT = almondnamespace::atlasmanager::get_atlas_vector();
-                        ctxShared->draw_sprite_safe(handle, atlasesRT, x, y, w, h);
-                    });
-                queued = true;
-            }
-
-            if (!queued)
-            {
-                const auto& atlases = almondnamespace::atlasmanager::get_atlas_vector();
-                ctx->draw_sprite_safe(handle, atlases, x, y, w, h);
-            }
+            if (ch == '\n') { maxWidth = (std::max)(maxWidth, current); current = 0.0f; continue; }
+            if (ch == '\t') current += adv * static_cast<float>(kTabSpaces);
+            else            current += adv;
         }
+        return (std::max)(maxWidth, current);
+    }
 
-        [[nodiscard]] bool point_in_rect(Vec2 p, float x, float y, float w, float h) noexcept
+    [[nodiscard]] float measure_wrapped_text_height(std::string_view text, float width, float scale) noexcept
+    {
+        const float effectiveWidth = (std::max)(space_advance(scale), width);
+        const float adv = space_advance(scale);
+        const float lineAdv = line_advance_amount(scale);
+        const float baseH = base_line_height(scale);
+
+        std::size_t lines = 1;
+        float penX = 0.0f;
+
+        for (char ch : text)
         {
-            return (p.x >= x && p.x <= x + w && p.y >= y && p.y <= y + h);
+            if (ch == '\n') { ++lines; penX = 0.0f; continue; }
+
+            float a = (ch == '\t') ? (adv * static_cast<float>(kTabSpaces)) : adv;
+            if (penX + a > effectiveWidth + 0.001f) { ++lines; penX = 0.0f; }
+            penX += a;
         }
 
-        [[nodiscard]] float base_line_height(float scale) noexcept
+        return baseH + static_cast<float>(lines - 1) * lineAdv;
+    }
+
+    // Placeholder text drawing (no font system wired yet)
+    void draw_text_line(std::string_view, float, float, float, std::optional<float> = std::nullopt) {}
+    float draw_wrapped_text(std::string_view text, float, float, float width, float scale)
+    {
+        return measure_wrapped_text_height(text, width, scale);
+    }
+
+    [[nodiscard]] Vec2 compute_caret_position(std::string_view text, float x, float y, float width, float scale) noexcept
+    {
+        const float effectiveWidth = (std::max)(space_advance(scale), width);
+        const float adv = space_advance(scale);
+        const float lineAdv = line_advance_amount(scale);
+
+        float penX = x;
+        float penY = y;
+
+        for (char ch : text)
         {
-            return kFallbackLinePx * scale;
+            if (ch == '\n') { penX = x; penY += lineAdv; continue; }
+
+            float a = (ch == '\t') ? (adv * static_cast<float>(kTabSpaces)) : adv;
+            if (penX + a > x + effectiveWidth + 0.001f) { penX = x; penY += lineAdv; }
+            penX += a;
         }
 
-        [[nodiscard]] float line_advance_amount(float scale) noexcept
-        {
-            return kFallbackLinePx * scale;
-        }
+        return { penX, penY };
+    }
 
-        [[nodiscard]] float space_advance(float scale) noexcept
-        {
-            return kFallbackGlyphPx * scale;
-        }
+    void draw_caret(float x, float y, float height)
+    {
+        const float caretWidth = (std::max)(1.0f, space_advance(kFontScale) * 0.1f);
+        draw_sprite(g_resources.buttonActive, x, y, caretWidth, height);
+    }
 
-        [[nodiscard]] float measure_text_width(std::string_view text, float scale) noexcept
-        {
-            float current = 0.0f;
-            float maxWidth = 0.0f;
+    void reset_frame()
+    {
+        g_frame.cursor = {};
+        g_frame.origin = {};
+        g_frame.windowSize = {};
+        g_frame.insideWindow = false;
+        g_frame.lastButtonBounds.reset();
+    }
 
-            const float adv = space_advance(scale);
-
-            for (char ch : text)
-            {
-                if (ch == '\n')
-                {
-                    maxWidth = (std::max)(maxWidth, current);
-                    current = 0.0f;
-                    continue;
-                }
-                if (ch == '\t') current += adv * static_cast<float>(kTabSpaces);
-                else            current += adv;
-            }
-
-            return (std::max)(maxWidth, current);
-        }
-
-        [[nodiscard]] float measure_wrapped_text_height(std::string_view text, float width, float scale) noexcept
-        {
-            const float effectiveWidth = (std::max)(space_advance(scale), width);
-            const float adv = space_advance(scale);
-            const float lineAdv = line_advance_amount(scale);
-            const float baseH = base_line_height(scale);
-
-            std::size_t lines = 1;
-            float penX = 0.0f;
-
-            for (char ch : text)
-            {
-                if (ch == '\n')
-                {
-                    ++lines;
-                    penX = 0.0f;
-                    continue;
-                }
-
-                float a = (ch == '\t') ? (adv * static_cast<float>(kTabSpaces)) : adv;
-                if (penX + a > effectiveWidth + 0.001f)
-                {
-                    ++lines;
-                    penX = 0.0f;
-                }
-                penX += a;
-            }
-
-            return baseH + static_cast<float>(lines - 1) * lineAdv;
-        }
-
-        // Text drawing placeholder: no font module hookup yet.
-        void draw_text_line(std::string_view, float, float, float, std::optional<float> = std::nullopt) {}
-        float draw_wrapped_text(std::string_view text, float, float, float width, float scale)
-        {
-            return measure_wrapped_text_height(text, width, scale);
-        }
-
-        [[nodiscard]] Vec2 compute_caret_position(std::string_view text, float x, float y, float width, float scale) noexcept
-        {
-            const float effectiveWidth = (std::max)(space_advance(scale), width);
-            const float adv = space_advance(scale);
-            const float lineAdv = line_advance_amount(scale);
-
-            float penX = x;
-            float penY = y;
-
-            for (char ch : text)
-            {
-                if (ch == '\n')
-                {
-                    penX = x;
-                    penY += lineAdv;
-                    continue;
-                }
-
-                float a = (ch == '\t') ? (adv * static_cast<float>(kTabSpaces)) : adv;
-
-                if (penX + a > x + effectiveWidth + 0.001f)
-                {
-                    penX = x;
-                    penY += lineAdv;
-                }
-
-                penX += a;
-            }
-
-            return { penX, penY };
-        }
-
-        void draw_caret(float x, float y, float height)
-        {
-            const float caretWidth = (std::max)(1.0f, space_advance(kFontScale) * 0.1f);
-            draw_sprite(g_resources.buttonActive, x, y, caretWidth, height);
-        }
-
-        void reset_frame()
-        {
-            g_frame.cursor = {};
-            g_frame.origin = {};
-            g_frame.windowSize = {};
-            g_frame.insideWindow = false;
-            g_frame.lastButtonBounds.reset();
-        }
-
-
-    void set_cursor(Vec2 position) noexcept
+    export void set_cursor(Vec2 position) noexcept
     {
         if (!g_frame.insideWindow) return;
         g_frame.cursor = position;
     }
 
-    void advance_cursor(Vec2 delta) noexcept
+    export void advance_cursor(Vec2 delta) noexcept
     {
         if (!g_frame.insideWindow) return;
         g_frame.cursor += delta;
     }
 
-    void push_input(const InputEvent& e) noexcept
+    export void push_input(const InputEvent& e) noexcept
     {
         g_pendingEvents.push_back(e);
     }
 
-    void begin_frame(const std::shared_ptr<core::Context>& ctx, float dt, Vec2 mouse_pos, bool mouse_down) noexcept
+    export void begin_frame(const std::shared_ptr<core::Context>& ctx, float dt, Vec2 mouse_pos, bool mouse_down) noexcept
     {
         core::Context* rawCtx = ctx.get();
         if (rawCtx)
@@ -473,7 +444,7 @@ namespace almondnamespace::gui
         reset_frame();
     }
 
-    void end_frame() noexcept
+    export void end_frame() noexcept
     {
         g_frame.ctxShared.reset();
         g_frame.ctx = nullptr;
@@ -483,7 +454,7 @@ namespace almondnamespace::gui
         g_frame.justReleased = false;
     }
 
-    void begin_window(std::string_view title, Vec2 position, Vec2 size) noexcept
+    export void begin_window(std::string_view title, Vec2 position, Vec2 size) noexcept
     {
         if (!g_frame.ctx) return;
 
@@ -503,12 +474,12 @@ namespace almondnamespace::gui
         advance_cursor({ 0.0f, titleHeight + kContentPadding });
     }
 
-    void end_window() noexcept
+    export void end_window() noexcept
     {
         g_frame.insideWindow = false;
     }
 
-    bool button(std::string_view label, Vec2 size) noexcept
+    export bool button(std::string_view label, Vec2 size) noexcept
     {
         if (!g_frame.insideWindow || !g_frame.ctx) return false;
 
@@ -539,33 +510,34 @@ namespace almondnamespace::gui
         return hovered && g_frame.justPressed;
     }
 
-    bool image_button(const SpriteHandle& sprite, Vec2 size) noexcept
+    export std::optional<WidgetBounds> last_button_bounds() noexcept
     {
-        if (!g_frame.insideWindow || !g_frame.ctx) return false;
-
-        ensure_resources();
-
-        const Vec2 pos = g_frame.cursor;
-        const float minSize = base_line_height(kFontScale) * 2.0f;
-        const float width = (std::max)(static_cast<float>(size.x), minSize);
-        const float height = (std::max)(static_cast<float>(size.y), minSize);
-
-        const bool hovered = point_in_rect(g_frame.mousePos, pos.x, pos.y, width, height);
-
-        const SpriteHandle background =
-            hovered ? (g_frame.mouseDown ? g_resources.buttonActive : g_resources.buttonHover)
-            : g_resources.buttonNormal;
-
-        draw_sprite(background, pos.x, pos.y, width, height);
-        if (sprite.is_valid()) draw_sprite(sprite, pos.x, pos.y, width, height);
-
-        g_frame.lastButtonBounds = WidgetBounds{ pos, { width, height } };
-        advance_cursor({ 0.0f, height + kContentPadding });
-
-        return hovered && g_frame.justPressed;
+        return g_frame.lastButtonBounds;
     }
 
-    EditBoxResult edit_box(std::string& text, Vec2 size, std::size_t max_chars, bool multiline) noexcept
+    export float line_height() noexcept
+    {
+        try { ensure_resources(); }
+        catch (...) { return 16.0f; }
+        return line_advance_amount(kFontScale);
+    }
+
+    export float glyph_width() noexcept
+    {
+        try { ensure_resources(); }
+        catch (...) { return 8.0f; }
+        return space_advance(kFontScale);
+    }
+
+    export void label(std::string_view text) noexcept
+    {
+        if (!g_frame.insideWindow || !g_frame.ctx) return;
+
+        draw_text_line(text, g_frame.cursor.x, g_frame.cursor.y, kFontScale);
+        advance_cursor({ 0.0f, line_advance_amount(kFontScale) });
+    }
+
+    export EditBoxResult edit_box(std::string& text, Vec2 size, std::size_t max_chars, bool multiline) noexcept
     {
         EditBoxResult result{};
         if (!g_frame.insideWindow || !g_frame.ctx) return result;
@@ -585,16 +557,8 @@ namespace almondnamespace::gui
 
         if (g_frame.justPressed)
         {
-            if (hovered)
-            {
-                g_activeWidget = id;
-                g_frame.caretTimer = 0.0f;
-                g_frame.caretVisible = true;
-            }
-            else if (g_activeWidget == id)
-            {
-                g_activeWidget = nullptr;
-            }
+            if (hovered) { g_activeWidget = id; g_frame.caretTimer = 0.0f; g_frame.caretVisible = true; }
+            else if (g_activeWidget == id) { g_activeWidget = nullptr; }
         }
 
         if (g_frame.justReleased && !hovered && g_activeWidget == id)
@@ -614,8 +578,7 @@ namespace almondnamespace::gui
         if (multiline) draw_wrapped_text(text, textX, textY, contentWidth, kFontScale);
         else           draw_text_line(text, textX, textY, kFontScale);
 
-        const std::size_t limit =
-            (max_chars == 0) ? std::numeric_limits<std::size_t>::max() : max_chars;
+        const std::size_t limit = (max_chars == 0) ? std::numeric_limits<std::size_t>::max() : max_chars;
 
         if (active)
         {
@@ -634,15 +597,11 @@ namespace almondnamespace::gui
                             {
                                 if (text.size() < limit) { text.push_back('\n'); result.changed = true; }
                             }
-                            else
-                            {
-                                result.submitted = true;
-                            }
+                            else { result.submitted = true; }
                             continue;
                         }
 
                         if (static_cast<unsigned char>(ch) < 32) continue;
-
                         if (text.size() < limit) { text.push_back(ch); result.changed = true; }
                     }
                     break;
@@ -663,10 +622,7 @@ namespace almondnamespace::gui
                         {
                             if (text.size() < limit) { text.push_back('\n'); result.changed = true; }
                         }
-                        else
-                        {
-                            result.submitted = true;
-                        }
+                        else { result.submitted = true; }
                     }
                     break;
 
@@ -694,7 +650,7 @@ namespace almondnamespace::gui
         return result;
     }
 
-    void text_box(std::string_view text, Vec2 size) noexcept
+    export void text_box(std::string_view text, Vec2 size) noexcept
     {
         if (!g_frame.insideWindow || !g_frame.ctx) return;
 
@@ -710,10 +666,7 @@ namespace almondnamespace::gui
             const float estimated = measure_text_width(text, kFontScale) + 2.0f * kBoxInnerPadding;
             width = (std::max)(minWidth, estimated);
         }
-        else
-        {
-            width = (std::max)(width, minWidth);
-        }
+        else { width = (std::max)(width, minWidth); }
 
         const float contentWidth = (std::max)(1.0f, width - 2.0f * kBoxInnerPadding);
 
@@ -723,10 +676,7 @@ namespace almondnamespace::gui
             const float textHeight = measure_wrapped_text_height(text, contentWidth, kFontScale);
             height = textHeight + 2.0f * kBoxInnerPadding;
         }
-        else
-        {
-            height = (std::max)(height, baseHeight + 2.0f * kBoxInnerPadding);
-        }
+        else { height = (std::max)(height, baseHeight + 2.0f * kBoxInnerPadding); }
 
         draw_sprite(g_resources.panelBackground, pos.x, pos.y, width, height);
         draw_wrapped_text(text, pos.x + kBoxInnerPadding, pos.y + kBoxInnerPadding, contentWidth, kFontScale);
@@ -734,26 +684,18 @@ namespace almondnamespace::gui
         advance_cursor({ 0.0f, height + kContentPadding });
     }
 
-    ConsoleWindowResult console_window(const ConsoleWindowOptions& options) noexcept
+    export ConsoleWindowResult console_window(const ConsoleWindowOptions& options) noexcept
     {
         ConsoleWindowResult result{};
         if (!g_frame.ctx) return result;
 
         begin_window(options.title, options.position, options.size);
-        if (!g_frame.insideWindow || !g_frame.ctx)
-        {
-            end_window();
-            return result;
-        }
+        if (!g_frame.insideWindow || !g_frame.ctx) { end_window(); return result; }
 
         ensure_resources();
 
-        const float availableWidth =
-            (std::max)(0.0f, options.size.x - 2.0f * kContentPadding);
-
-        const float logHeight =
-            (std::max)(0.0f, options.size.y - 3.0f * kContentPadding - base_line_height(kFontScale));
-
+        const float availableWidth = (std::max)(0.0f, options.size.x - 2.0f * kContentPadding);
+        const float logHeight = (std::max)(0.0f, options.size.y - 3.0f * kContentPadding - base_line_height(kFontScale));
         const Vec2 logPos = g_frame.cursor;
 
         if (availableWidth > 0.0f && logHeight > 0.0f)
@@ -775,7 +717,6 @@ namespace almondnamespace::gui
 
                 const float paragraphGap = (std::max)(0.0f, line_advance_amount(kFontScale) - base_line_height(kFontScale));
                 penY += drawn + paragraphGap;
-
                 if (penY > maxY) break;
             }
         }
@@ -792,32 +733,4 @@ namespace almondnamespace::gui
         end_window();
         return result;
     }
-
-    void label(std::string_view text) noexcept
-    {
-        if (!g_frame.insideWindow || !g_frame.ctx) return;
-
-        draw_text_line(text, g_frame.cursor.x, g_frame.cursor.y, kFontScale);
-        advance_cursor({ 0.0f, line_advance_amount(kFontScale) });
-    }
-
-    float line_height() noexcept
-    {
-        try { ensure_resources(); }
-        catch (...) { return 16.0f; }
-        return line_advance_amount(kFontScale);
-    }
-
-    float glyph_width() noexcept
-    {
-        try { ensure_resources(); }
-        catch (...) { return 8.0f; }
-        return space_advance(kFontScale);
-    }
-
-    std::optional<WidgetBounds> last_button_bounds() noexcept
-    {
-        return g_frame.lastButtonBounds;
-    }
-
-} // namespace almondnamespace::gui
+}

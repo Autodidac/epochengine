@@ -1,25 +1,26 @@
 module;
-
+#include "aengine.config.hpp" 		// for ALMOND_USING_SDL
 //#include "aplatform.hpp"
 //#include "aengineconfig.hpp"
 //#include "aatlasmanager.hpp"
 //#include "aatlastexture.hpp"
 //#include "aimageloader.hpp"
 //#include "atexture.hpp"
-export module aengine.sdl.textures;
+export module acontext.sdl.textures;
 
 import aengine.platform;
-import aengine.config;
+//import aengine.config;
 
 #if defined(ALMOND_USING_SDL)
 
 import aatlas.manager;
 import aatlas.texture;
-import aimageloader;
+import aimage.loader;
 import atexture;
+import aspritehandle;
 
 import acontext.sdl.renderer;
-import asdlstate;
+import acontext.sdl.state;
 
 import <SDL3/SDL.h>;
 import <algorithm>;

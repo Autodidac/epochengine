@@ -1,5 +1,3 @@
-module; // REQUIRED global module fragment (macros + platform headers live here)
-
 // ============================================================
 // Almond Entry Point / Platform Configuration
 // ============================================================
@@ -31,10 +29,10 @@ module; // REQUIRED global module fragment (macros + platform headers live here)
 // Engine Context Config
 // ------------------------------------------------------------
 
-#define ALMOND_USING_SDL 1
+//#define ALMOND_USING_OPENGL 1
+//#define ALMOND_USING_SDL 1
 // #define ALMOND_USING_RAYLIB 1
 #define ALMOND_USING_SOFTWARE_RENDERER 1
-#define ALMOND_USING_OPENGL 1
 
 #if defined(ALMOND_FORCE_DISABLE_SDL)
 #undef ALMOND_USING_SDL
@@ -179,8 +177,4 @@ typedef HGLRC(WINAPI* PFNWGLCREATECONTEXTATTRIBSARBPROC)(HDC, HGLRC, const int*)
 #endif
 #endif
 
-// ============================================================
-// Named module (empty export surface by design)
-// ============================================================
 
-export module aengine.config;
