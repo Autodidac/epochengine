@@ -213,3 +213,190 @@ export namespace almondnamespace
         void mark_used(u32 x, u32 y, u32 w, u32 h);
     };
 }
+
+namespace almondnamespace
+{
+    inline std::optional<AtlasEntry> TextureAtlas::add_entry(const std::string& id, const Texture& tex)
+    {
+        if (tex.width == 0 || tex.height == 0 || tex.pixels.empty()) {
+            std::cerr << "[Atlas] Rejected empty texture '" << id << "'\n";
+            return std::nullopt;
+        }
+
+        std::unique_lock<std::shared_mutex> lock(entriesMutex);
+
+        if (lookup.contains(id)) {
+            std::cerr << "[Atlas] Duplicate ID: '" << id << "'\n";
+            return std::nullopt;
+        }
+
+        auto pos = try_pack(tex.width, tex.height);
+        if (!pos) {
+            std::cerr << "[Atlas] Failed to pack '" << id << "'\n";
+            return std::nullopt;
+        }
+
+        auto [x, y] = *pos;
+        const u32 stride = width * 4;
+
+        for (u32 row = 0; row < tex.height; ++row) {
+            u8* dst = pixel_data.data() + ((y + row) * stride) + (x * 4);
+            const u8* src = tex.pixels.data() + (row * tex.width * 4);
+            std::copy_n(src, tex.width * 4, dst);
+        }
+
+        AtlasRegion region{
+            .u1 = static_cast<float>(x) / width,
+            .v1 = static_cast<float>(height - (y + tex.height)) / height,
+            .u2 = static_cast<float>(x + tex.width) / width,
+            .v2 = static_cast<float>(height - y) / height,
+            .x = x,
+            .y = y,
+            .width = tex.width,
+            .height = tex.height
+        };
+
+        int entryIndex = static_cast<int>(entries.size());
+        AtlasEntry entry{ entryIndex, id, region, tex.pixels, tex.width, tex.height };
+        entries.push_back(entry);
+        lookup.emplace(id, region);
+        ++version;
+#if defined(DEBUG_TEXTURE_RENDERING_VERBOSE)
+        std::cerr << "[Atlas] Added '" << id << "' at (" << x << ", " << y
+            << ") EntryIndex=" << entryIndex << "\n";
+#endif
+        return entry;
+    }
+
+    inline std::optional<AtlasEntry> TextureAtlas::add_slice_entry(
+        const std::string& id,
+        int x,
+        int y,
+        int w,
+        int h)
+    {
+        std::unique_lock<std::shared_mutex> lock(entriesMutex);
+
+        if (w <= 0 || h <= 0) {
+            std::cerr << "[Atlas] Invalid slice size for '" << id << "'\n";
+            return std::nullopt;
+        }
+
+        if (lookup.contains(id)) {
+            std::cerr << "[Atlas] Duplicate ID: '" << id << "'\n";
+            return std::nullopt;
+        }
+
+        AtlasRegion region{
+            .u1 = static_cast<float>(x) / static_cast<float>(width),
+            .v1 = static_cast<float>(height - (y + h)) / static_cast<float>(height),
+            .u2 = static_cast<float>(x + w) / static_cast<float>(width),
+            .v2 = static_cast<float>(height - y) / static_cast<float>(height),
+            .x = static_cast<u32>(x),
+            .y = static_cast<u32>(y),
+            .width = static_cast<u32>(w),
+            .height = static_cast<u32>(h)
+        };
+
+        const int entryIndex = static_cast<int>(entries.size());
+        AtlasEntry entry{
+            entryIndex,
+            id,
+            region,
+            {},
+            static_cast<u32>(w),
+            static_cast<u32>(h)
+        };
+
+        entries.emplace_back(entry);
+        lookup.emplace(id, region);
+        ++version;
+
+#if defined(DEBUG_TEXTURE_RENDERING_VERBOSE)
+        std::cerr << "[Atlas] Added slice entry '" << id << "' at ("
+            << x << ", " << y << ") size [" << w << "x" << h << "] "
+            << "EntryIndex=" << entryIndex << "\n";
+#endif
+        return entry;
+    }
+
+    inline std::optional<AtlasRegion> TextureAtlas::get_region(const std::string& id) const
+    {
+        std::shared_lock<std::shared_mutex> lock(entriesMutex);
+        auto it = lookup.find(id);
+        return (it != lookup.end()) ? std::optional{ it->second } : std::nullopt;
+    }
+
+    inline void TextureAtlas::rebuild_pixels() const
+    {
+        std::unique_lock<std::shared_mutex> lock(entriesMutex);
+        const size_t size = static_cast<size_t>(width) * height * 4;
+        if (pixel_data.size() != size) {
+            pixel_data.resize(size);
+        }
+
+        std::fill(pixel_data.begin(), pixel_data.end(), 0);
+        const size_t stride = static_cast<size_t>(width) * 4;
+
+        for (const auto& entry : entries) {
+            if (entry.pixels.empty()) {
+                continue;
+            }
+
+            const size_t requiredBytes = static_cast<size_t>(entry.texWidth)
+                * static_cast<size_t>(entry.texHeight) * 4;
+            if (entry.pixels.size() < requiredBytes) {
+                std::cerr << "[Atlas] Skipping rebuild for entry '" << entry.name
+                    << "' due to insufficient pixel data (have "
+                    << entry.pixels.size() << ", need " << requiredBytes << ")\n";
+                continue;
+            }
+
+            for (u32 row = 0; row < entry.texHeight; ++row) {
+                auto dst = pixel_data.data()
+                    + ((entry.region.y + row) * stride)
+                    + (entry.region.x * 4);
+                auto src = entry.pixels.data() + (static_cast<size_t>(row) * entry.texWidth * 4);
+                std::copy_n(src, static_cast<size_t>(entry.texWidth) * 4, dst);
+            }
+        }
+
+        ++version;
+    }
+
+    inline std::optional<std::pair<u32, u32>> TextureAtlas::try_pack(u32 w, u32 h)
+    {
+        for (u32 y = 0; y + h <= height; ++y) {
+            for (u32 x = 0; x + w <= width; ++x) {
+                if (can_place(x, y, w, h)) {
+                    mark_used(x, y, w, h);
+                    return { std::pair{ x, y } };
+                }
+            }
+        }
+
+        return std::nullopt;
+    }
+
+    inline bool TextureAtlas::can_place(u32 x, u32 y, u32 w, u32 h) const
+    {
+        for (u32 dy = 0; dy < h; ++dy) {
+            for (u32 dx = 0; dx < w; ++dx) {
+                if (occupancy[y + dy][x + dx]) {
+                    return false;
+                }
+            }
+        }
+
+        return true;
+    }
+
+    inline void TextureAtlas::mark_used(u32 x, u32 y, u32 w, u32 h)
+    {
+        for (u32 dy = 0; dy < h; ++dy) {
+            for (u32 dx = 0; dx < w; ++dx) {
+                occupancy[y + dy][x + dx] = true;
+            }
+        }
+    }
+}
