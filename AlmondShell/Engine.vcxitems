@@ -21,6 +21,7 @@
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="$(MSBuildThisFileDirectory)include\aengine.config.hpp" />
+    <ClInclude Include="$(MSBuildThisFileDirectory)include\aengine.hpp" />
     <ClInclude Include="$(MSBuildThisFileDirectory)include\aframework.hpp" />
     <ClInclude Include="$(MSBuildThisFileDirectory)src\pch.h" />
     <ClInclude Include="$(MSBuildThisFileDirectory)src\resource.h" />
@@ -71,7 +72,6 @@
     <ClCompile Include="$(MSBuildThisFileDirectory)modules\aengine.cli.ixx" />
     <ClCompile Include="$(MSBuildThisFileDirectory)modules\aengine.engine_components.ixx" />
     <ClCompile Include="$(MSBuildThisFileDirectory)modules\aengine.input.ixx" />
-    <ClCompile Include="$(MSBuildThisFileDirectory)modules\aengine.hpp" />
     <ClCompile Include="$(MSBuildThisFileDirectory)modules\aengine.platform.ixx" />
     <ClCompile Include="$(MSBuildThisFileDirectory)modules\aengine.context.cppm">
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">false</ExcludedFromBuild>
@@ -195,14 +195,13 @@
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">true</ExcludedFromBuild>
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|x64'">true</ExcludedFromBuild>
     </ClCompile>
-    <ClCompile Include="$(MSBuildThisFileDirectory)src modules\aengine.cpp" />
     <ClCompile Include="$(MSBuildThisFileDirectory)src modules\aengine.gui.cppm" />
     <ClCompile Include="$(MSBuildThisFileDirectory)src modules\aengine.scripting.compiler.cppm" />
     <ClCompile Include="$(MSBuildThisFileDirectory)src modules\afilewatch.cppm" />
     <ClCompile Include="$(MSBuildThisFileDirectory)src modules\afont.renderer.cppm" />
-    <ClCompile Include="$(MSBuildThisFileDirectory)src modules\almondshell.cppm" />
     <ClCompile Include="$(MSBuildThisFileDirectory)src modules\aopenglplatform_win.cppm" />
     <ClCompile Include="$(MSBuildThisFileDirectory)src\acontextmultiplexer_linux.cpp" />
+    <ClCompile Include="$(MSBuildThisFileDirectory)src\aengine.cpp" />
     <ClCompile Include="$(MSBuildThisFileDirectory)src\aopenglplatform_linux.cpp" />
     <ClCompile Include="$(MSBuildThisFileDirectory)src\scripts\editor_launcher.ascript.cpp">
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">true</ExcludedFromBuild>

@@ -1,32 +1,26 @@
-﻿/**************************************************************
- *   █████╗ ██╗     ███╗   ███╗   ███╗   ██╗    ██╗██████╗    *
- *  ██╔══██╗██║     ████╗ ████║ ██╔═══██╗████╗  ██║██╔══██╗   *
- *  ███████║██║     ██╔████╔██║ ██║   ██║██╔██╗ ██║██║  ██║   *
- *  ██╔══██║██║     ██║╚██╔╝██║ ██║   ██║██║╚██╗██║██║  ██║   *
- *  ██║  ██║███████╗██║ ╚═╝ ██║ ╚██████╔╝██║ ╚████║██████╔╝   *
- *  ╚═╝  ╚═╝╚══════╝╚═╝     ╚═╝  ╚═════╝ ╚═╝  ╚═══╝╚═════╝    *
- *                                                            *
- *   This file is part of the Almond Project.                 *
- *   AlmondShell - Modular C++ Framework                      *
- *                                                            *
- *   SPDX-License-Identifier: LicenseRef-MIT-NoSell           *
- *                                                            *
- *   Provided "AS IS", without warranty of any kind.          *
- *   Use permitted for Non-Commercial Purposes ONLY,          *
- *   without prior commercial licensing agreement.            *
- *                                                            *
- *   Redistribution Allowed with This Notice and              *
- *   LICENSE file. No obligation to disclose modifications.   *
- *                                                            *
- *   See LICENSE file for full terms.                         *
- *                                                            *
- **************************************************************/
-// aengine.hpp
-#pragma once
 
-#include "aplatform.hpp"
-// leave this here, avoid auto sorting incorrect order, platform always comes first
-#include "aengine.config.hpp"
+#include <wtypes.h>
+#include <cstdint>
+
+//import aengine.platform;
+//import aengine.config;
+#include "aengine.config.hpp" 		// for ALMOND_USING_SDL
+
+//export import aengine.platform;
+//export import aengine.engine_components;
+//export import aengine.renderers;
+//export import aengine.menu;
+//export import aengine.input;
+//export import aengine.aallocator;
+//export import aengine.aatlasmanager;
+//export import aengine.aatlastexture;
+//export import aengine.aimageloader;
+//export import aengine.aimageatlaswriter;
+//export import aengine.aimagewriter;
+//export import aengine.atexture;
+//export import aengine.autilities;
+
+//#include "aengine.hpp"          // DEFAULT_WINDOW_WIDTH, DEFAULT_WINDOW_HEIGHT
 
 // Window dimensions
 //inline constexpr int DEFAULT_WINDOW_WIDTH = 1024;
@@ -54,7 +48,7 @@ namespace almondnamespace::core
     ATOM RegisterWindowClass(HINSTANCE hInstance, LPCWSTR window_name, LPCWSTR child_name);
     void PrintLastWin32Error(const wchar_t* lpszFunction);
     void ShowConsole();
-    void RunEngine();
+    extern void RunEngine();
 }
 
 #endif

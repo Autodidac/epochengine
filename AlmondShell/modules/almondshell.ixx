@@ -4,8 +4,6 @@ module;
 
 export module almondshell;
 
-
-
 //export import aengine;
 // export import other public-facing modules if you want:
 // export import aengine.gui;
@@ -25,3 +23,12 @@ import acontext.opengl.context;
 
 // application modules
 import aapplicationmodule;
+
+
+// this is required for module linkage
+export namespace almondnamespace::core
+{
+
+
+	// You can add global functions, types, variables, etc. here if needed.
+}
