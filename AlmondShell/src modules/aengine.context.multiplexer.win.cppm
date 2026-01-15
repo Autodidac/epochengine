@@ -177,16 +177,15 @@ namespace almondnamespace::core
     //inline  DragState s_drag{};
 
 
-    //// Exported ABI surface:
-    //std::unordered_map<HWND, std::thread>& almondnamespace::core::Threads() noexcept
-    //{
-    //    return s_threads;
-    //}
+    std::unordered_map<HWND, std::thread>& Threads() noexcept
+    {
+        return gThreads;
+    }
 
-    //almondnamespace::core::DragState& almondnamespace::core::Drag() noexcept
-    //{
-    //    return s_drag;
-    //}
+    DragState& Drag() noexcept
+    {
+        return gDragState;
+    }
 
     WindowData* MultiContextManager::findWindowByHWND(HWND hwnd) 
     {
