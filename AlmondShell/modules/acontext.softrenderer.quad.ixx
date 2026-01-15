@@ -26,6 +26,8 @@ module;
 #include <algorithm>
 #include <cstdint>
 
+#include "aengine.config.hpp"       // for ALMOND_USING_SOFTWARE_RENDERER
+
 export module acontext.softrenderer.quad;
 
 import acontext.softrenderer.textures; // BackendData, Texture, TexturePtr, create_texture
@@ -41,7 +43,8 @@ export namespace almondnamespace::anativecontext
         const Texture& tex,
         int dstX, int dstY, int dstW, int dstH)
     {
-        if (backend.srState.pixels.empty()) return;
+        // Fix: Use backend.srState.framebuffer.pixels instead of backend.srState.pixels
+        if (backend.srState.framebuffer.empty()) return;
 
         const int fbW = backend.srState.width;
         const int fbH = backend.srState.height;
@@ -63,7 +66,7 @@ export namespace almondnamespace::anativecontext
                 const int srcX = static_cast<int>(u * static_cast<float>(tex.width));
 
                 const std::uint32_t src = tex.sample(srcX, srcY);
-                backend.srState.pixels[fbY * fbW + fbX] = src;
+                backend.srState.framebuffer[fbY * fbW + fbX] = src;
             }
         }
     }

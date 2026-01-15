@@ -486,18 +486,21 @@ namespace almondnamespace::core
                     ctxs.reserve(static_cast<size_t>(count));
                     ctxs.push_back(state.master);
 
-                    auto ensure_duplicate = [&](size_t index) -> std::shared_ptr<context::Context> {
-                        if (index < state.duplicates.size()) {
-                            auto& candidate = state.duplicates[index];
-                            if (candidate && candidate->initialize) {
+                    auto ensure_duplicate =
+                        [&state](size_t index) -> std::shared_ptr<context::Context>
+                        {
+                            if (index < state.duplicates.size()) {
+                                auto& candidate = state.duplicates[index];
+                                if (candidate && candidate->initialize) {
+                                    return candidate;
+                                }
+                                candidate = CloneContext(*state.master);
                                 return candidate;
                             }
-                            candidate = CloneContext(*state.master);
-                            return candidate;
-                        }
-                        auto dup = CloneContext(*state.master);
-                        state.duplicates.push_back(dup);
-                        return dup;
+
+                            auto dup = CloneContext(*state.master);
+                            state.duplicates.push_back(dup);
+                            return dup;
                         };
 
                     while (ctxs.size() < static_cast<size_t>(count)) {

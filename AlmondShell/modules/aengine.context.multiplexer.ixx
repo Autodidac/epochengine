@@ -57,11 +57,11 @@ import aengine.core.context;         // almondnamespace::context::Context
 export namespace almondnamespace::core
 {
     // Keep legacy naming: "core::Context" refers to the real Context type.
-    export using Context = almondnamespace::context::Context;
+    using Context = almondnamespace::context::Context;
 
 #if defined(_WIN32)
 
-    export struct DragState
+    struct DragState
     {
         bool dragging = false;
         POINT lastMousePos{};
@@ -69,12 +69,12 @@ export namespace almondnamespace::core
         HWND originalParent = nullptr;
     };
 
-    export std::unordered_map<HWND, std::thread>& Threads() noexcept;
-    export DragState& Drag() noexcept;
+    std::unordered_map<HWND, std::thread>& Threads() noexcept;
+    DragState& Drag() noexcept;
 
-    export void MakeDockable(HWND hwnd, HWND parent);
+    void MakeDockable(HWND hwnd, HWND parent);
 
-    export class MultiContextManager
+    class MultiContextManager
     {
     public:
         static void ShowConsole();

@@ -527,5 +527,8 @@
     <ClCompile Include="$(MSBuildThisFileDirectory)modules\aengine.bindings.ixx">
       <Filter>Module Files\ixx\utilities</Filter>
     </ClCompile>
+    <ClCompile Include="$(MSBuildThisFileDirectory)src modules\almondshell.cppm">
+      <Filter>Module Files\cppm</Filter>
+    </ClCompile>
   </ItemGroup>
 </Project>

@@ -1,4 +1,4 @@
-module;
+﻿module;
 
 #if defined(_WIN32) && !defined(ALMOND_MAIN_HEADLESS)
 #   include <windows.h> // HWND/HDC/HGLRC
@@ -173,6 +173,13 @@ export namespace almondnamespace::core
             return add_model ? add_model(name, path) : -1;
         }
 
+#if defined(_WIN32) && !defined(ALMOND_MAIN_HEADLESS)
+        // Expose HWND, HDC, HGLRC for platform-specific code needing direct access.
+        HWND  get_hwnd() const noexcept { return hwnd; }
+        HDC   get_hdc() const noexcept { return hdc; }
+        HGLRC get_hglrc() const noexcept { return hglrc; }
+#endif
+
         // -----------------------------------------------------------------
         // Legacy public pointer:
         // Many game/sample modules expect to read ctx->windowData.
@@ -180,7 +187,6 @@ export namespace almondnamespace::core
         // -----------------------------------------------------------------
         WindowData* windowData = nullptr;
 
-    private:
         void* native_window = nullptr;
         void* native_drawable = nullptr;
         void* native_gl_context = nullptr;

@@ -100,9 +100,13 @@ namespace almondnamespace::anativecontext
             return nullptr;
     }
 #endif
+}
+
+export namespace almondnamespace::anativecontext
+{
 
     // Exported API (what your engine calls)
-    export bool softrenderer_initialize(
+    bool softrenderer_initialize(
         std::shared_ptr<core::Context> ctx,
 #if defined(_WIN32)
         HWND parentWnd = nullptr,
@@ -177,7 +181,7 @@ namespace almondnamespace::anativecontext
         return true;
     }
 
-    static void softrenderer_draw_quad(SoftRendState& softstate)
+    void softrenderer_draw_quad(SoftRendState& softstate)
     {
         if (atlasmanager::atlas_vector.empty()) return;
 
@@ -206,7 +210,134 @@ namespace almondnamespace::anativecontext
         }
     }
 
-    export bool softrenderer_process(core::Context& ctx, core::CommandQueue& queue)
+    inline void draw_sprite(SpriteHandle handle,
+        std::span<const TextureAtlas* const> atlases,
+        float x, float y, float width, float height) noexcept
+    {
+        if (!handle.is_valid()) {
+            std::cerr << "[Software_DrawSprite] Invalid sprite handle.\n";
+            return;
+        }
+
+        const int atlasIdx = static_cast<int>(handle.atlasIndex);
+        const int localIdx = static_cast<int>(handle.localIndex);
+
+        if (atlasIdx < 0 || atlasIdx >= static_cast<int>(atlases.size())) {
+            std::cerr << "[Software_DrawSprite] Atlas index out of range: " << atlasIdx << "\n";
+            return;
+        }
+
+        const TextureAtlas* atlas = atlases[atlasIdx];
+        if (!atlas) {
+            std::cerr << "[Software_DrawSprite] Null atlas pointer for index " << atlasIdx << "\n";
+            return;
+        }
+
+        AtlasRegion region{};
+        if (!atlas->try_get_entry_info(localIdx, region)) {
+            std::cerr << "[Software_DrawSprite] Sprite index out of range: " << localIdx << "\n";
+            return;
+        }
+
+        if (atlas->pixel_data.empty()) {
+            const_cast<TextureAtlas*>(atlas)->rebuild_pixels();
+        }
+
+        auto& sr = s_softrendererstate;
+        if (sr.framebuffer.empty() || sr.width <= 0 || sr.height <= 0) {
+            return;
+        }
+
+        float drawX = x;
+        float drawY = y;
+        float drawWidth = width;
+        float drawHeight = height;
+
+        const bool widthNormalized = drawWidth > 0.f && drawWidth <= 1.f;
+        const bool heightNormalized = drawHeight > 0.f && drawHeight <= 1.f;
+
+        if (widthNormalized) {
+            if (drawX >= 0.f && drawX <= 1.f)
+                drawX *= static_cast<float>(sr.width);
+            drawWidth = (std::max)(drawWidth * static_cast<float>(sr.width), 1.0f);
+        }
+        if (heightNormalized) {
+            if (drawY >= 0.f && drawY <= 1.f)
+                drawY *= static_cast<float>(sr.height);
+            drawHeight = (std::max)(drawHeight * static_cast<float>(sr.height), 1.0f);
+        }
+
+        if (drawWidth <= 0.f) drawWidth = static_cast<float>(region.width);
+        if (drawHeight <= 0.f) drawHeight = static_cast<float>(region.height);
+
+        const int destX = static_cast<int>(std::floor(drawX));
+        const int destY = static_cast<int>(std::floor(drawY));
+        const int destW = (std::max)(1, static_cast<int>(std::lround(drawWidth)));
+        const int destH = (std::max)(1, static_cast<int>(std::lround(drawHeight)));
+
+        const int clipX0 = (std::max)(0, destX);
+        const int clipY0 = (std::max)(0, destY);
+        const int clipX1 = (std::min)(sr.width, destX + destW);
+        const int clipY1 = (std::min)(sr.height, destY + destH);
+        if (clipX0 >= clipX1 || clipY0 >= clipY1) {
+            return;
+        }
+
+        const int srcW = static_cast<int>((std::max)(1u, region.width));
+        const int srcH = static_cast<int>((std::max)(1u, region.height));
+        const float invDestW = 1.0f / static_cast<float>(destW);
+        const float invDestH = 1.0f / static_cast<float>(destH);
+
+        for (int py = clipY0; py < clipY1; ++py) {
+            const float v = (py - destY) * invDestH;
+            const int sampleY = std::clamp(static_cast<int>(std::floor(v * srcH)), 0, srcH - 1);
+            for (int px = clipX0; px < clipX1; ++px) {
+                const float u = (px - destX) * invDestW;
+                const int sampleX = std::clamp(static_cast<int>(std::floor(u * srcW)), 0, srcW - 1);
+
+                const int atlasX = static_cast<int>(region.x) + sampleX;
+                const int atlasY = static_cast<int>(region.y) + sampleY;
+                const size_t srcIndex =
+                    (static_cast<size_t>(atlasY) * atlas->width + static_cast<size_t>(atlasX)) * 4;
+
+                if (srcIndex + 3 >= atlas->pixel_data.size()) continue;
+
+                const uint8_t* src = atlas->pixel_data.data() + srcIndex;
+                const uint8_t srcA = src[3];
+                if (srcA == 0)
+                    continue;
+
+                const size_t dstIndex = static_cast<size_t>(py) * static_cast<size_t>(s_softrendererstate.width)
+                    + static_cast<size_t>(px);
+
+                const uint32_t dst = s_softrendererstate.framebuffer[dstIndex];
+
+                const float alpha = static_cast<float>(srcA) / 255.0f;
+                const float invAlpha = 1.0f - alpha;
+
+                const uint8_t dstR = static_cast<uint8_t>((dst >> 16) & 0xFF);
+                const uint8_t dstG = static_cast<uint8_t>((dst >> 8) & 0xFF);
+                const uint8_t dstB = static_cast<uint8_t>(dst & 0xFF);
+                const uint8_t dstA = static_cast<uint8_t>((dst >> 24) & 0xFF);
+
+                const float outR = std::clamp(src[0] * alpha + dstR * invAlpha, 0.0f, 255.0f);
+                const float outG = std::clamp(src[1] * alpha + dstG * invAlpha, 0.0f, 255.0f);
+                const float outB = std::clamp(src[2] * alpha + dstB * invAlpha, 0.0f, 255.0f);
+                const float dstAlpha = static_cast<float>(dstA) / 255.0f;
+                const float outAlphaNorm = std::clamp(alpha + dstAlpha * invAlpha, 0.0f, 1.0f);
+                const float outA = outAlphaNorm * 255.0f;
+
+                const uint32_t packed = (static_cast<uint32_t>(outA + 0.5f) << 24)
+                    | (static_cast<uint32_t>(outR + 0.5f) << 16)
+                    | (static_cast<uint32_t>(outG + 0.5f) << 8)
+                    | static_cast<uint32_t>(outB + 0.5f);
+
+                s_softrendererstate.framebuffer[dstIndex] = packed;
+            }
+        }
+    }
+
+    bool softrenderer_process(core::Context& ctx, core::CommandQueue& queue)
     {
         auto& sr = s_softrendererstate;
 
@@ -249,7 +380,7 @@ namespace almondnamespace::anativecontext
         return true;
     }
 
-    export void softrenderer_cleanup(std::shared_ptr<almondnamespace::core::Context>& /*ctx*/)
+    void softrenderer_cleanup(std::shared_ptr<almondnamespace::core::Context>& /*ctx*/)
     {
         auto& sr = s_softrendererstate;
 
@@ -266,19 +397,19 @@ namespace almondnamespace::anativecontext
         std::cout << "[SoftRenderer] Cleanup complete\n";
     }
 
-    export int get_width() { return s_softrendererstate.width; }
-    export int get_height() { return s_softrendererstate.height; }
+    int get_width() { return s_softrendererstate.width; }
+    int get_height() { return s_softrendererstate.height; }
 
 #else
     // If you build without ALMOND_USING_SOFTWARE_RENDERER, keep linkable stubs.
-    export bool softrenderer_initialize(std::shared_ptr<core::Context>, void*, unsigned, unsigned, std::function<void(int, int)>)
+    bool softrenderer_initialize(std::shared_ptr<core::Context>, void*, unsigned, unsigned, std::function<void(int, int)>)
     {
         std::cerr << "[SoftRenderer] Not built (ALMOND_USING_SOFTWARE_RENDERER not defined)\n";
         return false;
     }
-    export bool softrenderer_process(core::Context&, core::CommandQueue&) { return false; }
-    export void softrenderer_cleanup(std::shared_ptr<almondnamespace::core::Context>&) {}
-    export int get_width() { return 0; }
-    export int get_height() { return 0; }
+    bool softrenderer_process(core::Context&, core::CommandQueue&) { return false; }
+    void softrenderer_cleanup(std::shared_ptr<almondnamespace::core::Context>&) {}
+    int get_width() { return 0; }
+    int get_height() { return 0; }
 #endif
 } // namespace almondnamespace::anativecontext

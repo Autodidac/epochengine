@@ -74,10 +74,10 @@
     <ClCompile Include="$(MSBuildThisFileDirectory)modules\aengine.hpp" />
     <ClCompile Include="$(MSBuildThisFileDirectory)modules\aengine.platform.ixx" />
     <ClCompile Include="$(MSBuildThisFileDirectory)modules\aengine.context.cppm">
-      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">true</ExcludedFromBuild>
-      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">true</ExcludedFromBuild>
-      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">true</ExcludedFromBuild>
-      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|x64'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">false</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">false</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">false</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|x64'">false</ExcludedFromBuild>
     </ClCompile>
     <ClCompile Include="$(MSBuildThisFileDirectory)modules\aengine.context.commandqueue.ixx" />
     <ClCompile Include="$(MSBuildThisFileDirectory)modules\aengine.context.control.ixx" />
@@ -200,6 +200,7 @@
     <ClCompile Include="$(MSBuildThisFileDirectory)src modules\aengine.scripting.compiler.cppm" />
     <ClCompile Include="$(MSBuildThisFileDirectory)src modules\afilewatch.cppm" />
     <ClCompile Include="$(MSBuildThisFileDirectory)src modules\afont.renderer.cppm" />
+    <ClCompile Include="$(MSBuildThisFileDirectory)src modules\almondshell.cppm" />
     <ClCompile Include="$(MSBuildThisFileDirectory)src modules\aopenglplatform_win.cppm" />
     <ClCompile Include="$(MSBuildThisFileDirectory)src\acontextmultiplexer_linux.cpp" />
     <ClCompile Include="$(MSBuildThisFileDirectory)src\aopenglplatform_linux.cpp" />

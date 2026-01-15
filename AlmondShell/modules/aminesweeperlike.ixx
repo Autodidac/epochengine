@@ -86,7 +86,7 @@ export namespace almondnamespace::minesweeperlike
         }
     };
 
-    struct MinesweeperLikeScene : public scene::Scene
+    export struct MinesweeperLikeScene : public scene::Scene
     {
         MinesweeperLikeScene(logger::Logger* L = nullptr, timing::Timer* C = nullptr)
             : Scene(L, C) {}

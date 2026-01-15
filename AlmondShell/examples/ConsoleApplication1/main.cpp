@@ -28,6 +28,7 @@
 #include <string_view>
 #include <thread>
 #include <vector>
+#include "../../modules/aengine.hpp"
 
 import almondshell; // import the module
 
@@ -36,9 +37,11 @@ import almondshell; // import the module
 //void test_linkage() {
 //    almondshell::opengl::s_state.shader = 42;  // Or just read a member
 //}
+inline auto sanity() {
+    return almondnamespace::core::RunEngine();
 
 //static void RunEngine() {
-//    // 🔄 **Cleanup Restart Script on Restart & Old Files on Update**
+    // 🔄 **Cleanup Restart Script on Restart & Old Files on Update**
 //#ifdef LEAVE_NO_FILES_ALWAYS_REDOWNLOAD
 //#if defined(_WIN32)
 //    system("del /F /Q replace_updater.bat >nul 2>&1");
@@ -69,7 +72,7 @@ import almondshell; // import the module
     // Lets Begin
     //TaskScheduler scheduler;
 
- //   std::cout << "[Engine] Starting up...\n";
+    std::cout << "[Engine] Starting up...\n";
 
 
 
@@ -103,6 +106,6 @@ import almondshell; // import the module
         if (std::chrono::duration_cast<std::chrono::minutes>(std::chrono::steady_clock::now() - start).count() > 10) break;
     }
 */
-  //  std::cout << "[Engine] Session ended.\n";
-  //  return 0;
-//}
+    std::cout << "[Engine] Session ended.\n";
+    //return 0;
+}

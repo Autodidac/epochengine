@@ -73,6 +73,8 @@ import <vector>;
 import aengine.platform;
 //import aengine.config;
 
+import almondshell;
+
 import aengine.cli;
 import aengine.version;
 import aengine.updater;
@@ -87,14 +89,17 @@ import aengine.gui;
 import aengine.gui.menu;
 
 import ascene;
+
 import asnakelike;
 import atetrislike;
 import apacmanlike;
 import asokobanlike;
 import amatch3like;
+
 import aslidingpuzzlelike;
 import aminesweeperlike;
 import a2048like;
+
 import asandsim;
 import acellularsim;
 
@@ -666,7 +671,7 @@ int WINAPI wWinMain(
 }
 #endif
 
-int main(int argc, char* argv[])
+int main(int argc, wchar_t** argv[])
 {
 #if defined(_WIN32) && defined(ALMOND_USING_WINMAIN)
     return wWinMain(GetModuleHandleW(nullptr), nullptr, GetCommandLineW(), SW_SHOWNORMAL);

@@ -79,7 +79,7 @@ export namespace almondnamespace::pacmanlike
         }
     };
 
-    struct PacmanLikeScene final : public scene::Scene
+    export struct PacmanLikeScene final : public scene::Scene
     {
         PacmanLikeScene(logger::Logger* L = nullptr, timing::Timer* C = nullptr)
             : Scene(L, C)
