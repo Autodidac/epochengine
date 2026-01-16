@@ -47,13 +47,19 @@ export namespace almondnamespace::snakelike
 
             ctx->clear_safe();
 
-            // Draw a simple full-screen background sprite if present
-            if (auto it = sprites.find("bg"); it != sprites.end() && spritepool::is_alive(it->second))
+            // Example: draw head as a sanity check (or bg if you have it)
+            if (auto it = sprites.find("head"); it != sprites.end() && spritepool::is_alive(it->second))
             {
-                auto& atlasVec = atlasmanager::get_atlas_vector();
-                std::span<const TextureAtlas* const> atlasSpan(atlasVec.data(), atlasVec.size());
-                ctx->draw_sprite_safe(it->second, atlasSpan, 0.0f, 0.0f,
-                    float(ctx->get_width_safe()), float(ctx->get_height_safe()));
+                // Snapshot, not reference.
+                auto atlasesVec = atlasmanager::get_atlas_vector(); // must return by value (snapshot)
+                std::span<const TextureAtlas* const> atlases(atlasesVec.data(), atlasesVec.size());
+
+                ctx->draw_sprite_safe(
+                    it->second,
+                    atlases,
+                    0.0f, 0.0f,
+                    float(ctx->get_width_safe()),
+                    float(ctx->get_height_safe()));
             }
 
             ctx->present_safe();
@@ -67,6 +73,7 @@ export namespace almondnamespace::snakelike
         }
 
     private:
+
         void setupSprites()
         {
             sprites.clear();
@@ -113,7 +120,7 @@ export namespace almondnamespace::snakelike
             };
 
             // Always try to load a background sprite if available
-            ensureSprite("bg");
+            //ensureSprite("bg");
             ensureSprite("head");
             ensureSprite("body");
             ensureSprite("food");
@@ -128,7 +135,7 @@ export namespace almondnamespace::snakelike
         std::unordered_map<std::string, SpriteHandle> sprites{};
     };
 
-    inline bool run_snakelike(std::shared_ptr<core::Context> ctx)
+    export bool run_snakelike(std::shared_ptr<context::Context> ctx)
     {
         SnakeLikeScene scene;
         scene.load();

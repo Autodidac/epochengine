@@ -121,20 +121,16 @@ export namespace almondnamespace::openglcontext
             return ctx;
         }
 
-        inline PlatformGL::PlatformGLContext context_to_platform_context(const core::Context* ctx) noexcept
+        inline PlatformGL::PlatformGLContext context_to_platform_context(const context::Context* ctx) noexcept
         {
             PlatformGL::PlatformGLContext result{};
             if (!ctx) return result;
 
 #if defined(_WIN32)
-            if (ctx->windowData)
-            {
-                result.device = ctx->windowData->hdc;
-                result.context = ctx->windowData->glContext;
-                return result;
-            }
+            // Don’t rely on WindowData layout here (module boundaries).
             result.device = static_cast<HDC>(ctx->native_drawable);
             result.context = static_cast<HGLRC>(ctx->native_gl_context);
+
 #elif defined(__linux__)
             result.display = static_cast<Display*>(ctx->native_drawable);
             result.drawable = static_cast<GLXDrawable>(reinterpret_cast<std::uintptr_t>(ctx->native_window));
@@ -696,7 +692,7 @@ void main() {
         glClear(GL_COLOR_BUFFER_BIT);
     }
 
-    inline bool opengl_process(std::shared_ptr<core::Context> ctx, core::CommandQueue& queue)
+    inline bool opengl_process(std::shared_ptr<context::Context> ctx, core::CommandQueue& queue)
     {
         if (!ctx) return false;
 

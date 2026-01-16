@@ -159,26 +159,69 @@ export namespace almondnamespace
         std::ifstream f(filepath, std::ios::binary);
         if (!f) throw std::runtime_error("Cannot open PPM: " + filepath.string());
 
+        auto skip_ws_and_comments = [&]()
+            {
+                while (true)
+                {
+                    // eat whitespace
+                    while (f && std::isspace(static_cast<unsigned char>(f.peek())))
+                        (void)f.get();
+
+                    // eat comment line
+                    if (f && f.peek() == '#')
+                    {
+                        std::string dummy;
+                        std::getline(f, dummy);
+                        continue;
+                    }
+                    break;
+                }
+            };
+
+        auto read_int = [&](int& v)
+            {
+                skip_ws_and_comments();
+                f >> v;
+                if (!f) throw std::runtime_error("Invalid PPM header: " + filepath.string());
+            };
+
         std::string magic;
         f >> magic;
-        if (magic != "P6") throw std::runtime_error("Unsupported PPM format: " + filepath.string());
+        if (magic != "P6")
+            throw std::runtime_error("Unsupported PPM format (expected P6): " + filepath.string());
 
         int w = 0, h = 0, maxVal = 0;
-        f >> w >> h >> maxVal;
-        f.ignore(std::numeric_limits<std::streamsize>::max(), '\n');
+        read_int(w);
+        read_int(h);
+        read_int(maxVal);
 
         if (w <= 0 || h <= 0 || maxVal <= 0 || maxVal > 255)
             throw std::runtime_error("Invalid PPM header: " + filepath.string());
 
-        std::vector<uint8_t> raw(size_t(w) * size_t(h) * 3);
-        f.read(reinterpret_cast<char*>(raw.data()), static_cast<std::streamsize>(raw.size()));
+        // After maxVal there is a single whitespace byte before binary data.
+        // Consume exactly one char if it's whitespace; if not, still consume one to align.
+        int c = f.get();
+        if (c == EOF) throw std::runtime_error("Truncated PPM: " + filepath.string());
+        if (!std::isspace(static_cast<unsigned char>(c)))
+        {
+            // some writers don't include whitespace; treat this byte as first pixel channel
+            f.unget();
+        }
 
-        std::vector<uint8_t> out(size_t(w) * size_t(h) * 4);
-        for (int y = 0; y < h; ++y) {
-            int srcY = flipVertically ? (h - 1 - y) : y;
-            for (int x = 0; x < w; ++x) {
-                int srcIdx = (srcY * w + x) * 3;
-                int dstIdx = (y * w + x) * 4;
+        const std::size_t rgbBytes = std::size_t(w) * std::size_t(h) * 3;
+        std::vector<std::uint8_t> raw(rgbBytes);
+        f.read(reinterpret_cast<char*>(raw.data()), static_cast<std::streamsize>(raw.size()));
+        if (f.gcount() != static_cast<std::streamsize>(raw.size()))
+            throw std::runtime_error("Truncated PPM pixel data: " + filepath.string());
+
+        std::vector<std::uint8_t> out(std::size_t(w) * std::size_t(h) * 4);
+        for (int y = 0; y < h; ++y)
+        {
+            const int srcY = flipVertically ? (h - 1 - y) : y;
+            for (int x = 0; x < w; ++x)
+            {
+                const int srcIdx = (srcY * w + x) * 3;
+                const int dstIdx = (y * w + x) * 4;
                 out[dstIdx + 0] = raw[srcIdx + 0];
                 out[dstIdx + 1] = raw[srcIdx + 1];
                 out[dstIdx + 2] = raw[srcIdx + 2];

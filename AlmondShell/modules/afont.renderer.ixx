@@ -44,6 +44,7 @@ import aspritehandle;
 // import the modules that define these types
 import aengine.core.logger;
 import aatlas.texture;
+import atexture;
 
 export namespace almondnamespace::font
 {

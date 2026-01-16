@@ -115,9 +115,10 @@ export namespace almondnamespace::slidinglike
             };
 
             // Always try to load a background sprite if available
-            ensureSprite("bg");
-            ensureSprite("tile");
-            ensureSprite("empty");
+          //  ensureSprite("bg");
+            //ensureSprite("tile");
+            //ensureSprite("empty");
+            ensureSprite("atestimage");
 
             if (createdAtlas || registered)
             {
@@ -129,7 +130,7 @@ export namespace almondnamespace::slidinglike
         std::unordered_map<std::string, SpriteHandle> sprites{};
     };
 
-    inline bool run_slidingpuzzle(std::shared_ptr<core::Context> ctx)
+    export bool run_slidingpuzzle(std::shared_ptr<core::Context> ctx)
     {
         SlidingPuzzleLikeScene scene;
         scene.load();

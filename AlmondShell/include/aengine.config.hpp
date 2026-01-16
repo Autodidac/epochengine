@@ -29,7 +29,7 @@
 // Engine Context Config
 // ------------------------------------------------------------
 
-#define ALMOND_USING_OPENGL 1
+//#define ALMOND_USING_OPENGL 1
 #define ALMOND_USING_SDL 1
 //#define ALMOND_USING_RAYLIB 1
 #define ALMOND_USING_SOFTWARE_RENDERER 1

@@ -1,7 +1,7 @@
 module;
 
 #define STB_TRUETYPE_IMPLEMENTATION
-#include "stb/stb_truetype.h"
+#include "stb_truetype.h"
 
 #include <algorithm>
 #include <array>
@@ -17,6 +17,7 @@ export module afont.renderer;
 
 import afont.renderer;
 import aatlas.manager;
+import aatlas.texture;
 
 namespace almondnamespace::font
 {
@@ -174,7 +175,7 @@ namespace almondnamespace::font
         asset.metrics = metrics;
         asset.kerning_pairs = std::move(kerning_pairs);
 
-        atlasmanager::ensure_uploaded(atlas);
+        almondnamespace::atlasmanager::ensure_uploaded(atlas);
 
         loaded_fonts_.emplace(
             name,

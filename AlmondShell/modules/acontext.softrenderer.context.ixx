@@ -185,157 +185,174 @@ export namespace almondnamespace::anativecontext
     {
         if (atlasmanager::atlas_vector.empty()) return;
 
-        const auto* atlas = atlasmanager::atlas_vector[0];
+        const auto* atlas = atlasmanager::atlas_vector.back();
         if (!atlas) return;
 
         const int w = atlas->width;
         const int h = atlas->height;
-        if (w <= 0 || h <= 0 || atlas->pixel_data.empty()) return;
+        if (w <= 0 || h <= 0) return;
+
+        const std::size_t expected = std::size_t(w) * std::size_t(h) * 4u;
+        if (atlas->pixel_data.size() < expected) return;
+
+        const int dstW = (std::max)(1, softstate.width);
+        const int dstH = (std::max)(1, softstate.height);
 
         for (int y = 0; y < softstate.height; ++y)
         {
+            const int texY = std::clamp((y * h) / dstH, 0, h - 1);
+
             for (int x = 0; x < softstate.width; ++x)
             {
-                const float u = float(x) / float((std::max)(1, softstate.width));
-                const float v = float(y) / float((std::max)(1, softstate.height));
+                const int texX = std::clamp((x * w) / dstW, 0, w - 1);
 
-                const int texX = static_cast<int>(u * float(w - 1));
-                const int texY = static_cast<int>(v * float(h - 1));
+                const std::size_t src = (std::size_t(texY) * std::size_t(w) + std::size_t(texX)) * 4u;
+                const std::uint8_t r = atlas->pixel_data[src + 0];
+                const std::uint8_t g = atlas->pixel_data[src + 1];
+                const std::uint8_t b = atlas->pixel_data[src + 2];
+                const std::uint8_t a = atlas->pixel_data[src + 3];
 
-                const std::size_t idx = std::size_t(texY) * std::size_t(w) + std::size_t(texX);
-                if (idx < atlas->pixel_data.size())
-                    softstate.framebuffer[std::size_t(y) * std::size_t(softstate.width) + std::size_t(x)] =
-                    atlas->pixel_data[idx];
+                // If you want straight blit ignoring alpha, force a=255.
+                const std::uint32_t packed =
+                    (std::uint32_t(a) << 24) |
+                    (std::uint32_t(r) << 16) |
+                    (std::uint32_t(g) << 8) |
+                    (std::uint32_t(b) << 0);
+
+                softstate.framebuffer[std::size_t(y) * std::size_t(softstate.width) + std::size_t(x)] = packed;
             }
         }
     }
 
-    inline void draw_sprite(SpriteHandle handle,
+
+    inline void draw_sprite(
+        SpriteHandle handle,
         std::span<const TextureAtlas* const> atlases,
         float x, float y, float width, float height) noexcept
     {
-        if (!handle.is_valid()) {
-            std::cerr << "[Software_DrawSprite] Invalid sprite handle.\n";
+        if (!handle.is_valid())
             return;
-        }
 
         const int atlasIdx = static_cast<int>(handle.atlasIndex);
         const int localIdx = static_cast<int>(handle.localIndex);
 
-        if (atlasIdx < 0 || atlasIdx >= static_cast<int>(atlases.size())) {
-            std::cerr << "[Software_DrawSprite] Atlas index out of range: " << atlasIdx << "\n";
+        if (atlasIdx < 0 || atlasIdx >= static_cast<int>(atlases.size()))
             return;
-        }
 
         const TextureAtlas* atlas = atlases[atlasIdx];
-        if (!atlas) {
-            std::cerr << "[Software_DrawSprite] Null atlas pointer for index " << atlasIdx << "\n";
+        if (!atlas)
             return;
-        }
 
         AtlasRegion region{};
-        if (!atlas->try_get_entry_info(localIdx, region)) {
-            std::cerr << "[Software_DrawSprite] Sprite index out of range: " << localIdx << "\n";
+        if (!atlas->try_get_entry_info(localIdx, region))
             return;
-        }
 
-        if (atlas->pixel_data.empty()) {
+        // Ensure pixels exist
+        if (atlas->pixel_data.empty())
             const_cast<TextureAtlas*>(atlas)->rebuild_pixels();
-        }
 
         auto& sr = s_softrendererstate;
-        if (sr.framebuffer.empty() || sr.width <= 0 || sr.height <= 0) {
+        if (sr.framebuffer.empty() || sr.width <= 0 || sr.height <= 0)
             return;
-        }
 
+        // Normalize coords if caller uses 0..1
         float drawX = x;
         float drawY = y;
-        float drawWidth = width;
-        float drawHeight = height;
+        float drawW = width;
+        float drawH = height;
 
-        const bool widthNormalized = drawWidth > 0.f && drawWidth <= 1.f;
-        const bool heightNormalized = drawHeight > 0.f && drawHeight <= 1.f;
+        const bool wNorm = (drawW > 0.f && drawW <= 1.f);
+        const bool hNorm = (drawH > 0.f && drawH <= 1.f);
 
-        if (widthNormalized) {
-            if (drawX >= 0.f && drawX <= 1.f)
-                drawX *= static_cast<float>(sr.width);
-            drawWidth = (std::max)(drawWidth * static_cast<float>(sr.width), 1.0f);
+        if (wNorm)
+        {
+            if (drawX >= 0.f && drawX <= 1.f) drawX *= static_cast<float>(sr.width);
+            drawW = (std::max)(drawW * static_cast<float>(sr.width), 1.0f);
         }
-        if (heightNormalized) {
-            if (drawY >= 0.f && drawY <= 1.f)
-                drawY *= static_cast<float>(sr.height);
-            drawHeight = (std::max)(drawHeight * static_cast<float>(sr.height), 1.0f);
+        if (hNorm)
+        {
+            if (drawY >= 0.f && drawY <= 1.f) drawY *= static_cast<float>(sr.height);
+            drawH = (std::max)(drawH * static_cast<float>(sr.height), 1.0f);
         }
 
-        if (drawWidth <= 0.f) drawWidth = static_cast<float>(region.width);
-        if (drawHeight <= 0.f) drawHeight = static_cast<float>(region.height);
+        if (drawW <= 0.f) drawW = static_cast<float>(region.width);
+        if (drawH <= 0.f) drawH = static_cast<float>(region.height);
 
         const int destX = static_cast<int>(std::floor(drawX));
         const int destY = static_cast<int>(std::floor(drawY));
-        const int destW = (std::max)(1, static_cast<int>(std::lround(drawWidth)));
-        const int destH = (std::max)(1, static_cast<int>(std::lround(drawHeight)));
+        const int destW = (std::max)(1, static_cast<int>(std::lround(drawW)));
+        const int destH = (std::max)(1, static_cast<int>(std::lround(drawH)));
 
         const int clipX0 = (std::max)(0, destX);
         const int clipY0 = (std::max)(0, destY);
         const int clipX1 = (std::min)(sr.width, destX + destW);
         const int clipY1 = (std::min)(sr.height, destY + destH);
-        if (clipX0 >= clipX1 || clipY0 >= clipY1) {
+        if (clipX0 >= clipX1 || clipY0 >= clipY1)
             return;
-        }
 
         const int srcW = static_cast<int>((std::max)(1u, region.width));
         const int srcH = static_cast<int>((std::max)(1u, region.height));
+
         const float invDestW = 1.0f / static_cast<float>(destW);
         const float invDestH = 1.0f / static_cast<float>(destH);
 
-        for (int py = clipY0; py < clipY1; ++py) {
+        // Assumption (matches your “atlas_vector[idx] assigned” + working blit):
+        // atlas->pixel_data is packed 0xAARRGGBB (u32 per pixel), same as framebuffer.
+        for (int py = clipY0; py < clipY1; ++py)
+        {
             const float v = (py - destY) * invDestH;
             const int sampleY = std::clamp(static_cast<int>(std::floor(v * srcH)), 0, srcH - 1);
-            for (int px = clipX0; px < clipX1; ++px) {
+
+            for (int px = clipX0; px < clipX1; ++px)
+            {
                 const float u = (px - destX) * invDestW;
                 const int sampleX = std::clamp(static_cast<int>(std::floor(u * srcW)), 0, srcW - 1);
 
                 const int atlasX = static_cast<int>(region.x) + sampleX;
                 const int atlasY = static_cast<int>(region.y) + sampleY;
+
+                // bounds (no signed/unsigned mismatch)
+                if (static_cast<unsigned>(atlasX) >= static_cast<unsigned>(atlas->width) ||
+                    static_cast<unsigned>(atlasY) >= static_cast<unsigned>(atlas->height))
+                    continue;
+
                 const size_t srcIndex =
-                    (static_cast<size_t>(atlasY) * atlas->width + static_cast<size_t>(atlasX)) * 4;
+                    static_cast<size_t>(atlasY) * static_cast<size_t>(atlas->width) + static_cast<size_t>(atlasX);
 
-                if (srcIndex + 3 >= atlas->pixel_data.size()) continue;
+                if (srcIndex >= static_cast<size_t>(atlas->pixel_data.size()))
+                    continue;
 
-                const uint8_t* src = atlas->pixel_data.data() + srcIndex;
-                const uint8_t srcA = src[3];
+                const uint32_t src = atlas->pixel_data[srcIndex];
+                const uint8_t srcA = static_cast<uint8_t>((src >> 24) & 0xFF);
                 if (srcA == 0)
                     continue;
 
-                const size_t dstIndex = static_cast<size_t>(py) * static_cast<size_t>(s_softrendererstate.width)
-                    + static_cast<size_t>(px);
+                const size_t dstIndex =
+                    static_cast<size_t>(py) * static_cast<size_t>(sr.width) + static_cast<size_t>(px);
 
-                const uint32_t dst = s_softrendererstate.framebuffer[dstIndex];
+                const uint32_t dst = sr.framebuffer[dstIndex];
 
-                const float alpha = static_cast<float>(srcA) / 255.0f;
-                const float invAlpha = 1.0f - alpha;
+                const float a = static_cast<float>(srcA) / 255.0f;
+                const float ia = 1.0f - a;
+
+                const uint8_t srcR = static_cast<uint8_t>((src >> 16) & 0xFF);
+                const uint8_t srcG = static_cast<uint8_t>((src >> 8) & 0xFF);
+                const uint8_t srcB = static_cast<uint8_t>(src & 0xFF);
 
                 const uint8_t dstR = static_cast<uint8_t>((dst >> 16) & 0xFF);
                 const uint8_t dstG = static_cast<uint8_t>((dst >> 8) & 0xFF);
                 const uint8_t dstB = static_cast<uint8_t>(dst & 0xFF);
-                const uint8_t dstA = static_cast<uint8_t>((dst >> 24) & 0xFF);
 
-                const float outR = std::clamp(src[0] * alpha + dstR * invAlpha, 0.0f, 255.0f);
-                const float outG = std::clamp(src[1] * alpha + dstG * invAlpha, 0.0f, 255.0f);
-                const float outB = std::clamp(src[2] * alpha + dstB * invAlpha, 0.0f, 255.0f);
-                const float dstAlpha = static_cast<float>(dstA) / 255.0f;
-                const float outAlphaNorm = std::clamp(alpha + dstAlpha * invAlpha, 0.0f, 1.0f);
-                const float outA = outAlphaNorm * 255.0f;
+                const uint8_t outR = static_cast<uint8_t>(srcR * a + dstR * ia + 0.5f);
+                const uint8_t outG = static_cast<uint8_t>(srcG * a + dstG * ia + 0.5f);
+                const uint8_t outB = static_cast<uint8_t>(srcB * a + dstB * ia + 0.5f);
 
-                const uint32_t packed = (static_cast<uint32_t>(outA + 0.5f) << 24)
-                    | (static_cast<uint32_t>(outR + 0.5f) << 16)
-                    | (static_cast<uint32_t>(outG + 0.5f) << 8)
-                    | static_cast<uint32_t>(outB + 0.5f);
-
-                s_softrendererstate.framebuffer[dstIndex] = packed;
+                sr.framebuffer[dstIndex] =
+                    (0xFFu << 24) | (uint32_t(outR) << 16) | (uint32_t(outG) << 8) | uint32_t(outB);
             }
         }
     }
+
 
     bool softrenderer_process(core::Context& ctx, core::CommandQueue& queue)
     {
@@ -344,8 +361,9 @@ export namespace almondnamespace::anativecontext
         // Clear
         std::fill(sr.framebuffer.begin(), sr.framebuffer.end(), 0xFF000000u);
 
+        // debug fullscreen atlas blit
         // Optional draw (disabled in your header)
-        // softrenderer_draw_quad(sr);
+        //softrenderer_draw_quad(sr);
 
         // Drain commands
         queue.drain();
@@ -377,6 +395,7 @@ export namespace almondnamespace::anativecontext
                 ReleaseDC(sr.hwnd, hdc);
         }
 #endif
+
         return true;
     }
 

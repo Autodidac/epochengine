@@ -131,7 +131,7 @@ export namespace almondnamespace::froggerlike
         std::unordered_map<std::string, SpriteHandle> sprites{};
     };
 
-    inline bool run_froggerlike(std::shared_ptr<core::Context> ctx)
+    export bool run_froggerlike(std::shared_ptr<core::Context> ctx)
     {
         FroggerLikeScene scene;
         scene.load();
