@@ -34,6 +34,7 @@ export module aengine.gui;
 // If you need interface/impl separation, use partitions (`export module aengine.gui:...;`).
 
 import aengine.core.context;
+import aengine.context.multiplexer;
 import aengine.context.window;
 
 import aatlas.manager;
@@ -283,9 +284,34 @@ export namespace almondnamespace::gui
         if (!ctx)
             return;
 
-        // Context has no public command_queue() in your current build; draw immediately.
-        const auto& atlases = almondnamespace::atlasmanager::get_atlas_vector();
-        ctx->draw_sprite_safe(handle, atlases, x, y, w, h);
+        bool queued = false;
+        if (ctx->windowData && g_frame.ctxShared)
+        {
+            auto ctxShared = g_frame.ctxShared;
+            ctx->windowData->commandQueue.enqueue([ctxShared, handle, x, y, w, h]()
+            {
+                if (!ctxShared)
+                    return;
+                const auto& atlasesRT = almondnamespace::atlasmanager::get_atlas_vector();
+                ctxShared->draw_sprite_safe(handle, atlasesRT, x, y, w, h);
+            });
+            queued = true;
+        }
+
+        if (!queued)
+        {
+            bool onRenderThread = false;
+            if (auto current = core::MultiContextManager::GetCurrent())
+            {
+                onRenderThread = (current.get() == ctx);
+            }
+
+            if (!ctx->windowData || onRenderThread)
+            {
+                const auto& atlases = almondnamespace::atlasmanager::get_atlas_vector();
+                ctx->draw_sprite_safe(handle, atlases, x, y, w, h);
+            }
+        }
     }
 
     [[nodiscard]] bool point_in_rect(Vec2 p, float x, float y, float w, float h) noexcept
