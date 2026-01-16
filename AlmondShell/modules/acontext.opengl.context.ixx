@@ -21,12 +21,10 @@
  *   See LICENSE file for full terms.                         *
  *                                                            *
  **************************************************************/
- /**************************************************************
-  *  acontext.opengl.context.ixx
-  **************************************************************/
+// acontext.opengl.context.ixx
 module;
 
-// Put OS headers in the global module fragment (only where needed).
+// OS + GL headers in global module fragment.
 #if defined(_WIN32)
 #   ifndef WIN32_LEAN_AND_MEAN
 #       define WIN32_LEAN_AND_MEAN
@@ -42,30 +40,27 @@ module;
 #   include <GL/glxext.h>
 #endif
 
-#include "aengine.config.hpp" 		// for ALMOND_USING_SDL
+#include "..\\include\\aengine.config.hpp"
 
 export module acontext.opengl.context;
 
 // ------------------------------------------------------------
 // Core engine modules
 // ------------------------------------------------------------
-//import aengine.config;
-import aengine.core.context;         // core::Context
-import aengine.context.commandqueue;  // core::CommandQueue
-import aengine.context.window;        // core::WindowData
+import aengine.core.context;
+import aengine.context.commandqueue;
+import aengine.context.window;
 import aengine.input;
 import aplatformpump;
 import aatlas.manager;
-
-// Needed for window_width/height fallback (your file used core::cli::*).
 import aengine.core.commandline;
 
 // ------------------------------------------------------------
-// OpenGL backend modules (you MUST have these in your project)
+// OpenGL backend modules
 // ------------------------------------------------------------
-import acontext.opengl.textures;      // opengltextures backend + uploads
-//import acontext.opengl.context;         // openglstate::OpenGL4State (if that's where it lives)
-import aengine.platform;              // PlatformGL (get_proc_address/swap_buffers/etc)
+import acontext.opengl.textures;
+import acontext.opengl.state;
+import acontext.opengl.platform;
 
 // ------------------------------------------------------------
 // Standard library
@@ -83,17 +78,10 @@ import <vector>;
 
 export namespace almondnamespace::openglcontext
 {
-    // ------------------------------------------------------------
-    // Feature gating
-    // ------------------------------------------------------------
 #if !defined(ALMOND_USING_OPENGL)
 
-    // Build-safe stubs when the OpenGL backend is disabled.
-    inline bool opengl_initialize(std::shared_ptr<core::Context>,
-        void* = nullptr,
-        unsigned int = 0, unsigned int = 0,
-        std::function<void(int, int)> = nullptr)
-    {
+    inline bool opengl_initialize(std::shared_ptr<core::Context>, void* = nullptr,
+        unsigned int = 0, unsigned int = 0, std::function<void(int, int)> = nullptr) {
         return false;
     }
 
@@ -109,13 +97,10 @@ export namespace almondnamespace::openglcontext
     namespace detail
     {
 #if defined(__linux__)
-        // On Linux, we store the X11 Window handle in Context::hwnd as an opaque pointer.
-        // Convert via uintptr_t to avoid UB on 32/64-bit.
         inline ::Window to_xwindow(void* opaque) noexcept
         {
             return static_cast<::Window>(reinterpret_cast<std::uintptr_t>(opaque));
         }
-
         inline void* from_xwindow(::Window window) noexcept
         {
             return reinterpret_cast<void*>(static_cast<std::uintptr_t>(window));
@@ -142,26 +127,29 @@ export namespace almondnamespace::openglcontext
             if (!ctx) return result;
 
 #if defined(_WIN32)
-            // Prefer windowData if it exists (it should be the canonical store).
             if (ctx->windowData)
             {
                 result.device = ctx->windowData->hdc;
                 result.context = ctx->windowData->glContext;
                 return result;
             }
-
-            // Legacy fallback (if your Context mirrors are present)
             result.device = static_cast<HDC>(ctx->native_drawable);
             result.context = static_cast<HGLRC>(ctx->native_gl_context);
-
 #elif defined(__linux__)
-            // We store Display* in native_drawable, GLXContext in native_gl_context, and Window in native_window/hwnd.
             result.display = static_cast<Display*>(ctx->native_drawable);
             result.drawable = static_cast<GLXDrawable>(reinterpret_cast<std::uintptr_t>(ctx->native_window));
             result.context = static_cast<GLXContext>(ctx->native_gl_context);
 #endif
             return result;
         }
+
+#if defined(_WIN32)
+        inline bool is_bad_wgl_ptr(void* p) noexcept
+        {
+            const auto v = reinterpret_cast<std::uintptr_t>(p);
+            return v == 0u || v == 1u || v == 2u || v == 3u || v == static_cast<std::uintptr_t>(-1);
+        }
+#endif
     } // namespace detail
 
     inline void* LoadGLFunc(const char* name)
@@ -423,96 +411,135 @@ void main() {
 
         glState.width = w;
         glState.height = h;
-
         ctx->onResize = std::move(onResize);
 
         PlatformGL::ScopedContext contextGuard;
 
 #if defined(_WIN32)
         HWND parentHwnd = static_cast<HWND>(parentWindowOpaque);
-
-        // Prefer WindowData if present.
         if (ctx->windowData && ctx->windowData->hwnd)
             parentHwnd = ctx->windowData->hwnd;
 
         if (!parentHwnd)
-            throw std::runtime_error("[OpenGL] No parent HWND available (ctx->windowData->hwnd was null)");
+            throw std::runtime_error("[OpenGL] No parent HWND available");
 
-        // Create or reuse a child hwnd for OpenGL.
+        // Avoid custom window class registration: use a stock class.
         if (!glState.hwnd)
         {
             glState.parent = parentHwnd;
-            glState.hwnd = CreateWindowExW(
-                0, L"AlmondChild", L"Almond OpenGL",
-                WS_CHILD | WS_VISIBLE,
+            glState.hwnd = ::CreateWindowExW(
+                0,
+                L"STATIC",
+                L"",
+                WS_CHILD | WS_VISIBLE | WS_CLIPSIBLINGS | WS_CLIPCHILDREN,
                 0, 0, static_cast<int>(w), static_cast<int>(h),
-                glState.parent, nullptr, nullptr, nullptr);
+                glState.parent,
+                nullptr,
+                ::GetModuleHandleW(nullptr),
+                nullptr);
 
             if (!glState.hwnd)
                 throw std::runtime_error("[OpenGL] CreateWindowExW failed for child GL window");
         }
 
-        glState.hdc = GetDC(glState.hwnd);
+        glState.hdc = ::GetDC(glState.hwnd);
         if (!glState.hdc)
             throw std::runtime_error("[OpenGL] GetDC failed");
 
-        PIXELFORMATDESCRIPTOR pfd{
-            sizeof(pfd), 1,
-            PFD_DRAW_TO_WINDOW | PFD_SUPPORT_OPENGL | PFD_DOUBLEBUFFER,
-            PFD_TYPE_RGBA, 32,
-            0,0,0,0,0,0,0,0,0,
-            24, 0, 0, 0, 0, 0, 0, 0
-        };
-
-        int pf = ChoosePixelFormat(glState.hdc, &pfd);
-        if (!pf) throw std::runtime_error("[OpenGL] ChoosePixelFormat failed");
-        if (!SetPixelFormat(glState.hdc, pf, &pfd))
-            throw std::runtime_error("[OpenGL] SetPixelFormat failed");
-
-        HGLRC tmp = wglCreateContext(glState.hdc);
-        if (!tmp) throw std::runtime_error("[OpenGL] wglCreateContext failed");
-
-        // Make temp current so we can load wglCreateContextAttribsARB.
+        // SetPixelFormat is one-time per HDC.
+        if (::GetPixelFormat(glState.hdc) == 0)
         {
-            PlatformGL::ScopedContext tmpScope;
-            PlatformGL::PlatformGLContext tmpCtx{};
-            tmpCtx.device = glState.hdc;
-            tmpCtx.context = tmp;
-            if (!tmpScope.set(tmpCtx))
-                throw std::runtime_error("[OpenGL] wglMakeCurrent(temp) failed");
+            PIXELFORMATDESCRIPTOR pfd{
+                sizeof(PIXELFORMATDESCRIPTOR), 1,
+                PFD_DRAW_TO_WINDOW | PFD_SUPPORT_OPENGL | PFD_DOUBLEBUFFER,
+                PFD_TYPE_RGBA, 32,
+                0,0,0,0,0,0,0,0,0,
+                24, 0, 0, 0, 0, 0, 0, 0
+            };
+
+            int pf = ::ChoosePixelFormat(glState.hdc, &pfd);
+            if (!pf) throw std::runtime_error("[OpenGL] ChoosePixelFormat failed");
+            if (!::SetPixelFormat(glState.hdc, pf, &pfd))
+                throw std::runtime_error("[OpenGL] SetPixelFormat failed");
         }
 
-        auto wglCreateContextAttribsARB =
-            reinterpret_cast<PFNWGLCREATECONTEXTATTRIBSARBPROC>(LoadGLFunc("wglCreateContextAttribsARB"));
-        if (!wglCreateContextAttribsARB)
-            throw std::runtime_error("[OpenGL] Failed to load wglCreateContextAttribsARB");
+        // ---- WGL bootstrap (correctly): temp context stays current while loading + creating ----
+        HGLRC tmp = ::wglCreateContext(glState.hdc);
+        if (!tmp) throw std::runtime_error("[OpenGL] wglCreateContext(temp) failed");
+        if (::wglMakeCurrent(glState.hdc, tmp) != TRUE)
+        {
+            ::wglDeleteContext(tmp);
+            throw std::runtime_error("[OpenGL] wglMakeCurrent(temp) failed");
+        }
 
-        int attribs[] = {
-            WGL_CONTEXT_MAJOR_VERSION_ARB, 4,
-            WGL_CONTEXT_MINOR_VERSION_ARB, 6,
-            WGL_CONTEXT_PROFILE_MASK_ARB,  WGL_CONTEXT_CORE_PROFILE_BIT_ARB,
-            0
-        };
+        // Load wglCreateContextAttribsARB safely (filter WGL sentinel pointers).
+        PFNWGLCREATECONTEXTATTRIBSARBPROC wglCreateContextAttribsARB = nullptr;
+        {
+            void* raw = reinterpret_cast<void*>(::wglGetProcAddress("wglCreateContextAttribsARB"));
+            if (!detail::is_bad_wgl_ptr(raw))
+                wglCreateContextAttribsARB = reinterpret_cast<PFNWGLCREATECONTEXTATTRIBSARBPROC>(raw);
+        }
 
-        glState.hglrc = wglCreateContextAttribsARB(glState.hdc, nullptr, attribs);
-        if (!glState.hglrc)
-            throw std::runtime_error("[OpenGL] Failed to create OpenGL core context");
+        // Try modern core context; if it fails or extension missing, keep the temp legacy context as final.
+        glState.hglrc = nullptr;
 
-        wglDeleteContext(tmp);
+        if (wglCreateContextAttribsARB)
+        {
+            int attribs46[] = {
+                WGL_CONTEXT_MAJOR_VERSION_ARB, 4,
+                WGL_CONTEXT_MINOR_VERSION_ARB, 6,
+                WGL_CONTEXT_PROFILE_MASK_ARB,  WGL_CONTEXT_CORE_PROFILE_BIT_ARB,
+                0
+            };
 
-        // Make final current
+            glState.hglrc = wglCreateContextAttribsARB(glState.hdc, nullptr, attribs46);
+
+            if (!glState.hglrc)
+            {
+                int attribs41[] = {
+                    WGL_CONTEXT_MAJOR_VERSION_ARB, 4,
+                    WGL_CONTEXT_MINOR_VERSION_ARB, 1,
+                    WGL_CONTEXT_PROFILE_MASK_ARB,  WGL_CONTEXT_CORE_PROFILE_BIT_ARB,
+                    0
+                };
+                glState.hglrc = wglCreateContextAttribsARB(glState.hdc, nullptr, attribs41);
+            }
+        }
+
+        if (glState.hglrc)
+        {
+            // Switch to final and destroy temp.
+            (void)::wglMakeCurrent(nullptr, nullptr);
+            ::wglDeleteContext(tmp);
+            tmp = nullptr;
+
+            if (::wglMakeCurrent(glState.hdc, glState.hglrc) != TRUE)
+            {
+                ::wglDeleteContext(glState.hglrc);
+                glState.hglrc = nullptr;
+                throw std::runtime_error("[OpenGL] wglMakeCurrent(final) failed");
+            }
+        }
+        else
+        {
+            // No modern context: the temp legacy context becomes the final context.
+            glState.hglrc = tmp;
+            tmp = nullptr;
+        }
+
+        // Publish through PlatformGL (so the rest of the engine uses the same path).
         {
             PlatformGL::PlatformGLContext finalCtx{};
             finalCtx.device = glState.hdc;
             finalCtx.context = glState.hglrc;
             if (!contextGuard.set(finalCtx))
-                throw std::runtime_error("[OpenGL] wglMakeCurrent(final) failed");
+                throw std::runtime_error("[OpenGL] PlatformGL::make_current(final) failed");
         }
 
-        if (!gladLoadGL())
-            throw std::runtime_error("[OpenGL] gladLoadGL failed");
+        // Load GL entry points.
+        if (!gladLoadGLLoader(reinterpret_cast<GLADloadproc>(PlatformGL::get_proc_address)))
+            throw std::runtime_error("[OpenGL] gladLoadGLLoader failed");
 
-        // Publish handles through Context in a cross-platform way
         ctx->native_window = glState.hwnd;
         ctx->native_drawable = glState.hdc;
         ctx->native_gl_context = glState.hglrc;
@@ -586,7 +613,6 @@ void main() {
         }
 
         XFree(vi);
-
         glState.drawable = glState.window;
 
         if (!glState.glxContext)
@@ -616,7 +642,6 @@ void main() {
             finalCtx.display = display;
             finalCtx.drawable = glState.drawable;
             finalCtx.context = glState.glxContext;
-
             if (!contextGuard.set(finalCtx))
                 throw std::runtime_error("[OpenGL] glXMakeCurrent failed");
         }
@@ -635,7 +660,6 @@ void main() {
         if (!ensure_quad_pipeline(glState))
             throw std::runtime_error("[OpenGL] Failed to build/ensure quad pipeline");
 
-        // Hook atlas uploads for this backend
         atlasmanager::register_backend_uploader(core::ContextType::OpenGL,
             [](const TextureAtlas& atlas) { opengltextures::ensure_uploaded(atlas); });
 
@@ -674,13 +698,11 @@ void main() {
 
     inline bool opengl_process(std::shared_ptr<core::Context> ctx, core::CommandQueue& queue)
     {
-        if (!ctx)
-            return false;
+        if (!ctx) return false;
 
         auto& backend = opengltextures::get_opengl_backend();
         auto& glState = backend.glState;
 
-        // Make correct context current
         PlatformGL::ScopedContext guard;
         auto desired = detail::context_to_platform_context(ctx.get());
         if (!desired.valid() || !guard.set(desired))
@@ -690,8 +712,8 @@ void main() {
                 return false;
         }
 
-        // Process atlas uploads + repair pipeline if needed
         atlasmanager::process_pending_uploads(core::ContextType::OpenGL);
+
         if (!ensure_quad_pipeline(glState))
         {
             queue.drain();
@@ -699,13 +721,11 @@ void main() {
             return true;
         }
 
-        // Use input module as canonical source
         ctx->is_key_held = [](almondnamespace::input::Key k) { return almondnamespace::input::is_key_held(k); };
         ctx->is_key_down = [](almondnamespace::input::Key k) { return almondnamespace::input::is_key_down(k); };
         ctx->is_mouse_button_held = [](almondnamespace::input::MouseButton b) { return almondnamespace::input::is_mouse_button_held(b); };
         ctx->is_mouse_button_down = [](almondnamespace::input::MouseButton b) { return almondnamespace::input::is_mouse_button_down(b); };
 
-        // Clear + render queued commands
         const int fbW = (std::max)(1, opengl_get_width());
         const int fbH = (std::max)(1, opengl_get_height());
         glViewport(0, 0, fbW, fbH);
@@ -721,17 +741,16 @@ void main() {
     {
         auto& backend = opengltextures::get_opengl_backend();
         auto& glState = backend.glState;
-
         (void)ctx;
 
 #if defined(_WIN32)
         PlatformGL::clear_current();
 
-        if (glState.hglrc) { wglDeleteContext(glState.hglrc); glState.hglrc = nullptr; }
-        if (glState.hdc && glState.hwnd) { ReleaseDC(glState.hwnd, glState.hdc); }
+        if (glState.hglrc) { ::wglDeleteContext(glState.hglrc); glState.hglrc = nullptr; }
+        if (glState.hdc && glState.hwnd) { ::ReleaseDC(glState.hwnd, glState.hdc); }
         glState.hdc = nullptr;
 
-        if (glState.hwnd) { DestroyWindow(glState.hwnd); glState.hwnd = nullptr; }
+        if (glState.hwnd) { ::DestroyWindow(glState.hwnd); glState.hwnd = nullptr; }
         glState.parent = nullptr;
 
 #elif defined(__linux__)
@@ -752,3 +771,13 @@ void main() {
 
 #endif // ALMOND_USING_OPENGL
 } // namespace almondnamespace::openglcontext
+
+
+
+
+
+
+
+
+
+

@@ -57,11 +57,11 @@ import aengine.core.context;         // almondnamespace::context::Context
 export namespace almondnamespace::core
 {
     // Keep legacy naming: "core::Context" refers to the real Context type.
-    using Context = almondnamespace::context::Context;
+    export using Context = almondnamespace::context::Context;
 
 #if defined(_WIN32)
 
-    struct DragState
+    export struct DragState
     {
         bool dragging = false;
         POINT lastMousePos{};
@@ -69,12 +69,12 @@ export namespace almondnamespace::core
         HWND originalParent = nullptr;
     };
 
-    std::unordered_map<HWND, std::thread>& Threads() noexcept;
-    DragState& Drag() noexcept;
+    export std::unordered_map<HWND, std::thread>& Threads() noexcept;
+    export DragState& Drag() noexcept;
 
-    void MakeDockable(HWND hwnd, HWND parent);
+    export void MakeDockable(HWND hwnd, HWND parent);
 
-    class MultiContextManager
+    export class MultiContextManager
     {
     public:
         static void ShowConsole();
@@ -132,8 +132,16 @@ export namespace almondnamespace::core
 
     private:
         std::vector<std::unique_ptr<WindowData>> windows;
-        std::atomic<bool> running{ true };
-        mutable std::mutex windowsMutex;
+
+        // Start stopped; Initialize() explicitly transitions to running.
+        std::atomic<bool> running{ false };
+
+        // Win32 can synchronously re-enter our window procedures during
+        // CreateWindow/SetWindowPos/SendMessage. A plain std::mutex will
+        // throw std::system_error("resource deadlock would occur") if the
+        // same thread tries to lock it again. Recursive locking is acceptable
+        // here because the critical sections are short and purely structural.
+        mutable std::recursive_mutex windowsMutex;
 
         HGLRC sharedContext = nullptr;
         HWND  parent = nullptr;

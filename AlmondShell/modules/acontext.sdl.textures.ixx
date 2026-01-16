@@ -1,5 +1,7 @@
 module;
-#include "aengine.config.hpp" 		// for ALMOND_USING_SDL
+// configuration
+#include "..\\include\\aengine.config.hpp"
+
 //#include "aplatform.hpp"
 //#include "aengineconfig.hpp"
 //#include "aatlasmanager.hpp"
@@ -240,8 +242,8 @@ export namespace almondnamespace::sdltextures
             return;
         }
 
-        const int w = sdlcontext::state::s_sdlstate.window.width;
-        const int h = sdlcontext::state::s_sdlstate.window.height;
+        const int w = sdlcontext::state::get_sdl_state().window.width;
+        const int h = sdlcontext::state::get_sdl_state().window.height;
         if (w == 0 || h == 0) {
             std::cerr << "[SDL_DrawSprite] ERROR: Window dimensions are zero.\n";
             return;

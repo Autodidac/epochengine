@@ -4,6 +4,8 @@
 
 module;
 
+#include "..\include\aengine.config.hpp"
+
 export module acontext.opengl.renderer;
 
 
@@ -30,7 +32,7 @@ import acontext.opengl.context;
 import aspritehandle;
 import acontext.opengl.textures;
 import acontext.opengl.state;
-import aopenglquad;
+import acontext.opengl.quad;
 import aengine.cli;
 // ────────────────────────────────────────────────────────────
 // MODULE DECLARATION

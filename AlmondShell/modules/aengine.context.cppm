@@ -32,9 +32,10 @@ import aengine.input;
 import aengine.core.context;
 import aengine.context.window;
 import aengine.context.multiplexer;
-import aimage.loader;
-import aatlas.texture;
+
 import aatlas.manager;
+import aatlas.texture;
+import aimage.loader;
 
 #ifdef ALMOND_USING_VULKAN
 import "avulkancontext.hpp";
@@ -80,14 +81,12 @@ namespace
         HWND hwnd = ctx->get_hwnd();
         if (!hwnd) return;
 
-        if (almondnamespace::input::are_mouse_coords_global()) {
+        if (almondnamespace::input::are_mouse_coords_global())
             return;
-        }
 
         RECT rc{};
-        if (!::GetClientRect(hwnd, &rc)) {
+        if (!::GetClientRect(hwnd, &rc))
             return;
-        }
 
         const int width = static_cast<int>((std::max)(static_cast<LONG>(1), rc.right - rc.left));
         const int height = static_cast<int>((std::max)(static_cast<LONG>(1), rc.bottom - rc.top));
@@ -97,15 +96,13 @@ namespace
             y = -1;
         }
     }
-
 #elif defined(__linux__)
     void ClampMouseToClientRectIfNeeded(const std::shared_ptr<almondnamespace::core::Context>& ctx, int& x, int& y) noexcept
     {
         if (!ctx) return;
 
-        if (almondnamespace::input::are_mouse_coords_global()) {
+        if (almondnamespace::input::are_mouse_coords_global())
             return;
-        }
 
         const int width = (std::max)(1, ctx->width);
         const int height = (std::max)(1, ctx->height);
@@ -119,10 +116,83 @@ namespace
     void ClampMouseToClientRectIfNeeded(const std::shared_ptr<almondnamespace::core::Context>&, int&, int&) noexcept {}
 #endif
 
-    // ---------------------------------------------------------------------
-    // Adapters: Context wants void(*)() and bool(shared_ptr<Context>,Queue&)
-    // Many backends use richer signatures. Pull current ctx at call time.
-    // ---------------------------------------------------------------------
+    // ------------------------------------------------------------
+    // Atlas helpers that do NOT depend on removed backend APIs.
+    // ------------------------------------------------------------
+    std::uint32_t default_add_atlas(const almondnamespace::TextureAtlas& atlas, almondnamespace::core::ContextType type) noexcept
+    {
+        // Keep consistent with your old fallback behavior:
+        // Use a stable non-zero handle even when no backend uploader exists.
+        try {
+            almondnamespace::atlasmanager::ensure_uploaded(atlas);
+            almondnamespace::atlasmanager::process_pending_uploads(type);
+        }
+        catch (...) {
+            // keep it noexcept
+        }
+
+        const int idx = atlas.get_index();
+        return static_cast<std::uint32_t>(idx >= 0 ? idx + 1 : 1);
+    }
+
+    std::uint32_t default_add_texture(almondnamespace::TextureAtlas&, std::string, const almondnamespace::ImageData&) noexcept
+    {
+        // Old backends used to implement per-texture injection.
+        // If that API is gone, this becomes a no-op placeholder.
+        return 0u;
+    }
+
+    // ------------------------------------------------------------
+    // Adapters: Context wants void(*)() and bool(shared_ptr, Queue&)
+    // Backends often want richer signatures, so we pull Current().
+    // ------------------------------------------------------------
+
+#if defined(ALMOND_USING_OPENGL)
+    void opengl_initialize_adapter()
+    {
+        auto ctx = almondnamespace::core::MultiContextManager::GetCurrent();
+        if (!ctx) return;
+
+        HWND hwnd = ctx->get_hwnd();
+        if (!hwnd && ctx->windowData) hwnd = ctx->windowData->hwnd;
+
+        const unsigned w = static_cast<unsigned>((std::max)(1, ctx->width));
+        const unsigned h = static_cast<unsigned>((std::max)(1, ctx->height));
+
+        try {
+            (void)almondnamespace::openglcontext::opengl_initialize(ctx, hwnd, w, h, ctx->onResize);
+        }
+        catch (const std::exception& e) {
+            std::cerr << "[OpenGL] init exception: " << e.what() << "\n";
+        }
+        catch (...) {
+            std::cerr << "[OpenGL] init unknown exception\n";
+        }
+    }
+
+    void opengl_cleanup_adapter()
+    {
+        auto ctx = almondnamespace::core::MultiContextManager::GetCurrent();
+        if (!ctx) return;
+
+        try {
+            almondnamespace::openglcontext::opengl_cleanup(ctx);
+        }
+        catch (const std::exception& e) {
+            std::cerr << "[OpenGL] cleanup exception: " << e.what() << "\n";
+        }
+        catch (...) {
+            std::cerr << "[OpenGL] cleanup unknown exception\n";
+        }
+    }
+
+    bool opengl_process_adapter(std::shared_ptr<almondnamespace::core::Context> ctx,
+        almondnamespace::core::CommandQueue& queue)
+    {
+        if (!ctx) return false;
+        return almondnamespace::openglcontext::opengl_process(ctx, queue);
+    }
+#endif
 
 #if defined(ALMOND_USING_SOFTWARE_RENDERER)
     void softrenderer_initialize_adapter()
@@ -130,15 +200,21 @@ namespace
         auto ctx = almondnamespace::core::MultiContextManager::GetCurrent();
         if (!ctx) return;
 
-        // Expected (based on your prior compile error pattern):
-        // bool softrenderer_initialize(std::shared_ptr<Context>, HWND, u32, u32, std::function<void(int,int)>)
-        (void)almondnamespace::anativecontext::softrenderer_initialize(
-            ctx,
-            ctx->get_hwnd(),
-            static_cast<unsigned>(ctx->width),
-            static_cast<unsigned>(ctx->height),
-            ctx->onResize
-        );
+        try {
+            (void)almondnamespace::anativecontext::softrenderer_initialize(
+                ctx,
+                ctx->get_hwnd(),
+                static_cast<unsigned>((std::max)(1, ctx->width)),
+                static_cast<unsigned>((std::max)(1, ctx->height)),
+                ctx->onResize
+            );
+        }
+        catch (const std::exception& e) {
+            std::cerr << "[SoftRenderer] init exception: " << e.what() << "\n";
+        }
+        catch (...) {
+            std::cerr << "[SoftRenderer] init unknown exception\n";
+        }
     }
 
     void softrenderer_cleanup_adapter()
@@ -146,43 +222,53 @@ namespace
         auto ctx = almondnamespace::core::MultiContextManager::GetCurrent();
         if (!ctx) return;
 
-        // Expected (based on your prior compile error pattern):
-        // void softrenderer_cleanup(std::shared_ptr<Context>&)
-        auto copy = ctx;
-        almondnamespace::anativecontext::softrenderer_cleanup(copy);
+        try {
+            auto copy = ctx;
+            almondnamespace::anativecontext::softrenderer_cleanup(copy);
+        }
+        catch (const std::exception& e) {
+            std::cerr << "[SoftRenderer] cleanup exception: " << e.what() << "\n";
+        }
+        catch (...) {
+            std::cerr << "[SoftRenderer] cleanup unknown exception\n";
+        }
     }
 
     bool softrenderer_process_adapter(std::shared_ptr<almondnamespace::core::Context> ctx,
         almondnamespace::core::CommandQueue& queue)
     {
         if (!ctx) return false;
-        // Expected mismatch you hit earlier: bool process(Context&, Queue&)
         return almondnamespace::anativecontext::softrenderer_process(*ctx, queue);
     }
 #endif
 
 #if defined(ALMOND_USING_SFML)
+    void sfml_cleanup_adapter()
+    {
+        if (auto ctx = almondnamespace::core::MultiContextManager::GetCurrent()) {
+            auto copy = ctx;
+            almondnamespace::sfmlcontext::sfml_cleanup(copy);
+        }
+    }
+
     bool sfml_process_adapter(std::shared_ptr<almondnamespace::core::Context> ctx,
         almondnamespace::core::CommandQueue& queue)
     {
         if (!ctx) return false;
-
-        // If your SFML process already matches the shared_ptr signature, this still works
-        // only if there is an overload taking Context&; otherwise switch to direct call.
         return almondnamespace::sfmlcontext::sfml_process(*ctx, queue);
     }
 #endif
-}
+} // anonymous namespace
 
 namespace almondnamespace::core
 {
-    // ─── Global backends ──────────────────────────────────────
     std::map<ContextType, BackendState> g_backends{};
     std::shared_mutex g_backendsMutex{};
 
-    // ─── AddContextForBackend ─────────────────────────────────
-    void AddContextForBackend(ContextType type, std::shared_ptr<almondnamespace::core::Context> context)
+    void AddContextForBackend(ContextType type, std::shared_ptr<Context> context)
     {
+        if (!context) return;
+
         std::unique_lock lock(g_backendsMutex);
         auto& backendState = g_backends[type];
 
@@ -190,26 +276,13 @@ namespace almondnamespace::core
             backendState.master = std::move(context);
         else
             backendState.duplicates.emplace_back(std::move(context));
-
-        if (!backendState.data) {
-            switch (type) {
-#if defined(ALMOND_USING_OPENGL)
-            case ContextType::OpenGL:
-                backends::opengl::ensure_backend_data(backendState);
-                break;
-#endif
-            default:
-                break;
-            }
-        }
     }
 
-    // ─── Context::process_safe ────────────────────────────────
     bool core::Context::process_safe(std::shared_ptr<core::Context> ctx, CommandQueue& queue)
     {
         if (!process) return false;
         try {
-            return process(ctx, queue);
+            return process(std::move(ctx), queue);
         }
         catch (const std::exception& e) {
             std::cerr << "[Context] Exception in process: " << e.what() << "\n";
@@ -219,74 +292,6 @@ namespace almondnamespace::core
             std::cerr << "[Context] Unknown exception in process\n";
             return false;
         }
-    }
-
-    inline std::uint32_t AddTextureThunk(TextureAtlas& atlas, std::string name, const ImageData& img, ContextType type)
-    {
-        switch (type) {
-#if defined(ALMOND_USING_OPENGL)
-        case ContextType::OpenGL: return backends::opengl::add_texture(atlas, std::move(name), img);
-#endif
-#if defined(ALMOND_USING_SDL)
-        case ContextType::SDL:  return backends::sdl::add_texture(atlas, std::move(name), img);
-#endif
-#if defined(ALMOND_USING_SFML)
-        case ContextType::SFML:  return sfmltextures::atlas_add_texture(atlas, std::move(name), img);
-#endif
-#if defined(ALMOND_USING_RAYLIB)
-        case ContextType::RayLib: return backends::raylib::add_texture(atlas, std::move(name), img);
-#endif
-#if defined(ALMOND_USING_VULKAN)
-        case ContextType::Vulkan: return vulkantextures::atlas_add_texture(atlas, std::move(name), img);
-#endif
-#if defined(ALMOND_USING_DIRECTX)
-        case ContextType::DirectX: return directxtextures::atlas_add_texture(atlas, std::move(name), img);
-#endif
-        default: (void)atlas; (void)name; (void)img; return 0u;
-        }
-    }
-
-    inline std::uint32_t AddAtlasThunk(const TextureAtlas& atlas, ContextType type)
-    {
-        atlasmanager::ensure_uploaded(atlas);
-
-        std::uint32_t handle = 0;
-        switch (type) {
-#if defined(ALMOND_USING_OPENGL)
-        case ContextType::OpenGL: handle = backends::opengl::load_atlas(atlas); break;
-#endif
-#if defined(ALMOND_USING_SDL)
-        case ContextType::SDL:  handle = backends::sdl::load_atlas(atlas); break;
-#endif
-#if defined(ALMOND_USING_SFML)
-        case ContextType::SFML: handle = sfmltextures::load_atlas(atlas, atlas.get_index()); break;
-#endif
-#if defined(ALMOND_USING_RAYLIB)
-        case ContextType::RayLib: handle = backends::raylib::load_atlas(atlas); break;
-#endif
-#if defined(ALMOND_USING_VULKAN)
-        case ContextType::Vulkan: handle = vulkantextures::load_atlas(atlas, atlas.get_index()); break;
-#endif
-#if defined(ALMOND_USING_DIRECTX)
-        case ContextType::DirectX: handle = directxtextures::load_atlas(atlas, atlas.get_index()); break;
-#endif
-        case ContextType::Software:
-        case ContextType::Custom:
-        case ContextType::None:
-        case ContextType::Noop: {
-            const int atlasIndex = atlas.get_index();
-            handle = static_cast<std::uint32_t>(atlasIndex >= 0 ? atlasIndex + 1 : 1);
-            break;
-        }
-        default:
-            std::cerr << "[AddAtlasThunk] Unsupported context type\n";
-            break;
-        }
-
-        if (handle != 0) {
-            atlasmanager::process_pending_uploads(type);
-        }
-        return handle;
     }
 
     namespace
@@ -305,22 +310,16 @@ namespace almondnamespace::core
             dst.ptr.store(src.ptr.load(std::memory_order_acquire), std::memory_order_release);
         }
 
-#if defined(ALMOND_USING_SFML)
-        void sfml_cleanup_adapter()
+        // Default atlas hooks used when backends don't expose per-atlas upload APIs.
+        std::uint32_t add_texture_default(TextureAtlas& a, std::string n, const ImageData& i)
         {
-            if (auto ctx = MultiContextManager::GetCurrent()) {
-                auto copy = ctx;
-                almondnamespace::sfmlcontext::sfml_cleanup(copy);
-            }
+            return default_add_texture(a, std::move(n), i);
         }
-#endif
 
-#if defined(ALMOND_USING_RAYLIB)
-        void raylib_cleanup_adapter()
+        std::uint32_t add_atlas_default(const TextureAtlas& a, ContextType t)
         {
-            backends::raylib::cleanup_adapter();
+            return default_add_atlas(a, t);
         }
-#endif
     }
 
     std::shared_ptr<core::Context> CloneContext(const core::Context& prototype)
@@ -348,7 +347,6 @@ namespace almondnamespace::core
         copy_atomic_function(clone->add_atlas, prototype.add_atlas);
 
         clone->onResize = prototype.onResize;
-
         clone->width = prototype.width;
         clone->height = prototype.height;
         clone->type = prototype.type;
@@ -368,209 +366,221 @@ namespace almondnamespace::core
         if (s_initialized) return;
         s_initialized = true;
 
-#if defined(ALMOND_USING_OPENGL)
-        AddContextForBackend(ContextType::OpenGL, backends::opengl::make_context());
-#endif
+        // NOTE:
+        // This file no longer calls removed backends::make_context().
+        // We create prototypes by wiring known backend entrypoints
+        // (or safe defaults) into core::Context.
 
-#if defined(ALMOND_USING_SDL)
-        AddContextForBackend(ContextType::SDL, backends::sdl::make_context());
+#if defined(ALMOND_USING_OPENGL)
+        {
+            auto ctx = std::make_shared<Context>();
+            ctx->type = ContextType::OpenGL;
+            ctx->backendName = "OpenGL";
+
+            ctx->initialize = opengl_initialize_adapter; // void(*)()
+            ctx->cleanup = opengl_cleanup_adapter;    // void(*)()
+            ctx->process = opengl_process_adapter;    // bool(shared_ptr, queue)
+            ctx->clear = almondnamespace::openglcontext::opengl_clear;
+            ctx->present = almondnamespace::openglcontext::opengl_present;
+            ctx->get_width = almondnamespace::openglcontext::opengl_get_width;
+            ctx->get_height = almondnamespace::openglcontext::opengl_get_height;
+
+            ctx->is_key_held = [](input::Key k) { return input::is_key_held(k); };
+            ctx->is_key_down = [](input::Key k) { return input::is_key_down(k); };
+            ctx->get_mouse_position = [](int& x, int& y) {
+                x = input::mouseX.load(std::memory_order_relaxed);
+                y = input::mouseY.load(std::memory_order_relaxed);
+                };
+            ctx->is_mouse_button_held = [](input::MouseButton b) { return input::is_mouse_button_held(b); };
+            ctx->is_mouse_button_down = [](input::MouseButton b) { return input::is_mouse_button_down(b); };
+
+            ctx->add_texture = &add_texture_default;
+            ctx->add_atlas = +[](const TextureAtlas& a) {
+                return add_atlas_default(a, ContextType::OpenGL);
+                };
+
+            AddContextForBackend(ContextType::OpenGL, std::move(ctx));
+        }
 #endif
 
 #if defined(ALMOND_USING_SFML)
-        auto sfmlContext = std::make_shared<Context>();
-        sfmlContext->initialize = []() {};                 // must be void(*)()
-        sfmlContext->cleanup = sfml_cleanup_adapter;       // must be void(*)()
-        sfmlContext->process = sfml_process_adapter;       // force correct signature
-        sfmlContext->clear = []() {};
-        sfmlContext->present = []() {};
-        sfmlContext->get_width = []() { return 800; };
-        sfmlContext->get_height = []() { return 600; };
+        {
+            auto ctx = std::make_shared<Context>();
+            ctx->type = ContextType::SFML;
+            ctx->backendName = "SFML";
 
-        sfmlContext->is_key_held = [](input::Key k) { return input::is_key_held(k); };
-        sfmlContext->is_key_down = [](input::Key k) { return input::is_key_down(k); };
-        sfmlContext->get_mouse_position = [](int& x, int& y) {
-            x = input::mouseX.load(std::memory_order_relaxed);
-            y = input::mouseY.load(std::memory_order_relaxed);
-            };
-        sfmlContext->is_mouse_button_held = [](input::MouseButton b) { return input::is_mouse_button_held(b); };
-        sfmlContext->is_mouse_button_down = [](input::MouseButton b) { return input::is_mouse_button_down(b); };
+            ctx->initialize = []() {};
+            ctx->cleanup = sfml_cleanup_adapter;
+            ctx->process = sfml_process_adapter;
+            ctx->clear = []() {};
+            ctx->present = []() {};
+            ctx->get_width = []() { return 800; };
+            ctx->get_height = []() { return 600; };
 
-        sfmlContext->registry_get = [](const char*) { return 0; };
-        sfmlContext->draw_sprite = sfmltextures::draw_sprite;
+            ctx->is_key_held = [](input::Key k) { return input::is_key_held(k); };
+            ctx->is_key_down = [](input::Key k) { return input::is_key_down(k); };
+            ctx->get_mouse_position = [](int& x, int& y) {
+                x = input::mouseX.load(std::memory_order_relaxed);
+                y = input::mouseY.load(std::memory_order_relaxed);
+                };
+            ctx->is_mouse_button_held = [](input::MouseButton b) { return input::is_mouse_button_held(b); };
+            ctx->is_mouse_button_down = [](input::MouseButton b) { return input::is_mouse_button_down(b); };
 
-        sfmlContext->add_texture = [&](TextureAtlas& a, const std::string& n, const ImageData& i) {
-            return AddTextureThunk(a, n, i, ContextType::SFML);
-            };
-        sfmlContext->add_atlas = [&](const TextureAtlas& a) {
-            return AddAtlasThunk(a, ContextType::SFML);
-            };
-        sfmlContext->add_model = [](const char*, const char*) { return 0; };
+            ctx->registry_get = [](const char*) { return 0; };
+            ctx->draw_sprite = sfmltextures::draw_sprite;
 
-        sfmlContext->backendName = "SFML";
-        sfmlContext->type = ContextType::SFML;
-        AddContextForBackend(ContextType::SFML, sfmlContext);
-#endif
+            ctx->add_texture = &add_texture_default;
+            ctx->add_atlas = +[](const TextureAtlas& a) {
+                return add_atlas_default(a, ContextType::SFML);
+                };
 
-#if defined(ALMOND_USING_RAYLIB)
-        AddContextForBackend(ContextType::RayLib, backends::raylib::make_context());
+            AddContextForBackend(ContextType::SFML, std::move(ctx));
+        }
 #endif
 
 #if defined(ALMOND_USING_VULKAN)
-        auto vulkanContext = std::make_shared<Context>();
-        vulkanContext->initialize = []() {};
-        vulkanContext->cleanup = []() {};
-        vulkanContext->process = [](std::shared_ptr<core::Context> ctx, CommandQueue& queue) -> bool {
-            if (!ctx) return false;
-            atlasmanager::process_pending_uploads(ctx->type);
-            queue.drain();
-            return true;
-            };
-        vulkanContext->clear = []() {};
-        vulkanContext->present = []() {};
-        vulkanContext->get_width = []() { return 800; };
-        vulkanContext->get_height = []() { return 600; };
+        {
+            auto ctx = std::make_shared<Context>();
+            ctx->type = ContextType::Vulkan;
+            ctx->backendName = "Vulkan";
 
-        vulkanContext->is_key_held = [](input::Key k) { return input::is_key_held(k); };
-        vulkanContext->is_key_down = [](input::Key k) { return input::is_key_down(k); };
-        vulkanContext->get_mouse_position = [](int& x, int& y) {
-            x = input::mouseX.load(std::memory_order_relaxed);
-            y = input::mouseY.load(std::memory_order_relaxed);
-            };
-        vulkanContext->is_mouse_button_held = [](input::MouseButton b) { return input::is_mouse_button_held(b); };
-        vulkanContext->is_mouse_button_down = [](input::MouseButton b) { return input::is_mouse_button_down(b); };
+            ctx->initialize = []() {};
+            ctx->cleanup = []() {};
+            ctx->process = [](std::shared_ptr<core::Context> c, CommandQueue& q) -> bool {
+                if (!c) return false;
+                atlasmanager::process_pending_uploads(c->type);
+                q.drain();
+                return true;
+                };
+            ctx->clear = []() {};
+            ctx->present = []() {};
+            ctx->get_width = []() { return 800; };
+            ctx->get_height = []() { return 600; };
 
-        vulkanContext->registry_get = [](const char*) { return 0; };
-        vulkanContext->draw_sprite = [](SpriteHandle, std::span<const TextureAtlas* const>, float, float, float, float) {};
+            ctx->is_key_held = [](input::Key k) { return input::is_key_held(k); };
+            ctx->is_key_down = [](input::Key k) { return input::is_key_down(k); };
+            ctx->get_mouse_position = [](int& x, int& y) {
+                x = input::mouseX.load(std::memory_order_relaxed);
+                y = input::mouseY.load(std::memory_order_relaxed);
+                };
+            ctx->is_mouse_button_held = [](input::MouseButton b) { return input::is_mouse_button_held(b); };
+            ctx->is_mouse_button_down = [](input::MouseButton b) { return input::is_mouse_button_down(b); };
 
-        vulkanContext->add_texture = [&](TextureAtlas& a, const std::string& n, const ImageData& i) {
-            return AddTextureThunk(a, n, i, ContextType::Vulkan);
-            };
-        vulkanContext->add_atlas = [&](const TextureAtlas& a) {
-            return AddAtlasThunk(a, ContextType::Vulkan);
-            };
-        vulkanContext->add_model = [](const char*, const char*) { return 0; };
+            ctx->add_texture = &add_texture_default;
+            ctx->add_atlas = +[](const TextureAtlas& a) {
+                return add_atlas_default(a, ContextType::Vulkan);
+                };
 
-        vulkanContext->backendName = "Vulkan";
-        vulkanContext->type = ContextType::Vulkan;
-        AddContextForBackend(ContextType::Vulkan, vulkanContext);
+            AddContextForBackend(ContextType::Vulkan, std::move(ctx));
+        }
 #endif
 
 #if defined(ALMOND_USING_DIRECTX)
-        auto directxContext = std::make_shared<Context>();
-        directxContext->initialize = []() {};
-        directxContext->cleanup = []() {};
-        directxContext->process = [](std::shared_ptr<core::Context> ctx, CommandQueue& queue) -> bool {
-            if (!ctx) return false;
-            atlasmanager::process_pending_uploads(ctx->type);
-            queue.drain();
-            return true;
-            };
-        directxContext->clear = []() {};
-        directxContext->present = []() {};
-        directxContext->get_width = []() { return 800; };
-        directxContext->get_height = []() { return 600; };
+        {
+            auto ctx = std::make_shared<Context>();
+            ctx->type = ContextType::DirectX;
+            ctx->backendName = "DirectX";
 
-        directxContext->is_key_held = [](input::Key k) { return input::is_key_held(k); };
-        directxContext->is_key_down = [](input::Key k) { return input::is_key_down(k); };
-        directxContext->get_mouse_position = [](int& x, int& y) {
-            x = input::mouseX.load(std::memory_order_relaxed);
-            y = input::mouseY.load(std::memory_order_relaxed);
-            };
-        directxContext->is_mouse_button_held = [](input::MouseButton b) { return input::is_mouse_button_held(b); };
-        directxContext->is_mouse_button_down = [](input::MouseButton b) { return input::is_mouse_button_down(b); };
+            ctx->initialize = []() {};
+            ctx->cleanup = []() {};
+            ctx->process = [](std::shared_ptr<core::Context> c, CommandQueue& q) -> bool {
+                if (!c) return false;
+                atlasmanager::process_pending_uploads(c->type);
+                q.drain();
+                return true;
+                };
+            ctx->clear = []() {};
+            ctx->present = []() {};
+            ctx->get_width = []() { return 800; };
+            ctx->get_height = []() { return 600; };
 
-        directxContext->registry_get = [](const char*) { return 0; };
-        directxContext->draw_sprite = [](SpriteHandle, std::span<const TextureAtlas* const>, float, float, float, float) {};
+            ctx->is_key_held = [](input::Key k) { return input::is_key_held(k); };
+            ctx->is_key_down = [](input::Key k) { return input::is_key_down(k); };
+            ctx->get_mouse_position = [](int& x, int& y) {
+                x = input::mouseX.load(std::memory_order_relaxed);
+                y = input::mouseY.load(std::memory_order_relaxed);
+                };
+            ctx->is_mouse_button_held = [](input::MouseButton b) { return input::is_mouse_button_held(b); };
+            ctx->is_mouse_button_down = [](input::MouseButton b) { return input::is_mouse_button_down(b); };
 
-        directxContext->add_texture = [&](TextureAtlas& a, const std::string& n, const ImageData& i) {
-            return AddTextureThunk(a, n, i, ContextType::DirectX);
-            };
-        directxContext->add_atlas = [&](const TextureAtlas& a) {
-            return AddAtlasThunk(a, ContextType::DirectX);
-            };
-        directxContext->add_model = [](const char*, const char*) { return 0; };
+            ctx->add_texture = &add_texture_default;
+            ctx->add_atlas = +[](const TextureAtlas& a) {
+                return add_atlas_default(a, ContextType::DirectX);
+                };
 
-        directxContext->backendName = "DirectX";
-        directxContext->type = ContextType::DirectX;
-        AddContextForBackend(ContextType::DirectX, directxContext);
+            AddContextForBackend(ContextType::DirectX, std::move(ctx));
+        }
 #endif
 
 #if defined(ALMOND_USING_CUSTOM)
-        auto customContext = std::make_shared<Context>();
-        customContext->initialize = []() {};
-        customContext->cleanup = []() {};
-        customContext->process = [](std::shared_ptr<core::Context> ctx, CommandQueue& queue) -> bool {
-            if (!ctx) return false;
-            atlasmanager::process_pending_uploads(ctx->type);
-            queue.drain();
-            return true;
-            };
-        customContext->clear = []() {};
-        customContext->present = []() {};
-        customContext->get_width = []() { return 800; };
-        customContext->get_height = []() { return 600; };
+        {
+            auto ctx = std::make_shared<Context>();
+            ctx->type = ContextType::Custom;
+            ctx->backendName = "Custom";
 
-        customContext->is_key_held = [](input::Key k) { return input::is_key_held(k); };
-        customContext->is_key_down = [](input::Key k) { return input::is_key_down(k); };
-        customContext->get_mouse_position = [](int& x, int& y) {
-            x = input::mouseX.load(std::memory_order_relaxed);
-            y = input::mouseY.load(std::memory_order_relaxed);
-            };
-        customContext->is_mouse_button_held = [](input::MouseButton b) { return input::is_mouse_button_held(b); };
-        customContext->is_mouse_button_down = [](input::MouseButton b) { return input::is_mouse_button_down(b); };
+            ctx->initialize = []() {};
+            ctx->cleanup = []() {};
+            ctx->process = [](std::shared_ptr<core::Context> c, CommandQueue& q) -> bool {
+                if (!c) return false;
+                atlasmanager::process_pending_uploads(c->type);
+                q.drain();
+                return true;
+                };
+            ctx->clear = []() {};
+            ctx->present = []() {};
+            ctx->get_width = []() { return 800; };
+            ctx->get_height = []() { return 600; };
 
-        customContext->registry_get = [](const char*) { return 0; };
-        customContext->draw_sprite = [](SpriteHandle, std::span<const TextureAtlas* const>, float, float, float, float) {};
+            ctx->is_key_held = [](input::Key k) { return input::is_key_held(k); };
+            ctx->is_key_down = [](input::Key k) { return input::is_key_down(k); };
+            ctx->get_mouse_position = [](int& x, int& y) {
+                x = input::mouseX.load(std::memory_order_relaxed);
+                y = input::mouseY.load(std::memory_order_relaxed);
+                };
+            ctx->is_mouse_button_held = [](input::MouseButton b) { return input::is_mouse_button_held(b); };
+            ctx->is_mouse_button_down = [](input::MouseButton b) { return input::is_mouse_button_down(b); };
 
-        customContext->add_texture = [&](TextureAtlas& a, const std::string& n, const ImageData& i) {
-            return AddTextureThunk(a, n, i, ContextType::Custom);
-            };
-        customContext->add_atlas = [&](const TextureAtlas& a) {
-            return AddAtlasThunk(a, ContextType::Custom);
-            };
-        customContext->add_model = [](const char*, const char*) { return 0; };
+            ctx->add_texture = &add_texture_default;
+            ctx->add_atlas = +[](const TextureAtlas& a) {
+                return add_atlas_default(a, ContextType::Custom);
+                };
 
-        customContext->backendName = "Custom";
-        customContext->type = ContextType::Custom;
-        AddContextForBackend(ContextType::Custom, customContext);
+            AddContextForBackend(ContextType::Custom, std::move(ctx));
+        }
 #endif
 
 #if defined(ALMOND_USING_SOFTWARE_RENDERER)
-        auto softwareContext = std::make_shared<Context>();
+        {
+            auto ctx = std::make_shared<Context>();
+            ctx->type = ContextType::Software;
+            ctx->backendName = "Software";
 
-        // FIXED: these must match Context's raw hook types.
-        softwareContext->initialize = softrenderer_initialize_adapter;      // void(*)()
-        softwareContext->cleanup = softrenderer_cleanup_adapter;            // void(*)()
-        softwareContext->process = softrenderer_process_adapter;            // bool(shared_ptr, queue)
+            ctx->initialize = softrenderer_initialize_adapter;
+            ctx->cleanup = softrenderer_cleanup_adapter;
+            ctx->process = softrenderer_process_adapter;
 
-        softwareContext->clear = nullptr;
-        softwareContext->present = nullptr;
-        softwareContext->get_width = almondnamespace::anativecontext::get_width;
-        softwareContext->get_height = almondnamespace::anativecontext::get_height;
+            // If your software backend has these, wire them. Otherwise keep null.
+            // ctx->clear = ...
+            // ctx->present = ...
+            // ctx->get_width = almondnamespace::anativecontext::get_width;
+            // ctx->get_height = almondnamespace::anativecontext::get_height;
 
-        softwareContext->is_key_held = [](input::Key k) { return input::is_key_held(k); };
-        softwareContext->is_key_down = [](input::Key k) { return input::is_key_down(k); };
-        softwareContext->get_mouse_position = [](int& x, int& y) {
-            x = input::mouseX.load(std::memory_order_relaxed);
-            y = input::mouseY.load(std::memory_order_relaxed);
-            };
-        softwareContext->is_mouse_button_held = [](input::MouseButton b) { return input::is_mouse_button_held(b); };
-        softwareContext->is_mouse_button_down = [](input::MouseButton b) { return input::is_mouse_button_down(b); };
+            ctx->is_key_held = [](input::Key k) { return input::is_key_held(k); };
+            ctx->is_key_down = [](input::Key k) { return input::is_key_down(k); };
+            ctx->get_mouse_position = [](int& x, int& y) {
+                x = input::mouseX.load(std::memory_order_relaxed);
+                y = input::mouseY.load(std::memory_order_relaxed);
+                };
+            ctx->is_mouse_button_held = [](input::MouseButton b) { return input::is_mouse_button_held(b); };
+            ctx->is_mouse_button_down = [](input::MouseButton b) { return input::is_mouse_button_down(b); };
 
-        softwareContext->registry_get = [](const char*) { return 0; };
-        softwareContext->draw_sprite = anativecontext::draw_sprite;
+            ctx->add_texture = &add_texture_default;
+            ctx->add_atlas = +[](const TextureAtlas& a) {
+                return add_atlas_default(a, ContextType::Software);
+                };
 
-        softwareContext->add_texture = [&](TextureAtlas& a, const std::string& n, const ImageData& i) {
-            return AddTextureThunk(a, n, i, ContextType::Software);
-            };
-        softwareContext->add_atlas = [&](const TextureAtlas& a) {
-            return AddAtlasThunk(a, ContextType::Software);
-            };
-        softwareContext->add_model = [](const char*, const char*) { return 0; };
-
-        softwareContext->backendName = "Software";
-        softwareContext->type = ContextType::Software;
-        AddContextForBackend(ContextType::Software, softwareContext);
+            AddContextForBackend(ContextType::Software, std::move(ctx));
+        }
 #endif
     }
 
@@ -592,13 +602,12 @@ namespace almondnamespace::core
         {
             if (!ctx) continue;
 
-            if (auto* window = ctx->windowData) {
-                // render thread drives it; just report "still alive" if window says running
+            if (auto* window = ctx->windowData)
+            {
                 if (window->running) {
                     anyRunning = true;
                 }
                 else {
-                    // thread stopped; drain any leftover commands
                     window->commandQueue.drain();
                 }
                 continue;
@@ -610,12 +619,10 @@ namespace almondnamespace::core
                 continue;
             }
 
-            if (ctx->process_safe(ctx, localQueue)) {
+            if (ctx->process_safe(ctx, localQueue))
                 anyRunning = true;
-            }
         }
 
         return anyRunning;
     }
-
 } // namespace almondnamespace::core

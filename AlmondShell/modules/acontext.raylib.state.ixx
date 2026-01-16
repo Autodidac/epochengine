@@ -20,7 +20,7 @@ import aengine.platform;
 
 import aengine.core.time;
 import aengine.core.commandline;
-
+import aengine.cli;
 
 #if defined(ALMOND_USING_RAYLIB)
 
@@ -80,8 +80,8 @@ namespace almondnamespace::raylibcontext
        // Raylib manages window internally, but track width & height for consistency
       // int screenWidth = 800;
        //int screenHeight = 600;
-       int screenWidth = DEFAULT_WINDOW_WIDTH;
-       int screenHeight = DEFAULT_WINDOW_HEIGHT;
+       int screenWidth = almondnamespace::core::cli::window_width;
+       int screenHeight = almondnamespace::core::cli::window_height;
        GuiFitViewport lastViewport{};
        // Mouse state (if you want to hook raw input logic)
        struct MouseState {

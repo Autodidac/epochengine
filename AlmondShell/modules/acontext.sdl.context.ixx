@@ -28,6 +28,7 @@ import aatlas.manager;
 import acontext.sdl.state;
 import acontext.sdl.renderer;
 import acontext.sdl.textures;
+import aengine.context.multiplexer; // almondnamespace::core::MakeDockable(sdlcontext.hwnd, sdlcontext.parent);
 
 
 
@@ -323,63 +324,63 @@ export namespace almondnamespace::sdlcontext
 
     inline void set_window_position_centered()
     {
-        if (state::s_sdlstate.window.sdl_window)
+        if (state::get_sdl_state().window.sdl_window)
         {
             int w, h;
-            SDL_GetWindowSize(state::s_sdlstate.window.sdl_window, &w, &h);
-            SDL_SetWindowPosition(state::s_sdlstate.window.sdl_window, SDL_WINDOWPOS_CENTERED, SDL_WINDOWPOS_CENTERED);
+            SDL_GetWindowSize(state::get_sdl_state().window.sdl_window, &w, &h);
+            SDL_SetWindowPosition(state::get_sdl_state().window.sdl_window, SDL_WINDOWPOS_CENTERED, SDL_WINDOWPOS_CENTERED);
         }
     }
 
     inline void set_window_position(int x, int y)
     {
-        if (state::s_sdlstate.window.sdl_window)
-            SDL_SetWindowPosition(state::s_sdlstate.window.sdl_window, x, y);
+        if (state::get_sdl_state().window.sdl_window)
+            SDL_SetWindowPosition(state::get_sdl_state().window.sdl_window, x, y);
     }
     inline void set_window_fullscreen(bool fullscreen)
     {
-        if (state::s_sdlstate.window.sdl_window)
+        if (state::get_sdl_state().window.sdl_window)
         {
             if (fullscreen)
-                SDL_SetWindowFullscreen(state::s_sdlstate.window.sdl_window, SDL_WINDOW_FULLSCREEN_DESKTOP);
+                SDL_SetWindowFullscreen(state::get_sdl_state().window.sdl_window, SDL_WINDOW_FULLSCREEN_DESKTOP);
             else
-                SDL_SetWindowFullscreen(state::s_sdlstate.window.sdl_window, 0);
+                SDL_SetWindowFullscreen(state::get_sdl_state().window.sdl_window, 0);
         }
     }
     inline void set_window_borderless(bool borderless)
     {
-        if (state::s_sdlstate.window.sdl_window)
+        if (state::get_sdl_state().window.sdl_window)
         {
-            SDL_SetWindowBordered(state::s_sdlstate.window.sdl_window, !borderless);
+            SDL_SetWindowBordered(state::get_sdl_state().window.sdl_window, !borderless);
         }
     }
     inline void set_window_is_resizable(bool resizable)
     {
-        if (state::s_sdlstate.window.sdl_window)
+        if (state::get_sdl_state().window.sdl_window)
         {
             if (resizable)
-                SDL_SetWindowResizable(state::s_sdlstate.window.sdl_window, true);
+                SDL_SetWindowResizable(state::get_sdl_state().window.sdl_window, true);
             else
-                SDL_SetWindowResizable(state::s_sdlstate.window.sdl_window, false);
+                SDL_SetWindowResizable(state::get_sdl_state().window.sdl_window, false);
         }
     }
     inline void set_window_minimized()
     {
-        if (state::s_sdlstate.window.sdl_window)
+        if (state::get_sdl_state().window.sdl_window)
         {
-            SDL_MinimizeWindow(state::s_sdlstate.window.sdl_window);
+            SDL_MinimizeWindow(state::get_sdl_state().window.sdl_window);
         }
     }
     inline void set_window_size(int width, int height)
     {
-        if (state::s_sdlstate.window.sdl_window)
-            SDL_SetWindowSize(state::s_sdlstate.window.sdl_window, width, height);
+        if (state::get_sdl_state().window.sdl_window)
+            SDL_SetWindowSize(state::get_sdl_state().window.sdl_window, width, height);
         }
 
     inline void sdl_set_window_title(const std::string& title)
     {
-        if (state::s_sdlstate.window.sdl_window)
-            SDL_SetWindowTitle(state::s_sdlstate.window.sdl_window, title.c_str());
+        if (state::get_sdl_state().window.sdl_window)
+            SDL_SetWindowTitle(state::get_sdl_state().window.sdl_window, title.c_str());
         }
 
     inline std::pair<int, int> get_size() noexcept

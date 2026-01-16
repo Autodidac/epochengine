@@ -82,8 +82,6 @@
     <ClCompile Include="$(MSBuildThisFileDirectory)modules\aengine.context.commandqueue.ixx" />
     <ClCompile Include="$(MSBuildThisFileDirectory)modules\aengine.context.control.ixx" />
     <ClCompile Include="$(MSBuildThisFileDirectory)modules\aengine.context.multiplexer.ixx" />
-    <ClCompile Include="$(MSBuildThisFileDirectory)modules\aengine.context.renderer.ixx" />
-    <ClCompile Include="$(MSBuildThisFileDirectory)modules\aengine.context.state.ixx" />
     <ClCompile Include="$(MSBuildThisFileDirectory)modules\aengine.context.type.ixx" />
     <ClCompile Include="$(MSBuildThisFileDirectory)modules\aengine.context.window.ixx" />
     <ClCompile Include="$(MSBuildThisFileDirectory)modules\aengine.context.sdl.ixx">
@@ -124,8 +122,8 @@
     <ClCompile Include="$(MSBuildThisFileDirectory)modules\aautility.noheapguard.ixx" />
     <ClCompile Include="$(MSBuildThisFileDirectory)modules\acontext.noop.context.ixx" />
     <ClCompile Include="$(MSBuildThisFileDirectory)modules\aopenglfreetype.ixx" />
-    <ClCompile Include="$(MSBuildThisFileDirectory)modules\aopenglplatform.ixx" />
-    <ClCompile Include="$(MSBuildThisFileDirectory)modules\aopenglquad.ixx" />
+    <ClCompile Include="$(MSBuildThisFileDirectory)modules\acontext.opengl.platform.ixx" />
+    <ClCompile Include="$(MSBuildThisFileDirectory)modules\acontext.opengl.quad.ixx" />
     <ClCompile Include="$(MSBuildThisFileDirectory)modules\acontext.opengl.state.ixx" />
     <ClCompile Include="$(MSBuildThisFileDirectory)modules\aopengltriangle.ixx" />
     <ClCompile Include="$(MSBuildThisFileDirectory)modules\apacmanlike.ixx" />
@@ -199,7 +197,8 @@
     <ClCompile Include="$(MSBuildThisFileDirectory)src modules\aengine.scripting.compiler.cppm" />
     <ClCompile Include="$(MSBuildThisFileDirectory)src modules\afilewatch.cppm" />
     <ClCompile Include="$(MSBuildThisFileDirectory)src modules\afont.renderer.cppm" />
-    <ClCompile Include="$(MSBuildThisFileDirectory)src modules\aopenglplatform_win.cppm" />
+    <ClCompile Include="$(MSBuildThisFileDirectory)src modules\acontext.opengl.platform.linux.cppm" />
+    <ClCompile Include="$(MSBuildThisFileDirectory)src modules\acontext.opengl.platform.win.cppm" />
     <ClCompile Include="$(MSBuildThisFileDirectory)src\acontextmultiplexer_linux.cpp" />
     <ClCompile Include="$(MSBuildThisFileDirectory)src\aengine.cpp" />
     <ClCompile Include="$(MSBuildThisFileDirectory)src\aopenglplatform_linux.cpp" />

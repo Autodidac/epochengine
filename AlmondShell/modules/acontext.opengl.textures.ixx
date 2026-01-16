@@ -26,49 +26,58 @@ module;
 // aengine.opengl.textures module interface
 
 //#include "atypes.hpp"
-#include "aengine.config.hpp" 		// for ALMOND_USING_SDL
-
-#include <atomic>
-#include <format>
-#include <string>
-#include <vector>
-#include <iostream>
-#include <filesystem>
-#include <unordered_map>
-#include <mutex>
-#include <algorithm>
-
-export module acontext.opengl.textures;
-
-import aengine.platform;
-//import aengine.config;
-
-#ifdef ALMOND_USING_OPENGL
-
-#include "aopenglplatform.hpp"
+//#include "aopenglplatform.hpp"
 //#include "aopenglcontext.hpp"
 //#include "aopenglstate.hpp"
 
 //#include "acontext.hpp"
 //#include "acontextmultiplexer.hpp"
 //#include "aatlasmanager.hpp"
-#include "aatlastexture.hpp"
+//#include "aatlastexture.hpp"
 //#include "aimageloader.hpp"
-#include "atexture.hpp"
+//#include "atexture.hpp"
 //#include "aspritehandle.hpp"
 //#include "acommandline.hpp"
+#include "..\include\aengine.config.hpp"
+//#include "..\include\aengine.hpp"
 
-import aengine.context;
+#include <atomic>
+#include <format>
+#include <string>
+#include <vector>
+#include <iostream>
+#include <fstream>
+#include <filesystem>
+#include <unordered_map>
+#include <mutex>
+#include <algorithm>
+#include <span>
+
+export module acontext.opengl.textures;
+
+import aengine.platform;
+
+#ifdef ALMOND_USING_OPENGL
+
+import aengine.cli; 
+import aengine.core.context;
 import aengine.context.multiplexer;
+//import aengine.core.types;
 
+import acontext.opengl.platform;
 import acontext.opengl.state;
+import aatlas.manager;
+import aatlas.texture;
+import atexture;
+import aimage.loader;
+import aspritehandle;
 //import acontext.opengl.context;
 
 export namespace almondnamespace::opengltextures
 {
     namespace detail
     {
-        inline almondnamespace::openglcontext::PlatformGL::PlatformGLContext to_platform_context(const openglstate::OpenGL4State& state) noexcept
+        inline almondnamespace::openglcontext::PlatformGL::PlatformGLContext to_platform_context(const almondnamespace::openglstate::OpenGL4State& state) noexcept
         {
             almondnamespace::openglcontext::PlatformGL::PlatformGLContext ctx{};
 #if defined(_WIN32)

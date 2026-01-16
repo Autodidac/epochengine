@@ -52,11 +52,13 @@ import aengine.core.types;
 
 
 //export import acontext.raylib.context;
-export import acontext.raylib.state;
-export import aatlas.manager;
-export import aatlas.texture;
-export import aimage.loader;
-export import atexture;
+import acontext.raylib.state;
+import aatlas.manager;
+import aatlas.texture;
+import aimage.loader;
+import atexture;
+//import aengine.core.context;
+import aengine.context.multiplexer;
 
 #if defined(ALMOND_USING_RAYLIB)
 namespace almondnamespace::raylibtextures

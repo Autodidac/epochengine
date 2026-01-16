@@ -1,10 +1,5 @@
-﻿// acontextmultiplexer.cppm  (was acontextmultiplexer.cpp)
+﻿// aengine.context.multiplexer.win.cppm
 module;
-
-// Global module fragment: legacy headers/macros live here.
-//#include "aplatform.hpp"        // must be first for platform defines
-//#include "aengineconfig.hpp"
-//#include "astringconverter.hpp"
 
 #if defined(_WIN32)
 #   ifndef WIN32_LEAN_AND_MEAN
@@ -16,88 +11,78 @@ module;
 #   include <shellapi.h>
 #   pragma comment(lib, "comctl32.lib")
 
-//#   include "aopenglcontext.hpp"
-//#   include "asdlcontext.hpp"
-//#   include "asfmlcontext.hpp"
-//#   include "araylibcontext.hpp"
-//#   include "asoftrenderer_context.hpp"
-//#   include "acommandline.hpp"
-
-#   include <stdexcept>
 #   include <algorithm>
+#   include <chrono>
+#   include <functional>
+#   include <iostream>
 #   include <memory>
 #   include <shared_mutex>
+#   include <stdexcept>
 #   include <string>
 #   include <string_view>
-#   include <unordered_map>
 #   include <thread>
+#   include <unordered_map>
+#   include <utility>
 #   include <vector>
-#   include <functional>
-#   include <chrono>
-#   include <iostream>
 
-#include <glad/glad.h>
-
+#   include <glad/glad.h>
 #endif
 
 // configuration
-#include "..\include\aengine.config.hpp" 		// for ALMOND_USING_SDL
+#include "..\\include\\aengine.config.hpp"
 
 export module aengine.context.multiplexer:win;
 
 import aengine.platform;
-//import aengine.config;
 import autility.string.converter;
 
+import aengine.cli;
 import aengine.core.context;
 
-import acontext.opengl.context;
-import acontext.sdl.context;
-//import acontext.sfml.context;
-import acontext.raylib.context;
-import acontext.softrenderer.context;
-
-import aengine.context.multiplexer;
-import aengine.context.window;
-import aengine.context.type;
 import aengine.context.commandqueue;
+import aengine.context.multiplexer;
+import aengine.context.type;
+import aengine.context.window;
 
-import aengine.cli;
-
+#if defined(ALMOND_USING_OPENGL)
+import acontext.opengl.context;
+#endif
+#if defined(ALMOND_USING_SDL)
+import acontext.sdl.context;
+#endif
+#if defined(ALMOND_USING_RAYLIB)
+import acontext.raylib.context;
+#endif
+#if defined(ALMOND_USING_SOFTWARE_RENDERER)
+import acontext.softrenderer.context;
+#endif
 
 #if defined(_WIN32)
 
-// -----------------------------------------------------------------
-// Dockable child handling
-// -----------------------------------------------------------------
 namespace
 {
+    // TU-owned globals. Accessed via almondnamespace::core::Threads()/Drag().
+    std::unordered_map<HWND, std::thread> g_threads;
+    almondnamespace::core::DragState       g_drag;
+
+#if ALMOND_SINGLE_PARENT
     struct SubCtx { HWND originalParent{}; };
 
-    LRESULT CALLBACK DockableProc(HWND hwnd, UINT msg, WPARAM wp, LPARAM lp,
-        UINT_PTR, DWORD_PTR dw)
+    LRESULT CALLBACK DockableProc(HWND hwnd, UINT msg, WPARAM wp, LPARAM lp, UINT_PTR, DWORD_PTR dw)
     {
-#if ALMOND_SINGLE_PARENT
         auto* ctx = reinterpret_cast<SubCtx*>(dw);
-#endif
 
-        switch (msg) {
+        switch (msg)
+        {
+        case WM_NCDESTROY:
+            // We allocated SubCtx in MakeDockable; free it here.
+            delete ctx;
+            return DefSubclassProc(hwnd, msg, wp, lp);
+
         case WM_CLOSE:
-#if ALMOND_SINGLE_PARENT
-            if (ctx && ctx->originalParent) {
-                if (hwnd == ctx->originalParent) {
-                    PostQuitMessage(0); // main parent closed -> shutdown engine
-                }
-                else {
-                    DestroyWindow(hwnd); // child closes itself
-                }
-            }
-            else {
-                DestroyWindow(hwnd); // no parent -> just close itself
-            }
-#else
-            DestroyWindow(hwnd); // always independent
-#endif
+            // Child close should not kill the process when docked.
+            // Only the actual *parent* window closing triggers WM_QUIT (handled in ParentProc).
+            ::DestroyWindow(hwnd);
             return 0;
 
         case WM_LBUTTONDOWN:
@@ -105,19 +90,30 @@ namespace
         case WM_LBUTTONUP:
             return almondnamespace::core::MultiContextManager::ChildProc(hwnd, msg, wp, lp);
         }
+
         return DefSubclassProc(hwnd, msg, wp, lp);
     }
+#endif
+
+    [[nodiscard]] inline int clamp_positive(int v) noexcept { return (v < 1) ? 1 : v; }
 }
 
-// Exported API surface must be in an exported namespace (your request).
 namespace almondnamespace::core
 {
+    // ------------------------------------------------------------
+    // Exported helpers
+    // ------------------------------------------------------------
+    std::unordered_map<HWND, std::thread>& Threads() noexcept { return g_threads; }
+    DragState& Drag() noexcept { return g_drag; }
+
     void MakeDockable(HWND hwnd, HWND parent)
     {
 #if ALMOND_SINGLE_PARENT
+        (void)parent;
         if (!hwnd) return;
         auto* ctx = new SubCtx{ parent };
-        if (!SetWindowSubclass(hwnd, DockableProc, 1, reinterpret_cast<DWORD_PTR>(ctx))) {
+        if (!::SetWindowSubclass(hwnd, DockableProc, 1, reinterpret_cast<DWORD_PTR>(ctx)))
+        {
             delete ctx;
         }
 #else
@@ -157,110 +153,92 @@ namespace almondnamespace::core
         void ResolveClientSize(HWND hwnd, int& width, int& height) noexcept
         {
             if (!hwnd) return;
-
             RECT client{};
-            if (!::GetClientRect(hwnd, &client)) {
-                return;
-            }
-
-            width = (std::max)(static_cast<LONG>(1), client.right - client.left);
-            height = (std::max)(static_cast<LONG>(1), client.bottom - client.top);
+            if (!::GetClientRect(hwnd, &client)) return;
+            width = clamp_positive(static_cast<int>(client.right - client.left));
+            height = clamp_positive(static_cast<int>(client.bottom - client.top));
         }
     }
 
-    // These are in your pasted file as TU-globals inside the export namespace.
-    // That keeps the surface consistent (though globals in an export namespace are still exported symbols).
-    std::unordered_map<HWND, std::thread> gThreads{};
-    almondnamespace::core::DragState gDragState{};
-
-    //inline  std::unordered_map<HWND, std::thread> s_threads{};
-    //inline  DragState s_drag{};
-
-
-    std::unordered_map<HWND, std::thread>& Threads() noexcept
-    {
-        return gThreads;
-    }
-
-    DragState& Drag() noexcept
-    {
-        return gDragState;
-    }
-
-    WindowData* MultiContextManager::findWindowByHWND(HWND hwnd) 
+    // ------------------------------------------------------------
+    // Window lookup
+    // ------------------------------------------------------------
+    WindowData* MultiContextManager::findWindowByHWND(HWND hwnd)
     {
         std::scoped_lock lock(windowsMutex);
         auto it = std::find_if(windows.begin(), windows.end(),
-            [hwnd](const std::unique_ptr<core::WindowData>& w) {
-                return w && w->hwnd == hwnd;
-            });
+            [hwnd](const std::unique_ptr<WindowData>& w) { return w && w->hwnd == hwnd; });
         return (it != windows.end()) ? it->get() : nullptr;
     }
 
-    const WindowData* MultiContextManager::findWindowByHWND(HWND hwnd) const 
+    const WindowData* MultiContextManager::findWindowByHWND(HWND hwnd) const
     {
         std::scoped_lock lock(windowsMutex);
         auto it = std::find_if(windows.begin(), windows.end(),
-            [hwnd](const std::unique_ptr<WindowData>& w) {
-                return w && w->hwnd == hwnd;
-            });
+            [hwnd](const std::unique_ptr<WindowData>& w) { return w && w->hwnd == hwnd; });
         return (it != windows.end()) ? it->get() : nullptr;
     }
 
-    WindowData* MultiContextManager::findWindowByContext(const std::shared_ptr<context::Context>& ctx) {
+    WindowData* MultiContextManager::findWindowByContext(const std::shared_ptr<context::Context>& ctx)
+    {
         if (!ctx) return nullptr;
         std::scoped_lock lock(windowsMutex);
         auto it = std::find_if(windows.begin(), windows.end(),
-            [&](const std::unique_ptr<WindowData>& w) {
-                return w && w->context && w->context.get() == ctx.get();
-            });
+            [&](const std::unique_ptr<WindowData>& w) { return w && w->context && w->context.get() == ctx.get(); });
         return (it != windows.end()) ? it->get() : nullptr;
     }
 
-    const WindowData* MultiContextManager::findWindowByContext(const std::shared_ptr<context::Context>& ctx) const {
+    const WindowData* MultiContextManager::findWindowByContext(const std::shared_ptr<context::Context>& ctx) const
+    {
         if (!ctx) return nullptr;
         std::scoped_lock lock(windowsMutex);
         auto it = std::find_if(windows.begin(), windows.end(),
-            [&](const std::unique_ptr<WindowData>& w) {
-                return w && w->context && w->context.get() == ctx.get();
-            });
+            [&](const std::unique_ptr<WindowData>& w) { return w && w->context && w->context.get() == ctx.get(); });
         return (it != windows.end()) ? it->get() : nullptr;
     }
 
-    // ---------------- MultiContextManager (static) ----------------
-    void almondnamespace::core::MultiContextManager::SetCurrent(std::shared_ptr<context::Context> ctx) {
+    // ------------------------------------------------------------
+    // MultiContextManager (static)
+    // ------------------------------------------------------------
+    void MultiContextManager::SetCurrent(std::shared_ptr<context::Context> ctx)
+    {
         currentContext = std::move(ctx);
     }
 
-    std::shared_ptr<Context> almondnamespace::core::MultiContextManager::GetCurrent() {
+    std::shared_ptr<Context> MultiContextManager::GetCurrent()
+    {
         return currentContext;
     }
 
-    // ---------------- MultiContextManager (public helpers) ----------------
-    inline bool MultiContextManager::IsRunning() const noexcept {
+    // ------------------------------------------------------------
+    // MultiContextManager (public helpers)
+    // ------------------------------------------------------------
+    bool MultiContextManager::IsRunning() const noexcept
+    {
         return running.load(std::memory_order_acquire);
     }
 
-    inline void MultiContextManager::StopRunning() noexcept {
+    void MultiContextManager::StopRunning() noexcept
+    {
         running.store(false, std::memory_order_release);
     }
 
-    inline void MultiContextManager::EnqueueRenderCommand(HWND hwnd, RenderCommand cmd) {
+    void MultiContextManager::EnqueueRenderCommand(HWND hwnd, RenderCommand cmd)
+    {
         std::scoped_lock lock(windowsMutex);
         auto it = std::find_if(windows.begin(), windows.end(),
-            [hwnd](const std::unique_ptr<WindowData>& w) { return w->hwnd == hwnd; });
-        if (it != windows.end()) {
-            (*it)->EnqueueCommand(std::move(cmd));
-        }
+            [hwnd](const std::unique_ptr<WindowData>& w) { return w && w->hwnd == hwnd; });
+        if (it != windows.end()) (*it)->EnqueueCommand(std::move(cmd));
     }
 
-    // -----------------------------------------------------------------
+    // ------------------------------------------------------------
     // Implementation
-    // -----------------------------------------------------------------
+    // ------------------------------------------------------------
     void MultiContextManager::ShowConsole()
     {
-        if (AllocConsole()) {
-            FILE* f;
+        if (::AllocConsole())
+        {
+            FILE* f{};
             freopen_s(&f, "CONOUT$", "w", stdout);
             freopen_s(&f, "CONIN$", "r", stdin);
             freopen_s(&f, "CONOUT$", "w", stderr);
@@ -275,9 +253,8 @@ namespace almondnamespace::core
         wc.hInstance = hInst;
         wc.lpszClassName = name;
         wc.style = CS_OWNDC | CS_HREDRAW | CS_VREDRAW;
-        wc.hCursor = LoadCursor(nullptr, IDC_ARROW);
-
-        return RegisterClassW(&wc);
+        wc.hCursor = ::LoadCursor(nullptr, IDC_ARROW);
+        return ::RegisterClassW(&wc);
     }
 
     ATOM MultiContextManager::RegisterChildClass(HINSTANCE hInst, LPCWSTR name)
@@ -287,10 +264,9 @@ namespace almondnamespace::core
         wc.hInstance = hInst;
         wc.lpszClassName = name;
         wc.style = CS_OWNDC | CS_HREDRAW | CS_VREDRAW;
-        wc.hCursor = LoadCursor(nullptr, IDC_ARROW);
+        wc.hCursor = ::LoadCursor(nullptr, IDC_ARROW);
         wc.hbrBackground = reinterpret_cast<HBRUSH>(COLOR_WINDOW + 1);
-
-        return RegisterClassW(&wc);
+        return ::RegisterClassW(&wc);
     }
 
     void MultiContextManager::SetupPixelFormat(HDC hdc)
@@ -304,59 +280,58 @@ namespace almondnamespace::core
         pfd.cDepthBits = 24;
         pfd.iLayerType = PFD_MAIN_PLANE;
 
-        int pf = ChoosePixelFormat(hdc, &pfd);
-        if (pf == 0 || !SetPixelFormat(hdc, pf, &pfd))
+        const int pf = ::ChoosePixelFormat(hdc, &pfd);
+        if (pf == 0 || !::SetPixelFormat(hdc, pf, &pfd))
             throw std::runtime_error("Failed to set pixel format");
     }
 
     HGLRC MultiContextManager::CreateSharedGLContext(HDC hdc)
     {
         SetupPixelFormat(hdc);
-        HGLRC ctx = wglCreateContext(hdc);
+        HGLRC ctx = ::wglCreateContext(hdc);
         if (!ctx) throw std::runtime_error("Failed to create OpenGL context");
-        if (sharedContext && !wglShareLists(sharedContext, ctx)) {
-            wglDeleteContext(ctx);
+
+        if (sharedContext && !::wglShareLists(sharedContext, ctx))
+        {
+            ::wglDeleteContext(ctx);
             throw std::runtime_error("Failed to share GL context");
         }
+
         return ctx;
     }
 
-    inline int MultiContextManager::get_title_bar_thickness(const HWND window_handle)
+    int MultiContextManager::get_title_bar_thickness(const HWND window_handle)
     {
-        RECT window_rectangle{}, client_rectangle{};
-        GetWindowRect(window_handle, &window_rectangle);
-        GetClientRect(window_handle, &client_rectangle);
+        RECT wr{}, cr{};
+        ::GetWindowRect(window_handle, &wr);
+        ::GetClientRect(window_handle, &cr);
 
-        int totalWidth = window_rectangle.right - window_rectangle.left;
-        int totalHeight = window_rectangle.bottom - window_rectangle.top;
-        int clientWidth = client_rectangle.right - client_rectangle.left;
-        int clientHeight = client_rectangle.bottom - client_rectangle.top;
+        const int totalH = wr.bottom - wr.top;
+        const int clientH = cr.bottom - cr.top;
+        const int totalW = wr.right - wr.left;
+        const int clientW = cr.right - cr.left;
 
-        int nonClientHeight = totalHeight - clientHeight; // title bar + borders (top+bottom)
-        int nonClientWidth = totalWidth - clientWidth;   // vertical borders (left+right)
+        const int nonClientH = totalH - clientH;
+        const int nonClientW = totalW - clientW;
 
-        int borderThickness = nonClientWidth / 2;          // assume symmetrical
-        int titleBarHeight = nonClientHeight - borderThickness * 2;
-
-#if defined(DEBUG_WINDOW_VERBOSE)
-        std::cout << "Window size:  " << totalWidth << "x" << totalHeight << " px\n";
-        std::cout << "Client size:  " << clientWidth << "x" << clientHeight << " px\n";
-        std::cout << "Non-client H: " << nonClientHeight
-            << " (title bar + top/bottom borders)\n";
-        std::cout << "Non-client W: " << nonClientWidth
-            << " (left+right borders total)\n";
-        std::cout << "Border thickness: " << borderThickness << " px each side\n";
-        std::cout << "Title bar height: " << titleBarHeight << " px\n";
-#endif
-        return titleBarHeight;
+        const int border = nonClientW / 2;
+        const int title = nonClientH - border * 2;
+        return title;
     }
 
-    // ----------  MultiContext Manager Initialize  -------------------------------------------------------
-    bool MultiContextManager::Initialize(HINSTANCE hInst, int RayLibWinCount, int SDLWinCount, int SFMLWinCount, int OpenGLWinCount, int SoftwareWinCount, bool parented)
+    bool MultiContextManager::Initialize(
+        HINSTANCE hInst,
+        int RayLibWinCount,
+        int SDLWinCount,
+        int SFMLWinCount,
+        int OpenGLWinCount,
+        int SoftwareWinCount,
+        bool parented)
     {
         const int totalRequested = RayLibWinCount + SDLWinCount + SFMLWinCount + OpenGLWinCount + SoftwareWinCount;
         if (totalRequested <= 0) return false;
 
+        running.store(true, std::memory_order_release);
         s_activeInstance = this;
 
         RegisterParentClass(hInst, L"AlmondParent");
@@ -370,55 +345,78 @@ namespace almondnamespace::core
             int cols = 1, rows = 1;
             while (cols * rows < totalRequested) (cols <= rows ? ++cols : ++rows);
 
-            int cellW = (totalRequested == 1) ? cli::window_width : 800;
-            int cellH = (totalRequested == 1) ? cli::window_height : 600;
+            const int cellW = (totalRequested == 1) ? cli::window_width : 800;
+            const int cellH = (totalRequested == 1) ? cli::window_height : 600;
 
-            int clientW = cols * cellW;
-            int clientH = rows * cellH;
+            const int clientW = cols * cellW;
+            const int clientH = rows * cellH;
 
-            RECT want = { 0, 0, clientW, clientH };
-            DWORD style = WS_OVERLAPPEDWINDOW | WS_VISIBLE;
-            AdjustWindowRect(&want, style, FALSE);
+            RECT want{ 0, 0, clientW, clientH };
+            const DWORD style = WS_OVERLAPPEDWINDOW | WS_VISIBLE;
+            ::AdjustWindowRect(&want, style, FALSE);
 
-            parent = CreateWindowExW(0, L"AlmondParent", L"Almond Docking",
+            parent = ::CreateWindowExW(
+                0,
+                L"AlmondParent",
+                L"Almond Docking",
                 style,
-                CW_USEDEFAULT, CW_USEDEFAULT,
-                want.right - want.left, want.bottom - want.top,
-                nullptr, nullptr, hInst, this);
+                CW_USEDEFAULT,
+                CW_USEDEFAULT,
+                want.right - want.left,
+                want.bottom - want.top,
+                nullptr,
+                nullptr,
+                hInst,
+                this);
 
             if (!parent) return false;
-
-            DragAcceptFiles(parent, TRUE);
+            ::DragAcceptFiles(parent, TRUE);
         }
-        else {
+        else
+        {
             parent = nullptr;
         }
 
-        // ---------------- Shared dummy GL context (for wglShareLists) ----------------
+#if defined(ALMOND_USING_OPENGL)
+        // ---------------- Shared dummy GL context (for wglShareLists + glad bootstrap) ----------------
         {
-            HWND dummy = CreateWindowExW(WS_EX_TOOLWINDOW, L"AlmondChild", L"Dummy", WS_POPUP, 0, 0, 1, 1, nullptr, nullptr, hInst, nullptr);
+            HWND dummy = ::CreateWindowExW(
+                WS_EX_TOOLWINDOW,
+                L"AlmondChild",
+                L"Dummy",
+                WS_POPUP,
+                0, 0, 1, 1,
+                nullptr,
+                nullptr,
+                hInst,
+                nullptr);
+
             if (!dummy) return false;
 
-            HDC dummyDC = GetDC(dummy);
+            HDC dummyDC = ::GetDC(dummy);
             SetupPixelFormat(dummyDC);
-            sharedContext = wglCreateContext(dummyDC);
+            sharedContext = ::wglCreateContext(dummyDC);
             if (!sharedContext)
             {
-                ReleaseDC(dummy, dummyDC);
-                DestroyWindow(dummy);
+                ::ReleaseDC(dummy, dummyDC);
+                ::DestroyWindow(dummy);
                 throw std::runtime_error("Failed to create shared OpenGL context");
             }
-            wglMakeCurrent(dummyDC, sharedContext);
+
+            ::wglMakeCurrent(dummyDC, sharedContext);
 
             static bool gladInitialized = false;
-            if (!gladInitialized) {
-                gladInitialized = gladLoadGL();
+            if (!gladInitialized)
+            {
+                gladInitialized = (gladLoadGL() != 0);
                 std::cerr << "[Init] GLAD loaded on dummy context\n";
             }
-            wglMakeCurrent(nullptr, nullptr);
-            ReleaseDC(dummy, dummyDC);
-            DestroyWindow(dummy);
+
+            ::wglMakeCurrent(nullptr, nullptr);
+            ::ReleaseDC(dummy, dummyDC);
+            ::DestroyWindow(dummy);
         }
+#endif
 
         // ---------------- Helper: create N windows for a backend ----------------
         auto make_backend_windows = [&](ContextType type, int count)
@@ -426,30 +424,34 @@ namespace almondnamespace::core
                 if (count <= 0) return;
 
                 std::vector<HWND> created;
-                created.reserve(count);
+                created.reserve(static_cast<size_t>(count));
                 std::vector<std::string> createdTitles;
-                createdTitles.reserve(count);
+                createdTitles.reserve(static_cast<size_t>(count));
 
                 for (int i = 0; i < count; ++i)
                 {
                     const std::wstring windowTitle = backend::BuildChildWindowTitle(type, i);
                     const std::string narrowTitle = almondnamespace::text::narrow_utf8(windowTitle);
-                    HWND hwnd = CreateWindowExW(0, L"AlmondChild", windowTitle.c_str(),
-                        (parent ? WS_CHILD | WS_VISIBLE : WS_OVERLAPPEDWINDOW | WS_VISIBLE),
+
+                    HWND hwnd = ::CreateWindowExW(
+                        0,
+                        L"AlmondChild",
+                        windowTitle.c_str(),
+                        (parent ? (WS_CHILD | WS_VISIBLE) : (WS_OVERLAPPEDWINDOW | WS_VISIBLE)),
                         0, 0, 800, 600,
-                        parent, nullptr, hInst, nullptr);
+                        parent,
+                        nullptr,
+                        hInst,
+                        nullptr);
 
-                    if (!hwnd)
-                    {
-                        continue;
-                    }
+                    if (!hwnd) continue;
 
-                    SetWindowTextW(hwnd, windowTitle.c_str());
+                    ::SetWindowTextW(hwnd, windowTitle.c_str());
 
-                    HDC hdc = GetDC(hwnd);
+                    HDC hdc = ::GetDC(hwnd);
                     HGLRC glrc = nullptr;
 
-#ifdef ALMOND_USING_OPENGL
+#if defined(ALMOND_USING_OPENGL)
                     if (type == ContextType::OpenGL)
                     {
                         glrc = CreateSharedGLContext(hdc);
@@ -457,58 +459,76 @@ namespace almondnamespace::core
 #endif
 
                     auto winPtr = std::make_unique<contextwindow::WindowData>(hwnd, hdc, glrc, true, type);
+                    winPtr->running = true; // critical: default-constructed WindowData is not guaranteed to be running
                     winPtr->titleWide = windowTitle;
                     winPtr->titleNarrow = narrowTitle;
-                    if (parent)
-                    {
-                        MakeDockable(hwnd, parent);
-                    }
+
+                    if (parent) MakeDockable(hwnd, parent);
+
                     {
                         std::scoped_lock lock(windowsMutex);
                         windows.emplace_back(std::move(winPtr));
                     }
+
                     created.push_back(hwnd);
                     createdTitles.push_back(narrowTitle);
                 }
 
                 std::vector<std::shared_ptr<context::Context>> ctxs;
+
+                // IMPORTANT: do not call CloneContext() while holding g_backendsMutex.
+                // If CloneContext() ever evolves to touch g_backends/g_backendsMutex (directly or indirectly),
+                // calling it under this lock will deadlock.
+                std::shared_ptr<context::Context> master;
+                std::vector<std::shared_ptr<context::Context>> free_dups;
+                free_dups.reserve(static_cast<size_t>((std::max)(0, count - 1)));
+
                 {
                     std::unique_lock lock(g_backendsMutex);
                     auto it = g_backends.find(type);
-                    if (it == g_backends.end() || !it->second.master) {
-                        std::cerr << "[Init] Missing prototype context for backend type "
-                            << static_cast<int>(type) << "\n";
+                    if (it == g_backends.end() || !it->second.master)
+                    {
+                        std::cerr << "[Init] Missing prototype context for backend type " << static_cast<int>(type) << "\n";
                         return;
                     }
 
                     core::BackendState& state = it->second;
-                    ctxs.reserve(static_cast<size_t>(count));
-                    ctxs.push_back(state.master);
+                    master = state.master;
 
-                    auto ensure_duplicate =
-                        [&state](size_t index) -> std::shared_ptr<context::Context>
-                        {
-                            if (index < state.duplicates.size()) {
-                                auto& candidate = state.duplicates[index];
-                                if (candidate && candidate->initialize) {
-                                    return candidate;
-                                }
-                                candidate = CloneContext(*state.master);
-                                return candidate;
-                            }
-
-                            auto dup = CloneContext(*state.master);
-                            state.duplicates.push_back(dup);
-                            return dup;
-                        };
-
-                    while (ctxs.size() < static_cast<size_t>(count)) {
-                        ctxs.push_back(ensure_duplicate(ctxs.size() - 1));
+                    for (auto& dup : state.duplicates)
+                    {
+                        if (dup && dup->windowData == nullptr)
+                            free_dups.push_back(dup);
                     }
                 }
 
+                if (!master)
+                    return;
+
+                ctxs.reserve(static_cast<size_t>(count));
+                ctxs.push_back(master);
+
+                while (ctxs.size() < static_cast<size_t>(count))
+                {
+                    if (!free_dups.empty())
+                    {
+                        ctxs.push_back(std::move(free_dups.back()));
+                        free_dups.pop_back();
+                        continue;
+                    }
+
+                    auto cloned = CloneContext(*master);
+                    {
+                        std::unique_lock lock(g_backendsMutex);
+                        auto& state = g_backends[type];
+                        state.duplicates.push_back(cloned);
+                    }
+                    ctxs.push_back(std::move(cloned));
+                }
+
                 const size_t n = (std::min)(created.size(), ctxs.size());
-                for (size_t i = 0; i < n; ++i) {
+                for (size_t i = 0; i < n; ++i)
+                {
                     HWND hwnd = created[i];
                     auto* w = findWindowByHWND(hwnd);
                     auto& ctx = ctxs[i];
@@ -516,38 +536,34 @@ namespace almondnamespace::core
 
                     ctx->type = type;
                     ctx->hwnd = hwnd;
-                    RECT rc{};
-                    if (parent) GetClientRect(parent, &rc);
-                    else GetClientRect(hwnd, &rc);
-                    int width = static_cast<int>((std::max)(static_cast<LONG>(1), rc.right - rc.left));
-                    int height = static_cast<int>((std::max)(static_cast<LONG>(1), rc.bottom - rc.top));
 
+                    int width = 800;
+                    int height = 600;
                     backend::ResolveClientSize(hwnd, width, height);
                     ctx->width = width;
                     ctx->height = height;
 
                     std::string narrowTitle;
-
-                    if (w) {
+                    if (w)
+                    {
                         ctx->hdc = w->hdc;
                         ctx->hglrc = w->glContext;
                         ctx->windowData = w;
                         w->context = ctx;
                         w->width = width;
                         w->height = height;
-                        if (!ctx->onResize && w->onResize)
-                            ctx->onResize = w->onResize;
-                        if (!w->titleNarrow.empty())
-                            narrowTitle = w->titleNarrow;
+
+                        // Ensure WindowData starts "alive".
+                        w->running = true;
+
+                        if (!ctx->onResize && w->onResize) ctx->onResize = w->onResize;
+                        if (!w->titleNarrow.empty()) narrowTitle = w->titleNarrow;
                     }
 
-                    if (narrowTitle.empty()) {
-                        if (i < createdTitles.size()) {
-                            narrowTitle = createdTitles[i];
-                        }
-                        else {
-                            narrowTitle = almondnamespace::text::narrow_utf8(backend::BuildChildWindowTitle(type, static_cast<int>(i)));
-                        }
+                    if (narrowTitle.empty())
+                    {
+                        narrowTitle = (i < createdTitles.size()) ? createdTitles[i]
+                            : almondnamespace::text::narrow_utf8(backend::BuildChildWindowTitle(type, static_cast<int>(i)));
                     }
 
                     const HWND placeholderHwnd = hwnd;
@@ -555,13 +571,12 @@ namespace almondnamespace::core
 
                     auto adopt_backend_window = [&](HWND actualHwnd)
                         {
-                            if (!w || !ctx || !actualHwnd || actualHwnd == placeholderHwnd) {
-                                return;
-                            }
+                            if (!w || !ctx || !actualHwnd || actualHwnd == placeholderHwnd) return;
 
                             const HWND previous = w->hwnd;
 
-                            if (hostParent) {
+                            if (hostParent)
+                            {
                                 ::SetParent(actualHwnd, hostParent);
 
                                 LONG_PTR style = ::GetWindowLongPtr(actualHwnd, GWL_STYLE);
@@ -576,7 +591,8 @@ namespace almondnamespace::core
 
                                 MakeDockable(actualHwnd, hostParent);
                             }
-                            else {
+                            else
+                            {
                                 ::SetParent(actualHwnd, nullptr);
                             }
 
@@ -587,23 +603,28 @@ namespace almondnamespace::core
                             w->glContext = ctx->hglrc;
                             w->context = ctx;
                             w->usesSharedContext = false;
+                            w->running = true;
                             ctx->windowData = w;
 
                             RECT client{};
-                            if (::GetClientRect(actualHwnd, &client)) {
-                                const int actualWidth = static_cast<int>((std::max)(static_cast<LONG>(1), client.right - client.left));
-                                const int actualHeight = static_cast<int>((std::max)(static_cast<LONG>(1), client.bottom - client.top));
+                            if (::GetClientRect(actualHwnd, &client))
+                            {
+                                const int actualWidth = clamp_positive(static_cast<int>(client.right - client.left));
+                                const int actualHeight = clamp_positive(static_cast<int>(client.bottom - client.top));
                                 w->width = actualWidth;
                                 w->height = actualHeight;
                                 ctx->width = actualWidth;
                                 ctx->height = actualHeight;
                             }
 
-                            if (previous && previous != actualHwnd) {
+                            if (previous && previous != actualHwnd)
+                            {
                                 auto& threads = Threads();
-                                if (threads.contains(previous)) {
+                                if (threads.contains(previous))
+                                {
                                     auto node = threads.extract(previous);
-                                    if (!node.empty()) {
+                                    if (!node.empty())
+                                    {
                                         node.key() = actualHwnd;
                                         threads.insert(std::move(node));
                                     }
@@ -613,98 +634,78 @@ namespace almondnamespace::core
                         };
 
                     // ---------------- Immediate backend initialization ----------------
-                    switch (type) {
-#ifdef ALMOND_USING_OPENGL
+                    switch (type)
+                    {
+#if defined(ALMOND_USING_OPENGL)
                     case ContextType::OpenGL:
-                        if (ctx->hdc && ctx->hglrc) {
-                            if (!wglMakeCurrent(ctx->hdc, ctx->hglrc)) {
+                        if (ctx->hdc && ctx->hglrc)
+                        {
+                            if (!::wglMakeCurrent(ctx->hdc, ctx->hglrc))
+                            {
                                 std::cerr << "[Init] wglMakeCurrent failed for hwnd=" << hwnd << "\n";
                             }
-                            else {
+                            else
+                            {
                                 std::cerr << "[Init] Running OpenGL init for hwnd=" << hwnd << "\n";
-                                almondnamespace::openglcontext::opengl_initialize(
-                                    ctx, hwnd, ctx->width, ctx->height, w->onResize);
-                                wglMakeCurrent(nullptr, nullptr);
+                                almondnamespace::openglcontext::opengl_initialize(ctx, hwnd, ctx->width, ctx->height, w ? w->onResize : nullptr);
+                                ::wglMakeCurrent(nullptr, nullptr);
                             }
                         }
                         break;
 #endif
-#ifdef ALMOND_USING_SOFTWARE_RENDERER
+#if defined(ALMOND_USING_SOFTWARE_RENDERER)
                     case ContextType::Software:
                         std::cerr << "[Init] Initializing Software renderer for hwnd=" << hwnd << "\n";
-                        almondnamespace::anativecontext::softrenderer_initialize(
-                            ctx, hwnd, ctx->width, ctx->height, w->onResize);
+                        almondnamespace::anativecontext::softrenderer_initialize(ctx, hwnd, ctx->width, ctx->height, w ? w->onResize : nullptr);
                         break;
 #endif
-#ifdef ALMOND_USING_SDL
+#if defined(ALMOND_USING_SDL)
                     case ContextType::SDL:
                         std::cerr << "[Init] Initializing SDL context for hwnd=" << hwnd << "\n";
-                        almondnamespace::sdlcontext::sdl_initialize(
-                            ctx, hostParent, ctx->width, ctx->height, w->onResize, narrowTitle);
+                        almondnamespace::sdlcontext::sdl_initialize(ctx, hostParent, ctx->width, ctx->height, w ? w->onResize : nullptr, narrowTitle);
                         break;
 #endif
-#ifdef ALMOND_USING_SFML
-                    case ContextType::SFML:
-                        std::cerr << "[Init] Initializing SFML context for hwnd=" << hwnd << "\n";
-                        almondnamespace::sfmlcontext::sfml_initialize(
-                            ctx, hwnd, ctx->width, ctx->height, w->onResize);
-                        break;
-#endif
-#ifdef ALMOND_USING_RAYLIB
+#if defined(ALMOND_USING_RAYLIB)
                     case ContextType::RayLib:
                         std::cerr << "[Init] Initializing RayLib context for hwnd=" << hwnd << "\n";
-                        almondnamespace::raylibcontext::raylib_initialize(
-                            ctx, hostParent, ctx->width, ctx->height, w->onResize, narrowTitle);
+                        almondnamespace::raylibcontext::raylib_initialize(ctx, hostParent, ctx->width, ctx->height, w ? w->onResize : nullptr, narrowTitle);
                         break;
 #endif
-					case ContextType::Custom:
-						// Custom backend initialization can be handled here if needed
-						break;
-					case ContextType::Vulkan:
-                        break;
-					case ContextType::DirectX:
-                        break;
-					case ContextType::Noop:
-                        break;
                     default:
                         break;
                     }
 
-                    if (type == ContextType::SDL || type == ContextType::RayLib) {
+                    // Some backends (SDL/Raylib) create their own HWND; adopt it.
+                    if (type == ContextType::SDL || type == ContextType::RayLib)
                         adopt_backend_window(ctx->hwnd);
-                    }
                 }
             };
 
-#ifdef ALMOND_USING_RAYLIB
+#if defined(ALMOND_USING_RAYLIB)
         make_backend_windows(ContextType::RayLib, RayLibWinCount);
 #endif
-#ifdef ALMOND_USING_SDL
+#if defined(ALMOND_USING_SDL)
         make_backend_windows(ContextType::SDL, SDLWinCount);
 #endif
-#ifdef ALMOND_USING_SFML
-        make_backend_windows(ContextType::SFML, SFMLWinCount);
-#endif
-#ifdef ALMOND_USING_OPENGL
+#if defined(ALMOND_USING_OPENGL)
         make_backend_windows(ContextType::OpenGL, OpenGLWinCount);
 #endif
-#ifdef ALMOND_USING_SOFTWARE_RENDERER
+#if defined(ALMOND_USING_SOFTWARE_RENDERER)
         make_backend_windows(ContextType::Software, SoftwareWinCount);
 #endif
+        (void)SFMLWinCount;
 
         ArrangeDockedWindowsGrid();
+
         {
             std::shared_lock lock(g_backendsMutex);
             return !g_backends.empty();
         }
     }
 
-    // ======================================================
-    // MultiContextManager : Implementations
-    // ======================================================
     void MultiContextManager::AddWindow(
         HWND hwnd,
-        HWND parent,
+        HWND parentWnd,
         HDC hdc,
         HGLRC glContext,
         bool usesSharedContext,
@@ -715,81 +716,56 @@ namespace almondnamespace::core
 
         s_activeInstance = this;
 
-        if (!hdc) hdc = GetDC(hwnd);
+        if (!hdc) hdc = ::GetDC(hwnd);
 
-        // Only create GL context if this window is OpenGL
-        if (type == ContextType::OpenGL)
+#if defined(ALMOND_USING_OPENGL)
+        if (type == ContextType::OpenGL && !glContext)
         {
-#ifdef ALMOND_USING_OPENGL
-            if (!glContext) {
-                SetupPixelFormat(hdc);
-                glContext = CreateSharedGLContext(hdc);
-
-                static bool gladInitialized = false;
-                if (!gladInitialized) {
-                    wglMakeCurrent(hdc, glContext);
-                    gladInitialized = gladLoadGL();
-                    wglMakeCurrent(nullptr, nullptr);
-                }
+            glContext = CreateSharedGLContext(hdc);
+            static bool gladInitialized = false;
+            if (!gladInitialized)
+            {
+                ::wglMakeCurrent(hdc, glContext);
+                gladInitialized = (gladLoadGL() != 0);
+                ::wglMakeCurrent(nullptr, nullptr);
             }
-#endif
         }
+#endif
 
-        if (type == ContextType::RayLib)
+        if (parentWnd) MakeDockable(hwnd, parentWnd);
+
         {
-#if defined(_WIN32) && defined(ALMOND_USING_RAYLIB)
-            if (!glContext && hdc) {
-                SetupPixelFormat(hdc);
-                glContext = CreateSharedGLContext(hdc);
-
-                static bool gladInitialized = false;
-                if (!gladInitialized) {
-                    if (wglMakeCurrent(hdc, glContext)) {
-                        gladInitialized = gladLoadGL();
-                        wglMakeCurrent(nullptr, nullptr);
-                    }
-                    else {
-                        std::cerr << "[Raylib] Failed to bind bootstrap GL context for hwnd="
-                            << hwnd << "\n";
-                    }
-                }
+            bool needInit = false;
+            {
+                std::shared_lock lock(g_backendsMutex);
+                needInit = g_backends.empty();
             }
-#endif
-        }
-
-        // Make window dockable if a parent is provided
-        if (parent) MakeDockable(hwnd, parent);
-
-        bool needInit = false;
-        {
-            std::shared_lock lock(g_backendsMutex);
-            needInit = g_backends.empty();
-        }
-        if (needInit) {
-            InitializeAllContexts();
+            if (needInit) InitializeAllContexts();
         }
 
         std::shared_ptr<context::Context> ctx;
         {
             std::unique_lock lock(g_backendsMutex);
             auto& state = core::g_backends[type];
-            if (!state.master) {
+
+            if (!state.master)
+            {
                 ctx = std::make_shared<context::Context>();
                 ctx->type = type;
                 state.master = ctx;
             }
-            else if (!state.master->windowData) {
+            else if (!state.master->windowData)
+            {
                 ctx = state.master;
             }
-            else {
+            else
+            {
                 auto it = std::find_if(state.duplicates.begin(), state.duplicates.end(),
-                    [](const std::shared_ptr<context::Context>& dup) {
-                        return dup && !dup->windowData;
-                    });
-                if (it != state.duplicates.end()) {
-                    ctx = *it;
-                }
-                else {
+                    [](const std::shared_ptr<context::Context>& dup) { return dup && !dup->windowData; });
+
+                if (it != state.duplicates.end()) ctx = *it;
+                else
+                {
                     auto dup = CloneContext(*state.master);
                     state.duplicates.push_back(dup);
                     ctx = dup;
@@ -797,59 +773,39 @@ namespace almondnamespace::core
             }
         }
 
-        if (ctx)
-            ctx->type = type;
+        if (!ctx) return;
 
+        ctx->type = type;
         ctx->hwnd = hwnd;
         ctx->hdc = hdc;
         ctx->hglrc = glContext;
-        ctx->type = type;
 
-        // Prepare WindowData (unique_ptr)
         auto winPtr = std::make_unique<WindowData>(hwnd, hdc, glContext, usesSharedContext, type);
+        winPtr->running = true;
         winPtr->onResize = std::move(onResize);
-        winPtr->context = ctx;                // hook it up
-        ctx->windowData = winPtr.get();       // back-pointer immediately
-
-#if defined(ALMOND_USING_RAYLIB)
-        if (type == ContextType::RayLib && ctx) {
-            if (ctx->hwnd) {
-                winPtr->hwnd = ctx->hwnd;
-            }
-#   if defined(_WIN32)
-            if (ctx->hdc) {
-                winPtr->hdc = ctx->hdc;
-            }
-            if (ctx->hglrc) {
-                winPtr->glContext = ctx->hglrc;
-            }
-#   endif
-        }
-#endif
+        winPtr->context = ctx;
+        ctx->windowData = winPtr.get();
 
         RECT rc{};
-        GetClientRect(hwnd, &rc);
-        const int width = static_cast<int>((std::max)(static_cast<LONG>(1), rc.right - rc.left));
-        const int height = static_cast<int>((std::max)(static_cast<LONG>(1), rc.bottom - rc.top));
-        ctx->width = width;
-        ctx->height = height;
-        winPtr->width = width;
-        winPtr->height = height;
+        ::GetClientRect(hwnd, &rc);
+        ctx->width = clamp_positive(static_cast<int>(rc.right - rc.left));
+        ctx->height = clamp_positive(static_cast<int>(rc.bottom - rc.top));
+        winPtr->width = ctx->width;
+        winPtr->height = ctx->height;
+
         if (!ctx->onResize && winPtr->onResize) ctx->onResize = winPtr->onResize;
         if (!winPtr->onResize && ctx->onResize) winPtr->onResize = ctx->onResize;
 
-        WindowData* rawWinPtr = winPtr.get();
-
+        WindowData* rawWin = winPtr.get();
         {
             std::scoped_lock lock(windowsMutex);
             windows.emplace_back(std::move(winPtr));
         }
 
         auto& threads = Threads();
-        if (!threads.contains(hwnd) && rawWinPtr) {
-            threads[hwnd] = std::thread([this, rawWinPtr]() {
-                RenderLoop(*rawWinPtr);
-                });
+        if (!threads.contains(hwnd) && rawWin)
+        {
+            threads[hwnd] = std::thread([this, rawWin]() { RenderLoop(*rawWin); });
         }
 
         ArrangeDockedWindowsGrid();
@@ -859,8 +815,8 @@ namespace almondnamespace::core
     {
         if (!hwnd) return;
 
-        int clampedWidth = (std::max)(1, width);
-        int clampedHeight = (std::max)(1, height);
+        int clampedWidth = clamp_positive(width);
+        int clampedHeight = clamp_positive(height);
         backend::ResolveClientSize(hwnd, clampedWidth, clampedHeight);
 
         std::function<void(int, int)> resizeCallback;
@@ -870,187 +826,169 @@ namespace almondnamespace::core
             std::scoped_lock lock(windowsMutex);
             auto it = std::find_if(windows.begin(), windows.end(),
                 [hwnd](const std::unique_ptr<WindowData>& w) { return w && w->hwnd == hwnd; });
-            if (it == windows.end()) {
-                return;
-            }
+            if (it == windows.end()) return;
 
             window = it->get();
             window->width = clampedWidth;
             window->height = clampedHeight;
 
-            if (window->context) {
+            if (window->context)
+            {
                 window->context->width = clampedWidth;
                 window->context->height = clampedHeight;
-                if (window->context->onResize) {
-                    resizeCallback = window->context->onResize;
-                }
+                if (window->context->onResize) resizeCallback = window->context->onResize;
             }
 
-            if (!resizeCallback && window->onResize) {
-                resizeCallback = window->onResize;
-            }
+            if (!resizeCallback && window->onResize) resizeCallback = window->onResize;
         }
 
-        if (resizeCallback && window) {
+        if (resizeCallback && window)
+        {
             window->commandQueue.enqueue([
                 cb = std::move(resizeCallback),
-                clampedWidth,
-                clampedHeight
-            ]() mutable {
-                    if (cb) cb(clampedWidth, clampedHeight);
+                w = clampedWidth,
+                h = clampedHeight
+            ]() mutable
+                {
+                    if (cb) cb(w, h);
                 });
         }
     }
 
     void MultiContextManager::StartRenderThreads()
     {
-        // Snapshot HWNDs under the mutex; don't spawn threads while holding the lock.
         std::vector<HWND> hwnds;
         {
             std::scoped_lock lock(windowsMutex);
             hwnds.reserve(windows.size());
-            for (const auto& w : windows) {
-                if (w && w->hwnd) {
-                    hwnds.push_back(w->hwnd);
-                }
-            }
+            for (const auto& w : windows)
+                if (w && w->hwnd) hwnds.push_back(w->hwnd);
         }
 
         auto& threads = Threads();
 
         for (HWND hwnd : hwnds)
         {
-            if (threads.contains(hwnd)) {
-                continue;
-            }
+            if (threads.contains(hwnd)) continue;
 
             threads[hwnd] = std::thread([this, hwnd]()
                 {
                     WindowData* win = nullptr;
-
                     {
                         std::scoped_lock lock(windowsMutex);
-                        auto it = std::find_if(
-                            windows.begin(), windows.end(),
+                        auto it = std::find_if(windows.begin(), windows.end(),
                             [hwnd](const std::unique_ptr<WindowData>& w) { return w && w->hwnd == hwnd; });
-
-                        if (it != windows.end()) {
-                            win = it->get();
-                        }
+                        if (it != windows.end()) win = it->get();
                     }
 
-                    if (win) {
-                        RenderLoop(*win);
-                    }
+                    if (win) RenderLoop(*win);
                 });
         }
     }
 
     void MultiContextManager::RemoveWindow(HWND hwnd)
     {
-        std::unique_ptr<WindowData> removedWindow;
+        std::unique_ptr<WindowData> removed;
 
         {
             std::scoped_lock lock(windowsMutex);
-
-            auto it = std::find_if(
-                windows.begin(), windows.end(),
-                [hwnd](const std::unique_ptr<WindowData>& w) {
-                    return w && w->hwnd == hwnd;
-                });
-
-            if (it == windows.end())
-                return;
+            auto it = std::find_if(windows.begin(), windows.end(),
+                [hwnd](const std::unique_ptr<WindowData>& w) { return w && w->hwnd == hwnd; });
+            if (it == windows.end()) return;
 
             (*it)->running = false;
 
-            if ((*it)->context) {
+            if ((*it)->context)
+            {
                 auto ctx = (*it)->context;
-                if (ctx->windowData == it->get()) {
-                    ctx->windowData = nullptr;
-                }
-                if (ctx->hwnd == hwnd) {
+                if (ctx->windowData == it->get()) ctx->windowData = nullptr;
+                if (ctx->hwnd == hwnd)
+                {
                     ctx->hwnd = nullptr;
                     ctx->hdc = nullptr;
                     ctx->hglrc = nullptr;
                 }
             }
 
-            removedWindow = std::move(*it);
+            removed = std::move(*it);
             windows.erase(it);
         }
 
         auto& threads = Threads();
-        if (threads.contains(hwnd)) {
-            if (threads[hwnd].joinable()) {
-                threads[hwnd].join();
-            }
+        if (threads.contains(hwnd))
+        {
+            if (threads[hwnd].joinable()) threads[hwnd].join();
             threads.erase(hwnd);
         }
 
-        if (removedWindow) {
-            if (removedWindow->glContext) {
-                wglMakeCurrent(nullptr, nullptr);
-                wglDeleteContext(removedWindow->glContext);
-            }
-            if (removedWindow->hdc && removedWindow->hwnd) {
-                ReleaseDC(removedWindow->hwnd, removedWindow->hdc);
-            }
+#if defined(ALMOND_USING_OPENGL)
+        if (removed && removed->glContext)
+        {
+            ::wglMakeCurrent(nullptr, nullptr);
+            ::wglDeleteContext(removed->glContext);
         }
+#endif
+        if (removed && removed->hdc && removed->hwnd)
+            ::ReleaseDC(removed->hwnd, removed->hdc);
     }
 
-    // Final active version (your current one):
-    void MultiContextManager::ArrangeDockedWindowsGrid() {
-        if (!parent || windows.empty()) return;
+    void MultiContextManager::ArrangeDockedWindowsGrid()
+    {
+        if (!parent) return;
 
-        int total = static_cast<int>(windows.size());
+        std::scoped_lock lock(windowsMutex);
+        if (windows.empty()) return;
+
+        const int total = static_cast<int>(windows.size());
         int cols = 1, rows = 1;
         while (cols * rows < total) (cols <= rows ? ++cols : ++rows);
 
         RECT rcClient{};
-        GetClientRect(parent, &rcClient);
-        int clientW = rcClient.right - rcClient.left;
-        int clientH = rcClient.bottom - rcClient.top;
+        ::GetClientRect(parent, &rcClient);
+        const int clientW = rcClient.right - rcClient.left;
+        const int clientH = rcClient.bottom - rcClient.top;
 
-        int cw = (std::max)(1, clientW / cols);
-        int ch = (std::max)(1, clientH / rows);
+        const int cw = clamp_positive(clientW / cols);
+        const int ch = clamp_positive(clientH / rows);
 
-        for (size_t i = 0; i < windows.size(); ++i) {
-            int c = static_cast<int>(i) % cols;
-            int r = static_cast<int>(i) / cols;
+        for (size_t i = 0; i < windows.size(); ++i)
+        {
+            const int c = static_cast<int>(i) % cols;
+            const int r = static_cast<int>(i) / cols;
 
             WindowData& win = *windows[i];
-            SetWindowPos(win.hwnd, nullptr, c * cw, r * ch, cw, ch,
+            ::SetWindowPos(win.hwnd, nullptr, c * cw, r * ch, cw, ch,
                 SWP_NOZORDER | SWP_NOACTIVATE | SWP_SHOWWINDOW);
 
+            // Queue resize into that window's render queue.
             HandleResize(win.hwnd, cw, ch);
         }
     }
 
-    void MultiContextManager::StopAll() {
-        running = false;
+    void MultiContextManager::StopAll()
+    {
+        running.store(false, std::memory_order_release);
 
         {
             std::scoped_lock lock(windowsMutex);
-            for (auto& w : windows) {
+            for (auto& w : windows)
                 if (w) w->running = false;
-            }
         }
 
-        for (auto& [hwnd, th] : gThreads) {
+        for (auto& [hwnd, th] : g_threads)
+        {
             if (th.joinable()) th.join();
         }
-        gThreads.clear();
+        g_threads.clear();
 
-        if (s_activeInstance == this) {
-            s_activeInstance = nullptr;
-        }
+        if (s_activeInstance == this) s_activeInstance = nullptr;
     }
 
     void MultiContextManager::RenderLoop(WindowData& win)
     {
         auto ctx = win.context;
-        if (!ctx) {
+        if (!ctx)
+        {
             win.running = false;
             return;
         }
@@ -1058,30 +996,24 @@ namespace almondnamespace::core
         ctx->windowData = &win;
         SetCurrent(ctx);
 
-        struct ResetGuard
-        {
-            ~ResetGuard() { MultiContextManager::SetCurrent(nullptr); }
-        } resetGuard;
+        struct ResetGuard { ~ResetGuard() { MultiContextManager::SetCurrent(nullptr); } } resetGuard;
 
-        if (ctx->initialize) {
-            ctx->initialize_safe();
-        }
-        else {
+        if (ctx->initialize) ctx->initialize_safe();
+        else
+        {
             win.running = false;
             return;
         }
 
-        while (running && win.running) {
+        while (running.load(std::memory_order_acquire) && win.running)
+        {
             bool keepRunning = true;
 
-            if (ctx->process) {
-                keepRunning = ctx->process_safe(ctx, win.commandQueue);
-            }
-            else {
-                win.commandQueue.drain();
-            }
+            if (ctx->process) keepRunning = ctx->process_safe(ctx, win.commandQueue);
+            else win.commandQueue.drain();
 
-            if (!keepRunning) {
+            if (!keepRunning)
+            {
                 win.running = false;
                 break;
             }
@@ -1089,78 +1021,72 @@ namespace almondnamespace::core
             std::this_thread::sleep_for(std::chrono::milliseconds(16));
         }
 
-        if (ctx->cleanup) {
-            ctx->cleanup_safe();
-        }
+        if (ctx->cleanup) ctx->cleanup_safe();
     }
 
-    void MultiContextManager::HandleDropFiles(HWND hwnd, HDROP hDrop) {
-        UINT count = DragQueryFile(hDrop, 0xFFFFFFFF, nullptr, 0);
+    void MultiContextManager::HandleDropFiles(HWND, HDROP hDrop)
+    {
+        const UINT count = ::DragQueryFileW(hDrop, 0xFFFFFFFF, nullptr, 0);
         for (UINT i = 0; i < count; ++i)
         {
             wchar_t path[MAX_PATH]{};
-            DragQueryFileW(hDrop, i, path, MAX_PATH);
+            ::DragQueryFileW(hDrop, i, path, MAX_PATH);
             std::wcout << L"[Drop] " << path << L"\n";
         }
     }
 
-    LRESULT CALLBACK almondnamespace::core::MultiContextManager::ParentProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
+    LRESULT CALLBACK MultiContextManager::ParentProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
     {
         if (msg == WM_NCCREATE)
         {
-            auto* cs = reinterpret_cast<CREATESTRUCT*>(lParam);
-            SetWindowLongPtr(hwnd, GWLP_USERDATA,
-                reinterpret_cast<LONG_PTR>(cs->lpCreateParams));
+            auto* cs = reinterpret_cast<CREATESTRUCTW*>(lParam);
+            ::SetWindowLongPtrW(hwnd, GWLP_USERDATA, reinterpret_cast<LONG_PTR>(cs->lpCreateParams));
             return TRUE;
         }
-        auto* mgr = reinterpret_cast<MultiContextManager*>(GetWindowLongPtr(hwnd, GWLP_USERDATA));
-        if (!mgr) return DefWindowProc(hwnd, msg, wParam, lParam);
+
+        auto* mgr = reinterpret_cast<MultiContextManager*>(::GetWindowLongPtrW(hwnd, GWLP_USERDATA));
+        if (!mgr) return ::DefWindowProcW(hwnd, msg, wParam, lParam);
 
         switch (msg)
         {
         case WM_SIZE:
-        {
             mgr->ArrangeDockedWindowsGrid();
             return 0;
-        }
+
         case WM_PAINT:
         {
-            PAINTSTRUCT ps; HDC hdc = BeginPaint(hwnd, &ps);
-            FillRect(hdc, &ps.rcPaint, (HBRUSH)(COLOR_WINDOW + 1));
-            EndPaint(hwnd, &ps); return 0;
-        }
-        case WM_DROPFILES:
-        {
-            mgr->HandleDropFiles(hwnd, reinterpret_cast<HDROP>(wParam));
-            DragFinish(reinterpret_cast<HDROP>(wParam));
-            return 0;
-        }
-        case WM_CLOSE:
-        {
-            DestroyWindow(hwnd); return 0;
-        }
-        case WM_DESTROY:
-        {
-            if (hwnd == mgr->GetParentWindow()) {
-                PostQuitMessage(0);
-            }
+            PAINTSTRUCT ps{};
+            HDC hdc = ::BeginPaint(hwnd, &ps);
+            ::FillRect(hdc, &ps.rcPaint, (HBRUSH)(COLOR_WINDOW + 1));
+            ::EndPaint(hwnd, &ps);
             return 0;
         }
 
-        default:
-        {
-            return DefWindowProc(hwnd, msg, wParam, lParam);
+        case WM_DROPFILES:
+            mgr->HandleDropFiles(hwnd, reinterpret_cast<HDROP>(wParam));
+            ::DragFinish(reinterpret_cast<HDROP>(wParam));
+            return 0;
+
+        case WM_CLOSE:
+            ::DestroyWindow(hwnd);
+            return 0;
+
+        case WM_DESTROY:
+            if (hwnd == mgr->GetParentWindow()) ::PostQuitMessage(0);
+            return 0;
         }
-        }
+
+        return ::DefWindowProcW(hwnd, msg, wParam, lParam);
     }
 
     LRESULT CALLBACK MultiContextManager::ChildProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
     {
         static DragState& drag = Drag();
+
         if (msg == WM_NCCREATE)
         {
-            auto* cs = reinterpret_cast<CREATESTRUCT*>(lParam);
-            SetWindowLongPtr(hwnd, GWLP_USERDATA, reinterpret_cast<LONG_PTR>(cs->lpCreateParams));
+            auto* cs = reinterpret_cast<CREATESTRUCTW*>(lParam);
+            ::SetWindowLongPtrW(hwnd, GWLP_USERDATA, reinterpret_cast<LONG_PTR>(cs->lpCreateParams));
             return TRUE;
         }
 
@@ -1168,135 +1094,144 @@ namespace almondnamespace::core
         {
         case WM_LBUTTONDOWN:
         {
-            SetCapture(hwnd);
+            ::SetCapture(hwnd);
             drag.dragging = true;
             drag.draggedWindow = hwnd;
-            drag.originalParent = GetParent(hwnd);
+            drag.originalParent = ::GetParent(hwnd);
             POINT pt{ GET_X_LPARAM(lParam), GET_Y_LPARAM(lParam) };
-            ClientToScreen(hwnd, &pt);
+            ::ClientToScreen(hwnd, &pt);
             drag.lastMousePos = pt;
             return 0;
         }
+
         case WM_MOUSEMOVE:
         {
             if (!drag.dragging || drag.draggedWindow != hwnd)
-                return DefWindowProc(hwnd, msg, wParam, lParam);
+                return ::DefWindowProcW(hwnd, msg, wParam, lParam);
 
             POINT pt{ GET_X_LPARAM(lParam), GET_Y_LPARAM(lParam) };
-            ClientToScreen(hwnd, &pt);
-            int dx = pt.x - drag.lastMousePos.x;
-            int dy = pt.y - drag.lastMousePos.y;
+            ::ClientToScreen(hwnd, &pt);
+
+            const int dx = pt.x - drag.lastMousePos.x;
+            const int dy = pt.y - drag.lastMousePos.y;
             drag.lastMousePos = pt;
 
-            RECT wndRect; GetWindowRect(hwnd, &wndRect);
-            int newX = wndRect.left + dx;
-            int newY = wndRect.top + dy;
+            RECT wndRect{};
+            ::GetWindowRect(hwnd, &wndRect);
 
-            if (drag.originalParent) {
-                RECT prc; GetClientRect(drag.originalParent, &prc);
-                POINT tl{ 0, 0 }; ClientToScreen(drag.originalParent, &tl);
-                OffsetRect(&prc, tl.x, tl.y);
+            const int newX = wndRect.left + dx;
+            const int newY = wndRect.top + dy;
 
-                bool inside =
+            if (drag.originalParent)
+            {
+                RECT prc{};
+                ::GetClientRect(drag.originalParent, &prc);
+                POINT tl{ 0,0 };
+                ::ClientToScreen(drag.originalParent, &tl);
+                ::OffsetRect(&prc, tl.x, tl.y);
+
+                const int wndW = wndRect.right - wndRect.left;
+                const int wndH = wndRect.bottom - wndRect.top;
+
+                const bool inside =
                     newX >= prc.left && newY >= prc.top &&
-                    (newX + (wndRect.right - wndRect.left)) <= prc.right &&
-                    (newY + (wndRect.bottom - wndRect.top)) <= prc.bottom;
+                    (newX + wndW) <= prc.right && (newY + wndH) <= prc.bottom;
 
-                if (inside) {
-                    if (GetParent(hwnd) != drag.originalParent) {
-                        LONG_PTR style = GetWindowLongPtr(hwnd, GWL_STYLE);
+                if (inside)
+                {
+                    if (::GetParent(hwnd) != drag.originalParent)
+                    {
+                        LONG_PTR style = ::GetWindowLongPtrW(hwnd, GWL_STYLE);
                         style &= ~(WS_POPUP | WS_OVERLAPPEDWINDOW);
                         style |= WS_CHILD;
-                        SetWindowLongPtr(hwnd, GWL_STYLE, style);
-                        SetParent(hwnd, drag.originalParent);
+                        ::SetWindowLongPtrW(hwnd, GWL_STYLE, style);
+                        ::SetParent(hwnd, drag.originalParent);
 
                         POINT cp{ newX, newY };
-                        ScreenToClient(drag.originalParent, &cp);
-                        SetWindowPos(hwnd, nullptr, cp.x, cp.y,
-                            wndRect.right - wndRect.left,
-                            wndRect.bottom - wndRect.top,
+                        ::ScreenToClient(drag.originalParent, &cp);
+                        ::SetWindowPos(hwnd, nullptr, cp.x, cp.y, wndW, wndH,
                             SWP_NOZORDER | SWP_NOACTIVATE | SWP_FRAMECHANGED | SWP_SHOWWINDOW);
                     }
-                    else {
+                    else
+                    {
                         POINT cp{ newX, newY };
-                        ScreenToClient(drag.originalParent, &cp);
-                        SetWindowPos(hwnd, nullptr, cp.x, cp.y,
-                            0, 0, SWP_NOZORDER | SWP_NOSIZE |
-                            SWP_NOACTIVATE);
+                        ::ScreenToClient(drag.originalParent, &cp);
+                        ::SetWindowPos(hwnd, nullptr, cp.x, cp.y, 0, 0,
+                            SWP_NOZORDER | SWP_NOSIZE | SWP_NOACTIVATE);
                     }
                 }
                 else
                 {
-                    if (GetParent(hwnd) == drag.originalParent) {
-                        LONG_PTR style = GetWindowLongPtr(hwnd, GWL_STYLE);
+                    if (::GetParent(hwnd) == drag.originalParent)
+                    {
+                        LONG_PTR style = ::GetWindowLongPtrW(hwnd, GWL_STYLE);
                         style &= ~WS_CHILD;
                         style |= WS_OVERLAPPEDWINDOW | WS_VISIBLE;
-                        SetWindowLongPtr(hwnd, GWL_STYLE, style);
-                        SetParent(hwnd, nullptr);
-                        SetWindowPos(hwnd, nullptr, newX, newY,
-                            wndRect.right - wndRect.left,
-                            wndRect.bottom - wndRect.top,
+                        ::SetWindowLongPtrW(hwnd, GWL_STYLE, style);
+                        ::SetParent(hwnd, nullptr);
+                        ::SetWindowPos(hwnd, nullptr, newX, newY, wndW, wndH,
                             SWP_NOZORDER | SWP_FRAMECHANGED | SWP_SHOWWINDOW);
                     }
-                    else {
-                        SetWindowPos(hwnd, nullptr, newX, newY,
-                            0, 0, SWP_NOZORDER | SWP_NOSIZE | SWP_NOACTIVATE);
+                    else
+                    {
+                        ::SetWindowPos(hwnd, nullptr, newX, newY, 0, 0,
+                            SWP_NOZORDER | SWP_NOSIZE | SWP_NOACTIVATE);
                     }
                 }
             }
-            else {
-                SetWindowPos(hwnd, nullptr, newX, newY,
-                    0, 0, SWP_NOZORDER | SWP_NOSIZE | SWP_NOACTIVATE);
+            else
+            {
+                ::SetWindowPos(hwnd, nullptr, newX, newY, 0, 0,
+                    SWP_NOZORDER | SWP_NOSIZE | SWP_NOACTIVATE);
             }
+
             return 0;
         }
+
         case WM_SIZE:
         {
-            if (wParam == SIZE_MINIMIZED)
-            {
-                return 0;
-            }
+            if (wParam == SIZE_MINIMIZED) return 0;
+
             auto* mgr = s_activeInstance;
-            if (!mgr) {
-                break;
-            }
-            int width = (std::max)(1, static_cast<int>(LOWORD(lParam)));
-            int height = (std::max)(1, static_cast<int>(HIWORD(lParam)));
+            if (!mgr) break;
+
+            const int width = clamp_positive(static_cast<int>(LOWORD(lParam)));
+            const int height = clamp_positive(static_cast<int>(HIWORD(lParam)));
             mgr->HandleResize(hwnd, width, height);
             return 0;
         }
+
         case WM_LBUTTONUP:
-        {
-            if (drag.dragging && drag.draggedWindow == hwnd) {
-                ReleaseCapture();
+            if (drag.dragging && drag.draggedWindow == hwnd)
+            {
+                ::ReleaseCapture();
                 drag.dragging = false;
                 drag.draggedWindow = nullptr;
                 drag.originalParent = nullptr;
             }
             return 0;
-        }
+
         case WM_DROPFILES:
-        {
-            if (HWND p = GetParent(hwnd))
-                SendMessage(p, WM_DROPFILES, wParam, lParam);
-            DragFinish(reinterpret_cast<HDROP>(wParam));
+            if (HWND p = ::GetParent(hwnd))
+                ::SendMessageW(p, WM_DROPFILES, wParam, lParam);
+            ::DragFinish(reinterpret_cast<HDROP>(wParam));
             return 0;
-        }
+
         case WM_PAINT:
         {
-            PAINTSTRUCT ps; HDC hdc = BeginPaint(hwnd, &ps);
-            FillRect(hdc, &ps.rcPaint, (HBRUSH)(COLOR_WINDOW + 1));
-            EndPaint(hwnd, &ps);
+            PAINTSTRUCT ps{};
+            HDC hdc = ::BeginPaint(hwnd, &ps);
+            ::FillRect(hdc, &ps.rcPaint, (HBRUSH)(COLOR_WINDOW + 1));
+            ::EndPaint(hwnd, &ps);
             return 0;
         }
+
         default:
-        {
-            return DefWindowProc(hwnd, msg, wParam, lParam);
-        }
+            return ::DefWindowProcW(hwnd, msg, wParam, lParam);
         }
 
         return 0;
     }
-} // export namespace almondnamespace::core
+}
 
-#endif // defined(_WIN32)
+#endif // _WIN32

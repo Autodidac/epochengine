@@ -11,7 +11,7 @@ export module almondshell;
 // primary modules
 
 import aengine.core.context;
-import aengine.context.renderer;
+
 import aatlas.manager;
 import aatlas.texture;
 import aspriteregistry;

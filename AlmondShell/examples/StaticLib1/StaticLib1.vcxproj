@@ -214,6 +214,12 @@
     <ClCompile Update="C:\Users\iammi\source\repos\epochengine\AlmondShell\modules\acontext.opengl.context.ixx">
       <FileType>Document</FileType>
     </ClCompile>
+    <ClCompile Update="C:\Users\iammi\source\repos\epochengine\AlmondShell\modules\acontext.opengl.platform.ixx">
+      <FileType>Document</FileType>
+    </ClCompile>
+    <ClCompile Update="C:\Users\iammi\source\repos\epochengine\AlmondShell\modules\acontext.opengl.quad.ixx">
+      <FileType>Document</FileType>
+    </ClCompile>
     <ClCompile Update="C:\Users\iammi\source\repos\epochengine\AlmondShell\modules\acontext.opengl.renderer.ixx">
       <FileType>Document</FileType>
     </ClCompile>
@@ -398,6 +404,12 @@
       <FileType>Document</FileType>
     </ClCompile>
     <ClCompile Update="C:\Users\iammi\source\repos\epochengine\AlmondShell\modules\autility.string.converter.ixx">
+      <FileType>Document</FileType>
+    </ClCompile>
+    <ClCompile Update="C:\Users\iammi\source\repos\epochengine\AlmondShell\src modules\acontext.opengl.platform.linux.cppm">
+      <FileType>Document</FileType>
+    </ClCompile>
+    <ClCompile Update="C:\Users\iammi\source\repos\epochengine\AlmondShell\src modules\acontext.opengl.platform.win.cppm">
       <FileType>Document</FileType>
     </ClCompile>
     <ClCompile Update="C:\Users\iammi\source\repos\epochengine\AlmondShell\src modules\aengine.context.multiplexer.win.cppm">
