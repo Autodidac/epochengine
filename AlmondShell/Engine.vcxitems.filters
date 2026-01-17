@@ -7,9 +7,6 @@
     <Filter Include="Resource Files">
       <UniqueIdentifier>{88d016ff-11dc-4da7-9ccf-b0f86a1f39e4}</UniqueIdentifier>
     </Filter>
-    <Filter Include="Source Files\crossplatform">
-      <UniqueIdentifier>{81d9dae6-2dbe-49b5-8539-cbdf46301748}</UniqueIdentifier>
-    </Filter>
     <Filter Include="Module Files">
       <UniqueIdentifier>{b80c85b8-f247-488e-b9b9-cd7c155a129d}</UniqueIdentifier>
     </Filter>
@@ -100,6 +97,9 @@
     <Filter Include="Module Files\ixx\core\context\backends\vulkan">
       <UniqueIdentifier>{de3e8c0b-4f63-41ae-bdce-6545e23a2c76}</UniqueIdentifier>
     </Filter>
+    <Filter Include="Source Files\scripts">
+      <UniqueIdentifier>{3be7745a-41c9-465a-8afe-9ac47d8de45d}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="$(MSBuildThisFileDirectory)src\pch.h">
@@ -140,15 +140,6 @@
     </ResourceCompile>
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="$(MSBuildThisFileDirectory)src\scripts\editor_launcher.ascript.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="$(MSBuildThisFileDirectory)src\acontextmultiplexer_linux.cpp">
-      <Filter>Source Files\crossplatform</Filter>
-    </ClCompile>
-    <ClCompile Include="$(MSBuildThisFileDirectory)src\aopenglplatform_linux.cpp">
-      <Filter>Source Files\crossplatform</Filter>
-    </ClCompile>
     <ClCompile Include="$(MSBuildThisFileDirectory)modules\amovementevent.ixx">
       <Filter>Module Files\ixx</Filter>
     </ClCompile>
@@ -529,6 +520,12 @@
     </ClCompile>
     <ClCompile Include="$(MSBuildThisFileDirectory)modules\acontext.raylib.renderer.ixx">
       <Filter>Module Files\ixx\core\context\backends\raylib</Filter>
+    </ClCompile>
+    <ClCompile Include="$(MSBuildThisFileDirectory)src modules\aengine.context.multiplexer.linux.cppm">
+      <Filter>Module Files\cppm\crossplatform</Filter>
+    </ClCompile>
+    <ClCompile Include="$(MSBuildThisFileDirectory)src\scripts\editor_launcher.ascript.cpp">
+      <Filter>Source Files\scripts</Filter>
     </ClCompile>
   </ItemGroup>
 </Project>

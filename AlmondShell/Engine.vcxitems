@@ -186,6 +186,7 @@
     <ClCompile Include="$(MSBuildThisFileDirectory)modules\avulkanswapchain.ixx" />
     <ClCompile Include="$(MSBuildThisFileDirectory)modules\avulkantexture.ixx" />
     <ClCompile Include="$(MSBuildThisFileDirectory)modules\avulkantriangle.ixx" />
+    <ClCompile Include="$(MSBuildThisFileDirectory)src modules\aengine.context.multiplexer.linux.cppm" />
     <ClCompile Include="$(MSBuildThisFileDirectory)src modules\aengine.context.multiplexer.win.cppm" />
     <ClCompile Include="$(MSBuildThisFileDirectory)src modules\aeditor.cppm">
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">true</ExcludedFromBuild>
@@ -199,9 +200,7 @@
     <ClCompile Include="$(MSBuildThisFileDirectory)src modules\afont.renderer.impl.cppm" />
     <ClCompile Include="$(MSBuildThisFileDirectory)src modules\acontext.opengl.platform.linux.cppm" />
     <ClCompile Include="$(MSBuildThisFileDirectory)src modules\acontext.opengl.platform.win.cppm" />
-    <ClCompile Include="$(MSBuildThisFileDirectory)src\acontextmultiplexer_linux.cpp" />
     <ClCompile Include="$(MSBuildThisFileDirectory)src\aengine.cpp" />
-    <ClCompile Include="$(MSBuildThisFileDirectory)src\aopenglplatform_linux.cpp" />
     <ClCompile Include="$(MSBuildThisFileDirectory)src\scripts\editor_launcher.ascript.cpp">
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">true</ExcludedFromBuild>
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">true</ExcludedFromBuild>

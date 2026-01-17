@@ -112,11 +112,19 @@ export namespace almondnamespace::a2048like
             };
 
             // Always try to load a background sprite if available
-            ensureSprite("bg");
-            ensureSprite("tile");
-            ensureSprite("tile2");
-            ensureSprite("tile4");
-            ensureSprite("tile8");
+            //ensureSprite("bg");
+            ensureSprite("2");
+            ensureSprite("4");
+            ensureSprite("6");
+            ensureSprite("8");
+            ensureSprite("16");
+            ensureSprite("32");
+            ensureSprite("64");
+            ensureSprite("128");
+            ensureSprite("256");
+            ensureSprite("512");
+            ensureSprite("1024");
+            ensureSprite("2048");
 
             if (createdAtlas || registered)
             {
