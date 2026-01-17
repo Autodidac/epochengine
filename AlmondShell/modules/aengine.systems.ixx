@@ -126,10 +126,10 @@ export namespace almondnamespace
     }
 
     // ---------------------------------------------------------
-    // Awaitables (no heap, no classes, clean C++20/23)
+    // Awaitables (no heap, no classes, clean C++23)
     // ---------------------------------------------------------
 
-    // LoadAssetAwaitable — runs blocking disk I/O on a worker
+    // LoadAssetAwaitable â€” runs blocking disk I/O on a worker
     struct LoadAssetAwaitable
     {
         std::string path;
@@ -160,7 +160,7 @@ export namespace almondnamespace
     };
 
     // ---------------------------------------------------------
-    // ReceiveNetworkAwaitable — polls network input then resumes
+    // ReceiveNetworkAwaitable â€” polls network input then resumes
     struct ReceiveNetworkAwaitable
     {
         bool await_ready() const noexcept { return false; }
@@ -180,7 +180,7 @@ export namespace almondnamespace
     };
 
     // ---------------------------------------------------------
-    // NextFrame — requeues coroutine for next engine tick
+    // NextFrame â€” requeues coroutine for next engine tick
     struct NextFrame
     {
         bool await_ready() const noexcept { return false; }
