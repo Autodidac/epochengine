@@ -672,7 +672,7 @@ int WINAPI wWinMain(
 }
 #endif
 
-int main(int argc, wchar_t** argv)
+int main(int argc, char** argv)
 {
 #if defined(_WIN32) && defined(ALMOND_USING_WINMAIN)
     return wWinMain(GetModuleHandleW(nullptr), nullptr, GetCommandLineW(), SW_SHOWNORMAL);
