@@ -1,5 +1,16 @@
 # Changelog
 
+## [v0.81.23]
+- Bumped the engine version constants to v0.81.23 so runtime banners and tooling remain aligned.
+- Refreshed the README snapshot, configuration guide, and engine analysis notes to advertise the v0.81.23 release tag.
+- Added the v0.81.23 release notes to keep the published metadata in sync.
+- Documented the C++23 module-first baseline so build tooling and packagers can align module scanning and compiler expectations.
+
+## [v0.72.9]
+- Bumped the engine version constants and legacy headers to v0.72.9 so runtime banners and tooling remain aligned.
+- Refreshed the README snapshot, configuration guide, and engine analysis notes to advertise the v0.72.9 release tag.
+- Added the v0.72.9 release notes to keep the published metadata in sync.
+
 ## [v0.72.8]
 - Converted additional legacy headers into module partitions so atlas utilities (`aatlasmanager.hpp`, `aatlastexture.hpp`) now expose `import aatlas.manager;` / `import aatlas.texture;`, the CLI surface is mirrored via `import acommandline;`, ECS mirrors (`import aentity.*`) stay in sync, and umbrella aggregates (`import almondengine;`, `import almondshell;`) mirror the legacy includes.
 - Synced version metadata and documentation (README snapshot, engine analysis, module map) to advertise v0.72.8 with the refreshed import surface.

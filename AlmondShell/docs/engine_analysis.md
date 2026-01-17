@@ -72,11 +72,12 @@ Asset producers can run off the main thread via the coroutine-enabled `taskgraph
 - **Roadmap Traceability** – The existing `roadmap.txt` lacked granular prompts or acceptance checks per phase, making automation hand-offs hard to script.
 - **Testing Surface** – No automated smoke tests or CI hooks are defined for the critical updater and renderer paths, leaving regression risk high during phase transitions.
 
-## Recent Progress (v0.72.8)
+## Recent Progress (v0.81.23)
 
 - Converted additional legacy headers into module partitions so atlas utilities (`aatlasmanager.hpp`, `aatlastexture.hpp`) now expose `import aatlas.manager;` / `import aatlas.texture;`, the CLI surface is mirrored by `import aengine.core.commandline;`, and ECS aliases such as `import aentity;`, `import aentity.component.manager;`, and `import aecs.*` sit alongside the umbrella aggregate (`import almondshell;`).
-- Confirmed updater/configuration guidance references the runtime version helpers so launcher manifests keep matching the v0.72.8 tag.
-- Synced the README snapshot, configuration flag guide, and release notes with the v0.72.8 metadata and refreshed import map so runtime banners and docs stay aligned on the new module surfaces.
+- Confirmed updater/configuration guidance references the runtime version helpers so launcher manifests keep matching the v0.81.23 tag.
+- Synced the README snapshot, configuration flag guide, and release notes with the v0.81.23 metadata and refreshed import map so runtime banners and docs stay aligned on the new module surfaces.
+- Documented the full C++23 module-first baseline so build tooling, packagers, and module scanners align on the current engine expectations.
 
 ## Recent Progress (v0.72.7)
 
