@@ -3,17 +3,17 @@ module;
 #define STB_TRUETYPE_IMPLEMENTATION
 #include "stb_truetype.h"
 
-#include <algorithm>
-#include <array>
-#include <cstdint>
-#include <fstream>
-#include <iostream>
-#include <mutex>
-#include <optional>
-#include <utility>
-#include <vector>
-
 export module afont.renderer:impl;
+
+import <algorithm>;
+import <array>;
+import <cstdint>;
+import <fstream>;
+import <iostream>;
+import <mutex>;
+import <optional>;
+import <utility>;
+import <vector>;
 
 import afont.renderer;
 import aatlas.manager;

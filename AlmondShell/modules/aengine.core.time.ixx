@@ -23,13 +23,13 @@
  **************************************************************/
 module;
 
-#include <chrono>
-#include <format>
-#include <string>
-#include <string_view>
-#include <unordered_map>
-
 export module aengine.core.time;
+
+import <chrono>;
+import <format>;
+import <string>;
+import <string_view>;
+import <unordered_map>;
 
 export namespace almondnamespace
 {

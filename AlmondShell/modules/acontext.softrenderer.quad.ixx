@@ -15,13 +15,13 @@
 
 module;
 
-#include <algorithm>
-#include <cstdint>
-#include <cstring>
-
 #include "aengine.config.hpp"
 
 export module acontext.softrenderer.quad;
+
+import <algorithm>;
+import <cstdint>;
+import <cstring>;
 
 import acontext.softrenderer.textures; // BackendData, Texture, TexturePtr, create_texture
 import aatlas.manager;                 // atlasmanager::atlas_vector (and atlas types)

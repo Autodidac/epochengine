@@ -23,12 +23,11 @@
  **************************************************************/
 module;  // aengine.scripting.compiler.cppm / .ixx
 
-#include <cstdlib>   // std::system
-#include <iostream>  // std::cout / std::cerr
-
 export module aengine.scripting.compiler;
 
 // Prefer standard library module imports in the module purview.
+import <cstdlib>;
+import <iostream>;
 import <filesystem>;
 import <string>;
 import <string_view>;

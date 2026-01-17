@@ -3,16 +3,16 @@ module;
 #include "aengine.hpp"          // DEFAULT_WINDOW_WIDTH, DEFAULT_WINDOW_HEIGHT
 #include "aengine.config.hpp" 		// for ALMOND_USING_SDL
 
-#include <string>
-#include <string_view>
-#include <stdexcept>
-#include <utility>
-
 #if defined(_WIN32)
 #   include <windows.h>
 #endif
 
 export module aengine.context.window;
+
+import <string>;
+import <string_view>;
+import <stdexcept>;
+import <utility>;
 
 import aframework;
 //import aengine.config;
@@ -116,7 +116,7 @@ export namespace almondnamespace::core
         {
         }
 #else
-        // Still provide the signature so templates compile if it’s referenced,
+        // Still provide the signature so templates compile if itâ€™s referenced,
         // but do nothing on non-Win/headless builds.
         WindowData(void*, void*, void*, bool inUsesShared, core::ContextType inType)
             : usesSharedContext(inUsesShared), type(inType)

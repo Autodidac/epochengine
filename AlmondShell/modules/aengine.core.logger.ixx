@@ -23,14 +23,14 @@
  **************************************************************/
 module;
 
-#include <filesystem>
-#include <fstream>
-#include <iostream>
-#include <mutex>
-#include <stdexcept>
-#include <string>
-
 export module aengine.core.logger;
+
+import <filesystem>;
+import <fstream>;
+import <iostream>;
+import <mutex>;
+import <stdexcept>;
+import <string>;
 
 import aengine.core.time;
 

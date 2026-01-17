@@ -23,10 +23,10 @@
  **************************************************************/
 module;
 
-#include <cstddef>
-#include <cstdint>
-
 export module aengine.core.types;
+
+import <cstddef>;
+import <cstdint>;
 
 export namespace almondnamespace
 {

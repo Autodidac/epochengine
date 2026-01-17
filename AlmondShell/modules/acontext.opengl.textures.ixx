@@ -41,19 +41,19 @@ module;
 #include "..\include\aengine.config.hpp"
 //#include "..\include\aengine.hpp"
 
-#include <atomic>
-#include <format>
-#include <string>
-#include <vector>
-#include <iostream>
-#include <fstream>
-#include <filesystem>
-#include <unordered_map>
-#include <mutex>
-#include <algorithm>
-#include <span>
-
 export module acontext.opengl.textures;
+
+import <algorithm>;
+import <atomic>;
+import <filesystem>;
+import <format>;
+import <fstream>;
+import <iostream>;
+import <mutex>;
+import <span>;
+import <string>;
+import <unordered_map>;
+import <vector>;
 
 import aengine.platform;
 

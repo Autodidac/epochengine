@@ -1,12 +1,12 @@
 module;
 
-#include <atomic>
-#include <cassert>
-#include <cstddef>
-#include <memory>
-#include <type_traits>
-
 export module ampmcboundedqueue;
+
+import <atomic>;
+import <cassert>;
+import <cstddef>;
+import <memory>;
+import <type_traits>;
 
 export namespace almondnamespace {
     template<typename T>
