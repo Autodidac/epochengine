@@ -78,6 +78,7 @@ Asset producers can run off the main thread via the coroutine-enabled `taskgraph
 - Confirmed updater/configuration guidance references the runtime version helpers so launcher manifests keep matching the v0.81.23 tag.
 - Synced the README snapshot, configuration flag guide, and release notes with the v0.81.23 metadata and refreshed import map so runtime banners and docs stay aligned on the new module surfaces.
 - Documented the full C++23 module-first baseline so build tooling, packagers, and module scanners align on the current engine expectations.
+- SDL’s GUI path is now functional; keep menu layout and input scaling behaviour in parity with the Raylib and OpenGL backends to avoid drift in overlay interactions.
 
 ## Recent Progress (v0.72.7)
 
