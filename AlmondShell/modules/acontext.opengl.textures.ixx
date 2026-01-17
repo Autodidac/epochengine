@@ -71,7 +71,11 @@ import aatlas.texture;
 import atexture;
 import aimage.loader;
 import aspritehandle;
-//import acontext.opengl.context;
+
+namespace almondnamespace::openglcontext
+{
+    bool ensure_quad_pipeline(almondnamespace::openglstate::OpenGL4State& glState);
+}
 
 export namespace almondnamespace::opengltextures
 {
@@ -374,19 +378,7 @@ export namespace almondnamespace::opengltextures
 
     inline bool ensure_created_pipeline(almondnamespace::openglstate::OpenGL4State& glState)
     {
-        // Check if the quad VAO and shader are already created
-        if (glState.shader != 0 && glState.vao != 0)
-            return true;
-
-        // Minimal stub: you should replace this with your actual quad pipeline setup.
-        // For now, just return false to indicate not ready.
-        // If you have a function elsewhere that sets up the quad pipeline, call it here.
-
-        // Example:
-        // bool success = setup_quad_pipeline(glState);
-        // return success;
-
-        return false;
+        return almondnamespace::openglcontext::ensure_quad_pipeline(glState);
     }
 
     // Diagnostic draw_sprite version
