@@ -23,10 +23,6 @@
  **************************************************************/
 module;
 
-#include <iostream>
-#include <type_traits>
-#include <utility>
-
 #ifdef _WIN32
 // MSVC doesn't always predefine the architecture macros inside module
 // interface units, which makes <winnt.h> bail out with "No Target
@@ -46,11 +42,15 @@ module;
 
 #include <consoleapi3.h>
 #else
-#include <stdio.h>
 #include <unistd.h>
 #endif
 
 export module aengine.core.utilities;
+
+import <cstdio>;
+import <iostream>;
+import <type_traits>;
+import <utility>;
 
 export namespace almondnamespace::utilities
 {

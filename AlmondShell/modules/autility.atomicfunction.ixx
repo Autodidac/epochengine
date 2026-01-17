@@ -1,12 +1,12 @@
 module;
 
-#include <atomic>
-#include <functional>
-#include <memory>
-#include <stdexcept>
-#include <utility>
-
 export module aatomicfunction;
+
+import <atomic>;
+import <functional>;
+import <memory>;
+import <stdexcept>;
+import <utility>;
 
 export namespace almondnamespace::core {
 

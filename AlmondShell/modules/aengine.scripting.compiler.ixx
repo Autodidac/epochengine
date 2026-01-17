@@ -1,12 +1,12 @@
 module;
 
-#include <cstdlib>
-#include <filesystem>
-#include <iostream>
-#include <string>
-#include <vector>
-
 export module aengine.scripting.compiler;
+
+import <cstdlib>;
+import <filesystem>;
+import <iostream>;
+import <string>;
+import <vector>;
 
 export namespace almondnamespace::compiler 
 {

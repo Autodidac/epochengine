@@ -1,15 +1,16 @@
 module;
 
-#include <string>
-
 #if defined(_WIN32)
 #include <Windows.h>
-#else
-#include <codecvt>
-#include <locale>
 #endif
 
 export module autility.string.converter;
+
+import <string>;
+#if !defined(_WIN32)
+import <codecvt>;
+import <locale>;
+#endif
 
 export namespace almondnamespace::text {
 #if defined(_WIN32)

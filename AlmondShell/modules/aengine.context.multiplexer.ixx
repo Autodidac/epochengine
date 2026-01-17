@@ -2,22 +2,41 @@
 // aengine.context.multiplexer.ixx
 module;
 
-#include <atomic>
-#include <functional>
-#include <mutex>
-#include <queue>
-#include <thread>
-#include <vector>
-#include <unordered_map>
-#include <memory>
-
 #if defined(_WIN32)
 #   include <windows.h>
 #   include <windowsx.h>
 #   include <shellapi.h>
 #   include <commctrl.h>
-#else
-#   include <cstdint>
+#endif
+
+#if defined(__linux__)
+#   include <X11/Xlib.h>
+#   include <X11/Xutil.h>
+#   include <GL/glx.h>
+#endif
+
+#include "aengine.config.hpp"
+
+export module aengine.context.multiplexer;
+
+import <atomic>;
+import <cstdint>;
+import <functional>;
+import <memory>;
+import <mutex>;
+import <queue>;
+import <thread>;
+import <unordered_map>;
+import <vector>;
+
+import aengine.platform;
+
+import aengine.context.type;         // almondnamespace::core::ContextType
+import aengine.context.commandqueue; // almondnamespace::core::CommandQueue
+import aengine.context.window;       // almondnamespace::core::WindowData
+import aengine.core.context;         // almondnamespace::core::Context + Set/Get current render ctx
+
+#if !defined(_WIN32)
 struct POINT { long x{}; long y{}; };
 using HINSTANCE = void*;
 using HDROP = void*;
@@ -36,23 +55,6 @@ using HWND = void*;
 using HDC = void*;
 using HGLRC = void*;
 #endif
-
-#if defined(__linux__)
-#   include <X11/Xlib.h>
-#   include <X11/Xutil.h>
-#   include <GL/glx.h>
-#endif
-
-#include "aengine.config.hpp"
-
-export module aengine.context.multiplexer;
-
-import aengine.platform;
-
-import aengine.context.type;         // almondnamespace::core::ContextType
-import aengine.context.commandqueue; // almondnamespace::core::CommandQueue
-import aengine.context.window;       // almondnamespace::core::WindowData
-import aengine.core.context;         // almondnamespace::core::Context + Set/Get current render ctx
 
 export namespace almondnamespace::core
 {

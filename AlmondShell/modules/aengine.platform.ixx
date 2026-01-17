@@ -1,7 +1,5 @@
 module;
 
-#include <string>
-
 // Keep platform / ABI macros in the global fragment.
 // They must remain macros for ABI + build-system compatibility.
 
@@ -33,6 +31,8 @@ module;
 // Module declaration
 // -----------------------------------------------------------------------------
 export module aengine.platform;
+
+import <string>;
 
 // -----------------------------------------------------------------------------
 // Namespace selection

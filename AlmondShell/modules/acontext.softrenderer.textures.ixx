@@ -6,15 +6,14 @@ module;
 //#include "asoftrenderer_state.hpp"
 //#include "ainput.hpp"
 
-#include <algorithm>
-#include <cstdint>
-#include <memory>
-#include <unordered_map>
-#include <vector>
-
-
 #include "aengine.config.hpp" 		// for ALMOND_USING_SDL
 export module acontext.softrenderer.textures;
+
+import <algorithm>;
+import <cstdint>;
+import <memory>;
+import <unordered_map>;
+import <vector>;
 
 import aatlas.texture;        // TextureAtlas
 import acontext.softrenderer.state;   // SoftRendState

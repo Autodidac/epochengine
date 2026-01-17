@@ -2,14 +2,14 @@
 
 module;
 
-#include <algorithm>
-#include <cstdint>
-#include <filesystem>
-#include <fstream>
-#include <system_error>
-#include <vector>
-
 export module autility.filewatch;
+
+import <algorithm>;
+import <cstdint>;
+import <filesystem>;
+import <fstream>;
+import <system_error>;
+import <vector>;
 
 import autility.filewatch;
 

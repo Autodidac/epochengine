@@ -23,19 +23,6 @@ module;
 
 #include <asio.hpp>
 
-#include <cstddef>
-#include <cstdint>
-#include <functional>
-#include <memory>
-#include <optional>
-#include <span>
-#include <stdexcept>
-#include <string>
-#include <string_view>
-#include <system_error>
-#include <type_traits>
-#include <variant>
-
 #ifdef ALMOND_WITH_STEAM
 #include <steam/steam_api.h>
 #include <steam/steamnetworkingsockets.h>
@@ -45,6 +32,19 @@ module;
 #include "aengine.config.hpp" 		// for ALMOND_USING_SDL
 
 export module anet;
+
+import <cstddef>;
+import <cstdint>;
+import <functional>;
+import <memory>;
+import <optional>;
+import <span>;
+import <stdexcept>;
+import <string>;
+import <string_view>;
+import <system_error>;
+import <type_traits>;
+import <variant>;
 
 import aengine.platform;
 //import aengine.config;

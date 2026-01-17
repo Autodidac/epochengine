@@ -8,12 +8,12 @@ module;
 //#include "aopengltextures.hpp"
 //#include "aspritepool.hpp"
 
-#include <array>
-#include <random>
-#include <stdexcept>
-#include <span>
-
 export module atetrislike;
+
+import <array>;
+import <random>;
+import <span>;
+import <stdexcept>;
 
 /**************************************************************
  *   █████╗ ██╗     ███╗   ███╗   ███╗   ██╗    ██╗██████╗    *
