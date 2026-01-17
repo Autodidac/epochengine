@@ -63,6 +63,70 @@ import acontext.raylib.input;
 
 namespace almondnamespace::raylibcontext
 {
+#if defined(ALMOND_USING_RAYLIB)
+    namespace
+    {
+        inline almondnamespace::raylibstate::GuiFitViewport compute_fit_viewport(
+            int fbW, int fbH, int refW, int refH) noexcept
+        {
+            almondnamespace::raylibstate::GuiFitViewport r{};
+            r.fbW = (std::max)(1, fbW);
+            r.fbH = (std::max)(1, fbH);
+            r.refW = (std::max)(1, refW);
+            r.refH = (std::max)(1, refH);
+
+            const float sx = static_cast<float>(r.fbW) / static_cast<float>(r.refW);
+            const float sy = static_cast<float>(r.fbH) / static_cast<float>(r.refH);
+            r.scale = (std::max)(0.0001f, (std::min)(sx, sy));
+
+            r.vpW = (std::max)(1, static_cast<int>(std::lround(r.refW * r.scale)));
+            r.vpH = (std::max)(1, static_cast<int>(std::lround(r.refH * r.scale)));
+            r.vpX = (r.fbW - r.vpW) / 2;
+            r.vpY = (r.fbH - r.vpH) / 2;
+            return r;
+        }
+
+        inline std::pair<int, int> resolve_reference_size(
+            const almondnamespace::raylibstate::RaylibState& st) noexcept
+        {
+            const bool widthOverride = core::cli::window_width_overridden
+                && core::cli::window_width > 0;
+            const bool heightOverride = core::cli::window_height_overridden
+                && core::cli::window_height > 0;
+
+            const unsigned fallbackW = (st.virtualWidth > 0u)
+                ? st.virtualWidth
+                : (st.designWidth > 0u ? st.designWidth : st.logicalWidth);
+            const unsigned fallbackH = (st.virtualHeight > 0u)
+                ? st.virtualHeight
+                : (st.designHeight > 0u ? st.designHeight : st.logicalHeight);
+
+            const int refW = widthOverride ? core::cli::window_width
+                : static_cast<int>((std::max)(1u, fallbackW));
+            const int refH = heightOverride ? core::cli::window_height
+                : static_cast<int>((std::max)(1u, fallbackH));
+
+            return { refW, refH };
+        }
+
+        inline void apply_mouse_viewport_mapping(
+            const almondnamespace::raylibstate::GuiFitViewport& fit) noexcept
+        {
+#if !defined(RAYLIB_NO_WINDOW)
+            if (!::IsWindowReady())
+                return;
+
+            const Vector2 renderOffset = ::GetRenderOffset();
+            const int baseOffsetX = static_cast<int>(std::floor(renderOffset.x)) + fit.vpX;
+            const int baseOffsetY = static_cast<int>(std::floor(renderOffset.y)) + fit.vpY;
+            const float invScale = (fit.scale > 0.0f) ? (1.0f / fit.scale) : 1.0f;
+            ::SetMouseOffset(-baseOffsetX, -baseOffsetY);
+            ::SetMouseScale(invScale, invScale);
+#endif
+        }
+    }
+#endif
+
 #if defined(_WIN32)
     using NativeWindowHandle = HWND;
     using NativeDeviceContext = HDC;
@@ -130,8 +194,10 @@ namespace almondnamespace::raylibcontext
         if (height == 0) height = static_cast<unsigned>(core::cli::window_height);
 
         st.parent = parent;
-        st.width = width;
-        st.height = height;
+        st.width = (std::max)(1u, width);
+        st.height = (std::max)(1u, height);
+        st.logicalWidth = st.width;
+        st.logicalHeight = st.height;
         st.onResize = std::move(resizeCallback);
 
         if (!title.empty())
@@ -140,6 +206,48 @@ namespace almondnamespace::raylibcontext
         ::SetConfigFlags(FLAG_MSAA_4X_HINT);
         ::InitWindow(static_cast<int>(st.width), static_cast<int>(st.height), title_storage().c_str());
         ::SetTargetFPS(0);
+
+#if !defined(RAYLIB_NO_WINDOW)
+        if (::IsWindowReady())
+        {
+            const int fbW = (std::max)(1, ::GetRenderWidth());
+            const int fbH = (std::max)(1, ::GetRenderHeight());
+            const int logicalW = (std::max)(1, ::GetScreenWidth());
+            const int logicalH = (std::max)(1, ::GetScreenHeight());
+
+            st.width = static_cast<unsigned>(fbW);
+            st.height = static_cast<unsigned>(fbH);
+            st.logicalWidth = static_cast<unsigned>(logicalW);
+            st.logicalHeight = static_cast<unsigned>(logicalH);
+        }
+#endif
+
+        if (st.designWidth == 0u)
+        {
+            st.designWidth = core::cli::window_width_overridden && core::cli::window_width > 0
+                ? static_cast<unsigned>(core::cli::window_width)
+                : st.logicalWidth;
+        }
+        if (st.designHeight == 0u)
+        {
+            st.designHeight = core::cli::window_height_overridden && core::cli::window_height > 0
+                ? static_cast<unsigned>(core::cli::window_height)
+                : st.logicalHeight;
+        }
+        if (st.virtualWidth == 0u)
+            st.virtualWidth = st.designWidth;
+        if (st.virtualHeight == 0u)
+            st.virtualHeight = st.designHeight;
+
+        {
+            const auto [refW, refH] = resolve_reference_size(st);
+            st.lastViewport = compute_fit_viewport(
+                static_cast<int>((std::max)(1u, st.width)),
+                static_cast<int>((std::max)(1u, st.height)),
+                refW,
+                refH);
+            apply_mouse_viewport_mapping(st.lastViewport);
+        }
 
 #if defined(_WIN32)
         st.hwnd = get_hwnd_from_raylib();
@@ -175,20 +283,39 @@ namespace almondnamespace::raylibcontext
         // Hook input here once you stabilize exported names in acontext.raylib.input
         // almondnamespace::raylibcontextinput::process();
 
-        const int w = ::GetScreenWidth();
-        const int h = ::GetScreenHeight();
-        if (w > 0 && h > 0 && (static_cast<unsigned>(w) != st.width || static_cast<unsigned>(h) != st.height))
-        {
-            st.width = static_cast<unsigned>(w);
-            st.height = static_cast<unsigned>(h);
+        const int logicalW = (std::max)(1, ::GetScreenWidth());
+        const int logicalH = (std::max)(1, ::GetScreenHeight());
+        const int fbW = (std::max)(1, ::GetRenderWidth());
+        const int fbH = (std::max)(1, ::GetRenderHeight());
 
+        const bool logicalChanged =
+            static_cast<unsigned>(logicalW) != st.logicalWidth
+            || static_cast<unsigned>(logicalH) != st.logicalHeight;
+        const bool framebufferChanged =
+            static_cast<unsigned>(fbW) != st.width
+            || static_cast<unsigned>(fbH) != st.height;
+
+        if (logicalChanged)
+        {
+            st.logicalWidth = static_cast<unsigned>(logicalW);
+            st.logicalHeight = static_cast<unsigned>(logicalH);
             if (st.onResize)
-                st.onResize(w, h);
+                st.onResize(logicalW, logicalH);
         }
 
+        if (framebufferChanged)
+        {
+            st.width = static_cast<unsigned>(fbW);
+            st.height = static_cast<unsigned>(fbH);
+        }
+
+        const auto [refW, refH] = resolve_reference_size(st);
+        st.lastViewport = compute_fit_viewport(fbW, fbH, refW, refH);
+        st.virtualWidth = static_cast<unsigned>(refW);
+        st.virtualHeight = static_cast<unsigned>(refH);
+        apply_mouse_viewport_mapping(st.lastViewport);
+
         const std::uintptr_t windowId = reinterpret_cast<std::uintptr_t>(st.hwnd);
-        const int fbW = ::GetRenderWidth();
-        const int fbH = ::GetRenderHeight();
         telemetry::emit_gauge(
             "renderer.framebuffer.size",
             static_cast<std::int64_t>(fbW),
@@ -199,11 +326,11 @@ namespace almondnamespace::raylibcontext
             telemetry::RendererTelemetryTags{ almondnamespace::core::ContextType::RayLib, windowId, "framebuffer_height" });
         telemetry::emit_gauge(
             "renderer.framebuffer.size",
-            static_cast<std::int64_t>(st.width),
+            static_cast<std::int64_t>(st.logicalWidth),
             telemetry::RendererTelemetryTags{ almondnamespace::core::ContextType::RayLib, windowId, "logical_width" });
         telemetry::emit_gauge(
             "renderer.framebuffer.size",
-            static_cast<std::int64_t>(st.height),
+            static_cast<std::int64_t>(st.logicalHeight),
             telemetry::RendererTelemetryTags{ almondnamespace::core::ContextType::RayLib, windowId, "logical_height" });
     }
 
@@ -291,6 +418,12 @@ namespace almondnamespace::raylibcontext
         st.onResize = {};
         st.width = 0;
         st.height = 0;
+        st.logicalWidth = 0;
+        st.logicalHeight = 0;
+        st.virtualWidth = 0;
+        st.virtualHeight = 0;
+        st.designWidth = 0;
+        st.designHeight = 0;
         st.lastViewport = {};
     }
 
@@ -302,12 +435,14 @@ namespace almondnamespace::raylibcontext
 
     export inline int raylib_get_width()
     {
-        return static_cast<int>(almondnamespace::raylibstate::s_raylibstate.width);
+        const auto& st = almondnamespace::raylibstate::s_raylibstate;
+        return static_cast<int>((std::max)(1u, st.logicalWidth));
     }
 
     export inline int raylib_get_height()
     {
-        return static_cast<int>(almondnamespace::raylibstate::s_raylibstate.height);
+        const auto& st = almondnamespace::raylibstate::s_raylibstate;
+        return static_cast<int>((std::max)(1u, st.logicalHeight));
     }
 
     export inline ::Vector2 raylib_get_mouse_position()
