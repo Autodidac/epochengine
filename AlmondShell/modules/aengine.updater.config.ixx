@@ -81,17 +81,17 @@ export namespace almondnamespace::updater
     {
         return GITHUB_RAW_BASE()
             + OWNER + "/" + REPO + "/" + BRANCH
-            + "/include/config.hpp";
+            + "/modules/aengine.version.ixx";
     }
 
     export inline std::string PROJECT_VERSION_HEADER_URL()
     {
-        // matches old aversion.hpp behavior
+        // fallback to legacy aversion module path
         auto url = PROJECT_VERSION_URL();
-        constexpr std::string_view needle = "/config.hpp";
+        constexpr std::string_view needle = "/modules/aengine.version.ixx";
 
         if (const auto pos = url.rfind(needle); pos != std::string::npos)
-            url.replace(pos, needle.size(), "/aversion.hpp");
+            url.replace(pos, needle.size(), "/Modules/aversion.ixx");
 
         return url;
     }
