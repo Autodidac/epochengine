@@ -38,6 +38,8 @@ import <sstream>;
 // Menu
 // ============================================================
 
+namespace gui = almondnamespace::gui;
+
 export namespace almondnamespace::menu
 {
     enum class Choice {
