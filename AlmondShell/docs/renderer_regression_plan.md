@@ -13,15 +13,15 @@ mind when auditing backend behaviour:
 1. `MenuOverlay::recompute_layout` caches `ctx->get_width_safe()` and
    `ctx->get_height_safe()` and centres the grid from those dimensions, so the
    context getters must track the actual pixel space that `draw_sprite_safe`
-   renders into.【F:AlmondShell/include/aguimenu.hpp†L101-L170】
+   renders into.【F:AlmondShell/modules/aengine.gui.menu.ixx†L1-L1】
 2. The cached positions produced during layout are reused for both hit-testing
    and the GUI cursor placement before each `gui::button` call in
    `update_and_draw`, so backend scaling still has to keep layout coordinates
-   aligned with the GUI draw pass.【F:AlmondShell/include/aguimenu.hpp†L277-L395】
+   aligned with the GUI draw pass.【F:AlmondShell/modules/aengine.gui.menu.ixx†L1-L1】
 3. `update_and_draw` compares `ctx->get_mouse_position_safe()` against the same
    rectangles it submits to `draw_sprite_safe`, so pointer coordinates have to
    arrive already translated into the sprite grid (with the OpenGL flip handled
-   explicitly in the overlay).【F:AlmondShell/include/aguimenu.hpp†L285-L352】【F:AlmondShell/include/aguimenu.hpp†L374-L395】
+   explicitly in the overlay).【F:AlmondShell/modules/aengine.gui.menu.ixx†L1-L1】
 
 ## 1. Smoke scenes per backend
 
@@ -80,12 +80,12 @@ regression runs can diff the coordinates without rerunning the scenes.
 | `renderer.resize.count` | Increment each time the multiplexer coalesces a resize. | `MultiContextManager::HandleResize` after the window/context width/height write; hook when enqueueing the render-thread callback so counts cover client-visible events.【F:AlmondShell/src/acontextmultiplexer.cpp†L780-L815】 |
 | `renderer.resize.latest_dimensions` | Gauges for last width/height per window and backend. | Populate immediately after `window->context->width/height` are updated in `HandleResize`, tagging with `ContextType`.【F:AlmondShell/src/acontextmultiplexer.cpp†L780-L812】 |
 | `renderer.framebuffer.size` | Record backend framebuffer dimensions after internal adjustments. |
-- OpenGL: sample `glViewport` dimensions right after `glViewport(0, 0, ctx->width, ctx->height)` inside the init path and any resize handler.【F:AlmondShell/include/aopenglcontext.hpp†L416-L430】
-- SDL: capture `renderW/renderH` from `SDL_GetCurrentRenderOutputSize` before presenting.【F:AlmondShell/include/asdlcontext.hpp†L254-L302】
-- Raylib: emit `safeFbW/safeFbH` plus logical canvas values within `dispatch_resize` after coalescing.【F:AlmondShell/include/araylibcontext.hpp†L101-L170】
-- Software: push `sr.width/sr.height` once `resize_framebuffer` completes and include buffer length for validation.【F:AlmondShell/include/asoftrenderer_context.hpp†L41-L123】 |
-| `renderer.command_queue.depth` | Sample queued command count before drain to ensure storms are handled. | Report `commandQueue.size()` before `queue.drain()` in backend process loops (`sdl_process`, Raylib present hook, software present) and inside `RenderLoop` before `process_safe` execution.【F:AlmondShell/include/asdlcontext.hpp†L274-L306】【F:AlmondShell/src/acontextmultiplexer.cpp†L996-L1065】 |
-| `renderer.frame.time_ms` | Frame duration histogram per backend for the smoke runs. | Stamp `RobustTime` timers around backend-present paths (`sdl_process` rainbow loop, Raylib `BeginDrawing`/`EndDrawing`, software blit) and aggregate in telemetry buffers. For OpenGL reuse the existing quad pipeline draw to flush timings.【F:AlmondShell/include/asdlcontext.hpp†L267-L312】【F:AlmondShell/include/araylibcontext.hpp†L59-L170】【F:AlmondShell/include/asoftrenderer_context.hpp†L93-L168】【F:AlmondShell/include/aopenglcontext.hpp†L288-L430】 |
+- OpenGL: sample `glViewport` dimensions right after `glViewport(0, 0, ctx->width, ctx->height)` inside the init path and any resize handler.【F:AlmondShell/modules/acontext.opengl.context.ixx†L1-L1】
+- SDL: capture `renderW/renderH` from `SDL_GetCurrentRenderOutputSize` before presenting.【F:AlmondShell/modules/acontext.sdl.context.ixx†L1-L1】
+- Raylib: emit `safeFbW/safeFbH` plus logical canvas values within `dispatch_resize` after coalescing.【F:AlmondShell/modules/acontext.raylib.context.ixx†L1-L1】
+- Software: push `sr.width/sr.height` once `resize_framebuffer` completes and include buffer length for validation.【F:AlmondShell/modules/acontext.softrenderer.context.ixx†L1-L1】 |
+| `renderer.command_queue.depth` | Sample queued command count before drain to ensure storms are handled. | Report `commandQueue.size()` before `queue.drain()` in backend process loops (`sdl_process`, Raylib present hook, software present) and inside `RenderLoop` before `process_safe` execution.【F:AlmondShell/modules/acontext.sdl.context.ixx†L1-L1】【F:AlmondShell/src/acontextmultiplexer.cpp†L996-L1065】 |
+| `renderer.frame.time_ms` | Frame duration histogram per backend for the smoke runs. | Stamp `RobustTime` timers around backend-present paths (`sdl_process` rainbow loop, Raylib `BeginDrawing`/`EndDrawing`, software blit) and aggregate in telemetry buffers. For OpenGL reuse the existing quad pipeline draw to flush timings.【F:AlmondShell/modules/acontext.sdl.context.ixx†L1-L1】【F:AlmondShell/modules/acontext.raylib.context.ixx†L1-L1】【F:AlmondShell/modules/acontext.softrenderer.context.ixx†L1-L1】【F:AlmondShell/modules/acontext.opengl.context.ixx†L1-L1】 |
 
 ### Hook sequencing notes
 
