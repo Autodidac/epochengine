@@ -243,6 +243,7 @@ export namespace almondnamespace::raylibtextures
     // ---------------------------------------------------------------------
     export inline void ensure_uploaded(const TextureAtlas& atlas)
     {
+        // Thread-safe on the render thread: per-context backend storage + mutex.
         auto& backend = get_raylib_backend();
         std::scoped_lock lock(backend.gpuMutex);
         upload_atlas_to_gpu_locked(backend, atlas);
