@@ -14,11 +14,9 @@
 │  • Importers: `aengine` (aggregate), `almondshell` (umbrella alias),
 │    `aengine.engine_components`, `aengine.platform`, `aengine.systems`,
 │    `aengine.gui`, `aengine.gui.menu`, `aengine.input`, `aengine.cli`,
-│    `aengine.version`, context surfaces (`aengine.context`,
-│    `.context.window`, `.context.render`, `.context.commandqueue`,
-│    `.context.control`, `.context.multiplexer`, `.context.state`,
-│    `.context.type`), backend bridges (`aengine.context.sdl`,
-│    `aengine.context.software`), renderer/context partitions under
+│    `aengine.version`, context surfaces (`aengine.context.commandqueue`,
+│    `.context.control`, `.context.multiplexer`, `.context.type`,
+│    `.context.window`, `.context.sdl`), renderer/context partitions under
 │    `acontext.opengl.*`, `acontext.sdl.*`, `acontext.raylib.*`,
 │    `acontext.softrenderer.*`, direct module mirrors for legacy headers like
 │    `import aatlas.manager;`, `import aatlas.texture;`,
@@ -101,10 +99,12 @@
 │   │   │── acellularsim.ixx
 │   │   │── acontext.noop.context.ixx
 │   │   │── acontext.opengl.context.ixx
+│   │   │── acontext.opengl.platform.ixx
+│   │   │── acontext.opengl.quad.ixx
 │   │   │── acontext.opengl.renderer.ixx
+│   │   │── acontext.opengl.state.ixx
 │   │   │── acontext.opengl.textures.ixx
 │   │   │── acontext.raylib.context.ixx
-│   │   │── acontext.raylib.contextinput.ixx
 │   │   │── acontext.raylib.input.ixx
 │   │   │── acontext.raylib.renderer.ixx
 │   │   │── acontext.raylib.state.ixx
@@ -126,15 +126,10 @@
 │   │   │── aenduserapplication.ixx
 │   │   │── aengine.bindings.ixx
 │   │   │── aengine.cli.ixx
-│   │   │── aengine.config.ixx
 │   │   │── aengine.context.commandqueue.ixx
 │   │   │── aengine.context.control.ixx
-│   │   │── aengine.context.ixx
 │   │   │── aengine.context.multiplexer.ixx
-│   │   │── aengine.context.render.ixx
 │   │   │── aengine.context.sdl.ixx
-│   │   │── aengine.context.software.ixx
-│   │   │── aengine.context.state.ixx
 │   │   │── aengine.context.type.ixx
 │   │   │── aengine.context.window.ixx
 │   │   │── aengine.core.commandline.ixx
@@ -154,6 +149,7 @@
 │   │   │── aengine.scripting.compiler.ixx
 │   │   │── aengine.systems.ixx
 │   │   │── aengine.taskgraph.dotsystem.ixx
+│   │   │── aengine.telemetry.ixx
 │   │   │── aengine.updater.config.ixx
 │   │   │── aengine.updater.ixx
 │   │   │── aengine.updater.system.ixx
@@ -167,9 +163,9 @@
 │   │   │── aframework.ixx
 │   │   │── afroggerlike.ixx
 │   │   │── agamecore.ixx
+│   │   │── aimage.loader.ixx
+│   │   │── aimage.writer.ixx
 │   │   │── aimageatlaswriter.ixx
-│   │   │── aimageloader.ixx
-│   │   │── aimagewriter.ixx
 │   │   │── almondshell.ixx
 │   │   │── amatch3like.ixx
 │   │   │── aminesweeperlike.ixx
@@ -178,11 +174,6 @@
 │   │   │── ampmcboundedqueue.ixx
 │   │   │── anet.ixx
 │   │   │── aopenglfreetype.ixx
-│   │   │── aopenglplatform.ixx
-│   │   │── aopenglquad.ixx
-│   │   │── aopenglrenderer.ixx
-│   │   │── aopenglstate.ixx
-│   │   │── aopengltextures.ixx
 │   │   │── aopengltriangle.ixx
 │   │   │── apacmanlike.ixx
 │   │   │── aplatformpump.ixx
@@ -191,10 +182,7 @@
 │   │   │── ascene.ixx
 │   │   │── asceneserializer.ixx
 │   │   │── ascenesnapshot.ixx
-│   │   │── ascriptingsystem.ixx
-│   │   │── asdlcontext.ixx
-│   │   │── asdlcontextrenderer.ixx
-│   │   │── asdltextures.ixx
+│   │   │── ascripting.system.ixx
 │   │   │── asfmlcontext.ixx
 │   │   │── asfmlrenderer.ixx
 │   │   │── asfmlstate.ixx
@@ -202,8 +190,8 @@
 │   │   │── aslidingpuzzlelike.ixx
 │   │   │── asnakelike.ixx
 │   │   │── asokobanlike.ixx
+│   │   │── asprite.pool.ixx
 │   │   │── aspritehandle.ixx
-│   │   │── aspritepool.ixx
 │   │   │── aspriteregistry.ixx
 │   │   │── atetrislike.ixx
 │   │   │── atexture.ixx
@@ -222,6 +210,8 @@
 │   │   │── avulkanswapchain.ixx
 │   │   │── avulkantexture.ixx
 │   │   │── avulkantriangle.ixx
+│   │── Module bridge units (.cppm)
+│   │   │── aengine.context.cppm
 │
 │── src modules/
 │   │── Module implementation units (.cppm)

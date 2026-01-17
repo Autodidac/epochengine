@@ -3,9 +3,9 @@ include Directory
 Module-first ECS/engine consumption: import `aengine` or
 `aengine.engine_components` instead of including the `aentity*.hpp`/
 `acomponent*` headers directly. Platform and context consumers should prefer
-`aengine.platform`, `aengine.context`, and the backend partitions
-(`aengine.opengl.*`, `aengine.sdl.*`, `aengine.context.raylib`,
-`aengine.context.software`).
+`aengine.platform`, `aengine.context.*` partitions, and the backend partitions
+(`acontext.opengl.*`, `acontext.sdl.*`, `acontext.raylib.*`,
+`acontext.softrenderer.*`).
 
 •       abuildsystem.hpp
 •       acomponentmanager.hpp
@@ -68,54 +68,64 @@ Aggregates & runtime:
 •       aengine.ixx (aggregate; mirrors aengine.hpp)
 •       aengine.engine_components.ixx
 •       aengine.platform.ixx
-•       aengine.renderers.ixx
-•       aengine.menu.ixx
+•       aengine.systems.ixx
+•       aengine.gui.ixx
+•       aengine.gui.menu.ixx
+•       aengine.bindings.ixx
+•       aengine.diagnostics.ixx
+•       aengine.handles.ixx
+•       aengine.taskgraph.dotsystem.ixx
+•       aengine.telemetry.ixx
 •       aengine.input.ixx
 •       aengine.cli.ixx
 •       aengine.version.ixx
+•       almondshell.ixx (umbrella alias)
 
 Context/back-end stack:
-•       aengine.context.ixx
 •       aengine.context.commandqueue.ixx
 •       aengine.context.control.ixx
 •       aengine.context.multiplexer.ixx
-•       aengine.context.state.ixx
 •       aengine.context.type.ixx
 •       aengine.context.window.ixx
-•       aengine.context.render.ixx
-•       aengine.context.cppm (bridge for import scanning)
-•       aengine.context.opengl.ixx
-•       aengine.context.raylib.ixx
 •       aengine.context.sdl.ixx
-•       aengine.context.software.ixx
-•       aengine.opengl.context.ixx / aengine.opengl.renderer.ixx / aengine.opengl.textures.ixx
-•       aengine.sdl.context.ixx / aengine.sdl.renderer.ixx / aengine.sdl.textures.ixx
+•       aengine.context.cppm (bridge for import scanning)
+•       acontext.noop.context.ixx
+•       acontext.opengl.context.ixx / acontext.opengl.platform.ixx / acontext.opengl.quad.ixx
+•       acontext.opengl.renderer.ixx / acontext.opengl.state.ixx / acontext.opengl.textures.ixx
+•       acontext.sdl.context.ixx / acontext.sdl.renderer.ixx / acontext.sdl.state.ixx / acontext.sdl.textures.ixx
+•       acontext.raylib.context.ixx / acontext.raylib.input.ixx / acontext.raylib.renderer.ixx
+•       acontext.raylib.state.ixx / acontext.raylib.textures.ixx
+•       acontext.softrenderer.context.ixx / acontext.softrenderer.quad.ixx
+•       acontext.softrenderer.renderer.ixx / acontext.softrenderer.state.ixx / acontext.softrenderer.textures.ixx
 
 ECS & runtime helpers:
 •       aecs.ixx / aecs.components.ixx / aecs.storage.ixx / aecs.internal_private.ixx
-•       aengine.atlasmanager.ixx
-•       aallocator.ixx
-•       aatlasmanager.ixx
-•       aatlastexture.ixx
-•       aimageloader.ixx
+•       aengine.core.commandline.ixx / aengine.core.context.ixx / aengine.core.logger.ixx
+•       aengine.core.time.ixx / aengine.core.types.ixx / aengine.core.utilities.ixx
+•       aatlas.manager.ixx
+•       aatlas.texture.ixx
+•       aimage.loader.ixx
+•       aimage.writer.ixx
 •       aimageatlaswriter.ixx
-•       aimagewriter.ixx
 •       atexture.ixx
-•       autilities.ixx
-•       almond.core.*.ixx
-•       almond.softrenderer.state.ixx
+•       autility.allocator.ixx / autility.atomicfunction.ixx / autility.codeinspector.ixx
+•       autility.filewatch.ixx / autility.string.converter.ixx
+•       ascripting.system.ixx
 •       amovementevent.ixx
 •       ascene.ixx
-•       asdlstate.ixx
+•       asceneserializer.ixx / ascenesnapshot.ixx
+•       aeventsystem.ixx / aentity.ixx / aentity.component.manager.ixx / aentityhistory.ixx
+•       aplatformpump.ixx
+•       asprite.pool.ixx / aspritehandle.ixx / aspriteregistry.ixx
 
 Updater and CLI:
 •       aengine.updater.ixx
 •       aengine.updater.config.ixx
+•       aengine.updater.system.ixx
 •       aengine.updater.tools.ixx
-•       aupdatesystem.ixx
 •       aapplicationmodule.ixx
 •       aenduserapplication.ixx
-•       acommandline.ixx
+•       aengine.core.commandline.ixx
 
 Mirrored headers: aengine.hpp, aplatform.hpp, acontext*.hpp, awindowdata.hpp,
 aguimenu.hpp, acommandline.hpp, aopenglcontext.hpp, and the ECS headers listed
