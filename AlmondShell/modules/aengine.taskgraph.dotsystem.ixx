@@ -84,8 +84,7 @@ export namespace almondnamespace::taskgraph
         {
             for (auto& n : Nodes_) {
                 if (n->PrereqCount.load(std::memory_order_acquire) == 0) {
-                    Queue_.enqueue(n.get());
-                    WorkSem_.release();
+                    EnqueueNode(n.get());
                 }
             }
         }
@@ -118,6 +117,21 @@ export namespace almondnamespace::taskgraph
             Nodes_.erase(end, Nodes_.end());
         }
 
+        std::size_t QueueDepth() const
+        {
+            return Queue_.approximate_size();
+        }
+
+        std::size_t CompletedCount() const
+        {
+            return Completed_.load(std::memory_order_relaxed);
+        }
+
+        std::size_t EnqueuedCount() const
+        {
+            return Enqueued_.load(std::memory_order_relaxed);
+        }
+
         void DumpDot(const std::string& path = "graph.dot")
         {
             std::ofstream out(path);
@@ -140,6 +154,22 @@ export namespace almondnamespace::taskgraph
         }
 
     private:
+        void EnqueueNode(Node* node)
+        {
+            while (!Queue_.enqueue(node)) {
+                std::this_thread::yield();
+            }
+
+            Enqueued_.fetch_add(1, std::memory_order_relaxed);
+            WorkSem_.release();
+        }
+
+        void MarkCompleted(Node* node)
+        {
+            node->PrereqCount.store(-1, std::memory_order_release);
+            Completed_.fetch_add(1, std::memory_order_relaxed);
+        }
+
         void WorkerLoop()
         {
             Node* n = nullptr;
@@ -165,12 +195,11 @@ export namespace almondnamespace::taskgraph
 
                 for (auto* d : n->Dependents) {
                     if (d->PrereqCount.fetch_sub(1, std::memory_order_acq_rel) == 1) {
-                        Queue_.enqueue(d);
-                        WorkSem_.release();
+                        EnqueueNode(d);
                     }
                 }
 
-                n->PrereqCount.store(-1, std::memory_order_release);
+                MarkCompleted(n);
             }
 
             // Drain remaining work
@@ -186,12 +215,11 @@ export namespace almondnamespace::taskgraph
 
                 for (auto* d : n->Dependents) {
                     if (d->PrereqCount.fetch_sub(1, std::memory_order_acq_rel) == 1) {
-                        Queue_.enqueue(d);
-                        WorkSem_.release();
+                        EnqueueNode(d);
                     }
                 }
 
-                n->PrereqCount.store(-1, std::memory_order_release);
+                MarkCompleted(n);
             }
         }
 
@@ -200,5 +228,7 @@ export namespace almondnamespace::taskgraph
         std::atomic<bool>           Running_;
         std::counting_semaphore<>   WorkSem_;
         std::vector<NodePtr>        Nodes_;
+        std::atomic<std::size_t>    Enqueued_{ 0 };
+        std::atomic<std::size_t>    Completed_{ 0 };
     };
 }

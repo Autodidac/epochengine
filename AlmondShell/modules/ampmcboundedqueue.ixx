@@ -83,6 +83,16 @@ export namespace almondnamespace {
             return head_.load(std::memory_order_relaxed) == tail_.load(std::memory_order_relaxed);
         }
 
+        size_t approximate_size() const {
+            auto head = head_.load(std::memory_order_relaxed);
+            auto tail = tail_.load(std::memory_order_relaxed);
+            return tail - head;
+        }
+
+        size_t capacity() const {
+            return capacity_;
+        }
+
     private:
         struct Node {
             std::atomic<size_t> seq;
