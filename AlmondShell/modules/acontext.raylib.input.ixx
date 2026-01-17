@@ -12,6 +12,7 @@ import aengine.input;
 
 
 #if defined(ALMOND_USING_RAYLIB)
+#include <raylib.h>
 namespace almondnamespace::raylibcontext {
 
     inline void poll_input()
