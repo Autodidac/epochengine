@@ -53,6 +53,7 @@ import aengine.context.type;
 import aengine.core.time;
 import aengine.telemetry;
 
+import aatlas.manager;
 import acontext.raylib.state;
 import acontext.raylib.textures;
 import acontext.raylib.renderer;
@@ -150,6 +151,10 @@ namespace almondnamespace::raylibcontext
 
         st.running = true;
         st.cleanupIssued = false;
+
+        almondnamespace::atlasmanager::register_backend_uploader(
+            almondnamespace::core::ContextType::RayLib,
+            almondnamespace::raylibtextures::ensure_uploaded);
         return true;
     }
 
@@ -254,6 +259,9 @@ namespace almondnamespace::raylibcontext
             return;
 
         st.cleanupIssued = true;
+
+        almondnamespace::atlasmanager::unregister_backend_uploader(
+            almondnamespace::core::ContextType::RayLib);
 
         // If you added this exported function in acontext.raylib.textures, keep it.
         // Otherwise comment it out.
