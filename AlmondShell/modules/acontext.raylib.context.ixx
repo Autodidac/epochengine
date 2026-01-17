@@ -145,7 +145,6 @@ namespace almondnamespace::raylibcontext
         st.hwnd = get_hwnd_from_raylib();
         st.hdc = st.hwnd ? ::GetDC(st.hwnd) : nullptr;
         st.hglrc = ::wglGetCurrentContext();
-        st.glContext = st.hglrc;
         if (ctx)
         {
             ctx->hwnd = st.hwnd;
@@ -287,7 +286,7 @@ namespace almondnamespace::raylibcontext
         st.running = false;
         st.hwnd = nullptr;
         st.hdc = nullptr;
-        st.glContext = nullptr;
+        st.hglrc = nullptr;
         st.parent = nullptr;
         st.onResize = {};
         st.width = 0;

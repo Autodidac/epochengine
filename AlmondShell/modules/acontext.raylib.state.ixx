@@ -45,7 +45,6 @@ export namespace almondnamespace::raylibstate
         void* parent = nullptr;
 #endif
 
-        void* glContext = nullptr;
         bool  ownsDC = false;
 
         std::function<void(int, int)> onResize{};
