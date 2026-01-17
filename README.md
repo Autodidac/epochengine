@@ -102,9 +102,10 @@ Refer to [`Changes/changelog.txt`](Changes/changelog.txt) for the full history o
   Changes to `*.ascript.cpp` files are detected at runtime, recompiled with LLVM/Clang, and seamlessly reloaded.
 
 - 🗂️ **Well-organised codebase**
-  - Headers in `include/`
-  - Implementation in `src/`
-  - Helper scripts under `unix/` plus project-level `.sh` helpers
+  - Module interface units in `AlmondShell/modules/`
+  - Compatibility headers in `AlmondShell/include/`
+  - Implementation in `AlmondShell/src/`
+  - Helper scripts under `AlmondShell/unix/` plus project-level `.sh` helpers
 
 - 🖼️ **Sprite & atlas management**
   Global registries, unique atlas indexing, and atlas-driven GUI (buttons, highlights, and menus) backed by the multi-context atlas pipeline that has been refined over thousands of development hours.
@@ -134,7 +135,8 @@ See [`Changes/roadmap.txt`](Changes/roadmap.txt) and [`AlmondShell/docs/engine_a
 ├── LICENSE                  # LicenseRef-MIT-NoSell terms for AlmondShell
 ├── README.md                # Project overview and setup guide (this file)
 ├── AlmondShell/
-│   ├── include/             # Core engine headers
+│   ├── modules/             # C++23 module interface units (primary API surface)
+│   ├── include/             # Compatibility headers that mirror module exports
 │   ├── src/                 # Engine, updater entry point, and scripts
 │   ├── docs/                # Engine analysis, configuration matrix, context audit, tooling notes
 │   ├── examples/            # Sample projects and templates
@@ -150,7 +152,7 @@ Refer to `AlmondShell/docs/file_structure.txt` for an exhaustive module map (inc
 
 ## API Documentation
 
-The repository ships with a [Doxygen](https://www.doxygen.nl/) configuration that indexes every public header beneath `AlmondShell/include/` and emits an HTML reference under `AlmondShell/docs/api/html/`.
+The repository ships with a [Doxygen](https://www.doxygen.nl/) configuration that indexes the module interface units under `AlmondShell/modules/` alongside public compatibility headers in `AlmondShell/include/`, emitting an HTML reference under `AlmondShell/docs/api/html/`.
 
 - Run the standard build helper (`./AlmondShell/build.sh <gcc|clang> <Debug|Release>`) and the script will invoke the documentation target automatically whenever Doxygen is available on your system.
 - Alternatively, generate the reference manually from an existing build tree via `cmake --build <build directory> --target docs`.
@@ -158,10 +160,10 @@ The repository ships with a [Doxygen](https://www.doxygen.nl/) configuration tha
 
 ---
 
-## Engine Configuration (`include/aengineconfig.hpp`)
+## Engine Configuration (`include/aengine.config.hpp`)
 
 AlmondShell centralises its build-time feature flags inside
-[`include/aengineconfig.hpp`](AlmondShell/include/aengineconfig.hpp). The file
+[`include/aengine.config.hpp`](AlmondShell/include/aengine.config.hpp). The file
 controls which entry points, contexts, and renderers are compiled into the
 runtime:
 
@@ -203,7 +205,7 @@ To build AlmondShell from source you will need the following tools:
 | Ninja _or_ MSBuild     | Pick the generator that matches your platform. Ninja is recommended with module builds to keep BMI scanning incremental. |
 | Git                    | Required for cloning the repository and fetching dependencies. |
 | [vcpkg](https://vcpkg.io/) | Simplifies acquiring third-party libraries listed in `AlmondShell/vcpkg.json`. |
-| Optional: Vulkan SDK   | Needed when working on Vulkan backends listed in `include/avulkan*`. |
+| Optional: Vulkan SDK   | Needed when working on Vulkan backends listed in `AlmondShell/modules/avulkan*.ixx`. |
 
 ### vcpkg manifest dependencies
 
@@ -342,7 +344,7 @@ These two adjustments let you run uncertified binaries, including the updater th
 ## Running the Updater & Engine
 
 On launch the updater:
-1. Reads the remote configuration targets defined in `include/aupdateconfig.hpp` (for example the `include/config.hpp` manifest in the release repository).
+1. Reads the remote configuration targets defined in the `aengine.updater.config` module (`AlmondShell/modules/aengine.updater.config.ixx`, for example the `include/config.hpp` manifest in the release repository).
 2. Ensures manifest version strings mirror the runtime helpers (currently v0.81.23) so update checks and diagnostics report the same release tag.
 3. Downloads and applies updates when available.
 4. Starts the engine runtime, which in turn loads `src/scripts/editor_launcher.ascript.cpp` and watches for changes. Editing the script triggers automatic recompilation within the running session, with `ScriptLoadReport` diagnostics surfacing reload status in the console.
