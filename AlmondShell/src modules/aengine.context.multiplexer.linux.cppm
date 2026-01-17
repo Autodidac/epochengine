@@ -18,10 +18,10 @@
 
 module;
 
-#if defined(__linux__)
-
 // Feature flags (defines ALMOND_USING_*)
 #include "aengine.config.hpp"
+
+#if defined(__linux__)
 
 // X11 / GLX headers must be includes (not module imports)
 #include <X11/Xatom.h>
@@ -36,6 +36,8 @@ module;
 #endif // __linux__
 
 export module aengine.context.multiplexer.linux;
+
+#if defined(__linux__)
 
 // ---- std ----
 import <algorithm>;
@@ -68,7 +70,6 @@ import aengine.cli;
 import autility.string.converter;     // almondnamespace::text::narrow_utf8
 
 // ---- backends (only referenced when enabled) ----
-#if defined(__linux__)
 #   if defined(ALMOND_USING_OPENGL)
 import acontext.opengl.context;       // almondnamespace::openglcontext::opengl_initialize
 import acontext.opengl.platform;      // almondnamespace::openglcontext::PlatformGL::get_proc_address
@@ -82,9 +83,7 @@ import acontext.sdl.context;          // almondnamespace::sdlcontext::sdl_initia
 #   if defined(ALMOND_USING_SOFTWARE_RENDERER)
 import acontext.softrenderer.context; // almondnamespace::anativecontext::softrenderer_initialize
 #   endif
-#endif // __linux__
 
-#if defined(__linux__)
 
 namespace almondnamespace::platform
 {

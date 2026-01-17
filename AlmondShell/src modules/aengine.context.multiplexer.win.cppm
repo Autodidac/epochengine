@@ -24,6 +24,9 @@
  // aengine.context.multiplexer.win.cppm
 module;
 
+// configuration
+#include "..\\include\\aengine.config.hpp"
+
 #if defined(_WIN32)
 #   ifndef WIN32_LEAN_AND_MEAN
 #       define WIN32_LEAN_AND_MEAN
@@ -50,9 +53,6 @@ module;
 
 #   include <glad/glad.h>
 #endif
-
-// configuration
-#include "..\\include\\aengine.config.hpp"
 
 export module aengine.context.multiplexer:win;
 
