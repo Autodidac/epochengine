@@ -124,8 +124,6 @@ namespace almondnamespace::raylibcontext
         std::function<void(int, int)> resizeCallback = nullptr,
         std::string title = {})
     {
-        (void)ctx;
-
         auto& st = almondnamespace::raylibstate::s_raylibstate;
 
         if (width == 0)  width = static_cast<unsigned>(core::cli::window_width);
@@ -146,7 +144,14 @@ namespace almondnamespace::raylibcontext
 #if defined(_WIN32)
         st.hwnd = get_hwnd_from_raylib();
         st.hdc = st.hwnd ? ::GetDC(st.hwnd) : nullptr;
-        st.glContext = ::wglGetCurrentContext();
+        st.hglrc = ::wglGetCurrentContext();
+        st.glContext = st.hglrc;
+        if (ctx)
+        {
+            ctx->hwnd = st.hwnd;
+            ctx->hdc = st.hdc;
+            ctx->hglrc = st.hglrc;
+        }
 #endif
 
         st.running = true;
