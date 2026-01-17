@@ -113,7 +113,7 @@ export namespace almondnamespace::cellularsim
             };
 
             // Always try to load a background sprite if available
-            ensureSprite("bg");
+           // ensureSprite("bg");
             ensureSprite("cell_alive");
             ensureSprite("cell_dead");
 

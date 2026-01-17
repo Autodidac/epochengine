@@ -49,6 +49,7 @@ import <utility>;
 
 import aengine.core.context;
 import aengine.core.commandline;
+import aengine.context.type;
 import aengine.core.time;
 import aengine.telemetry;
 
@@ -182,19 +183,19 @@ namespace almondnamespace::raylibcontext
         telemetry::emit_gauge(
             "renderer.framebuffer.size",
             static_cast<std::int64_t>(fbW),
-            telemetry::RendererTelemetryTags{ core::ContextType::RayLib, windowId, "framebuffer_width" });
+            telemetry::RendererTelemetryTags{ almondnamespace::core::ContextType::RayLib, windowId, "framebuffer_width" });
         telemetry::emit_gauge(
             "renderer.framebuffer.size",
             static_cast<std::int64_t>(fbH),
-            telemetry::RendererTelemetryTags{ core::ContextType::RayLib, windowId, "framebuffer_height" });
+            telemetry::RendererTelemetryTags{ almondnamespace::core::ContextType::RayLib, windowId, "framebuffer_height" });
         telemetry::emit_gauge(
             "renderer.framebuffer.size",
             static_cast<std::int64_t>(st.width),
-            telemetry::RendererTelemetryTags{ core::ContextType::RayLib, windowId, "logical_width" });
+            telemetry::RendererTelemetryTags{ almondnamespace::core::ContextType::RayLib, windowId, "logical_width" });
         telemetry::emit_gauge(
             "renderer.framebuffer.size",
             static_cast<std::int64_t>(st.height),
-            telemetry::RendererTelemetryTags{ core::ContextType::RayLib, windowId, "logical_height" });
+            telemetry::RendererTelemetryTags{ almondnamespace::core::ContextType::RayLib, windowId, "logical_height" });
     }
 
     export inline void raylib_clear(float r, float g, float b, float a)

@@ -115,7 +115,7 @@ export namespace almondnamespace::match3like
             };
 
             // Always try to load a background sprite if available
-            ensureSprite("bg");
+          //  ensureSprite("bg");
             ensureSprite("gem0");
             ensureSprite("gem1");
             ensureSprite("gem2");

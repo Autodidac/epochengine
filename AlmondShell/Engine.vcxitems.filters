@@ -527,5 +527,11 @@
     <ClCompile Include="$(MSBuildThisFileDirectory)src\scripts\editor_launcher.ascript.cpp">
       <Filter>Source Files\scripts</Filter>
     </ClCompile>
+    <ClCompile Include="$(MSBuildThisFileDirectory)modules\aengine.telemetry.ixx">
+      <Filter>Module Files\ixx\utilities</Filter>
+    </ClCompile>
+    <ClCompile Include="$(MSBuildThisFileDirectory)src modules\renderer_smoke_harness.cppm">
+      <Filter>Module Files\cppm</Filter>
+    </ClCompile>
   </ItemGroup>
 </Project>
