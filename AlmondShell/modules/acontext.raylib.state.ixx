@@ -99,6 +99,7 @@ export namespace almondnamespace::raylibstate
 
         timing::Timer pollTimer = timing::createTimer(1.0);
         timing::Timer fpsTimer = timing::createTimer(1.0);
+        timing::Timer frameTimer = timing::createTimer(1.0);
         int frameCount = 0;
 
         int uTransformLoc = -1;

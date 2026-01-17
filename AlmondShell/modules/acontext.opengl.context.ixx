@@ -54,6 +54,7 @@ import aengine.input;
 import aplatformpump;
 import aatlas.manager;
 import aengine.core.commandline;
+import aengine.telemetry;
 
 // ------------------------------------------------------------
 // OpenGL backend modules
@@ -66,10 +67,12 @@ import acontext.opengl.platform;
 // Standard library
 // ------------------------------------------------------------
 import <algorithm>;
+import <chrono>;
 import <cstdint>;
 import <format>;
 import <functional>;
 import <iostream>;
+import <mutex>;
 import <stdexcept>;
 import <string>;
 import <string_view>;
@@ -696,8 +699,12 @@ void main() {
     {
         if (!ctx) return false;
 
+        const auto frameStart = std::chrono::steady_clock::now();
         auto& backend = opengltextures::get_opengl_backend();
         auto& glState = backend.glState;
+        const std::uintptr_t windowId = ctx->windowData
+            ? reinterpret_cast<std::uintptr_t>(ctx->windowData->hwnd)
+            : 0;
 
         PlatformGL::ScopedContext guard;
         auto desired = detail::context_to_platform_context(ctx.get());
@@ -725,11 +732,36 @@ void main() {
         const int fbW = (std::max)(1, opengl_get_width());
         const int fbH = (std::max)(1, opengl_get_height());
         glViewport(0, 0, fbW, fbH);
+        telemetry::emit_gauge(
+            "renderer.framebuffer.size",
+            static_cast<std::int64_t>(fbW),
+            telemetry::RendererTelemetryTags{ core::ContextType::OpenGL, windowId, "width" });
+        telemetry::emit_gauge(
+            "renderer.framebuffer.size",
+            static_cast<std::int64_t>(fbH),
+            telemetry::RendererTelemetryTags{ core::ContextType::OpenGL, windowId, "height" });
 
         opengl_clear();
+        {
+            std::size_t depth = 0;
+            {
+                std::scoped_lock lock(queue.get_mutex());
+                depth = queue.get_queue().size();
+            }
+            telemetry::emit_gauge(
+                "renderer.command_queue.depth",
+                static_cast<std::int64_t>(depth),
+                telemetry::RendererTelemetryTags{ core::ContextType::OpenGL, windowId });
+        }
         queue.drain();
 
         PlatformGL::swap_buffers(guard.target());
+        const auto frameEnd = std::chrono::steady_clock::now();
+        const auto frameMs = std::chrono::duration<double, std::milli>(frameEnd - frameStart).count();
+        telemetry::emit_histogram_ms(
+            "renderer.frame.time_ms",
+            frameMs,
+            telemetry::RendererTelemetryTags{ core::ContextType::OpenGL, windowId });
         return true;
     }
 
@@ -767,9 +799,6 @@ void main() {
 
 #endif // ALMOND_USING_OPENGL
 } // namespace almondnamespace::openglcontext
-
-
-
 
 
 

@@ -12,9 +12,12 @@ export module acontext.sdl.context;
 //import aengine.config;
 import aengine.platform;
 
+import <chrono>;
+import <cstdint>;
 import <algorithm>;
 import <functional>;
 import <memory>;
+import <mutex>;
 import <stdexcept>;
 import <iostream>;
 import <string>;
@@ -29,6 +32,7 @@ import acontext.sdl.state;
 import acontext.sdl.renderer;
 import acontext.sdl.textures;
 import aengine.context.multiplexer; // almondnamespace::core::MakeDockable(sdlcontext.hwnd, sdlcontext.parent);
+import aengine.telemetry;
 
 
 
@@ -275,7 +279,12 @@ export namespace almondnamespace::sdlcontext
     }
 
     inline bool sdl_process(std::shared_ptr<core::Context> ctx, core::CommandQueue& queue) {
-        (void)ctx;
+        const auto frameStart = std::chrono::steady_clock::now();
+        const core::ContextType backendType = ctx ? ctx->type : core::ContextType::SDL;
+        const std::uintptr_t windowId = ctx && ctx->windowData
+            ? reinterpret_cast<std::uintptr_t>(ctx->windowData->hwnd)
+            : reinterpret_cast<std::uintptr_t>(sdlcontext.hwnd);
+
         SDL_Event sdl_event{};
         while (SDL_PollEvent(&sdl_event)) {
             if (sdl_event.type == SDL_EVENT_QUIT) {
@@ -289,12 +298,39 @@ export namespace almondnamespace::sdlcontext
 
         refresh_dimensions(ctx);
 
+        telemetry::emit_gauge(
+            "renderer.framebuffer.size",
+            static_cast<std::int64_t>(sdlcontext.framebufferWidth),
+            telemetry::RendererTelemetryTags{ backendType, windowId, "width" });
+        telemetry::emit_gauge(
+            "renderer.framebuffer.size",
+            static_cast<std::int64_t>(sdlcontext.framebufferHeight),
+            telemetry::RendererTelemetryTags{ backendType, windowId, "height" });
+
         SDL_SetRenderDrawColor(sdl_renderer.renderer, 124, 0, 255, 255);
         SDL_RenderClear(sdl_renderer.renderer);
+
+        {
+            std::size_t depth = 0;
+            {
+                std::scoped_lock lock(queue.get_mutex());
+                depth = queue.get_queue().size();
+            }
+            telemetry::emit_gauge(
+                "renderer.command_queue.depth",
+                static_cast<std::int64_t>(depth),
+                telemetry::RendererTelemetryTags{ backendType, windowId });
+        }
 
         queue.drain();
 
         SDL_RenderPresent(sdl_renderer.renderer);
+        const auto frameEnd = std::chrono::steady_clock::now();
+        const auto frameMs = std::chrono::duration<double, std::milli>(frameEnd - frameStart).count();
+        telemetry::emit_histogram_ms(
+            "renderer.frame.time_ms",
+            frameMs,
+            telemetry::RendererTelemetryTags{ backendType, windowId });
         return true;
     }
 
@@ -408,4 +444,3 @@ export namespace almondnamespace::sdlcontext
 #endif
 
 }
-
