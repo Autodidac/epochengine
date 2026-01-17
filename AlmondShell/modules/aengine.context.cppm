@@ -86,9 +86,12 @@ import acontext.opengl.context;
 #endif
 #if defined(ALMOND_USING_SDL)
 import acontext.sdl.context;
+import acontext.sdl.textures;
 #endif
 #if defined(ALMOND_USING_RAYLIB)
 import acontext.raylib.context;
+import acontext.raylib.renderer;
+import acontext.raylib.state;
 #endif
 #if defined(ALMOND_USING_SOFTWARE_RENDERER)
 import acontext.softrenderer.context;
@@ -281,6 +284,72 @@ namespace
         return almondnamespace::sfmlcontext::sfml_process(*ctx, queue);
     }
 #endif
+
+#if defined(ALMOND_USING_SDL)
+    void sdl_initialize_adapter()
+    {
+        auto ctx = almondnamespace::core::MultiContextManager::GetCurrent();
+        if (!ctx) return;
+
+        HWND parent = ctx->get_hwnd();
+        if (!parent && ctx->windowData) parent = ctx->windowData->hwnd;
+
+        try {
+            (void)almondnamespace::sdlcontext::sdl_initialize(
+                ctx,
+                parent,
+                static_cast<int>((std::max)(1, ctx->width)),
+                static_cast<int>((std::max)(1, ctx->height)),
+                ctx->onResize,
+                ctx->backendName
+            );
+        }
+        catch (const std::exception& e) {
+            std::cerr << "[SDL] init exception: " << e.what() << "\n";
+        }
+        catch (...) {
+            std::cerr << "[SDL] init unknown exception\n";
+        }
+    }
+
+    void sdl_cleanup_adapter()
+    {
+        auto ctx = almondnamespace::core::MultiContextManager::GetCurrent();
+        if (!ctx) return;
+
+        try {
+            auto copy = ctx;
+            almondnamespace::sdlcontext::sdl_cleanup(copy);
+        }
+        catch (const std::exception& e) {
+            std::cerr << "[SDL] cleanup exception: " << e.what() << "\n";
+        }
+        catch (...) {
+            std::cerr << "[SDL] cleanup unknown exception\n";
+        }
+    }
+
+    bool sdl_process_adapter(std::shared_ptr<almondnamespace::core::Context> ctx,
+        almondnamespace::core::CommandQueue& queue)
+    {
+        if (!ctx) return false;
+        const bool running = almondnamespace::sdlcontext::sdl_process(ctx, queue);
+        queue.drain();
+        return running;
+    }
+#endif
+
+#if defined(ALMOND_USING_RAYLIB)
+    bool raylib_process_adapter(std::shared_ptr<almondnamespace::core::Context> ctx,
+        almondnamespace::core::CommandQueue& queue)
+    {
+        if (!ctx) return false;
+        almondnamespace::raylibcontext::raylib_process();
+        almondnamespace::atlasmanager::process_pending_uploads(almondnamespace::core::ContextType::RayLib);
+        queue.drain();
+        return almondnamespace::raylibstate::s_raylibstate.running;
+    }
+#endif
 } // anonymous namespace
 
 namespace almondnamespace::core
@@ -423,6 +492,110 @@ namespace almondnamespace::core
                 };
 
             AddContextForBackend(ContextType::OpenGL, std::move(ctx));
+        }
+#endif
+
+#if defined(ALMOND_USING_SDL)
+        {
+            auto ctx = std::make_shared<Context>();
+            ctx->type = ContextType::SDL;
+            ctx->backendName = "SDL";
+
+            ctx->initialize = sdl_initialize_adapter;
+            ctx->cleanup = sdl_cleanup_adapter;
+            ctx->process = sdl_process_adapter;
+            ctx->clear = almondnamespace::sdlcontext::sdl_clear;
+            ctx->present = almondnamespace::sdlcontext::sdl_present;
+            ctx->get_width = almondnamespace::sdlcontext::sdl_get_width;
+            ctx->get_height = almondnamespace::sdlcontext::sdl_get_height;
+
+            ctx->is_key_held = [](input::Key k) { return input::is_key_held(k); };
+            ctx->is_key_down = [](input::Key k) { return input::is_key_down(k); };
+            ctx->get_mouse_position = [](int& x, int& y) {
+                x = input::mouseX.load(std::memory_order_relaxed);
+                y = input::mouseY.load(std::memory_order_relaxed);
+                };
+            ctx->is_mouse_button_held = [](input::MouseButton b) { return input::is_mouse_button_held(b); };
+            ctx->is_mouse_button_down = [](input::MouseButton b) { return input::is_mouse_button_down(b); };
+
+            ctx->draw_sprite = sdltextures::draw_sprite;
+            ctx->add_texture = &add_texture_default;
+            ctx->add_atlas = +[](const TextureAtlas& a) {
+                return add_atlas_default(a, ContextType::SDL);
+                };
+
+            AddContextForBackend(ContextType::SDL, std::move(ctx));
+        }
+#endif
+
+#if defined(ALMOND_USING_RAYLIB)
+        {
+            auto ctx = std::make_shared<Context>();
+            ctx->type = ContextType::RayLib;
+            ctx->backendName = "RayLib";
+
+            ctx->initialize = []() {
+                auto current = almondnamespace::core::MultiContextManager::GetCurrent();
+                if (!current) return;
+
+                HWND parent = current->get_hwnd();
+                if (!parent && current->windowData) parent = current->windowData->hwnd;
+
+                try {
+                    (void)almondnamespace::raylibcontext::raylib_initialize(
+                        current,
+                        parent,
+                        static_cast<unsigned>((std::max)(1, current->width)),
+                        static_cast<unsigned>((std::max)(1, current->height)),
+                        current->onResize,
+                        current->backendName
+                    );
+                }
+                catch (const std::exception& e) {
+                    std::cerr << "[RayLib] init exception: " << e.what() << "\n";
+                }
+                catch (...) {
+                    std::cerr << "[RayLib] init unknown exception\n";
+                }
+                };
+            ctx->cleanup = []() {
+                auto current = almondnamespace::core::MultiContextManager::GetCurrent();
+                if (!current) return;
+
+                try {
+                    almondnamespace::raylibcontext::raylib_cleanup(current);
+                }
+                catch (const std::exception& e) {
+                    std::cerr << "[RayLib] cleanup exception: " << e.what() << "\n";
+                }
+                catch (...) {
+                    std::cerr << "[RayLib] cleanup unknown exception\n";
+                }
+                };
+            ctx->process = raylib_process_adapter;
+            ctx->clear = []() {
+                almondnamespace::raylibcontext::raylib_clear(0.0f, 0.0f, 0.0f, 1.0f);
+                };
+            ctx->present = almondnamespace::raylibcontext::raylib_present;
+            ctx->get_width = almondnamespace::raylibcontext::raylib_get_width;
+            ctx->get_height = almondnamespace::raylibcontext::raylib_get_height;
+
+            ctx->is_key_held = [](input::Key k) { return input::is_key_held(k); };
+            ctx->is_key_down = [](input::Key k) { return input::is_key_down(k); };
+            ctx->get_mouse_position = [](int& x, int& y) {
+                x = input::mouseX.load(std::memory_order_relaxed);
+                y = input::mouseY.load(std::memory_order_relaxed);
+                };
+            ctx->is_mouse_button_held = [](input::MouseButton b) { return input::is_mouse_button_held(b); };
+            ctx->is_mouse_button_down = [](input::MouseButton b) { return input::is_mouse_button_down(b); };
+
+            ctx->draw_sprite = almondnamespace::raylibcontext::draw_sprite;
+            ctx->add_texture = &add_texture_default;
+            ctx->add_atlas = +[](const TextureAtlas& a) {
+                return add_atlas_default(a, ContextType::RayLib);
+                };
+
+            AddContextForBackend(ContextType::RayLib, std::move(ctx));
         }
 #endif
 
