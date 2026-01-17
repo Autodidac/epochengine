@@ -41,7 +41,9 @@ performed for OpenGL and Raylib immediately after the first resize.
 
 1. **Automated launch harness** – extend the existing smoke harness to accept a
    `--capture` flag. When set, spawn the renderer with deterministic window sizes
-   (1280×720 baseline) before scripted resizes and dock actions.
+   (1280×720 baseline) before scripted resizes and dock actions. The harness
+   entry point lives at `AlmondShell/src modules/renderer_smoke_harness.cppm` and builds
+   as the `almondshell_renderer_smoke` target.
 2. **Frame capture** –
    - OpenGL: trigger RenderDoc capture on the second frame after each resize.
    - SDL: capture via OBS recording of window region; use SDL renderer stats for
@@ -114,7 +116,21 @@ A backend smoke run passes when:
 Failures should capture offending telemetry payloads and link to their
 associated logs/captures for triage.
 
-## 5. Future automation hooks
+## 5. CLI harness usage
+
+Build the harness target alongside the engine and run it from the AlmondShell
+root (binary path can be overridden as needed):
+
+```
+./almondshell_renderer_smoke --binary ./Bin/GCC-Debug/cmakeapp1/cmakeapp1 --capture
+```
+
+The harness iterates the backend scenes defined above, launches each with
+deterministic sizing (`--width 1280 --height 720`), and scripts the resize/dock
+timeline. Logs, manifests, and capture notes are written under
+`Logs/<backend>/` with timestamped filenames for traceability.
+
+## 6. Future automation hooks
 
 - Expose a `RendererTelemetrySink` interface so CI smoke jobs can upload metrics
   to the dashboard without running the full editor tooling.

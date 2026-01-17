@@ -40,6 +40,10 @@ endif()
 
 add_executable(almondshell ${ALMONDSHELL_SOURCES})
 
+add_executable(almondshell_renderer_smoke
+    "src modules/renderer_smoke_harness.cppm"
+)
+
 set(ALMONDSHELL_MODULE_DIR ${CMAKE_CURRENT_SOURCE_DIR}/modules)
 file(GLOB ALMONDSHELL_MODULE_FILES ${ALMONDSHELL_MODULE_DIR}/*.ixx)
 list(SORT ALMONDSHELL_MODULE_FILES)
@@ -63,6 +67,13 @@ target_include_directories(almondshell PRIVATE
     ${CMAKE_CURRENT_SOURCE_DIR}/src/stb
 )
 
+target_include_directories(almondshell_renderer_smoke PRIVATE
+    ${CMAKE_CURRENT_SOURCE_DIR}/modules
+    ${CMAKE_CURRENT_SOURCE_DIR}/src
+    "${CMAKE_CURRENT_SOURCE_DIR}/src modules"
+    ${CMAKE_CURRENT_SOURCE_DIR}/src/stb
+)
+
 if(CMAKE_CXX_COMPILER_ID STREQUAL "MSVC")
     # Modern MSVC releases provide standard module support without the
     # deprecated /experimental:module switch; keep the latest standard
@@ -76,6 +87,14 @@ elseif(CMAKE_CXX_COMPILER_ID MATCHES "Clang")
     # Clang builds rely on the Modules TS flag to keep BMI generation
     # consistent across CMake presets and helper scripts.
     target_compile_options(almondshell PRIVATE -fmodules-ts)
+endif()
+
+if(CMAKE_CXX_COMPILER_ID STREQUAL "MSVC")
+    target_compile_options(almondshell_renderer_smoke PRIVATE /std:c++latest)
+elseif(CMAKE_CXX_COMPILER_ID STREQUAL "GNU")
+    target_compile_options(almondshell_renderer_smoke PRIVATE -fmodules-ts)
+elseif(CMAKE_CXX_COMPILER_ID MATCHES "Clang")
+    target_compile_options(almondshell_renderer_smoke PRIVATE -fmodules-ts)
 endif()
 
 option(ALMOND_ENABLE_RAYLIB "Enable the Raylib backend" ON)
