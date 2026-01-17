@@ -1,6 +1,6 @@
 # AlmondShell Engine Configuration Flags
 
-This guide summarises the build-time switches exposed from `include/aengineconfig.hpp` and clarifies which combinations are currently supported. Use it as a quick reference before enabling or disabling backends in multi-context builds.
+This guide summarises the build-time switches exposed from `modules/aengine.ixx` and clarifies which combinations are currently supported. Use it as a quick reference before enabling or disabling backends in multi-context builds.
 
 ## Entry-Point Controls
 
