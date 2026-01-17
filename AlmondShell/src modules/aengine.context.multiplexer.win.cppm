@@ -39,6 +39,7 @@ module;
 
 #   include <algorithm>
 #   include <chrono>
+#   include <cstdint>
 #   include <functional>
 #   include <iostream>
 #   include <memory>
@@ -66,6 +67,7 @@ import aengine.context.commandqueue;
 import aengine.context.multiplexer;
 import aengine.context.type;
 import aengine.context.window;
+import aengine.telemetry;
 
 #if defined(ALMOND_USING_OPENGL)
 import acontext.opengl.context;
@@ -846,6 +848,8 @@ namespace almondnamespace::core
         backend::ResolveClientSize(hwnd, clampedWidth, clampedHeight);
 
         std::function<void(int, int)> resizeCallback;
+        core::ContextType contextType = core::ContextType::None;
+        std::uintptr_t windowId = 0;
         WindowData* window = nullptr;
 
         {
@@ -862,20 +866,42 @@ namespace almondnamespace::core
             {
                 window->context->width = clampedWidth;
                 window->context->height = clampedHeight;
+                contextType = window->context->type;
                 if (window->context->onResize) resizeCallback = window->context->onResize;
+            }
+            else
+            {
+                contextType = window->type;
             }
 
             if (!resizeCallback && window->onResize) resizeCallback = window->onResize;
+
+            if (window->hwnd)
+                windowId = reinterpret_cast<std::uintptr_t>(window->hwnd);
         }
 
-        if (resizeCallback && window)
+        if (window)
         {
             window->commandQueue.enqueue([
                 cb = std::move(resizeCallback),
+                contextType,
+                windowId,
                 w = clampedWidth,
                 h = clampedHeight
             ]() mutable
                 {
+                    telemetry::emit_counter(
+                        "renderer.resize.count",
+                        1,
+                        telemetry::RendererTelemetryTags{ contextType, windowId });
+                    telemetry::emit_gauge(
+                        "renderer.resize.latest_dimensions",
+                        w,
+                        telemetry::RendererTelemetryTags{ contextType, windowId, "width" });
+                    telemetry::emit_gauge(
+                        "renderer.resize.latest_dimensions",
+                        h,
+                        telemetry::RendererTelemetryTags{ contextType, windowId, "height" });
                     if (cb) cb(w, h);
                 });
         }
@@ -1034,6 +1060,21 @@ namespace almondnamespace::core
         while (running.load(std::memory_order_acquire) && win.running)
         {
             bool keepRunning = true;
+
+            {
+                std::size_t depth = 0;
+                {
+                    std::scoped_lock lock(win.commandQueue.get_mutex());
+                    depth = win.commandQueue.get_queue().size();
+                }
+                telemetry::emit_gauge(
+                    "renderer.command_queue.depth",
+                    static_cast<std::int64_t>(depth),
+                    telemetry::RendererTelemetryTags{
+                        ctx->type,
+                        reinterpret_cast<std::uintptr_t>(win.hwnd)
+                    });
+            }
 
             if (ctx->process) keepRunning = ctx->process_safe(ctx, win.commandQueue);
             else win.commandQueue.drain();

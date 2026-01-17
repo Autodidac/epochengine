@@ -42,12 +42,15 @@ import <cmath>;
 import <cstdint>;
 import <functional>;
 import <memory>;
+import <mutex>;
 import <string>;
 import <string_view>;
 import <utility>;
 
 import aengine.core.context;
 import aengine.core.commandline;
+import aengine.core.time;
+import aengine.telemetry;
 
 import acontext.raylib.state;
 import acontext.raylib.textures;
@@ -172,6 +175,26 @@ namespace almondnamespace::raylibcontext
             if (st.onResize)
                 st.onResize(w, h);
         }
+
+        const std::uintptr_t windowId = reinterpret_cast<std::uintptr_t>(st.hwnd);
+        const int fbW = ::GetRenderWidth();
+        const int fbH = ::GetRenderHeight();
+        telemetry::emit_gauge(
+            "renderer.framebuffer.size",
+            static_cast<std::int64_t>(fbW),
+            telemetry::RendererTelemetryTags{ core::ContextType::RayLib, windowId, "framebuffer_width" });
+        telemetry::emit_gauge(
+            "renderer.framebuffer.size",
+            static_cast<std::int64_t>(fbH),
+            telemetry::RendererTelemetryTags{ core::ContextType::RayLib, windowId, "framebuffer_height" });
+        telemetry::emit_gauge(
+            "renderer.framebuffer.size",
+            static_cast<std::int64_t>(st.width),
+            telemetry::RendererTelemetryTags{ core::ContextType::RayLib, windowId, "logical_width" });
+        telemetry::emit_gauge(
+            "renderer.framebuffer.size",
+            static_cast<std::int64_t>(st.height),
+            telemetry::RendererTelemetryTags{ core::ContextType::RayLib, windowId, "logical_height" });
     }
 
     export inline void raylib_clear(float r, float g, float b, float a)
@@ -181,6 +204,7 @@ namespace almondnamespace::raylibcontext
         if (!st.running)
             return;
 
+        almondnamespace::timing::reset(st.frameTimer);
         ::BeginDrawing();
         ::ClearBackground(::Color{
             static_cast<unsigned char>(std::clamp(r, 0.0f, 1.0f) * 255.0f),
@@ -196,7 +220,29 @@ namespace almondnamespace::raylibcontext
         if (!st.running)
             return;
 
+        auto ctx = core::get_current_render_context();
+        const std::uintptr_t windowId = ctx && ctx->windowData
+            ? reinterpret_cast<std::uintptr_t>(ctx->windowData->hwnd)
+            : reinterpret_cast<std::uintptr_t>(st.hwnd);
+        if (ctx && ctx->windowData)
+        {
+            std::size_t depth = 0;
+            {
+                std::scoped_lock lock(ctx->windowData->commandQueue.get_mutex());
+                depth = ctx->windowData->commandQueue.get_queue().size();
+            }
+            telemetry::emit_gauge(
+                "renderer.command_queue.depth",
+                static_cast<std::int64_t>(depth),
+                telemetry::RendererTelemetryTags{ ctx->type, windowId });
+        }
+
         ::EndDrawing();
+        const double frameMs = almondnamespace::timing::realElapsed(st.frameTimer) * 1000.0;
+        telemetry::emit_histogram_ms(
+            "renderer.frame.time_ms",
+            frameMs,
+            telemetry::RendererTelemetryTags{ core::ContextType::RayLib, windowId });
     }
 
     export inline void raylib_cleanup(std::shared_ptr<core::Context> ctx)

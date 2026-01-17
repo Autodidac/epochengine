@@ -51,6 +51,7 @@ import <cstdint>;
 import <functional>;
 import <iostream>;
 import <memory>;
+import <mutex>;
 import <utility>;
 import <vector>;
 
@@ -61,6 +62,7 @@ import acontext.softrenderer.state;      // s_softrendererstate, SoftRendState
 import acontext.softrenderer.textures;   // Texture, TexturePtr (as in your project)
 import acontext.softrenderer.renderer;   // SoftwareRenderer (as in your project)
 import aatlas.manager;                  // atlasmanager::atlas_vector (as in your header)
+import aengine.telemetry;
 
 namespace almondnamespace::anativecontext
 {
@@ -357,15 +359,43 @@ export namespace almondnamespace::anativecontext
     bool softrenderer_process(core::Context& ctx, core::CommandQueue& queue)
     {
         auto& sr = s_softrendererstate;
+        const auto frameStart = std::chrono::steady_clock::now();
+        const std::uintptr_t windowId = ctx.windowData
+            ? reinterpret_cast<std::uintptr_t>(ctx.windowData->hwnd)
+            : 0;
 
         // Clear
         std::fill(sr.framebuffer.begin(), sr.framebuffer.end(), 0xFF000000u);
+
+        telemetry::emit_gauge(
+            "renderer.framebuffer.size",
+            static_cast<std::int64_t>(sr.width),
+            telemetry::RendererTelemetryTags{ ctx.type, windowId, "width" });
+        telemetry::emit_gauge(
+            "renderer.framebuffer.size",
+            static_cast<std::int64_t>(sr.height),
+            telemetry::RendererTelemetryTags{ ctx.type, windowId, "height" });
+        telemetry::emit_gauge(
+            "renderer.framebuffer.size",
+            static_cast<std::int64_t>(sr.framebuffer.size()),
+            telemetry::RendererTelemetryTags{ ctx.type, windowId, "buffer_length" });
 
         // debug fullscreen atlas blit
         // Optional draw (disabled in your header)
         //softrenderer_draw_quad(sr);
 
         // Drain commands
+        {
+            std::size_t depth = 0;
+            {
+                std::scoped_lock lock(queue.get_mutex());
+                depth = queue.get_queue().size();
+            }
+            telemetry::emit_gauge(
+                "renderer.command_queue.depth",
+                static_cast<std::int64_t>(depth),
+                telemetry::RendererTelemetryTags{ ctx.type, windowId });
+        }
         queue.drain();
 
 #if defined(_WIN32)
@@ -396,6 +426,12 @@ export namespace almondnamespace::anativecontext
         }
 #endif
 
+        const auto frameEnd = std::chrono::steady_clock::now();
+        const auto frameMs = std::chrono::duration<double, std::milli>(frameEnd - frameStart).count();
+        telemetry::emit_histogram_ms(
+            "renderer.frame.time_ms",
+            frameMs,
+            telemetry::RendererTelemetryTags{ ctx.type, windowId });
         return true;
     }
 

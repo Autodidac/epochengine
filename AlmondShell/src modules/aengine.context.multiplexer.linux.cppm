@@ -65,6 +65,7 @@ import aengine.context.window;        // WindowData
 import aengine.context.type;          // ContextType
 import aengine.core.commandline;
 import aengine.cli;
+import aengine.telemetry;
 
 // ---- helpers ----
 import autility.string.converter;     // almondnamespace::text::narrow_utf8
@@ -907,6 +908,8 @@ namespace almondnamespace::core
         const int clampedHeight = (std::max)(1, height);
 
         std::function<void(int, int)> resizeCallback;
+        core::ContextType contextType = core::ContextType::None;
+        std::uintptr_t windowId = 0;
         WindowData* window = nullptr;
 
         {
@@ -925,20 +928,42 @@ namespace almondnamespace::core
             {
                 window->context->width = clampedWidth;
                 window->context->height = clampedHeight;
+                contextType = window->context->type;
 
                 if (window->context->onResize)
                     resizeCallback = window->context->onResize;
             }
+            else
+            {
+                contextType = window->type;
+            }
 
             if (!resizeCallback && window->onResize)
                 resizeCallback = window->onResize;
+
+            if (window->hwnd)
+                windowId = reinterpret_cast<std::uintptr_t>(window->hwnd);
         }
 
-        if (resizeCallback && window)
+        if (window)
         {
             window->commandQueue.enqueue([cb = std::move(resizeCallback),
+                contextType,
+                windowId,
                 clampedWidth, clampedHeight]() mutable
                 {
+                    telemetry::emit_counter(
+                        "renderer.resize.count",
+                        1,
+                        telemetry::RendererTelemetryTags{ contextType, windowId });
+                    telemetry::emit_gauge(
+                        "renderer.resize.latest_dimensions",
+                        clampedWidth,
+                        telemetry::RendererTelemetryTags{ contextType, windowId, "width" });
+                    telemetry::emit_gauge(
+                        "renderer.resize.latest_dimensions",
+                        clampedHeight,
+                        telemetry::RendererTelemetryTags{ contextType, windowId, "height" });
                     if (cb) cb(clampedWidth, clampedHeight);
                 });
         }
@@ -1104,6 +1129,21 @@ namespace almondnamespace::core
         while (running.load(std::memory_order_acquire) && win.running)
         {
             bool keepRunning = true;
+
+            {
+                std::size_t depth = 0;
+                {
+                    std::scoped_lock lock(win.commandQueue.get_mutex());
+                    depth = win.commandQueue.get_queue().size();
+                }
+                telemetry::emit_gauge(
+                    "renderer.command_queue.depth",
+                    static_cast<std::int64_t>(depth),
+                    telemetry::RendererTelemetryTags{
+                        ctx->type,
+                        reinterpret_cast<std::uintptr_t>(win.hwnd)
+                    });
+            }
 
             if (ctx->process)
                 keepRunning = ctx->process_safe(ctx, win.commandQueue);
