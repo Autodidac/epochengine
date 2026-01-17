@@ -1,119 +1,119 @@
 module;
-//#include "aplatform.hpp"
-//#include "aengineconfig.hpp"
-#include "aengine.config.hpp" 		// for ALMOND_USING_SDL
+
+#include "aengine.config.hpp"
 
 #if defined(ALMOND_USING_RAYLIB)
-#include <raylib.h>
+#if defined(_WIN32)
+#include <windows.h>
+#endif
 #endif
 
 export module acontext.raylib.state;
 
 import <array>;
 import <bitset>;
-import <functional>;
 import <cstdint>;
-
+import <functional>;
 
 import aengine.platform;
-//import aengine.config;
-
 import aengine.core.time;
-import aengine.core.commandline;
 import aengine.cli;
 
 #if defined(ALMOND_USING_RAYLIB)
 
-namespace almondnamespace::raylibcontext
+export namespace almondnamespace::raylibstate
 {
-   struct GuiFitViewport
-   {
-       int vpX = 0, vpY = 0, vpW = 1, vpH = 1;
-       int fbW = 1, fbH = 1;
-       int refW = 1920, refH = 1080;
-       float scale = 1.0f;
-   };
+    struct GuiFitViewport
+    {
+        int vpX = 0, vpY = 0, vpW = 1, vpH = 1;
+        int fbW = 1, fbH = 1;
+        int refW = 1920, refH = 1080;
+        float scale = 1.0f;
+    };
 
-   struct RaylibState
-   {
+    export struct RaylibState
+    {
 #if defined(_WIN32)
-       HWND hwnd = nullptr;
-       HDC hdc = nullptr;
-       HGLRC hglrc = nullptr;
-
-       HGLRC glContext{}; // Store GL context created
-       bool ownsDC{ false };
-     //  WNDPROC oldWndProc = nullptr;
-      // WNDPROC getOldWndProc() const noexcept { return oldWndProc; }
-       HWND parent = nullptr;
+        HWND  hwnd = nullptr;
+        HDC   hdc = nullptr;
+        HGLRC hglrc = nullptr;
+        HWND  parent = nullptr;
 #else
-       void* hwnd = nullptr;
-       void* hdc = nullptr;
-       void* hglrc = nullptr;
-
-       void* glContext{}; // Store GL context created
-       bool ownsDC{ false };
-       void* parent = nullptr;
+        void* hwnd = nullptr;
+        void* hdc = nullptr;
+        void* hglrc = nullptr;
+        void* parent = nullptr;
 #endif
 
-       std::function<void(int, int)> onResize{};
-       std::function<void(int, int)> clientOnResize{};
-       bool dispatchingResize{ false };
-       bool hasPendingResize{ false };
-       unsigned int pendingWidth{ 0 };
-       unsigned int pendingHeight{ 0 };
-       bool pendingUpdateWindow{ false };
-       bool pendingNotifyClient{ false };
-       bool pendingSkipNativeApply{ false };
-       unsigned int width{ 400 };
-       unsigned int height{ 300 };
-       unsigned int logicalWidth{ 400 };
-       unsigned int logicalHeight{ 300 };
-       unsigned int virtualWidth{ 400 };
-       unsigned int virtualHeight{ 300 };
-       unsigned int designWidth{ 0 };
-       unsigned int designHeight{ 0 };
-       bool running{ false };
-       bool cleanupIssued{ false };
+        void* glContext = nullptr;
+        bool  ownsDC = false;
 
-       bool shouldClose = false; // Set to true when the window should close
-       // Raylib manages window internally, but track width & height for consistency
-      // int screenWidth = 800;
-       //int screenHeight = 600;
-       int screenWidth = almondnamespace::core::cli::window_width;
-       int screenHeight = almondnamespace::core::cli::window_height;
-       GuiFitViewport lastViewport{};
-       // Mouse state (if you want to hook raw input logic)
-       struct MouseState {
-           std::array<bool, 5> down{};     // 5 mouse buttons
-           std::array<bool, 5> pressed{};
-           std::array<bool, 5> prevDown{};
-           int lastX = 0, lastY = 0;
-       } mouse;
+        std::function<void(int, int)> onResize{};
+        std::function<void(int, int)> clientOnResize{};
 
-       // Keyboard state (Raylib already has IsKeyDown etc — wrap if you want consistent logic)
-       struct KeyboardState {
-           std::bitset<512> down;      // Raylib keycodes go above 256
-           std::bitset<512> pressed;
-           std::bitset<512> prevDown;
-       } keyboard;
+        bool dispatchingResize = false;
+        bool hasPendingResize = false;
+        unsigned int pendingWidth = 0;
+        unsigned int pendingHeight = 0;
 
-       // Timing — reuse your robusttime
-       timing::Timer pollTimer = timing::createTimer(1.0);
-       timing::Timer fpsTimer = timing::createTimer(1.0);
-       int frameCount = 0;
+        bool pendingUpdateWindow = false;
+        bool pendingNotifyClient = false;
+        bool pendingSkipNativeApply = false;
 
-       // If you want shaders — Raylib supports them.
-     //  Shader shader = { 0 };
-       int uTransformLoc = -1;
-       int uUVRegionLoc = -1;
-       int uSamplerLoc = -1;
+        unsigned int width = 400;
+        unsigned int height = 300;
 
-       // If you want VAOs/VBOs, stick to OpenGL path — Raylib abstracts most of that.
-   };
+        unsigned int logicalWidth = 400;
+        unsigned int logicalHeight = 300;
 
-   // Inline global instance — same pattern.
-   inline RaylibState s_raylibstate{};
+        unsigned int virtualWidth = 400;
+        unsigned int virtualHeight = 300;
+
+        unsigned int designWidth = 0;
+        unsigned int designHeight = 0;
+
+        bool running = false;
+        bool cleanupIssued = false;
+        bool shouldClose = false;
+
+        int screenWidth = almondnamespace::core::cli::window_width;
+        int screenHeight = almondnamespace::core::cli::window_height;
+
+        GuiFitViewport lastViewport{};
+
+        struct MouseState
+        {
+            std::array<bool, 5> down{};
+            std::array<bool, 5> pressed{};
+            std::array<bool, 5> prevDown{};
+            int lastX = 0;
+            int lastY = 0;
+        } mouse{};
+
+        struct KeyboardState
+        {
+            std::bitset<512> down{};
+            std::bitset<512> pressed{};
+            std::bitset<512> prevDown{};
+        } keyboard{};
+
+        timing::Timer pollTimer = timing::createTimer(1.0);
+        timing::Timer fpsTimer = timing::createTimer(1.0);
+        int frameCount = 0;
+
+        int uTransformLoc = -1;
+        int uUVRegionLoc = -1;
+        int uSamplerLoc = -1;
+    };
+
+    // One global per module instance (your existing pattern).
+    inline RaylibState s_raylibstate{};
+
+    // Exported getter used by renderer. Defined inline so it actually exists.
+    export inline GuiFitViewport get_last_viewport_fit() noexcept
+    {
+        return s_raylibstate.lastViewport;
+    }
 }
 
-#endif // ALMON
+#endif // ALMOND_USING_RAYLIB

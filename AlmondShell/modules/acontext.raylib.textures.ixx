@@ -21,49 +21,42 @@
  *   See LICENSE file for full terms.                         *
  *                                                            *
  **************************************************************/
-
 module;
-//#include "aplatform.hpp"
-//#include "aengineconfig.hpp"
-//#include "atypes.hpp"
+
+#include "aengine.config.hpp"
 
 #if defined(ALMOND_USING_RAYLIB)
 #include <raylib.h>
 #endif
 
-#include "aengine.config.hpp" 		// for ALMOND_USING_SDL
-
 export module acontext.raylib.textures;
 
 import <atomic>;
+import <cstdint>;
 import <filesystem>;
 import <format>;
-import <string>;
-import <string_view>;
-import <vector>;
-import <unordered_map>;
+import <fstream>;
 import <iostream>;
 import <mutex>;
-import <cstdint>;
+import <string>;
+import <string_view>;
+import <unordered_map>;
+import <utility>;
+import <vector>;
 
-import aengine.platform;
-//import aengine.config;
-import aengine.core.types;
-
-
-//export import acontext.raylib.context;
-import acontext.raylib.state;
-import aatlas.manager;
-import aatlas.texture;
-import aimage.loader;
-import atexture;
-//import aengine.core.context;
-import aengine.context.multiplexer;
+import aengine.core.context;   // core::get_current_render_context()
+import aatlas.manager;         // atlasmanager::ensure_uploaded()
+import aatlas.texture;         // TextureAtlas, AtlasRegion
+import aimage.loader;          // ImageData
+import atexture;               // Texture (CPU texture struct)
 
 #if defined(ALMOND_USING_RAYLIB)
-namespace almondnamespace::raylibtextures
+
+export namespace almondnamespace::raylibtextures
 {
-    using Handle = uint32_t;
+    using Handle = std::uint32_t;
+    using u32 = std::uint32_t;
+    using u64 = std::uint64_t;
 
     struct AtlasGPU
     {
@@ -73,120 +66,157 @@ namespace almondnamespace::raylibtextures
         u32 height = 0;
     };
 
-    struct TextureAtlasPtrHash {
-        size_t operator()(const TextureAtlas* atlas) const noexcept {
+    struct TextureAtlasPtrHash
+    {
+        size_t operator()(const TextureAtlas* atlas) const noexcept
+        {
             return std::hash<const TextureAtlas*>{}(atlas);
         }
     };
 
-    struct TextureAtlasPtrEqual {
-        bool operator()(const TextureAtlas* lhs, const TextureAtlas* rhs) const noexcept {
+    struct TextureAtlasPtrEqual
+    {
+        bool operator()(const TextureAtlas* lhs, const TextureAtlas* rhs) const noexcept
+        {
             return lhs == rhs;
         }
     };
 
-    inline std::unordered_map<const TextureAtlas*, AtlasGPU, TextureAtlasPtrHash, TextureAtlasPtrEqual> raylib_gpu_atlases;
-
-    
-    namespace raylibcontext { struct RaylibState; }
-    struct BackendData {
-        std::unordered_map<const TextureAtlas*, AtlasGPU,
-            TextureAtlasPtrHash, TextureAtlasPtrEqual> gpu_atlases;
+    struct BackendData
+    {
+        std::unordered_map<const TextureAtlas*, AtlasGPU, TextureAtlasPtrHash, TextureAtlasPtrEqual> gpu_atlases;
         std::mutex gpuMutex;
-        almondnamespace::raylibcontext::RaylibState rlState{};
     };
 
-    inline BackendData& get_raylib_backend() {
-        BackendData* data = nullptr;
-        {
-            std::unique_lock lock(almondnamespace::core::g_backendsMutex);
-            auto& backend = almondnamespace::core::g_backends[almondnamespace::core::ContextType::RayLib];
-            if (!backend.data) {
-                backend.data = {
-                    new BackendData(),
-                    [](void* p) { delete static_cast<BackendData*>(p); }
-                };
-            }
-            data = static_cast<BackendData*>(backend.data.get());
-        }
-        return *data;
+    // ---------------------------------------------------------------------
+    // Per-render-context backend data
+    // ---------------------------------------------------------------------
+    inline BackendData& get_raylib_backend()
+    {
+        // Must be called on a render thread (MultiContextManager sets it).
+        auto ctx = almondnamespace::core::get_current_render_context();
+        if (!ctx)
+            throw std::runtime_error("[RaylibTextures] No current render context");
+
+        // Lazily allocate backend data per-context.
+        // NOTE: ownership is manual; see shutdown_current_context_backend().
+        if (!ctx->native_drawable)
+            ctx->native_drawable = new BackendData();
+
+        return *static_cast<BackendData*>(ctx->native_drawable);
     }
 
-    inline std::atomic_uint8_t s_generation{ 1 };
+    // Call this from your raylib backend cleanup path (once per context/thread).
+    export inline void shutdown_current_context_backend() noexcept
+    {
+        try
+        {
+            auto& backend = get_raylib_backend();
+            std::scoped_lock lock(backend.gpuMutex);
+            for (auto& [_, gpu] : backend.gpu_atlases)
+            {
+                if (gpu.texture.id != 0)
+                    UnloadTexture(gpu.texture);
+            }
+            backend.gpu_atlases.clear();
+
+            // also delete the per-context allocation
+            if (auto ctx = almondnamespace::core::get_current_render_context(); ctx && ctx->native_drawable)
+            {
+                delete static_cast<BackendData*>(ctx->native_drawable);
+                ctx->native_drawable = nullptr;
+            }
+        }
+        catch (...) {}
+    }
+
+    // ---------------------------------------------------------------------
+    // Debug dumping
+    // ---------------------------------------------------------------------
     inline std::atomic_uint32_t s_dumpSerial{ 0 };
 
-    [[nodiscard]]
-    inline Handle make_handle(int atlasIdx, int localIdx) noexcept {
-        return (Handle(s_generation.load(std::memory_order_relaxed)) << 24)
-            | ((atlasIdx & 0xFFF) << 12)
-            | (localIdx & 0xFFF);
-    }
-
-    [[nodiscard]]
-    inline bool is_handle_live(Handle h) noexcept {
-        return uint8_t(h >> 24) == s_generation.load(std::memory_order_relaxed);
-    }
-
-    [[nodiscard]]
-    inline ImageData ensure_rgba(const ImageData& img) 
+    inline std::string make_dump_name(int atlasIdx, std::string_view tag)
     {
-        const size_t pixelCount = static_cast<size_t>(img.width) * img.height;
-        const size_t channels = img.pixels.size() / pixelCount;
+        std::filesystem::create_directories("atlas_dump");
+        return std::format("atlas_dump/{}_{}_{}.ppm",
+            tag,
+            atlasIdx,
+            s_dumpSerial.fetch_add(1, std::memory_order_relaxed));
+    }
 
-        if (channels == 4) return img;
+    inline void dump_atlas_rgb_ppm(const TextureAtlas& atlas, int atlasIdx)
+    {
+        const std::string filename = make_dump_name(atlasIdx, atlas.name);
+
+        std::ofstream out(filename, std::ios::binary);
+        if (!out)
+        {
+            std::cerr << "[Dump] Failed to open: " << filename << "\n";
+            return;
+        }
+
+        out << "P6\n" << atlas.width << " " << atlas.height << "\n255\n";
+
+        const auto& px = atlas.pixel_data; // RGBA
+        for (std::size_t i = 0; i + 2 < px.size(); i += 4)
+        {
+            out.put(static_cast<char>(px[i + 0]));
+            out.put(static_cast<char>(px[i + 1]));
+            out.put(static_cast<char>(px[i + 2]));
+        }
+
+        std::cerr << "[Dump] Wrote: " << filename << "\n";
+    }
+
+    // ---------------------------------------------------------------------
+    // Format conversion
+    // ---------------------------------------------------------------------
+    [[nodiscard]]
+    inline ImageData ensure_rgba(const ImageData& img)
+    {
+        const std::size_t pixelCount =
+            static_cast<std::size_t>(img.width) * static_cast<std::size_t>(img.height);
+
+        if (pixelCount == 0)
+            return img;
+
+        const std::size_t channels = img.pixels.size() / pixelCount;
+
+        if (channels == 4)
+            return img;
 
         if (channels != 3)
             throw std::runtime_error("ensure_rgba(): Unsupported channel count: " + std::to_string(channels));
 
-        std::vector<uint8_t> rgba(pixelCount * 4);
-        const uint8_t* src = img.pixels.data();
-        uint8_t* dst = rgba.data();
+        std::vector<std::uint8_t> rgba(pixelCount * 4);
+        const std::uint8_t* src = img.pixels.data();
 
-        for (size_t i = 0; i < pixelCount; ++i) {
-            dst[4 * i + 0] = src[3 * i + 0];
-            dst[4 * i + 1] = src[3 * i + 1];
-            dst[4 * i + 2] = src[3 * i + 2];
-            dst[4 * i + 3] = 255;
+        for (std::size_t i = 0; i < pixelCount; ++i)
+        {
+            rgba[4 * i + 0] = src[3 * i + 0];
+            rgba[4 * i + 1] = src[3 * i + 1];
+            rgba[4 * i + 2] = src[3 * i + 2];
+            rgba[4 * i + 3] = 255;
         }
 
         return { std::move(rgba), img.width, img.height, 4 };
     }
 
-    inline std::string make_dump_name(int atlasIdx, std::string_view tag) 
+    // ---------------------------------------------------------------------
+    // GPU upload (private helper; caller must hold backend.gpuMutex)
+    // ---------------------------------------------------------------------
+    inline void upload_atlas_to_gpu_locked(BackendData& backend, const TextureAtlas& atlas)
     {
-        std::filesystem::create_directories("atlas_dump");
-        return std::format("atlas_dump/{}_{}_{}.ppm", tag, atlasIdx, s_dumpSerial.fetch_add(1, std::memory_order_relaxed));
-    }
-
-    inline void dump_atlas(const TextureAtlas& atlas, int atlasIdx) 
-    {
-        std::string filename = make_dump_name(atlasIdx, atlas.name);
-        std::ofstream out(filename, std::ios::binary);
-        out << "P6\n" << atlas.width << " " << atlas.height << "\n255\n";
-        for (size_t i = 0; i < atlas.pixel_data.size(); i += 4) {
-            out.put(atlas.pixel_data[i]);
-            out.put(atlas.pixel_data[i + 1]);
-            out.put(atlas.pixel_data[i + 2]);
-        }
-        std::cerr << "[Dump] Wrote: " << filename << "\n";
-    }
-
-    inline void upload_atlas_to_gpu(const TextureAtlas& atlas) 
-    {
-        if (atlas.pixel_data.empty()) {
+        if (atlas.pixel_data.empty())
             const_cast<TextureAtlas&>(atlas).rebuild_pixels();
-        }
 
-        auto& gpu = raylib_gpu_atlases[&atlas];
+        AtlasGPU& gpu = backend.gpu_atlases[&atlas];
 
-        if (gpu.version == atlas.version && gpu.texture.id != 0) {
-            std::cerr << "[Raylib] SKIPPING upload for '" << atlas.name << "' version = " << atlas.version << "\n";
+        if (gpu.version == atlas.version && gpu.texture.id != 0)
             return;
-        }
 
-        if (gpu.texture.id != 0) {
+        if (gpu.texture.id != 0)
             UnloadTexture(gpu.texture);
-        }
 
         Image img{};
         img.data = const_cast<unsigned char*>(atlas.pixel_data.data());
@@ -197,59 +227,118 @@ namespace almondnamespace::raylibtextures
 
         gpu.texture = LoadTextureFromImage(img);
         gpu.version = atlas.version;
-        gpu.width = atlas.width;
-        gpu.height = atlas.height;
+        gpu.width = static_cast<u32>(atlas.width);
+        gpu.height = static_cast<u32>(atlas.height);
 
-        dump_atlas(atlas, atlas.index);
+        // Optional debug
+        dump_atlas_rgb_ppm(atlas, atlas.index);
 
-        std::cerr << "[Raylib] Uploaded atlas '" << atlas.name << "' (tex id " << gpu.texture.id << ")\n";
+        std::cerr << "[Raylib] Uploaded atlas '" << atlas.name
+            << "' (tex id " << gpu.texture.id
+            << ", version " << gpu.version << ")\n";
     }
 
-    inline void ensure_uploaded(const TextureAtlas& atlas) {
-        auto it = raylib_gpu_atlases.find(&atlas);
-        if (it != raylib_gpu_atlases.end()) {
-            if (it->second.version == atlas.version && it->second.texture.id != 0)
-                return;
+    // ---------------------------------------------------------------------
+    // EXPORTED API used by renderer
+    // ---------------------------------------------------------------------
+    export inline void ensure_uploaded(const TextureAtlas& atlas)
+    {
+        auto& backend = get_raylib_backend();
+        std::scoped_lock lock(backend.gpuMutex);
+        upload_atlas_to_gpu_locked(backend, atlas);
+    }
+
+    export inline const Texture2D* try_get_texture(const TextureAtlas& atlas) noexcept
+    {
+        try
+        {
+            auto& backend = get_raylib_backend();
+            std::scoped_lock lock(backend.gpuMutex);
+
+            auto it = backend.gpu_atlases.find(&atlas);
+            if (it == backend.gpu_atlases.end())
+                return nullptr;
+
+            if (it->second.texture.id == 0)
+                return nullptr;
+
+            return &it->second.texture;
         }
-        upload_atlas_to_gpu(atlas);
+        catch (...)
+        {
+            return nullptr;
+        }
     }
 
-    inline void clear_gpu_atlases() noexcept {
-        for (auto& [_, gpu] : raylib_gpu_atlases) {
-            if (gpu.texture.id != 0) {
-                UnloadTexture(gpu.texture);
+    export inline void clear_gpu_atlases() noexcept
+    {
+        try
+        {
+            auto& backend = get_raylib_backend();
+            std::scoped_lock lock(backend.gpuMutex);
+
+            for (auto& [_, gpu] : backend.gpu_atlases)
+            {
+                if (gpu.texture.id != 0)
+                    UnloadTexture(gpu.texture);
             }
+
+            backend.gpu_atlases.clear();
         }
-        raylib_gpu_atlases.clear();
-        s_generation.fetch_add(1, std::memory_order_relaxed);
+        catch (...)
+        {
+        }
     }
 
-    inline Handle load_atlas(const TextureAtlas& atlas, int atlasIndex = -1) {
+    // ---------------------------------------------------------------------
+    // Helpers kept for your existing handle / atlas add path
+    // ---------------------------------------------------------------------
+    inline std::atomic_uint8_t s_generation{ 1 };
+
+    [[nodiscard]]
+    inline Handle make_handle(int atlasIdx, int localIdx) noexcept
+    {
+        return (Handle(s_generation.load(std::memory_order_relaxed)) << 24)
+            | ((Handle(atlasIdx) & 0xFFFu) << 12)
+            | (Handle(localIdx) & 0xFFFu);
+    }
+
+    [[nodiscard]]
+    inline bool is_handle_live(Handle h) noexcept
+    {
+        return std::uint8_t(h >> 24) == s_generation.load(std::memory_order_relaxed);
+    }
+
+    export inline Handle load_atlas(const TextureAtlas& atlas, int atlasIndex = -1)
+    {
+        // Engine-level “ensure uploaded” (may call backend hooks depending on your manager)
         atlasmanager::ensure_uploaded(atlas);
+
         const int resolvedIndex = (atlasIndex >= 0) ? atlasIndex : atlas.get_index();
         return make_handle(resolvedIndex, 0);
     }
 
-    inline Handle atlas_add_texture(TextureAtlas& atlas, const std::string& id, const ImageData& img)
+    export inline Handle atlas_add_texture(TextureAtlas& atlas, const std::string& id, const ImageData& img)
     {
+        // NOT const: we want to move pixels into Texture.
         auto rgba = ensure_rgba(img);
 
         Texture texture{
-            .width = static_cast<uint32_t>(rgba.width),
-            .height = static_cast<uint32_t>(rgba.height),
+            .width = static_cast<std::uint32_t>(rgba.width),
+            .height = static_cast<std::uint32_t>(rgba.height),
             .pixels = std::move(rgba.pixels)
         };
 
         auto addedOpt = atlas.add_entry(id, texture);
-        if (!addedOpt) {
+        if (!addedOpt)
             throw std::runtime_error("atlas_add_texture: Failed to add texture: " + id);
-        }
 
         atlasmanager::ensure_uploaded(atlas);
-
         return make_handle(atlas.get_index(), addedOpt->index);
     }
 
-} // namespace almondnamespace::raylibcontext
+
+
+} // namespace almondnamespace::raylibtextures
 
 #endif // ALMOND_USING_RAYLIB

@@ -130,7 +130,7 @@ export namespace almondnamespace::sokobanlike
         std::unordered_map<std::string, SpriteHandle> sprites{};
     };
 
-    inline bool run_sokobanlike(std::shared_ptr<context::Context> ctx)
+    export bool run_sokobanlike(std::shared_ptr<core::Context> ctx)
     {
         SokobanLikeScene scene;
         scene.load();

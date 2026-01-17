@@ -92,7 +92,7 @@ export namespace almondnamespace::menu
 
         // ----------------------------------------------------
         void recompute_layout(
-            std::shared_ptr<context::Context> ctx,
+            std::shared_ptr<almondnamespace::core::Context> ctx,
             int widthPixels,
             int heightPixels)
         {

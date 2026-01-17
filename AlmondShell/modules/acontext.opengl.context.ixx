@@ -121,7 +121,7 @@ export namespace almondnamespace::openglcontext
             return ctx;
         }
 
-        inline PlatformGL::PlatformGLContext context_to_platform_context(const context::Context* ctx) noexcept
+        inline PlatformGL::PlatformGLContext context_to_platform_context(const core::Context* ctx) noexcept
         {
             PlatformGL::PlatformGLContext result{};
             if (!ctx) return result;
@@ -692,7 +692,7 @@ void main() {
         glClear(GL_COLOR_BUFFER_BIT);
     }
 
-    inline bool opengl_process(std::shared_ptr<context::Context> ctx, core::CommandQueue& queue)
+    inline bool opengl_process(std::shared_ptr<core::Context> ctx, core::CommandQueue& queue)
     {
         if (!ctx) return false;
 

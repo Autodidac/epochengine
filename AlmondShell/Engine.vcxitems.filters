@@ -329,18 +329,6 @@
     <ClCompile Include="$(MSBuildThisFileDirectory)modules\acontext.opengl.quad.ixx">
       <Filter>Module Files\ixx\core\context\backends\opengl</Filter>
     </ClCompile>
-    <ClCompile Include="$(MSBuildThisFileDirectory)modules\aopengltriangle.ixx">
-      <Filter>Module Files\ixx\core\context\backends\opengl</Filter>
-    </ClCompile>
-    <ClCompile Include="$(MSBuildThisFileDirectory)modules\acontext.raylib.renderer.ixx">
-      <Filter>Module Files\ixx\core\context\backends\raylib</Filter>
-    </ClCompile>
-    <ClCompile Include="$(MSBuildThisFileDirectory)modules\acontext.raylib.state.ixx">
-      <Filter>Module Files\ixx\core\context\backends\raylib</Filter>
-    </ClCompile>
-    <ClCompile Include="$(MSBuildThisFileDirectory)modules\acontext.raylib.textures.ixx">
-      <Filter>Module Files\ixx\core\context\backends\raylib</Filter>
-    </ClCompile>
     <ClCompile Include="$(MSBuildThisFileDirectory)modules\avulkantriangle.ixx">
       <Filter>Module Files\ixx\core\context\backends\vulkan</Filter>
     </ClCompile>
@@ -497,7 +485,7 @@
     <ClCompile Include="$(MSBuildThisFileDirectory)src modules\afilewatch.cppm">
       <Filter>Module Files\cppm</Filter>
     </ClCompile>
-    <ClCompile Include="$(MSBuildThisFileDirectory)src modules\afont.renderer.cppm">
+    <ClCompile Include="$(MSBuildThisFileDirectory)src modules\afont.renderer.impl.cppm">
       <Filter>Module Files\cppm</Filter>
     </ClCompile>
     <ClCompile Include="$(MSBuildThisFileDirectory)modules\acontext.opengl.state.ixx">
@@ -529,6 +517,18 @@
     </ClCompile>
     <ClCompile Include="$(MSBuildThisFileDirectory)modules\aengine.context.window.ixx">
       <Filter>Module Files\ixx\core\context</Filter>
+    </ClCompile>
+    <ClCompile Include="$(MSBuildThisFileDirectory)modules\acontext.raylib.textures.ixx">
+      <Filter>Module Files\ixx\core\context\backends\raylib</Filter>
+    </ClCompile>
+    <ClCompile Include="$(MSBuildThisFileDirectory)modules\aopengltriangle.ixx">
+      <Filter>Module Files\ixx\core\context\backends\opengl</Filter>
+    </ClCompile>
+    <ClCompile Include="$(MSBuildThisFileDirectory)modules\acontext.raylib.state.ixx">
+      <Filter>Module Files\ixx\core\context\backends\raylib</Filter>
+    </ClCompile>
+    <ClCompile Include="$(MSBuildThisFileDirectory)modules\acontext.raylib.renderer.ixx">
+      <Filter>Module Files\ixx\core\context\backends\raylib</Filter>
     </ClCompile>
   </ItemGroup>
 </Project>

@@ -1,3 +1,5 @@
+﻿
+// aengine.context.multiplexer.ixx
 module;
 
 #include <atomic>
@@ -41,24 +43,19 @@ using HGLRC = void*;
 #   include <GL/glx.h>
 #endif
 
-#include "aengine.config.hpp" 		// for ALMOND_USING_SDL
+#include "aengine.config.hpp"
 
 export module aengine.context.multiplexer;
 
 import aengine.platform;
-//import aengine.config;
 
-// Import the *real* types instead of fake forward decls.
 import aengine.context.type;         // almondnamespace::core::ContextType
 import aengine.context.commandqueue; // almondnamespace::core::CommandQueue
 import aengine.context.window;       // almondnamespace::core::WindowData
-import aengine.core.context;         // almondnamespace::context::Context
+import aengine.core.context;         // almondnamespace::core::Context + Set/Get current render ctx
 
 export namespace almondnamespace::core
 {
-    // Keep legacy naming: "core::Context" refers to the real Context type.
-    export using Context = almondnamespace::context::Context;
-
 #if defined(_WIN32)
 
     export struct DragState
@@ -114,8 +111,9 @@ export namespace almondnamespace::core
         using RenderCommand = std::function<void()>;
         void EnqueueRenderCommand(HWND hwnd, RenderCommand cmd);
 
-        static void SetCurrent(std::shared_ptr<Context> ctx);
-        static std::shared_ptr<Context> GetCurrent();
+        // Stable API used across the engine (GUI etc.)
+        static void SetCurrent(std::shared_ptr<core::Context> ctx) { almondnamespace::core::set_current_render_context(std::move(ctx)); }
+        static std::shared_ptr<core::Context> GetCurrent() { return almondnamespace::core::get_current_render_context(); }
 
         static LRESULT CALLBACK ParentProc(HWND, UINT, WPARAM, LPARAM);
         static LRESULT CALLBACK ChildProc(HWND, UINT, WPARAM, LPARAM);
@@ -127,20 +125,12 @@ export namespace almondnamespace::core
         WindowData* findWindowByHWND(HWND hwnd);
         const WindowData* findWindowByHWND(HWND hwnd) const;
 
-        WindowData* findWindowByContext(const std::shared_ptr<Context>& ctx);
-        const WindowData* findWindowByContext(const std::shared_ptr<Context>& ctx) const;
+        WindowData* findWindowByContext(const std::shared_ptr<core::Context>& ctx);
+        const WindowData* findWindowByContext(const std::shared_ptr<core::Context>& ctx) const;
 
     private:
         std::vector<std::unique_ptr<WindowData>> windows;
-
-        // Start stopped; Initialize() explicitly transitions to running.
         std::atomic<bool> running{ false };
-
-        // Win32 can synchronously re-enter our window procedures during
-        // CreateWindow/SetWindowPos/SendMessage. A plain std::mutex will
-        // throw std::system_error("resource deadlock would occur") if the
-        // same thread tries to lock it again. Recursive locking is acceptable
-        // here because the critical sections are short and purely structural.
         mutable std::recursive_mutex windowsMutex;
 
         HGLRC sharedContext = nullptr;
@@ -151,7 +141,6 @@ export namespace almondnamespace::core
         HGLRC CreateSharedGLContext(HDC hdc);
         int get_title_bar_thickness(const HWND window_handle);
 
-        inline static thread_local std::shared_ptr<Context> currentContext{};
         inline static MultiContextManager* s_activeInstance = nullptr;
     };
 
@@ -193,13 +182,13 @@ export namespace almondnamespace::core
 
         void EnqueueRenderCommand(HWND hwnd, RenderCommand cmd);
 
-        static void SetCurrent(std::shared_ptr<Context> ctx);
-        static std::shared_ptr<Context> GetCurrent();
+        static void SetCurrent(std::shared_ptr<core::Context> ctx) { core::set_current_render_context(std::move(ctx)); }
+        static std::shared_ptr<core::Context> GetCurrent() { return core::get_current_render_context(); }
 
         WindowData* findWindowByHWND(HWND hwnd);
         const WindowData* findWindowByHWND(HWND hwnd) const;
-        WindowData* findWindowByContext(const std::shared_ptr<Context>& ctx);
-        const WindowData* findWindowByContext(const std::shared_ptr<Context>& ctx) const;
+        WindowData* findWindowByContext(const std::shared_ptr<core::Context>& ctx);
+        const WindowData* findWindowByContext(const std::shared_ptr<core::Context>& ctx) const;
 
     private:
         void RenderLoop(WindowData& win);
@@ -219,7 +208,6 @@ export namespace almondnamespace::core
         Atom wmDeleteMessage = 0;
         XVisualInfo visualInfo{};
 
-        inline static thread_local std::shared_ptr<Context> currentContext{};
         inline static MultiContextManager* s_activeInstance = nullptr;
 
         friend MultiContextManager* GetActiveMultiContextManager() noexcept;
@@ -254,8 +242,8 @@ export namespace almondnamespace::core
 
         void EnqueueRenderCommand(HWND, RenderCommand) {}
 
-        static void SetCurrent(std::shared_ptr<Context> ctx) { s_currentContext = std::move(ctx); }
-        static std::shared_ptr<Context> GetCurrent() { return s_currentContext; }
+        static void SetCurrent(std::shared_ptr<core::Context> ctx) { core::set_current_render_context(std::move(ctx)); }
+        static std::shared_ptr<core::Context> GetCurrent() { return core::get_current_render_context(); }
 
         static LRESULT CALLBACK ParentProc(HWND, UINT, WPARAM, LPARAM) { return 0; }
         static LRESULT CALLBACK ChildProc(HWND, UINT, WPARAM, LPARAM) { return 0; }
@@ -263,12 +251,11 @@ export namespace almondnamespace::core
 
         WindowData* findWindowByHWND(HWND) { return nullptr; }
         const WindowData* findWindowByHWND(HWND) const { return nullptr; }
-        WindowData* findWindowByContext(const std::shared_ptr<Context>&) { return nullptr; }
-        const WindowData* findWindowByContext(const std::shared_ptr<Context>&) const { return nullptr; }
+        WindowData* findWindowByContext(const std::shared_ptr<core::Context>&) { return nullptr; }
+        const WindowData* findWindowByContext(const std::shared_ptr<core::Context>&) const { return nullptr; }
 
     private:
         inline static const std::vector<std::unique_ptr<WindowData>> s_emptyWindows{};
-        inline static thread_local std::shared_ptr<Context> s_currentContext{};
     };
 
 #endif

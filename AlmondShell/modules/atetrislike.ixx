@@ -71,7 +71,7 @@ export namespace almondnamespace::tetrislike
             game_over = false;
         }
 
-        bool frame(std::shared_ptr<context::Context> ctx, contextwindow::WindowData*) override {
+        bool frame(std::shared_ptr<almondnamespace::core::Context> ctx, contextwindow::WindowData*) override {
             if (game_over) return false;
 
             //platformpump::pump_events();

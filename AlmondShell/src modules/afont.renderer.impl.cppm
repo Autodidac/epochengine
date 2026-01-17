@@ -13,7 +13,7 @@ module;
 #include <utility>
 #include <vector>
 
-export module afont.renderer;
+export module afont.renderer:impl;
 
 import afont.renderer;
 import aatlas.manager;

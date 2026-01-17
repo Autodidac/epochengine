@@ -1,3 +1,27 @@
+﻿/**************************************************************
+ *   █████╗ ██╗     ███╗   ███╗   ███╗   ██╗    ██╗██████╗    *
+ *  ██╔══██╗██║     ████╗ ████║ ██╔═══██╗████╗  ██║██╔══██╗   *
+ *  ███████║██║     ██╔████╔██║ ██║   ██║██╔██╗ ██║██║  ██║   *
+ *  ██╔══██║██║     ██║╚██╔╝██║ ██║   ██║██║╚██╗██║██║  ██║   *
+ *  ██║  ██║███████╗██║ ╚═╝ ██║ ╚██████╔╝██║ ╚████║██████╔╝   *
+ *  ╚═╝  ╚═╝╚══════╝╚═╝     ╚═╝  ╚═════╝ ╚═╝  ╚═══╝╚═════╝    *
+ *                                                            *
+ *   This file is part of the Almond Project.                 *
+ *   AlmondShell - Modular C++ Framework                      *
+ *                                                            *
+ *   SPDX-License-Identifier: LicenseRef-MIT-NoSell           *
+ *                                                            *
+ *   Provided "AS IS", without warranty of any kind.          *
+ *   Use permitted for Non-Commercial Purposes ONLY,          *
+ *   without prior commercial licensing agreement.            *
+ *                                                            *
+ *   Redistribution Allowed with This Notice and              *
+ *   LICENSE file. No obligation to disclose modifications.   *
+ *                                                            *
+ *   See LICENSE file for full terms.                         *
+ *                                                            *
+ **************************************************************/
+
 // ============================================================
 // Almond Entry Point / Platform Configuration
 // ============================================================
@@ -29,9 +53,9 @@
 // Engine Context Config
 // ------------------------------------------------------------
 
-//#define ALMOND_USING_OPENGL 1
+#define ALMOND_USING_OPENGL 1
 #define ALMOND_USING_SDL 1
-//#define ALMOND_USING_RAYLIB 1
+#define ALMOND_USING_RAYLIB 1
 #define ALMOND_USING_SOFTWARE_RENDERER 1
 
 #if defined(ALMOND_FORCE_DISABLE_SDL)

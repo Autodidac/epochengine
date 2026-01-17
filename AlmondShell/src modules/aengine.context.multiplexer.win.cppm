@@ -1,4 +1,27 @@
-﻿// aengine.context.multiplexer.win.cppm
+﻿/**************************************************************
+ *   █████╗ ██╗     ███╗   ███╗   ███╗   ██╗    ██╗██████╗    *
+ *  ██╔══██╗██║     ████╗ ████║ ██╔═══██╗████╗  ██║██╔══██╗   *
+ *  ███████║██║     ██╔████╔██║ ██║   ██║██╔██╗ ██║██║  ██║   *
+ *  ██╔══██║██║     ██║╚██╔╝██║ ██║   ██║██║╚██╗██║██║  ██║   *
+ *  ██║  ██║███████╗██║ ╚═╝ ██║ ╚██████╔╝██║ ╚████║██████╔╝   *
+ *  ╚═╝  ╚═╝╚══════╝╚═╝     ╚═╝  ╚═════╝ ╚═╝  ╚═══╝╚═════╝    *
+ *                                                            *
+ *   This file is part of the Almond Project.                 *
+ *   AlmondShell - Modular C++ Framework                      *
+ *                                                            *
+ *   SPDX-License-Identifier: LicenseRef-MIT-NoSell           *
+ *                                                            *
+ *   Provided "AS IS", without warranty of any kind.          *
+ *   Use permitted for Non-Commercial Purposes ONLY,          *
+ *   without prior commercial licensing agreement.            *
+ *                                                            *
+ *   Redistribution Allowed with This Notice and              *
+ *   LICENSE file. No obligation to disclose modifications.   *
+ *                                                            *
+ *   See LICENSE file for full terms.                         *
+ *                                                            *
+ **************************************************************/
+ // aengine.context.multiplexer.win.cppm
 module;
 
 #if defined(_WIN32)
@@ -179,7 +202,7 @@ namespace almondnamespace::core
         return (it != windows.end()) ? it->get() : nullptr;
     }
 
-    WindowData* MultiContextManager::findWindowByContext(const std::shared_ptr<context::Context>& ctx)
+    WindowData* MultiContextManager::findWindowByContext(const std::shared_ptr<Context>& ctx)
     {
         if (!ctx) return nullptr;
         std::scoped_lock lock(windowsMutex);
@@ -188,7 +211,7 @@ namespace almondnamespace::core
         return (it != windows.end()) ? it->get() : nullptr;
     }
 
-    const WindowData* MultiContextManager::findWindowByContext(const std::shared_ptr<context::Context>& ctx) const
+    const WindowData* MultiContextManager::findWindowByContext(const std::shared_ptr<Context>& ctx) const
     {
         if (!ctx) return nullptr;
         std::scoped_lock lock(windowsMutex);
@@ -200,15 +223,18 @@ namespace almondnamespace::core
     // ------------------------------------------------------------
     // MultiContextManager (static)
     // ------------------------------------------------------------
-    void MultiContextManager::SetCurrent(std::shared_ptr<context::Context> ctx)
-    {
-        currentContext = std::move(ctx);
-    }
+    //void MultiContextManager::SetCurrent(std::shared_ptr<Context> ctx)
+    //{
+    //    // Must qualify: currentContext is a static data member of the class.
+    //    MultiContextManager::currentContext = std::move(ctx);
+    //}
 
-    std::shared_ptr<Context> MultiContextManager::GetCurrent()
-    {
-        return currentContext;
-    }
+    //std::shared_ptr<Context> MultiContextManager::GetCurrent()
+    //{
+    //    return MultiContextManager::currentContext;
+    //}
+
+
 
     // ------------------------------------------------------------
     // MultiContextManager (public helpers)
@@ -474,13 +500,13 @@ namespace almondnamespace::core
                     createdTitles.push_back(narrowTitle);
                 }
 
-                std::vector<std::shared_ptr<context::Context>> ctxs;
+                std::vector<std::shared_ptr<Context>> ctxs;
 
                 // IMPORTANT: do not call CloneContext() while holding g_backendsMutex.
                 // If CloneContext() ever evolves to touch g_backends/g_backendsMutex (directly or indirectly),
                 // calling it under this lock will deadlock.
-                std::shared_ptr<context::Context> master;
-                std::vector<std::shared_ptr<context::Context>> free_dups;
+                std::shared_ptr<Context> master;
+                std::vector<std::shared_ptr<Context>> free_dups;
                 free_dups.reserve(static_cast<size_t>((std::max)(0, count - 1)));
 
                 {
@@ -492,7 +518,7 @@ namespace almondnamespace::core
                         return;
                     }
 
-                    core::BackendState& state = it->second;
+                    BackendState& state = it->second;
                     master = state.master;
 
                     for (auto& dup : state.duplicates)
@@ -743,14 +769,14 @@ namespace almondnamespace::core
             if (needInit) InitializeAllContexts();
         }
 
-        std::shared_ptr<context::Context> ctx;
+        std::shared_ptr<Context> ctx;
         {
             std::unique_lock lock(g_backendsMutex);
             auto& state = core::g_backends[type];
 
             if (!state.master)
             {
-                ctx = std::make_shared<context::Context>();
+                ctx = std::make_shared<Context>();
                 ctx->type = type;
                 state.master = ctx;
             }
@@ -761,7 +787,7 @@ namespace almondnamespace::core
             else
             {
                 auto it = std::find_if(state.duplicates.begin(), state.duplicates.end(),
-                    [](const std::shared_ptr<context::Context>& dup) { return dup && !dup->windowData; });
+                    [](const std::shared_ptr<Context>& dup) { return dup && !dup->windowData; });
 
                 if (it != state.duplicates.end()) ctx = *it;
                 else

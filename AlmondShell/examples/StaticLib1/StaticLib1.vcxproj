@@ -418,6 +418,9 @@
     <ClCompile Update="C:\Users\iammi\source\repos\epochengine\AlmondShell\src modules\afont.renderer.cppm">
       <FileType>Document</FileType>
     </ClCompile>
+    <ClCompile Update="C:\Users\iammi\source\repos\epochengine\AlmondShell\src modules\afont.renderer.impl.cppm">
+      <FileType>Document</FileType>
+    </ClCompile>
     <ClCompile Update="C:\Users\iammi\source\repos\epochengine\AlmondShell\src\acontextmultiplexer_win.cppm">
       <FileType>Document</FileType>
     </ClCompile>

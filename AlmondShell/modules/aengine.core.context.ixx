@@ -1,13 +1,17 @@
 ﻿module;
 
 #if defined(_WIN32) && !defined(ALMOND_MAIN_HEADLESS)
+#   ifndef WIN32_LEAN_AND_MEAN
+#       define WIN32_LEAN_AND_MEAN
+#   endif
 #   include <windows.h> // HWND/HDC/HGLRC
 #endif
 
 export module aengine.core.context;
 
-// Standard library (header units or std module; keep consistent project-wide)
+// Std
 import <algorithm>;
+import <atomic>;
 import <cstdint>;
 import <functional>;
 import <map>;
@@ -20,27 +24,55 @@ import <string>;
 import <utility>;
 import <vector>;
 
-// Project modules (these must be modules too; do NOT include headers)
-import aengine.context.type;         // ContextType
-import aengine.context.commandqueue; // CommandQueue
-import aatomicfunction;              // AlmondAtomicFunction
-import aengine.context.window;       // core::WindowData
-import aengine.input;                // input::Key, input::MouseButton, mouseX/mouseY + helpers
-import aatlas.texture;               // TextureAtlas
-import aspritehandle;                // SpriteHandle
-import aimage.loader;                // ImageData
+// Project
+import aengine.context.type;
+import aengine.context.commandqueue;
+import aengine.context.window;
+import aatomicfunction;
+import aengine.input;
+import aatlas.texture;
+import aatlas.manager;   // reacquire atlas vector inside queued draw
+import aspritehandle;
+import aimage.loader;
 
 export namespace almondnamespace::core
 {
     class MultiContextManager;
 
+    // Forward declare so we can use Context in exported function signatures.
+    export class Context;
+
+    // ---------------------------------------------------------------------
+    // Render-thread "current context" storage
+    // (MultiContextManager sets this per-render-thread before backend work.)
+    // ---------------------------------------------------------------------
+    export void set_current_render_context(std::shared_ptr<Context> ctx) noexcept;
+    export std::shared_ptr<Context> get_current_render_context() noexcept;
+
+    namespace detail
+    {
+        inline thread_local std::shared_ptr<Context> t_current_render_context{};
+    }
+
+    inline void set_current_render_context(std::shared_ptr<Context> ctx) noexcept
+    {
+        detail::t_current_render_context = std::move(ctx);
+    }
+
+    inline std::shared_ptr<Context> get_current_render_context() noexcept
+    {
+        return detail::t_current_render_context;
+    }
+
+    // ---------------------------------------------------------------------
+    // Core Context
+    // ---------------------------------------------------------------------
     export class Context
     {
         friend class MultiContextManager;
         friend class aengine;
 
     public:
-        // --- Backend render hooks (fast raw function pointers) ---
         using InitializeFunc = void(*)();
         using CleanupFunc = void(*)();
         using ProcessFunc = bool(*)(std::shared_ptr<Context>, core::CommandQueue&);
@@ -91,19 +123,63 @@ export namespace almondnamespace::core
             add_atlas.store(aa);
         }
 
-        // --- Safe wrappers ---
+        // -----------------------------------------------------------------
+        // Lifecycle
+        // -----------------------------------------------------------------
         void initialize_safe() const noexcept { if (initialize) initialize(); }
         void cleanup_safe()    const noexcept { if (cleanup) cleanup(); }
 
-        // implemented out-of-line (keeps module interface lean)
+        // Keep as your existing out-of-line implementation.
         bool process_safe(std::shared_ptr<Context> ctx, core::CommandQueue& queue);
 
-        void clear_safe()   const noexcept { if (clear) clear(); }
+        // -----------------------------------------------------------------
+        // Render-thread routed wrappers
+        // -----------------------------------------------------------------
+        void clear_safe() const noexcept
+        {
+            if (!clear) return;
 
-        // Back-compat: older call sites used ctx->clear_safe(ctx)
+            // Fast path: already on THIS context's render thread.
+            if (auto cur = core::get_current_render_context(); cur && cur.get() == this)
+            {
+                clear();
+                return;
+            }
+
+            if (!windowData) return;
+
+            // Assumption: WindowData owns `std::shared_ptr<Context> context;`
+            // (your multiplexer sets it that way). If your field name differs, rename it.
+            std::weak_ptr<Context> weak = windowData->context;
+            windowData->commandQueue.enqueue([weak]()
+                {
+                    if (auto self = weak.lock(); self && self->clear)
+                        self->clear();
+                });
+        }
+
+        // Back-compat shim
         void clear_safe(std::shared_ptr<Context>) const noexcept { clear_safe(); }
 
-        void present_safe() const noexcept { if (present) present(); }
+        void present_safe() const noexcept
+        {
+            if (!present) return;
+
+            if (auto cur = core::get_current_render_context(); cur && cur.get() == this)
+            {
+                present();
+                return;
+            }
+
+            if (!windowData) return;
+
+            std::weak_ptr<Context> weak = windowData->context;
+            windowData->commandQueue.enqueue([weak]()
+                {
+                    if (auto self = weak.lock(); self && self->present)
+                        self->present();
+                });
+        }
 
         int get_width_safe()  const noexcept { return get_width ? get_width() : width; }
         int get_height_safe() const noexcept { return get_height ? get_height() : height; }
@@ -147,11 +223,35 @@ export namespace almondnamespace::core
             return registry_get ? registry_get(key) : 0;
         }
 
-        void draw_sprite_safe(SpriteHandle h,
+        void draw_sprite_safe(
+            SpriteHandle sprite,
             std::span<const TextureAtlas* const> atlases,
             float x, float y, float w, float hgt) const noexcept
         {
-            if (draw_sprite) draw_sprite(h, atlases, x, y, w, hgt);
+            if (!draw_sprite) return;
+
+            // Fast path: already on THIS context's render thread.
+            if (auto cur = core::get_current_render_context(); cur && cur.get() == this)
+            {
+                draw_sprite(sprite, atlases, x, y, w, hgt);
+                return;
+            }
+
+            if (!windowData) return;
+
+            std::weak_ptr<Context> weak = windowData->context;
+
+            // Do NOT capture `atlases` (span may reference transient storage).
+            // Re-acquire atlas vector on render thread.
+            windowData->commandQueue.enqueue([weak, sprite, x, y, w, hgt]()
+                {
+                    auto self = weak.lock();
+                    if (!self || !self->draw_sprite) return;
+
+                    const auto& av = almondnamespace::atlasmanager::get_atlas_vector();
+                    std::span<const TextureAtlas* const> span(av.data(), av.size());
+                    self->draw_sprite(sprite, span, x, y, w, hgt);
+                });
         }
 
         std::uint32_t add_texture_safe(TextureAtlas& atlas,
@@ -174,17 +274,12 @@ export namespace almondnamespace::core
         }
 
 #if defined(_WIN32) && !defined(ALMOND_MAIN_HEADLESS)
-        // Expose HWND, HDC, HGLRC for platform-specific code needing direct access.
-        HWND  get_hwnd() const noexcept { return hwnd; }
-        HDC   get_hdc() const noexcept { return hdc; }
+        HWND  get_hwnd()  const noexcept { return hwnd; }
+        HDC   get_hdc()   const noexcept { return hdc; }
         HGLRC get_hglrc() const noexcept { return hglrc; }
 #endif
 
-        // -----------------------------------------------------------------
-        // Legacy public pointer:
-        // Many game/sample modules expect to read ctx->windowData.
-        // Keeping it public avoids churn while the engine is mid-migration.
-        // -----------------------------------------------------------------
+        // Legacy public pointer (kept on purpose)
         WindowData* windowData = nullptr;
 
         void* native_window = nullptr;
@@ -212,7 +307,7 @@ export namespace almondnamespace::core
         ContextType type = ContextType::Custom;
         std::string backendName{};
 
-        // --- Backend function pointers ---
+        // Backend function pointers
         InitializeFunc  initialize = nullptr;
         CleanupFunc     cleanup = nullptr;
         ProcessFunc     process = nullptr;
@@ -224,19 +319,22 @@ export namespace almondnamespace::core
         DrawSpriteFunc  draw_sprite = nullptr;
         AddModelFunc    add_model = nullptr;
 
-        // --- Input hooks (std::function for flexibility) ---
+        // Input hooks
         std::function<bool(input::Key)>         is_key_held;
         std::function<bool(input::Key)>         is_key_down;
-        std::function<void(int&, int&)>         get_mouse_position; // must be client coords
+        std::function<void(int&, int&)>         get_mouse_position; // client coords
         std::function<bool(input::MouseButton)> is_mouse_button_held;
         std::function<bool(input::MouseButton)> is_mouse_button_down;
 
-        // --- High-level callbacks ---
+        // High-level callbacks
         core::AlmondAtomicFunction<std::uint32_t(TextureAtlas&, std::string, const ImageData&)> add_texture;
         core::AlmondAtomicFunction<std::uint32_t(const TextureAtlas&)>                         add_atlas;
         std::function<void(int, int)>                                                          onResize;
     };
 
+    // ---------------------------------------------------------------------
+    // Backend registry (existing)
+    // ---------------------------------------------------------------------
     struct BackendState
     {
         std::shared_ptr<Context>              master;
@@ -253,19 +351,4 @@ export namespace almondnamespace::core
     std::shared_ptr<Context> CloneContext(const Context& prototype);
     void AddContextForBackend(core::ContextType type, std::shared_ptr<Context> context);
     bool ProcessAllContexts();
-}
-
-export namespace almondnamespace::context
-{
-    export using Context = almondnamespace::core::Context;
-    export using BackendState = almondnamespace::core::BackendState;
-    export using BackendMap = almondnamespace::core::BackendMap;
-
-    export using almondnamespace::core::g_backends;
-    export using almondnamespace::core::g_backendsMutex;
-
-    export using almondnamespace::core::InitializeAllContexts;
-    export using almondnamespace::core::CloneContext;
-    export using almondnamespace::core::AddContextForBackend;
-    export using almondnamespace::core::ProcessAllContexts;
-}
+} // namespace almondnamespace::core

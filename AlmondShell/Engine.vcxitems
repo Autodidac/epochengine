@@ -196,7 +196,7 @@
     <ClCompile Include="$(MSBuildThisFileDirectory)src modules\aengine.gui.cppm" />
     <ClCompile Include="$(MSBuildThisFileDirectory)src modules\aengine.scripting.compiler.cppm" />
     <ClCompile Include="$(MSBuildThisFileDirectory)src modules\afilewatch.cppm" />
-    <ClCompile Include="$(MSBuildThisFileDirectory)src modules\afont.renderer.cppm" />
+    <ClCompile Include="$(MSBuildThisFileDirectory)src modules\afont.renderer.impl.cppm" />
     <ClCompile Include="$(MSBuildThisFileDirectory)src modules\acontext.opengl.platform.linux.cppm" />
     <ClCompile Include="$(MSBuildThisFileDirectory)src modules\acontext.opengl.platform.win.cppm" />
     <ClCompile Include="$(MSBuildThisFileDirectory)src\acontextmultiplexer_linux.cpp" />

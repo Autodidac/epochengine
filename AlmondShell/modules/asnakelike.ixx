@@ -135,7 +135,7 @@ export namespace almondnamespace::snakelike
         std::unordered_map<std::string, SpriteHandle> sprites{};
     };
 
-    export bool run_snakelike(std::shared_ptr<context::Context> ctx)
+    export bool run_snakelike(std::shared_ptr<almondnamespace::core::Context> ctx)
     {
         SnakeLikeScene scene;
         scene.load();

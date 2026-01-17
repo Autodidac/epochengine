@@ -21,17 +21,13 @@
  *   See LICENSE file for full terms.                         *
  *                                                            *
  **************************************************************/
- //
- // agui.cppm (converted from legacy agui.cpp)
- //
-module;
 
-// agui.cppm
-export module aengine.gui;
+module; // aengine.gui.cppm (converted from legacy agui.cpp)
+export module aengine.gui; // agui.cppm
 
 // NOTE:
 // Do NOT `import aengine.gui;` inside this module. A module cannot import itself.
-// If you need interface/impl separation, use partitions (`export module aengine.gui:...;`).
+// If you need interface/impl separation, use partitions (`export module aengine.gui:part;`).
 
 import aengine.core.context;
 import aengine.context.multiplexer;
