@@ -74,12 +74,6 @@
     <ClCompile Include="$(MSBuildThisFileDirectory)modules\aengine.engine_components.ixx" />
     <ClCompile Include="$(MSBuildThisFileDirectory)modules\aengine.input.ixx" />
     <ClCompile Include="$(MSBuildThisFileDirectory)modules\aengine.platform.ixx" />
-    <ClCompile Include="$(MSBuildThisFileDirectory)modules\aengine.context.cppm">
-      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">false</ExcludedFromBuild>
-      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">false</ExcludedFromBuild>
-      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">false</ExcludedFromBuild>
-      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|x64'">false</ExcludedFromBuild>
-    </ClCompile>
     <ClCompile Include="$(MSBuildThisFileDirectory)modules\aengine.context.commandqueue.ixx" />
     <ClCompile Include="$(MSBuildThisFileDirectory)modules\aengine.context.control.ixx" />
     <ClCompile Include="$(MSBuildThisFileDirectory)modules\aengine.context.multiplexer.ixx" />
@@ -187,7 +181,8 @@
     <ClCompile Include="$(MSBuildThisFileDirectory)modules\avulkanswapchain.ixx" />
     <ClCompile Include="$(MSBuildThisFileDirectory)modules\avulkantexture.ixx" />
     <ClCompile Include="$(MSBuildThisFileDirectory)modules\avulkantriangle.ixx" />
-    <ClCompile Include="$(MSBuildThisFileDirectory)src modules\acontext.raylib.platform.impl.cppm" />
+    <ClCompile Include="$(MSBuildThisFileDirectory)src modules\acontext.raylib.api.cppm" />
+    <ClCompile Include="$(MSBuildThisFileDirectory)src modules\aengine.context.cppm" />
     <ClCompile Include="$(MSBuildThisFileDirectory)src modules\aengine.context.multiplexer.linux.cppm" />
     <ClCompile Include="$(MSBuildThisFileDirectory)src modules\aengine.context.multiplexer.win.cppm" />
     <ClCompile Include="$(MSBuildThisFileDirectory)src modules\aeditor.cppm">

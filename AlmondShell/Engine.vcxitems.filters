@@ -251,9 +251,6 @@
     <ClCompile Include="$(MSBuildThisFileDirectory)modules\atexture.ixx">
       <Filter>Module Files\ixx\textures</Filter>
     </ClCompile>
-    <ClCompile Include="$(MSBuildThisFileDirectory)modules\aengine.context.cppm">
-      <Filter>Module Files\cppm</Filter>
-    </ClCompile>
     <ClCompile Include="$(MSBuildThisFileDirectory)modules\aatlas.manager.ixx">
       <Filter>Module Files\ixx\textures\atlas</Filter>
     </ClCompile>
@@ -527,7 +524,10 @@
     <ClCompile Include="$(MSBuildThisFileDirectory)src modules\renderer_smoke_harness.cppm">
       <Filter>Module Files\cppm</Filter>
     </ClCompile>
-    <ClCompile Include="$(MSBuildThisFileDirectory)src modules\acontext.raylib.platform.impl.cppm">
+    <ClCompile Include="$(MSBuildThisFileDirectory)src modules\aengine.context.cppm">
+      <Filter>Module Files\cppm</Filter>
+    </ClCompile>
+    <ClCompile Include="$(MSBuildThisFileDirectory)src modules\acontext.raylib.api.cppm">
       <Filter>Module Files\cppm\crossplatform</Filter>
     </ClCompile>
   </ItemGroup>
