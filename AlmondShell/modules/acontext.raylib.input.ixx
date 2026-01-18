@@ -1,30 +1,24 @@
-module;
+﻿module;
 
-//#include "aengineconfig.hpp"
-#include "aengine.config.hpp" 		// for ALMOND_USING_SDL
-#if defined(ALMOND_USING_RAYLIB)
-#include <raylib.h>
-#endif
+#include "aengine.config.hpp"
 
 export module acontext.raylib.input;
 
 import <shared_mutex>;
 
+import acontext.raylib.api;
 import aengine.input;
-//import aengine.config;
-
 
 #if defined(ALMOND_USING_RAYLIB)
 
-namespace almondnamespace::raylibcontext {
-
-    inline void poll_input()
+namespace almondnamespace::raylibcontext
+{
+    export inline void poll_input()
     {
         using namespace almondnamespace::input;
 
         std::unique_lock<std::shared_mutex> lock(g_inputMutex);
 
-        // Reset pressed states
         keyPressed.reset();
         mousePressed.reset();
         mouseWheel.store(0, std::memory_order_relaxed);
@@ -32,60 +26,64 @@ namespace almondnamespace::raylibcontext {
         // --- Keyboard ---
         for (int k = 0; k < Key::Count; ++k)
         {
-            int raylibKey = 0;
+            int ray = 0;
             switch (static_cast<Key>(k))
             {
-            case Key::A: raylibKey = KEY_A; break;
-            case Key::B: raylibKey = KEY_B; break;
-            case Key::C: raylibKey = KEY_C; break;
-            case Key::D: raylibKey = KEY_D; break;
-            case Key::E: raylibKey = KEY_E; break;
-            case Key::F: raylibKey = KEY_F; break;
-            case Key::G: raylibKey = KEY_G; break;
-            case Key::H: raylibKey = KEY_H; break;
-            case Key::I: raylibKey = KEY_I; break;
-            case Key::J: raylibKey = KEY_J; break;
-            case Key::K: raylibKey = KEY_K; break;
-            case Key::L: raylibKey = KEY_L; break;
-            case Key::M: raylibKey = KEY_M; break;
-            case Key::N: raylibKey = KEY_N; break;
-            case Key::O: raylibKey = KEY_O; break;
-            case Key::P: raylibKey = KEY_P; break;
-            case Key::Q: raylibKey = KEY_Q; break;
-            case Key::R: raylibKey = KEY_R; break;
-            case Key::S: raylibKey = KEY_S; break;
-            case Key::T: raylibKey = KEY_T; break;
-            case Key::U: raylibKey = KEY_U; break;
-            case Key::V: raylibKey = KEY_V; break;
-            case Key::W: raylibKey = KEY_W; break;
-            case Key::X: raylibKey = KEY_X; break;
-            case Key::Y: raylibKey = KEY_Y; break;
-            case Key::Z: raylibKey = KEY_Z; break;
-            case Key::Num0: raylibKey = KEY_ZERO; break;
-            case Key::Num1: raylibKey = KEY_ONE; break;
-            case Key::Num2: raylibKey = KEY_TWO; break;
-            case Key::Num3: raylibKey = KEY_THREE; break;
-            case Key::Num4: raylibKey = KEY_FOUR; break;
-            case Key::Num5: raylibKey = KEY_FIVE; break;
-            case Key::Num6: raylibKey = KEY_SIX; break;
-            case Key::Num7: raylibKey = KEY_SEVEN; break;
-            case Key::Num8: raylibKey = KEY_EIGHT; break;
-            case Key::Num9: raylibKey = KEY_NINE; break;
-            case Key::Space: raylibKey = KEY_SPACE; break;
-            case Key::Enter: raylibKey = KEY_ENTER; break;
-            case Key::Escape: raylibKey = KEY_ESCAPE; break;
-            case Key::Tab: raylibKey = KEY_TAB; break;
-            case Key::Backspace: raylibKey = KEY_BACKSPACE; break;
-            case Key::Left: raylibKey = KEY_LEFT; break;
-            case Key::Right: raylibKey = KEY_RIGHT; break;
-            case Key::Up: raylibKey = KEY_UP; break;
-            case Key::Down: raylibKey = KEY_DOWN; break;
-                // Add more mappings as needed...
-            default: raylibKey = 0; break;
-            }
-            if (raylibKey == 0) continue;
+            case Key::A: ray = almondnamespace::raylib_api::key_a; break;
+            case Key::B: ray = almondnamespace::raylib_api::key_b; break;
+            case Key::C: ray = almondnamespace::raylib_api::key_c; break;
+            case Key::D: ray = almondnamespace::raylib_api::key_d; break;
+            case Key::E: ray = almondnamespace::raylib_api::key_e; break;
+            case Key::F: ray = almondnamespace::raylib_api::key_f; break;
+            case Key::G: ray = almondnamespace::raylib_api::key_g; break;
+            case Key::H: ray = almondnamespace::raylib_api::key_h; break;
+            case Key::I: ray = almondnamespace::raylib_api::key_i; break;
+            case Key::J: ray = almondnamespace::raylib_api::key_j; break;
+            case Key::K: ray = almondnamespace::raylib_api::key_k; break;
+            case Key::L: ray = almondnamespace::raylib_api::key_l; break;
+            case Key::M: ray = almondnamespace::raylib_api::key_m; break;
+            case Key::N: ray = almondnamespace::raylib_api::key_n; break;
+            case Key::O: ray = almondnamespace::raylib_api::key_o; break;
+            case Key::P: ray = almondnamespace::raylib_api::key_p; break;
+            case Key::Q: ray = almondnamespace::raylib_api::key_q; break;
+            case Key::R: ray = almondnamespace::raylib_api::key_r; break;
+            case Key::S: ray = almondnamespace::raylib_api::key_s; break;
+            case Key::T: ray = almondnamespace::raylib_api::key_t; break;
+            case Key::U: ray = almondnamespace::raylib_api::key_u; break;
+            case Key::V: ray = almondnamespace::raylib_api::key_v; break;
+            case Key::W: ray = almondnamespace::raylib_api::key_w; break;
+            case Key::X: ray = almondnamespace::raylib_api::key_x; break;
+            case Key::Y: ray = almondnamespace::raylib_api::key_y; break;
+            case Key::Z: ray = almondnamespace::raylib_api::key_z; break;
 
-            bool down = IsKeyDown(raylibKey);
+            case Key::Num0: ray = almondnamespace::raylib_api::key_zero; break;
+            case Key::Num1: ray = almondnamespace::raylib_api::key_one; break;
+            case Key::Num2: ray = almondnamespace::raylib_api::key_two; break;
+            case Key::Num3: ray = almondnamespace::raylib_api::key_three; break;
+            case Key::Num4: ray = almondnamespace::raylib_api::key_four; break;
+            case Key::Num5: ray = almondnamespace::raylib_api::key_five; break;
+            case Key::Num6: ray = almondnamespace::raylib_api::key_six; break;
+            case Key::Num7: ray = almondnamespace::raylib_api::key_seven; break;
+            case Key::Num8: ray = almondnamespace::raylib_api::key_eight; break;
+            case Key::Num9: ray = almondnamespace::raylib_api::key_nine; break;
+
+            case Key::Space:     ray = almondnamespace::raylib_api::key_space; break;
+            case Key::Enter:     ray = almondnamespace::raylib_api::key_enter; break;
+            case Key::Escape:    ray = almondnamespace::raylib_api::key_escape; break;
+            case Key::Tab:       ray = almondnamespace::raylib_api::key_tab; break;
+            case Key::Backspace: ray = almondnamespace::raylib_api::key_backspace; break;
+
+            case Key::Left:  ray = almondnamespace::raylib_api::key_left; break;
+            case Key::Right: ray = almondnamespace::raylib_api::key_right; break;
+            case Key::Up:    ray = almondnamespace::raylib_api::key_up; break;
+            case Key::Down:  ray = almondnamespace::raylib_api::key_down; break;
+
+            default: ray = 0; break;
+            }
+
+            if (ray == 0) continue;
+
+            const bool down = almondnamespace::raylib_api::is_key_down(ray);
             keyPressed[k] = down && !keyDown[k];
             keyDown[k] = down;
         }
@@ -93,32 +91,30 @@ namespace almondnamespace::raylibcontext {
         // --- Mouse ---
         for (int b = 0; b < MouseButton::MouseCount; ++b)
         {
-            int raylibBtn = 0;
+            int ray = 0;
             switch (static_cast<MouseButton>(b))
             {
-            case MouseButton::MouseLeft:   raylibBtn = MOUSE_BUTTON_LEFT; break;
-            case MouseButton::MouseRight:  raylibBtn = MOUSE_BUTTON_RIGHT; break;
-            case MouseButton::MouseMiddle: raylibBtn = MOUSE_BUTTON_MIDDLE; break;
-            case MouseButton::MouseButton4: raylibBtn = MOUSE_BUTTON_SIDE; break;
-            case MouseButton::MouseButton5: raylibBtn = MOUSE_BUTTON_EXTRA; break;
-            default: raylibBtn = 0; break;
+            case MouseButton::MouseLeft:    ray = almondnamespace::raylib_api::mouse_button_left; break;
+            case MouseButton::MouseRight:   ray = almondnamespace::raylib_api::mouse_button_right; break;
+            case MouseButton::MouseMiddle:  ray = almondnamespace::raylib_api::mouse_button_middle; break;
+            case MouseButton::MouseButton4: ray = almondnamespace::raylib_api::mouse_button_side; break;
+            case MouseButton::MouseButton5: ray = almondnamespace::raylib_api::mouse_button_extra; break;
+            default: ray = 0; break;
             }
-            if (raylibBtn == 0) continue;
 
-            bool down = IsMouseButtonDown(raylibBtn);
+            if (ray == 0) continue;
+
+            const bool down = almondnamespace::raylib_api::is_mouse_button_down(ray);
             mousePressed[b] = down && !mouseDown[b];
             mouseDown[b] = down;
         }
 
-        // Mouse position
-        mouseX.store(GetMouseX(), std::memory_order_relaxed);
-        mouseY.store(GetMouseY(), std::memory_order_relaxed);
+        mouseX.store(almondnamespace::raylib_api::get_mouse_x(), std::memory_order_relaxed);
+        mouseY.store(almondnamespace::raylib_api::get_mouse_y(), std::memory_order_relaxed);
         set_mouse_coords_are_global(false);
 
-        // Mouse wheel (Raylib returns float, use int for your API)
-        mouseWheel.store(static_cast<int>(GetMouseWheelMove()), std::memory_order_relaxed);
+        mouseWheel.store(static_cast<int>(almondnamespace::raylib_api::get_mouse_wheel_move()), std::memory_order_relaxed);
     }
+}
 
-} // namespace almondnamespace::raylibcontext
-
-#endif // Non-Raylib context, use generic input handling
+#endif // ALMOND_USING_RAYLIB

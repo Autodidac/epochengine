@@ -55,7 +55,7 @@
 
 #define ALMOND_USING_OPENGL 1
 #define ALMOND_USING_SDL 1
-//#define ALMOND_USING_RAYLIB 1
+#define ALMOND_USING_RAYLIB 1
 #define ALMOND_USING_SOFTWARE_RENDERER 1
 
 #if defined(ALMOND_FORCE_DISABLE_SDL)
@@ -103,34 +103,34 @@
 #include "../include/aframework.hpp"
 #endif
 
-#ifdef ALMOND_USING_RAYLIB
-#include <glad/glad.h>
-
-#if defined(_WIN32)
-#include <GL/wglext.h>
-#endif
-
-#define RAYLIB_NO_WINDOW
-#define RAYLIB_STATIC
-
-#define CloseWindow Raylib_CloseWindow
-#define ShowCursor Raylib_ShowCursor
-#define LoadImageW Raylib_LoadImageW
-#define DrawTextW Raylib_DrawTextW
-#define DrawTextExW Raylib_DrawTextExW
-#define Rectangle Raylib_Rectangle
-#define PlaySoundW Raylib_PlaySoundW
-
-#include <raylib.h>
-
-#undef CloseWindow
-#undef ShowCursor
-#undef LoadImageW
-#undef DrawTextW
-#undef DrawTextExW
-#undef Rectangle
-#undef PlaySoundW
-#endif
+//#ifdef ALMOND_USING_RAYLIB
+//#include <glad/glad.h>
+//
+//#if defined(_WIN32)
+//#include <GL/wglext.h>
+//#endif
+//
+//#define RAYLIB_NO_WINDOW
+//#define RAYLIB_STATIC
+//
+//#define CloseWindow Raylib_CloseWindow
+//#define ShowCursor Raylib_ShowCursor
+//#define LoadImageW Raylib_LoadImageW
+//#define DrawTextW Raylib_DrawTextW
+//#define DrawTextExW Raylib_DrawTextExW
+//#define Rectangle Raylib_Rectangle
+//#define PlaySoundW Raylib_PlaySoundW
+//
+//#include <raylib.h>
+//
+//#undef CloseWindow
+//#undef ShowCursor
+//#undef LoadImageW
+//#undef DrawTextW
+//#undef DrawTextExW
+//#undef Rectangle
+//#undef PlaySoundW
+//#endif
 
 #ifdef ALMOND_USING_OPENGL
 #include <glad/glad.h>
