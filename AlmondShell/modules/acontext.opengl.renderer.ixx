@@ -58,7 +58,7 @@ export namespace almondnamespace::openglrenderer
     inline openglstate::OpenGL4State& renderer_gl_state_with_pipeline() noexcept
     {
         auto& glState = renderer_gl_state();
-        if (!openglcontext::ensure_quad_pipeline(glState))
+        if (!almondnamespace::openglquad::ensure_quad_pipeline(glState))
             std::cerr << "[OpenGL] Failed to rebuild quad pipeline\n";
         return glState;
     }
@@ -135,7 +135,7 @@ export namespace almondnamespace::openglrenderer
     // DRAWING
     // --------------------------------------------------------
 
-    inline void draw_quad(const openglcontext::Quad& quad, GLuint texture)
+    inline void draw_quad(const openglquad::Quad& quad, GLuint texture)
     {
         auto& glState = renderer_gl_state_with_pipeline();
 

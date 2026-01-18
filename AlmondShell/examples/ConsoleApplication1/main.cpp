@@ -33,8 +33,6 @@
 
 import almondshell; // import the module
 
-
-
 //void test_linkage() {
 //    almondshell::opengl::s_state.shader = 42;  // Or just read a member
 //}

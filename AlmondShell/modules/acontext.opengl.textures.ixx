@@ -66,16 +66,12 @@ import aengine.context.multiplexer;
 
 import acontext.opengl.platform;
 import acontext.opengl.state;
+import acontext.opengl.quad;
 import aatlas.manager;
 import aatlas.texture;
 import atexture;
 import aimage.loader;
 import aspritehandle;
-
-namespace almondnamespace::openglcontext
-{
-    bool ensure_quad_pipeline(almondnamespace::openglstate::OpenGL4State& glState);
-}
 
 export namespace almondnamespace::opengltextures
 {
@@ -307,7 +303,11 @@ export namespace almondnamespace::opengltextures
         upload_atlas_to_gpu(atlas);
     }
 
-
+    // Pipeline glue (was removed; draw_sprite still calls it)
+    inline bool ensure_created_pipeline(almondnamespace::openglstate::OpenGL4State& glState)
+    {
+        return almondnamespace::openglquad::ensure_quad_pipeline(glState);
+    }
 
     inline void clear_gpu_atlases() noexcept {
         BackendData* oglData = nullptr;
@@ -374,11 +374,6 @@ export namespace almondnamespace::opengltextures
         glBindTexture(GL_TEXTURE_2D, 0);
 
         return tex;
-    }
-
-    inline bool ensure_created_pipeline(almondnamespace::openglstate::OpenGL4State& glState)
-    {
-        return almondnamespace::openglcontext::ensure_quad_pipeline(glState);
     }
 
     // Diagnostic draw_sprite version

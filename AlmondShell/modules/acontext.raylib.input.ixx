@@ -2,6 +2,9 @@ module;
 
 //#include "aengineconfig.hpp"
 #include "aengine.config.hpp" 		// for ALMOND_USING_SDL
+#if defined(ALMOND_USING_RAYLIB)
+#include <raylib.h>
+#endif
 
 export module acontext.raylib.input;
 
@@ -12,7 +15,7 @@ import aengine.input;
 
 
 #if defined(ALMOND_USING_RAYLIB)
-#include <raylib.h>
+
 namespace almondnamespace::raylibcontext {
 
     inline void poll_input()

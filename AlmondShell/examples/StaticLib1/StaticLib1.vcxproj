@@ -406,10 +406,25 @@
     <ClCompile Update="C:\Users\iammi\source\repos\epochengine\AlmondShell\modules\autility.string.converter.ixx">
       <FileType>Document</FileType>
     </ClCompile>
+    <ClCompile Update="C:\Users\iammi\source\repos\epochengine\AlmondShell\src modules\acontext.opengl.platform.cppm">
+      <FileType>Document</FileType>
+    </ClCompile>
+    <ClCompile Update="C:\Users\iammi\source\repos\epochengine\AlmondShell\src modules\acontext.opengl.platform.impl.cppm">
+      <FileType>Document</FileType>
+    </ClCompile>
     <ClCompile Update="C:\Users\iammi\source\repos\epochengine\AlmondShell\src modules\acontext.opengl.platform.linux.cppm">
       <FileType>Document</FileType>
     </ClCompile>
+    <ClCompile Update="C:\Users\iammi\source\repos\epochengine\AlmondShell\src modules\acontext.opengl.platform.tu.cppm">
+      <FileType>Document</FileType>
+    </ClCompile>
     <ClCompile Update="C:\Users\iammi\source\repos\epochengine\AlmondShell\src modules\acontext.opengl.platform.win.cppm">
+      <FileType>Document</FileType>
+    </ClCompile>
+    <ClCompile Update="C:\Users\iammi\source\repos\epochengine\AlmondShell\src modules\acontext.raylib.platform.impl.cppm">
+      <FileType>Document</FileType>
+    </ClCompile>
+    <ClCompile Update="C:\Users\iammi\source\repos\epochengine\AlmondShell\src modules\acontext.raylib.platform.tu.cppm">
       <FileType>Document</FileType>
     </ClCompile>
     <ClCompile Update="C:\Users\iammi\source\repos\epochengine\AlmondShell\src modules\aengine.context.multiplexer.win.cppm">

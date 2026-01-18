@@ -494,12 +494,6 @@
     <ClCompile Include="$(MSBuildThisFileDirectory)src\aengine.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="$(MSBuildThisFileDirectory)src modules\acontext.opengl.platform.win.cppm">
-      <Filter>Module Files\cppm\crossplatform</Filter>
-    </ClCompile>
-    <ClCompile Include="$(MSBuildThisFileDirectory)src modules\acontext.opengl.platform.linux.cppm">
-      <Filter>Module Files\cppm\crossplatform</Filter>
-    </ClCompile>
     <ClCompile Include="$(MSBuildThisFileDirectory)src modules\aengine.context.multiplexer.win.cppm">
       <Filter>Module Files\cppm\crossplatform</Filter>
     </ClCompile>
@@ -532,6 +526,9 @@
     </ClCompile>
     <ClCompile Include="$(MSBuildThisFileDirectory)src modules\renderer_smoke_harness.cppm">
       <Filter>Module Files\cppm</Filter>
+    </ClCompile>
+    <ClCompile Include="$(MSBuildThisFileDirectory)src modules\acontext.raylib.platform.impl.cppm">
+      <Filter>Module Files\cppm\crossplatform</Filter>
     </ClCompile>
   </ItemGroup>
 </Project>

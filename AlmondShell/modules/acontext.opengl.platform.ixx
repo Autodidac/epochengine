@@ -1,55 +1,39 @@
 ﻿/**************************************************************
- *   █████╗ ██╗     ███╗   ███╗   ███╗   ██╗    ██╗██████╗    *
- *  ██╔══██╗██║     ████╗ ████║ ██╔═══██╗████╗  ██║██╔══██╗   *
- *  ███████║██║     ██╔████╔██║ ██║   ██║██╔██╗ ██║██║  ██║   *
- *  ██╔══██║██║     ██║╚██╔╝██║ ██║   ██║██║╚██╗██║██║  ██║   *
- *  ██║  ██║███████╗██║ ╚═╝ ██║ ╚██████╔╝██║ ╚████║██████╔╝   *
- *  ╚═╝  ╚═╝╚══════╝╚═╝     ╚═╝  ╚═════╝ ╚═╝  ╚═══╝╚═════╝    *
- *                                                            *
- *   This file is part of the Almond Project.                 *
- *   AlmondShell - Modular C++ Framework                      *
- *                                                            *
- *   SPDX-License-Identifier: LicenseRef-MIT-NoSell           *
- *                                                            *
- *   Provided "AS IS", without warranty of any kind.          *
- *   Use permitted for Non-Commercial Purposes ONLY,          *
- *   without prior commercial licensing agreement.            *
- *                                                            *
- *   Redistribution Allowed with This Notice and              *
- *   LICENSE file. No obligation to disclose modifications.   *
- *                                                            *
- *   See LICENSE file for full terms.                         *
- *                                                            *
+ *   This file is part of the Almond Project.
+ *   SPDX-License-Identifier: LicenseRef-MIT-NoSell
  **************************************************************/
- // acontext.opengl.platform.ixx
-
 module;
 
-// Keep platform macros/types in the global module fragment.
-#include "..\include\aengine.config.hpp"
-#include "..\include\aengine.hpp"
+// Global module fragment: macros + native headers only.
+#include "..\\include\\aengine.config.hpp"
+#include "..\\include\\aengine.hpp"
 
 #if defined(ALMOND_USING_OPENGL)
 
-#  if defined(_WIN32)
-#    include <windows.h>
-#  elif defined(__linux__)
-// X11 defines a typedef named `Font` that clashes with the global `Font`
-// type exported by raylib. Raylib is included from aengineconfig.hpp before
-// we reach this point, so temporarily remap the X11 `Font` symbol while the
-// header is processed to avoid the conflicting typedef.
-#    pragma push_macro("Font")
-#    define Font almondshell_X11Font
-#    include <X11/Xlib.h>
-#    include <GL/glx.h>
-#    pragma pop_macro("Font")
+#if defined(_WIN32)
+#  ifndef WIN32_LEAN_AND_MEAN
+#    define WIN32_LEAN_AND_MEAN
 #  endif
+#  include <windows.h>
+#  include <glad/glad.h>
+#  include <GL/wglext.h>
+
+#elif defined(__linux__)
+#  pragma push_macro("Font")
+#  define Font almondshell_X11Font
+#  include <X11/Xlib.h>
+#  include <GL/glx.h>
+#  pragma pop_macro("Font")
+#  include <dlfcn.h>
+#  include <cstdint>
+#endif
 
 #endif // ALMOND_USING_OPENGL
 
 export module acontext.opengl.platform;
 
 import <utility>;
+import <cstdint>;
 
 #if defined(ALMOND_USING_OPENGL)
 
@@ -98,64 +82,128 @@ export namespace almondnamespace::openglcontext::PlatformGL
     }
 #endif
 
-    // Platform hooks (implemented in a platform-specific implementation unit).
-    PlatformGLContext get_current() noexcept;
-    bool make_current(const PlatformGLContext& ctx) noexcept;
-    void clear_current() noexcept;
-    void swap_buffers(const PlatformGLContext& ctx) noexcept;
-    void* get_proc_address(const char* name) noexcept;
+    // -----------------------------
+    // Platform implementation (here)
+    // -----------------------------
+
+    inline PlatformGLContext get_current() noexcept
+    {
+        PlatformGLContext ctx{};
+
+#if defined(_WIN32)
+        ctx.device = ::wglGetCurrentDC();
+        ctx.context = ::wglGetCurrentContext();
+#elif defined(__linux__)
+        ctx.display = ::glXGetCurrentDisplay();
+        ctx.drawable = ::glXGetCurrentDrawable();
+        ctx.context = ::glXGetCurrentContext();
+#else
+        // unsupported
+#endif
+        return ctx;
+    }
+
+    inline bool make_current(const PlatformGLContext& ctx) noexcept
+    {
+#if defined(_WIN32)
+        if (!ctx.valid())
+            return ::wglMakeCurrent(nullptr, nullptr) == TRUE;
+        return ::wglMakeCurrent(ctx.device, ctx.context) == TRUE;
+
+#elif defined(__linux__)
+        if (!ctx.valid())
+        {
+            if (auto* dpy = ::glXGetCurrentDisplay())
+                return ::glXMakeCurrent(dpy, 0, nullptr) == True;
+            return true;
+        }
+        return ::glXMakeCurrent(ctx.display, ctx.drawable, ctx.context) == True;
+
+#else
+        (void)ctx;
+        return false;
+#endif
+    }
+
+    inline void clear_current() noexcept
+    {
+#if defined(_WIN32)
+        (void)::wglMakeCurrent(nullptr, nullptr);
+#elif defined(__linux__)
+        if (auto* dpy = ::glXGetCurrentDisplay())
+            (void)::glXMakeCurrent(dpy, 0, nullptr);
+#else
+#endif
+    }
+
+    inline void swap_buffers(const PlatformGLContext& ctx) noexcept
+    {
+#if defined(_WIN32)
+        if (ctx.device) (void)::SwapBuffers(ctx.device);
+#elif defined(__linux__)
+        if (ctx.display && ctx.drawable) ::glXSwapBuffers(ctx.display, ctx.drawable);
+#else
+        (void)ctx;
+#endif
+    }
+
+    inline void* get_proc_address(const char* name) noexcept
+    {
+        if (!name) return nullptr;
+
+#if defined(_WIN32)
+        if (auto p = reinterpret_cast<void*>(::wglGetProcAddress(name)))
+        {
+            const auto v = reinterpret_cast<std::uintptr_t>(p);
+            if (v != 0 && v != 1 && v != 2 && v != 3 && v != static_cast<std::uintptr_t>(-1))
+                return p;
+        }
+
+        static HMODULE opengl32 = ::GetModuleHandleW(L"opengl32.dll");
+        if (!opengl32) opengl32 = ::LoadLibraryW(L"opengl32.dll");
+        if (!opengl32) return nullptr;
+
+        return reinterpret_cast<void*>(::GetProcAddress(opengl32, name));
+
+#elif defined(__linux__)
+        if (auto p = ::glXGetProcAddressARB(reinterpret_cast<const GLubyte*>(name)))
+            return reinterpret_cast<void*>(p);
+
+        static void* libGL = ::dlopen("libGL.so.1", RTLD_LAZY | RTLD_LOCAL);
+        return libGL ? ::dlsym(libGL, name) : nullptr;
+
+#else
+        return nullptr;
+#endif
+    }
 
     class ScopedContext
     {
     public:
         ScopedContext() = default;
-
-        explicit ScopedContext(const PlatformGLContext& target)
-        {
-            set(target);
-        }
+        explicit ScopedContext(const PlatformGLContext& target) { set(target); }
 
         ScopedContext(const ScopedContext&) = delete;
         ScopedContext& operator=(const ScopedContext&) = delete;
 
-        ScopedContext(ScopedContext&& other) noexcept
-        {
-            move_from(other);
-        }
-
+        ScopedContext(ScopedContext&& other) noexcept { move_from(other); }
         ScopedContext& operator=(ScopedContext&& other) noexcept
         {
-            if (this != &other)
-            {
-                release();
-                move_from(other);
-            }
+            if (this != &other) { release(); move_from(other); }
             return *this;
         }
 
-        ~ScopedContext()
-        {
-            release();
-        }
+        ~ScopedContext() { release(); }
 
         bool set(const PlatformGLContext& target) noexcept
         {
             release();
             target_ = target;
 
-            if (!target.valid())
-            {
-                success_ = false;
-                return success_;
-            }
+            if (!target.valid()) { success_ = false; return false; }
 
             previous_ = get_current();
-            if (previous_ == target_)
-            {
-                success_ = true;
-                switched_ = false;
-                return success_;
-            }
+            if (previous_ == target_) { success_ = true; switched_ = false; return true; }
 
             switched_ = make_current(target_);
             success_ = switched_;
@@ -166,23 +214,16 @@ export namespace almondnamespace::openglcontext::PlatformGL
         {
             if (switched_)
             {
-                if (previous_.valid())
-                {
-                    (void)make_current(previous_);
-                }
-                else
-                {
-                    clear_current();
-                }
+                if (previous_.valid()) (void)make_current(previous_);
+                else clear_current();
             }
-
             switched_ = false;
             success_ = false;
             previous_ = {};
             target_ = {};
         }
 
-        [[nodiscard]] bool success()  const noexcept { return success_; }
+        [[nodiscard]] bool success() const noexcept { return success_; }
         [[nodiscard]] bool switched() const noexcept { return switched_; }
         [[nodiscard]] const PlatformGLContext& target() const noexcept { return target_; }
 
@@ -205,6 +246,6 @@ export namespace almondnamespace::openglcontext::PlatformGL
         bool switched_ = false;
         bool success_ = false;
     };
-} // namespace almondnamespace::openglcontext::PlatformGL
+}
 
 #endif // ALMOND_USING_OPENGL

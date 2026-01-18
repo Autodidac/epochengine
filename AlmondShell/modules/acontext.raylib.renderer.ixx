@@ -21,6 +21,7 @@
  *   See LICENSE file for full terms.                         *
  *                                                            *
  **************************************************************/
+
 module;
 
 #include "aengine.config.hpp"
@@ -35,27 +36,27 @@ import <algorithm>;
 import <cstdint>;
 import <span>;
 
-import acontext.raylib.state;     // ::almondnamespace::raylibstate::get_last_viewport_fit
-import acontext.raylib.textures;  // ::almondnamespace::raylibtextures::ensure_uploaded / try_get_texture
+import acontext.raylib.state;     // get_last_viewport_fit()
+import acontext.raylib.textures;  // ensure_uploaded(), try_get_texture()
 import aatlas.texture;
 import aspritehandle;
 
 #if defined(ALMOND_USING_RAYLIB)
 
-namespace almondnamespace::raylibcontext
+export namespace almondnamespace::raylibrenderer
 {
-    inline void begin_frame()
+    export inline void begin_frame()
     {
-        BeginDrawing();
-        ClearBackground(RAYWHITE);
+        ::BeginDrawing();
+        ::ClearBackground(RAYWHITE);
     }
 
-    inline void end_frame()
+    export inline void end_frame()
     {
-        EndDrawing();
+        ::EndDrawing();
     }
 
-    inline void draw_sprite(
+    export inline void draw_sprite(
         SpriteHandle handle,
         std::span<const TextureAtlas* const> atlases,
         float x, float y, float width, float height) noexcept
@@ -76,15 +77,14 @@ namespace almondnamespace::raylibcontext
         if (!atlas->try_get_entry_info(i, r))
             return;
 
-        // IMPORTANT: fully qualified from inside this namespace.
         ::almondnamespace::raylibtextures::ensure_uploaded(*atlas);
-        const Texture2D* texPtr = ::almondnamespace::raylibtextures::try_get_texture(*atlas);
+        const ::Texture2D* texPtr = ::almondnamespace::raylibtextures::try_get_texture(*atlas);
         if (!texPtr || texPtr->id == 0)
             return;
 
-        const Texture2D& tex = *texPtr;
+        const ::Texture2D& tex = *texPtr;
 
-        const Raylib_Rectangle src{
+        const ::Raylib_Rectangle src{
             static_cast<float>(r.x),
             static_cast<float>(r.y),
             static_cast<float>(r.width),
@@ -97,10 +97,10 @@ namespace almondnamespace::raylibcontext
         const float designWidth = static_cast<float>((std::max)(1, fit.refW));
         const float designHeight = static_cast<float>((std::max)(1, fit.refH));
 
-        Vector2 offset{ 0.0f, 0.0f };
+        ::Vector2 offset{ 0.0f, 0.0f };
 #if !defined(RAYLIB_NO_WINDOW)
-        if (IsWindowReady())
-            offset = GetRenderOffset();
+        if (::IsWindowReady())
+            offset = ::GetRenderOffset();
 #endif
 
         const float baseOffsetX = offset.x + static_cast<float>(fit.vpX);
@@ -117,9 +117,12 @@ namespace almondnamespace::raylibcontext
             px = baseOffsetX + x * designWidth * viewportScale;
             py = baseOffsetY + y * designHeight * viewportScale;
 
-            const float scaledW = (width > 0.f) ? (width * designWidth * viewportScale)
+            const float scaledW = (width > 0.f)
+                ? (width * designWidth * viewportScale)
                 : (static_cast<float>(r.width) * viewportScale);
-            const float scaledH = (height > 0.f) ? (height * designHeight * viewportScale)
+
+            const float scaledH = (height > 0.f)
+                ? (height * designHeight * viewportScale)
                 : (static_cast<float>(r.height) * viewportScale);
 
             pw = (std::max)(scaledW, 1.0f);
@@ -130,18 +133,21 @@ namespace almondnamespace::raylibcontext
             px = baseOffsetX + x * viewportScale;
             py = baseOffsetY + y * viewportScale;
 
-            const float scaledW = (width > 0.f) ? (width * viewportScale)
+            const float scaledW = (width > 0.f)
+                ? (width * viewportScale)
                 : (static_cast<float>(r.width) * viewportScale);
-            const float scaledH = (height > 0.f) ? (height * viewportScale)
+
+            const float scaledH = (height > 0.f)
+                ? (height * viewportScale)
                 : (static_cast<float>(r.height) * viewportScale);
 
             pw = (std::max)(scaledW, 1.0f);
             ph = (std::max)(scaledH, 1.0f);
         }
 
-        const Raylib_Rectangle dst{ px, py, pw, ph };
-        DrawTexturePro(tex, src, dst, Vector2{ 0.0f, 0.0f }, 0.0f, WHITE);
+        const ::Raylib_Rectangle dst{ px, py, pw, ph };
+        ::DrawTexturePro(tex, src, dst, ::Vector2{ 0.0f, 0.0f }, 0.0f, WHITE);
     }
-}
+} // namespace almondnamespace::raylibrenderer
 
 #endif // ALMOND_USING_RAYLIB
