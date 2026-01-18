@@ -20,13 +20,6 @@ module;
 
 #include "aengine.config.hpp"
 
-#if defined(ALMOND_USING_RAYLIB)
-#include <raylib.h>
-#if defined(CloseWindow)
-#undef CloseWindow
-#endif
-#endif
-
 #if defined(_WIN32)
 #ifndef WIN32_LEAN_AND_MEAN
 #define WIN32_LEAN_AND_MEAN
@@ -58,6 +51,7 @@ import acontext.raylib.state;
 import acontext.raylib.textures;
 import acontext.raylib.renderer;
 import acontext.raylib.input;
+import acontext.raylib.api;
 
 #if defined(ALMOND_USING_RAYLIB)
 
@@ -82,7 +76,7 @@ namespace almondnamespace::raylibcontext
 #if defined(_WIN32)
     inline NativeWindowHandle get_hwnd_from_raylib() noexcept
     {
-        return static_cast<HWND>(::GetWindowHandle());
+        return static_cast<HWND>(almondnamespace::raylib_api::get_window_handle());
     }
 
     inline bool make_current(NativeDeviceContext dc, NativeGlContext rc) noexcept
@@ -144,9 +138,13 @@ namespace almondnamespace::raylibcontext
         if (!title.empty())
             title_storage() = std::move(title);
 
-        ::SetConfigFlags(FLAG_MSAA_4X_HINT);
-        ::InitWindow(static_cast<int>(st.width), static_cast<int>(st.height), title_storage().c_str());
-        ::SetTargetFPS(0);
+        almondnamespace::raylib_api::set_config_flags(
+            static_cast<unsigned int>(almondnamespace::raylib_api::flag_msaa_4x_hint));
+        almondnamespace::raylib_api::init_window(
+            static_cast<int>(st.width),
+            static_cast<int>(st.height),
+            title_storage().c_str());
+        almondnamespace::raylib_api::set_target_fps(0);
 
 #if defined(_WIN32)
         st.hwnd = get_hwnd_from_raylib();
@@ -183,8 +181,8 @@ namespace almondnamespace::raylibcontext
         (void)refresh_wgl_handles();
 #endif
 
-        const int w = ::GetScreenWidth();
-        const int h = ::GetScreenHeight();
+        const int w = almondnamespace::raylib_api::get_screen_width();
+        const int h = almondnamespace::raylib_api::get_screen_height();
         if (w > 0 && h > 0 && (static_cast<unsigned>(w) != st.width || static_cast<unsigned>(h) != st.height))
         {
             st.width = static_cast<unsigned>(w);
@@ -202,8 +200,8 @@ namespace almondnamespace::raylibcontext
         if (!st.running)
             return;
 
-        ::BeginDrawing();
-        ::ClearBackground(::Color{
+        almondnamespace::raylib_api::begin_drawing();
+        almondnamespace::raylib_api::clear_background(almondnamespace::raylib_api::Color{
             static_cast<unsigned char>(std::clamp(r, 0.0f, 1.0f) * 255.0f),
             static_cast<unsigned char>(std::clamp(g, 0.0f, 1.0f) * 255.0f),
             static_cast<unsigned char>(std::clamp(b, 0.0f, 1.0f) * 255.0f),
@@ -217,7 +215,7 @@ namespace almondnamespace::raylibcontext
         if (!st.running)
             return;
 
-        ::EndDrawing();
+        almondnamespace::raylib_api::end_drawing();
     }
 
     export inline void raylib_cleanup(std::shared_ptr<core::Context> ctx)
@@ -243,8 +241,7 @@ namespace almondnamespace::raylibcontext
         if (haveCurrent)
             almondnamespace::raylibtextures::shutdown_current_context_backend();
 
-        // Must be raylib close, not Win32 CloseWindow(HWND).
-        ::DestroyWindow(st.hwnd);
+        almondnamespace::raylib_api::close_window();
 
         st.running = false;
         st.hwnd = nullptr;
@@ -260,7 +257,7 @@ namespace almondnamespace::raylibcontext
     export inline void raylib_set_window_title(std::string_view title)
     {
         title_storage().assign(title.begin(), title.end());
-        ::SetWindowTitle(title_storage().c_str());
+        almondnamespace::raylib_api::set_window_title(title_storage().c_str());
     }
 
     export inline int raylib_get_width()
@@ -273,9 +270,9 @@ namespace almondnamespace::raylibcontext
         return static_cast<int>(almondnamespace::raylibstate::s_raylibstate.height);
     }
 
-    export inline ::Vector2 raylib_get_mouse_position()
+    export inline almondnamespace::raylib_api::Vector2 raylib_get_mouse_position()
     {
-        return ::GetMousePosition();
+        return almondnamespace::raylib_api::get_mouse_position();
     }
 
 } // namespace almondnamespace::raylibcontext
