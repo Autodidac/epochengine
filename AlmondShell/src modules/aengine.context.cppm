@@ -27,10 +27,12 @@ module;
 #include "aengine.config.hpp"
 
 #if defined(_WIN32)
+#   ifdef ALMOND_USING_WINMAIN
+#       include "../include/aframework.hpp"
+#   endif
 #   ifndef WIN32_LEAN_AND_MEAN
 #       define WIN32_LEAN_AND_MEAN
 #   endif
-#   include <windows.h>
 #endif
 
 export module aengine.context;

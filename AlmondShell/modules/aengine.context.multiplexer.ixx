@@ -3,7 +3,9 @@
 module;
 
 #if defined(_WIN32)
-#   include <windows.h>
+#   ifdef ALMOND_USING_WINMAIN
+#       include "../include/aframework.hpp"
+#   endif
 #   include <windowsx.h>
 #   include <shellapi.h>
 #   include <commctrl.h>

@@ -99,10 +99,6 @@
 #include <SFML/Graphics.hpp>
 #endif
 
-#ifdef ALMOND_USING_WINMAIN
-#include "../include/aframework.hpp"
-#endif
-
 //#ifdef ALMOND_USING_RAYLIB
 //#include <glad/glad.h>
 //
@@ -200,5 +196,4 @@ typedef HGLRC(WINAPI* PFNWGLCREATECONTEXTATTRIBSARBPROC)(HDC, HGLRC, const int*)
 #include <vulkan/vulkan_win32.h>
 #endif
 #endif
-
 
