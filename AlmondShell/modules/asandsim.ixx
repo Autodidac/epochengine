@@ -113,10 +113,10 @@ export namespace almondnamespace::sandsim
             };
 
             // Always try to load a background sprite if available
-            ensureSprite("bg");
+           // ensureSprite("bg");
             ensureSprite("sand");
-            ensureSprite("water");
-            ensureSprite("stone");
+          //  ensureSprite("water");
+          //  ensureSprite("stone");
 
             if (createdAtlas || registered)
             {

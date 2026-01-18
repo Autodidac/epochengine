@@ -103,6 +103,9 @@
     <Filter Include="Module Files\cppm\core">
       <UniqueIdentifier>{60f884ca-531b-43d9-8094-e9a030f5e25f}</UniqueIdentifier>
     </Filter>
+    <Filter Include="Module Files\cppm\crossplatform\linux">
+      <UniqueIdentifier>{6bab900a-1fae-4bfc-bbd7-0b10489a61bc}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="$(MSBuildThisFileDirectory)src\pch.h">
@@ -503,9 +506,6 @@
     <ClCompile Include="$(MSBuildThisFileDirectory)modules\acontext.raylib.renderer.ixx">
       <Filter>Module Files\ixx\core\context\backends\raylib</Filter>
     </ClCompile>
-    <ClCompile Include="$(MSBuildThisFileDirectory)src modules\aengine.context.multiplexer.linux.cppm">
-      <Filter>Module Files\cppm\crossplatform</Filter>
-    </ClCompile>
     <ClCompile Include="$(MSBuildThisFileDirectory)src\scripts\editor_launcher.ascript.cpp">
       <Filter>Source Files\scripts</Filter>
     </ClCompile>
@@ -541,6 +541,9 @@
     </ClCompile>
     <ClCompile Include="$(MSBuildThisFileDirectory)src modules\acontext.raylib.context.win.cppm">
       <Filter>Module Files\cppm\crossplatform</Filter>
+    </ClCompile>
+    <ClCompile Include="$(MSBuildThisFileDirectory)src modules\aengine.context.multiplexer.linux.cppm">
+      <Filter>Module Files\cppm\crossplatform\linux</Filter>
     </ClCompile>
   </ItemGroup>
 </Project>

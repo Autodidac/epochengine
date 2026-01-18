@@ -424,10 +424,10 @@ namespace almondnamespace::core
             ctx->initialize = sdl_initialize_adapter;
             ctx->cleanup = sdl_cleanup_adapter;
             ctx->process = sdl_process_adapter;
-            ctx->clear = almondnamespace::sdlcontext::sdl_clear;
-            ctx->present = almondnamespace::sdlcontext::sdl_present;
-            ctx->get_width = almondnamespace::sdlcontext::sdl_get_width;
-            ctx->get_height = almondnamespace::sdlcontext::sdl_get_height;
+            //ctx->clear = almondnamespace::sdlcontext::sdl_clear;
+            //ctx->present = almondnamespace::sdlcontext::sdl_present;
+            //ctx->get_width = almondnamespace::sdlcontext::sdl_get_width;
+            //ctx->get_height = almondnamespace::sdlcontext::sdl_get_height;
 
             ctx->is_key_held = [](input::Key k) { return input::is_key_held(k); };
             ctx->is_key_down = [](input::Key k) { return input::is_key_down(k); };

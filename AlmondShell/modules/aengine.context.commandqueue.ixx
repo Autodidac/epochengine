@@ -9,12 +9,14 @@ export module aengine.context.commandqueue;
 // ------------------------------------------------------------
 // Standard library
 // ------------------------------------------------------------
+import <cstddef>;
 import <functional>;
 import <mutex>;
 import <queue>;
+import <utility>;
 
 // ============================================================
-// Command queue
+// Command queue (thread-safe, no raw mutex access)
 // ============================================================
 
 export namespace almondnamespace::core
@@ -23,50 +25,66 @@ export namespace almondnamespace::core
     {
         using RenderCommand = std::function<void()>;
 
-        std::queue<RenderCommand>& get_queue()
-        {
-            return commands;
-        }
-
-        std::mutex& get_mutex()
-        {
-            return mutex;
-        }
-
+        // Push a command (thread-safe)
         void enqueue(RenderCommand cmd)
         {
-            std::scoped_lock lock(mutex);
-            commands.push(std::move(cmd));
+            if (!cmd) return;
+            std::lock_guard<std::mutex> lock(mutex_);
+            commands_.push(std::move(cmd));
         }
 
-        void clear()
+        // Remove all queued commands (thread-safe)
+        void clear() noexcept
         {
-            std::scoped_lock lock(mutex);
+            std::lock_guard<std::mutex> lock(mutex_);
             std::queue<RenderCommand> empty;
-            commands.swap(empty);
+            commands_.swap(empty);
         }
 
+        // Execute all queued commands. Returns true if anything ran.
         bool drain()
         {
-            std::queue<RenderCommand> localCommands;
+            std::queue<RenderCommand> local;
             {
-                std::scoped_lock lock(mutex);
-                if (commands.empty())
+                std::lock_guard<std::mutex> lock(mutex_);
+                if (commands_.empty())
                     return false;
-                localCommands.swap(commands);
+                local.swap(commands_);
             }
 
-            while (!localCommands.empty()) {
-                auto cmd = std::move(localCommands.front());
-                localCommands.pop();
-                if (cmd)
-                    cmd();
+            while (!local.empty())
+            {
+                auto cmd = std::move(local.front());
+                local.pop();
+                cmd(); // cmd is guaranteed non-empty from enqueue(), but safe anyway.
             }
             return true;
         }
 
+        // Depth snapshot for telemetry (thread-safe)
+        [[nodiscard]] std::size_t depth() const noexcept
+        {
+            std::lock_guard<std::mutex> lock(mutex_);
+            return commands_.size();
+        }
+
+        // Optional: run at most one command (useful for budgeted pumping)
+        bool try_run_one()
+        {
+            RenderCommand cmd;
+            {
+                std::lock_guard<std::mutex> lock(mutex_);
+                if (commands_.empty())
+                    return false;
+                cmd = std::move(commands_.front());
+                commands_.pop();
+            }
+            if (cmd) cmd();
+            return true;
+        }
+
     private:
-        std::mutex mutex;
-        std::queue<RenderCommand> commands;
+        mutable std::mutex mutex_;
+        std::queue<RenderCommand> commands_;
     };
 }

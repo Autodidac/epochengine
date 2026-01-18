@@ -536,8 +536,7 @@ export namespace almondnamespace::openglcontext
         {
             std::size_t depth = 0;
             {
-                std::scoped_lock lock(queue.get_mutex());
-                depth = queue.get_queue().size();
+                const auto depth = queue.depth();
             }
             telemetry::emit_gauge(
                 "renderer.command_queue.depth",

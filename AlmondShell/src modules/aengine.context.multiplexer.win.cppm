@@ -689,16 +689,16 @@ namespace almondnamespace::core
                         almondnamespace::anativecontext::softrenderer_initialize(ctx, hwnd, ctx->width, ctx->height, w ? w->onResize : nullptr);
                         break;
 #endif
-#if defined(ALMOND_USING_SDL)
-                    case ContextType::SDL:
-                        std::cerr << "[Init] Initializing SDL context for hwnd=" << hwnd << "\n";
-                        almondnamespace::sdlcontext::sdl_initialize(ctx, hostParent, ctx->width, ctx->height, w ? w->onResize : nullptr, narrowTitle);
-                        break;
-#endif
 #if defined(ALMOND_USING_RAYLIB)
                     case ContextType::RayLib:
-                        std::cerr << "[Init] Initializing RayLib context for hwnd=" << hwnd << "\n";
+                        std::cerr << "[Init] Initializing RayLib context for hwnd=" << hostParent << "\n";
                         almondnamespace::raylibcontext::raylib_initialize(ctx, hostParent, ctx->width, ctx->height, w ? w->onResize : nullptr, narrowTitle);
+                        break;
+#endif
+#if defined(ALMOND_USING_SDL)
+                    case ContextType::SDL:
+                        std::cerr << "[Init] Initializing SDL context for hwnd=" << hostParent << "\n";
+                        almondnamespace::sdlcontext::sdl_initialize(ctx, hostParent, ctx->width, ctx->height, w ? w->onResize : nullptr, narrowTitle);
                         break;
 #endif
                     default:
@@ -1066,8 +1066,7 @@ namespace almondnamespace::core
             {
                 std::size_t depth = 0;
                 {
-                    std::scoped_lock lock(win.commandQueue.get_mutex());
-                    depth = win.commandQueue.get_queue().size();
+                    const auto depth = win.commandQueue.depth();
                 }
                 telemetry::emit_gauge(
                     "renderer.command_queue.depth",

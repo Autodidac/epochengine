@@ -83,7 +83,27 @@ namespace almondnamespace::raylibcontext
         almondnamespace::raylib_api::set_target_fps(0);
 
         if (ctx)
-            ctx->native_window = almondnamespace::raylib_api::get_window_handle();
+        {
+            // The multiplexer expects ctx->hwnd to become the backend-created HWND.
+            ctx->hwnd = static_cast<decltype(ctx->hwnd)>(almondnamespace::raylib_api::get_window_handle());
+
+            // If you also keep native_window, keep it consistent (optional).
+            if constexpr (requires { ctx->native_window; })
+                ctx->native_window = almondnamespace::raylib_api::get_window_handle();
+        }
+
+#if defined(_WIN32)
+        {
+            // Keep raylibstate coherent too (so the Win32 glue module can rely on it).
+            auto hwnd = static_cast<HWND>(almondnamespace::raylib_api::get_window_handle());
+            st.hwnd = hwnd;
+        }
+#else
+        {
+            st.hwnd = almondnamespace::raylib_api::get_window_handle();
+        }
+#endif
+
 
         st.running = true;
         st.cleanupIssued = false;
@@ -198,3 +218,12 @@ namespace almondnamespace::raylibcontext
 }
 
 #endif // ALMOND_USING_RAYLIB
+
+
+
+
+
+
+
+
+

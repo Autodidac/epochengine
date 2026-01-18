@@ -25,8 +25,8 @@ module;
 #       error "acontext.raylib.api.cppm must not see <windows.h> before <raylib.h>. Move Win32 includes out of aengine.config.hpp / central headers."
 #   endif
 
-    // Do NOT define RAYLIB_STATIC unless you are actually linking a static raylib build.
-    // For vcpkg shared builds, leave it undefined.
+// Do NOT define RAYLIB_STATIC unless you are actually linking a static raylib build.
+// For vcpkg shared builds, leave it undefined.
 #   include <raylib.h>
 
 #endif // ALMOND_USING_RAYLIB
