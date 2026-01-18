@@ -4,7 +4,9 @@ module;
 #include "aengine.config.hpp" 		// for ALMOND_USING_SDL
 
 #if defined(_WIN32)
-#   include <windows.h>
+#   ifdef ALMOND_USING_WINMAIN
+#       include "../include/aframework.hpp"
+#   endif
 #endif
 
 export module aengine.context.window;

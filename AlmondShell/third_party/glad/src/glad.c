@@ -651,7 +651,9 @@ static void* get_proc(const char *namez);
 #ifndef _WINDOWS_
 #undef APIENTRY
 #endif
-#include <windows.h>
+#ifdef ALMOND_USING_WINMAIN
+#include "../../../include/aframework.hpp"
+#endif
 static HMODULE libGL;
 
 typedef void* (APIENTRYP PFNWGLGETPROCADDRESSPROC_PRIVATE)(const char*);
@@ -9463,4 +9465,3 @@ int gladLoadGLLoader(GLADloadproc load) {
 	load_GL_SUN_vertex(load);
 	return GLVersion.major != 0 || GLVersion.minor != 0;
 }
-

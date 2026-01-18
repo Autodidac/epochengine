@@ -1,10 +1,12 @@
 ﻿module;
 
 #if defined(_WIN32) && !defined(ALMOND_MAIN_HEADLESS)
+#   ifdef ALMOND_USING_WINMAIN
+#       include "../include/aframework.hpp"
+#   endif
 #   ifndef WIN32_LEAN_AND_MEAN
 #       define WIN32_LEAN_AND_MEAN
 #   endif
-#   include <windows.h> // HWND/HDC/HGLRC
 #endif
 
 export module aengine.core.context;

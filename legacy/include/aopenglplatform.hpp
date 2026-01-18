@@ -30,7 +30,9 @@
 #if defined(ALMOND_USING_OPENGL)
 
 #if defined(_WIN32)
-#    include <windows.h>
+#    ifdef ALMOND_USING_WINMAIN
+#        include "aframework.hpp"
+#    endif
 #elif defined(__linux__)
 // X11 defines a typedef named `Font` that clashes with the global `Font`
 // type exported by raylib. Raylib is included from aengineconfig.hpp before

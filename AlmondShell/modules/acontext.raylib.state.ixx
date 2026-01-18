@@ -4,7 +4,9 @@ module;
 
 #if defined(ALMOND_USING_RAYLIB)
 #if defined(_WIN32)
-#include <windows.h>
+#ifdef ALMOND_USING_WINMAIN
+#include "../include/aframework.hpp"
+#endif
 #endif
 #endif
 
