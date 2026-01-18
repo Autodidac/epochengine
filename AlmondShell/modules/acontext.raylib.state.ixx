@@ -1,11 +1,11 @@
 module;
 
-#include "aengine.config.hpp"
+#include <include/aengine.config.hpp> // for ALMOND_USING Macros
 
 #if defined(ALMOND_USING_RAYLIB)
 #if defined(_WIN32)
 #ifdef ALMOND_USING_WINMAIN
-#include "../include/aframework.hpp"
+#include <include/aframework.hpp>
 #endif
 #endif
 #endif

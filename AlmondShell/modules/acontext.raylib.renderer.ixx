@@ -18,7 +18,7 @@
 
 module;
 
-#include "aengine.config.hpp"
+#include <include/aengine.config.hpp> // for ALMOND_USING Macros
 
 export module acontext.raylib.renderer;
 
@@ -138,7 +138,7 @@ export namespace almondnamespace::raylibrenderer
             dst,
             almondnamespace::raylib_api::Vector2{ 0.0f, 0.0f },
             0.0f,
-            almondnamespace::raylib_api::color_white);
+            almondnamespace::raylib_api::white);
     }
 }
 

@@ -1,39 +1,20 @@
 ﻿/**************************************************************
- *   █████╗ ██╗     ███╗   ███╗   ███╗   ██╗    ██╗██████╗    *
- *  ██╔══██╗██║     ████╗ ████║ ██╔═══██╗████╗  ██║██╔══██╗   *
- *  ███████║██║     ██╔████╔██║ ██║   ██║██╔██╗ ██║██║  ██║   *
- *  ██╔══██║██║     ██║╚██╔╝██║ ██║   ██║██║╚██╗██║██║  ██║   *
- *  ██║  ██║███████╗██║ ╚═╝ ██║ ╚██████╔╝██║ ╚████║██████╔╝   *
- *  ╚═╝  ╚═╝╚══════╝╚═╝     ╚═╝  ╚═════╝ ╚═╝  ╚═══╝╚═════╝    *
- *                                                            *
- *   This file is part of the Almond Project.                 *
- *   AlmondShell - Modular C++ Framework                      *
- *                                                            *
- *   SPDX-License-Identifier: LicenseRef-MIT-NoSell           *
- *                                                            *
- *   Provided "AS IS", without warranty of any kind.          *
- *   Use permitted for Non-Commercial Purposes ONLY,          *
- *   without prior commercial licensing agreement.            *
- *                                                            *
- *   Redistribution Allowed with This Notice and              *
- *   LICENSE file. No obligation to disclose modifications.   *
- *                                                            *
- *   See LICENSE file for full terms.                         *
- *                                                            *
+ *   █████╗ ██╗     ███╗   ███╗   ███╗   ██╗    ██╗██████╗
+ *  ██╔══██╗██║     ████╗ ████║ ██╔═══██╗████╗  ██║██╔══██╗
+ *  ███████║██║     ██╔████╔██║ ██║   ██║██╔██╗ ██║██║  ██║
+ *  ██╔══██║██║     ██║╚██╔╝██║ ██║   ██║██║╚██╗██║██║  ██║
+ *  ██║  ██║███████╗██║ ╚═╝ ██║ ╚██████╔╝██║ ╚████║██████╔╝
+ *  ╚═╝  ╚═╝╚══════╝╚═╝     ╚═╝  ╚═════╝ ╚═╝  ╚═══╝╚═════╝
+ *
+ *   This file is part of the Almond Project.
+ *   AlmondShell - Modular C++ Framework
+ *
+ *   SPDX-License-Identifier: LicenseRef-MIT-NoSell
  **************************************************************/
  // aengine.context.cppm
 module;
 
-#include "aengine.config.hpp"
-
-#if defined(_WIN32)
-#   ifdef ALMOND_USING_WINMAIN
-#       include "../include/aframework.hpp"
-#   endif
-#   ifndef WIN32_LEAN_AND_MEAN
-#       define WIN32_LEAN_AND_MEAN
-#   endif
-#endif
+#include <include/aengine.config.hpp> // macros only — must NOT include windows
 
 export module aengine.context;
 
@@ -54,8 +35,9 @@ import <vector>;
 import aengine.platform;
 
 import aengine.input;
+import aengine.context.type;
 import aengine.core.context;
-import aengine.context.window;
+//import aengine.context.window;
 import aengine.context.multiplexer;
 
 import aatlas.manager;
@@ -102,79 +84,39 @@ import acontext.softrenderer.context;
 
 namespace
 {
-#if defined(_WIN32)
-    void ClampMouseToClientRectIfNeeded(const std::shared_ptr<almondnamespace::core::Context>& ctx, int& x, int& y) noexcept
-    {
-        if (!ctx) return;
-
-        HWND hwnd = ctx->get_hwnd();
-        if (!hwnd) return;
-
-        if (almondnamespace::input::are_mouse_coords_global())
-            return;
-
-        RECT rc{};
-        if (!::GetClientRect(hwnd, &rc))
-            return;
-
-        const int width = static_cast<int>((std::max)(static_cast<LONG>(1), rc.right - rc.left));
-        const int height = static_cast<int>((std::max)(static_cast<LONG>(1), rc.bottom - rc.top));
-
-        if (x < 0 || y < 0 || x >= width || y >= height) {
-            x = -1;
-            y = -1;
-        }
-    }
-#elif defined(__linux__)
-    void ClampMouseToClientRectIfNeeded(const std::shared_ptr<almondnamespace::core::Context>& ctx, int& x, int& y) noexcept
-    {
-        if (!ctx) return;
-
-        if (almondnamespace::input::are_mouse_coords_global())
-            return;
-
-        const int width = (std::max)(1, ctx->width);
-        const int height = (std::max)(1, ctx->height);
-
-        if (x < 0 || y < 0 || x >= width || y >= height) {
-            x = -1;
-            y = -1;
-        }
-    }
-#else
-    void ClampMouseToClientRectIfNeeded(const std::shared_ptr<almondnamespace::core::Context>&, int&, int&) noexcept {}
-#endif
-
     // ------------------------------------------------------------
     // Atlas helpers that do NOT depend on removed backend APIs.
     // ------------------------------------------------------------
-    std::uint32_t default_add_atlas(const almondnamespace::TextureAtlas& atlas, almondnamespace::core::ContextType type) noexcept
+    std::uint32_t default_add_atlas(const almondnamespace::TextureAtlas& atlas,
+        almondnamespace::core::ContextType type) noexcept
     {
-        // Keep consistent with your old fallback behavior:
-        // Use a stable non-zero handle even when no backend uploader exists.
         try {
             almondnamespace::atlasmanager::ensure_uploaded(atlas);
             almondnamespace::atlasmanager::process_pending_uploads(type);
         }
-        catch (...) {
-            // keep it noexcept
-        }
+        catch (...) {}
 
         const int idx = atlas.get_index();
         return static_cast<std::uint32_t>(idx >= 0 ? idx + 1 : 1);
     }
 
-    std::uint32_t default_add_texture(almondnamespace::TextureAtlas&, std::string, const almondnamespace::ImageData&) noexcept
+    std::uint32_t default_add_texture(almondnamespace::TextureAtlas&, std::string,
+        const almondnamespace::ImageData&) noexcept
     {
-        // Old backends used to implement per-texture injection.
-        // If that API is gone, this becomes a no-op placeholder.
         return 0u;
     }
 
     // ------------------------------------------------------------
-    // Adapters: Context wants void(*)() and bool(shared_ptr, Queue&)
-    // Backends often want richer signatures, so we pull Current().
+    // Helpers: keep core TU platform-neutral.
+    // We never name HWND here; we pass opaque handles through.
     // ------------------------------------------------------------
+    inline void* ctx_native_window_handle(const std::shared_ptr<almondnamespace::core::Context>& ctx) noexcept
+    {
+        if (!ctx) return nullptr;
+        if (auto h = ctx->get_hwnd()) return h;               // assumed void*/opaque
+        if (ctx->windowData && ctx->windowData->hwnd) return ctx->windowData->hwnd; // assumed void*/opaque
+        return nullptr;
+    }
 
 #if defined(ALMOND_USING_OPENGL)
     void opengl_initialize_adapter()
@@ -182,14 +124,14 @@ namespace
         auto ctx = almondnamespace::core::MultiContextManager::GetCurrent();
         if (!ctx) return;
 
-        HWND hwnd = ctx->get_hwnd();
-        if (!hwnd && ctx->windowData) hwnd = ctx->windowData->hwnd;
+        void* native = ctx_native_window_handle(ctx);
 
         const unsigned w = static_cast<unsigned>((std::max)(1, ctx->width));
         const unsigned h = static_cast<unsigned>((std::max)(1, ctx->height));
 
         try {
-            (void)almondnamespace::openglcontext::opengl_initialize(ctx, hwnd, w, h, ctx->onResize);
+            // backend owns the platform cast
+            (void)almondnamespace::openglcontext::opengl_initialize(ctx, native, w, h, ctx->onResize);
         }
         catch (const std::exception& e) {
             std::cerr << "[OpenGL] init exception: " << e.what() << "\n";
@@ -204,15 +146,9 @@ namespace
         auto ctx = almondnamespace::core::MultiContextManager::GetCurrent();
         if (!ctx) return;
 
-        try {
-            almondnamespace::openglcontext::opengl_cleanup(ctx);
-        }
-        catch (const std::exception& e) {
-            std::cerr << "[OpenGL] cleanup exception: " << e.what() << "\n";
-        }
-        catch (...) {
-            std::cerr << "[OpenGL] cleanup unknown exception\n";
-        }
+        try { almondnamespace::openglcontext::opengl_cleanup(ctx); }
+        catch (const std::exception& e) { std::cerr << "[OpenGL] cleanup exception: " << e.what() << "\n"; }
+        catch (...) { std::cerr << "[OpenGL] cleanup unknown exception\n"; }
     }
 
     bool opengl_process_adapter(std::shared_ptr<almondnamespace::core::Context> ctx,
@@ -342,6 +278,7 @@ namespace
     }
 #endif
 
+
 #if defined(ALMOND_USING_RAYLIB)
     bool raylib_process_adapter(std::shared_ptr<almondnamespace::core::Context> ctx,
         almondnamespace::core::CommandQueue& queue)
@@ -353,7 +290,7 @@ namespace
         return almondnamespace::raylibstate::s_raylibstate.running;
     }
 #endif
-} // anonymous namespace
+} // namespace
 
 namespace almondnamespace::core
 {
@@ -367,26 +304,16 @@ namespace almondnamespace::core
         std::unique_lock lock(g_backendsMutex);
         auto& backendState = g_backends[type];
 
-        if (!backendState.master)
-            backendState.master = std::move(context);
-        else
-            backendState.duplicates.emplace_back(std::move(context));
+        if (!backendState.master) backendState.master = std::move(context);
+        else backendState.duplicates.emplace_back(std::move(context));
     }
 
     bool core::Context::process_safe(std::shared_ptr<core::Context> ctx, CommandQueue& queue)
     {
         if (!process) return false;
-        try {
-            return process(std::move(ctx), queue);
-        }
-        catch (const std::exception& e) {
-            std::cerr << "[Context] Exception in process: " << e.what() << "\n";
-            return false;
-        }
-        catch (...) {
-            std::cerr << "[Context] Unknown exception in process\n";
-            return false;
-        }
+        try { return process(std::move(ctx), queue); }
+        catch (const std::exception& e) { std::cerr << "[Context] Exception in process: " << e.what() << "\n"; return false; }
+        catch (...) { std::cerr << "[Context] Unknown exception in process\n"; return false; }
     }
 
     namespace
@@ -405,7 +332,6 @@ namespace almondnamespace::core
             dst.ptr.store(src.ptr.load(std::memory_order_acquire), std::memory_order_release);
         }
 
-        // Default atlas hooks used when backends don't expose per-atlas upload APIs.
         std::uint32_t add_texture_default(TextureAtlas& a, std::string n, const ImageData& i)
         {
             return default_add_texture(a, std::move(n), i);
@@ -461,20 +387,15 @@ namespace almondnamespace::core
         if (s_initialized) return;
         s_initialized = true;
 
-        // NOTE:
-        // This file no longer calls removed backends::make_context().
-        // We create prototypes by wiring known backend entrypoints
-        // (or safe defaults) into core::Context.
-
 #if defined(ALMOND_USING_OPENGL)
         {
             auto ctx = std::make_shared<Context>();
             ctx->type = ContextType::OpenGL;
             ctx->backendName = "OpenGL";
 
-            ctx->initialize = opengl_initialize_adapter; // void(*)()
-            ctx->cleanup = opengl_cleanup_adapter;    // void(*)()
-            ctx->process = opengl_process_adapter;    // bool(shared_ptr, queue)
+            ctx->initialize = opengl_initialize_adapter;
+            ctx->cleanup = opengl_cleanup_adapter;
+            ctx->process = opengl_process_adapter;
             ctx->clear = almondnamespace::openglcontext::opengl_clear;
             ctx->present = almondnamespace::openglcontext::opengl_present;
             ctx->get_width = almondnamespace::openglcontext::opengl_get_width;
@@ -482,18 +403,13 @@ namespace almondnamespace::core
 
             ctx->is_key_held = [](input::Key k) { return input::is_key_held(k); };
             ctx->is_key_down = [](input::Key k) { return input::is_key_down(k); };
-            ctx->get_mouse_position = [](int& x, int& y) {
-                x = input::mouseX.load(std::memory_order_relaxed);
-                y = input::mouseY.load(std::memory_order_relaxed);
-                };
+            ctx->get_mouse_position = [](int& x, int& y) { x = input::mouseX.load(std::memory_order_relaxed); y = input::mouseY.load(std::memory_order_relaxed); };
             ctx->is_mouse_button_held = [](input::MouseButton b) { return input::is_mouse_button_held(b); };
             ctx->is_mouse_button_down = [](input::MouseButton b) { return input::is_mouse_button_down(b); };
 
             ctx->draw_sprite = almondnamespace::opengltextures::draw_sprite;
             ctx->add_texture = &add_texture_default;
-            ctx->add_atlas = +[](const TextureAtlas& a) {
-                return add_atlas_default(a, ContextType::OpenGL);
-                };
+            ctx->add_atlas = +[](const TextureAtlas& a) { return add_atlas_default(a, ContextType::OpenGL); };
 
             AddContextForBackend(ContextType::OpenGL, std::move(ctx));
         }
@@ -515,18 +431,13 @@ namespace almondnamespace::core
 
             ctx->is_key_held = [](input::Key k) { return input::is_key_held(k); };
             ctx->is_key_down = [](input::Key k) { return input::is_key_down(k); };
-            ctx->get_mouse_position = [](int& x, int& y) {
-                x = input::mouseX.load(std::memory_order_relaxed);
-                y = input::mouseY.load(std::memory_order_relaxed);
-                };
+            ctx->get_mouse_position = [](int& x, int& y) { x = input::mouseX.load(std::memory_order_relaxed); y = input::mouseY.load(std::memory_order_relaxed); };
             ctx->is_mouse_button_held = [](input::MouseButton b) { return input::is_mouse_button_held(b); };
             ctx->is_mouse_button_down = [](input::MouseButton b) { return input::is_mouse_button_down(b); };
 
             ctx->draw_sprite = sdltextures::draw_sprite;
             ctx->add_texture = &add_texture_default;
-            ctx->add_atlas = +[](const TextureAtlas& a) {
-                return add_atlas_default(a, ContextType::SDL);
-                };
+            ctx->add_atlas = +[](const TextureAtlas& a) { return add_atlas_default(a, ContextType::SDL); };
 
             AddContextForBackend(ContextType::SDL, std::move(ctx));
         }
@@ -542,8 +453,7 @@ namespace almondnamespace::core
                 auto current = almondnamespace::core::MultiContextManager::GetCurrent();
                 if (!current) return;
 
-                HWND parent = current->get_hwnd();
-                if (!parent && current->windowData) parent = current->windowData->hwnd;
+                void* parent = ctx_native_window_handle(current);
 
                 try {
                     (void)almondnamespace::raylibcontext::raylib_initialize(
@@ -562,190 +472,33 @@ namespace almondnamespace::core
                     std::cerr << "[RayLib] init unknown exception\n";
                 }
                 };
+
             ctx->cleanup = []() {
                 auto current = almondnamespace::core::MultiContextManager::GetCurrent();
                 if (!current) return;
 
-                try {
-                    almondnamespace::raylibcontext::raylib_cleanup(current);
-                }
-                catch (const std::exception& e) {
-                    std::cerr << "[RayLib] cleanup exception: " << e.what() << "\n";
-                }
-                catch (...) {
-                    std::cerr << "[RayLib] cleanup unknown exception\n";
-                }
+                try { almondnamespace::raylibcontext::raylib_cleanup(current); }
+                catch (const std::exception& e) { std::cerr << "[RayLib] cleanup exception: " << e.what() << "\n"; }
+                catch (...) { std::cerr << "[RayLib] cleanup unknown exception\n"; }
                 };
+
             ctx->process = raylib_process_adapter;
-            ctx->clear = []() {
-                almondnamespace::raylibcontext::raylib_clear(0.0f, 0.0f, 0.0f, 1.0f);
-                };
+            ctx->clear = []() { almondnamespace::raylibcontext::raylib_clear(0.0f, 0.0f, 0.0f, 1.0f); };
             ctx->present = almondnamespace::raylibcontext::raylib_present;
             ctx->get_width = almondnamespace::raylibcontext::raylib_get_width;
             ctx->get_height = almondnamespace::raylibcontext::raylib_get_height;
 
             ctx->is_key_held = [](input::Key k) { return input::is_key_held(k); };
             ctx->is_key_down = [](input::Key k) { return input::is_key_down(k); };
-            ctx->get_mouse_position = [](int& x, int& y) {
-                x = input::mouseX.load(std::memory_order_relaxed);
-                y = input::mouseY.load(std::memory_order_relaxed);
-                };
+            ctx->get_mouse_position = [](int& x, int& y) { x = input::mouseX.load(std::memory_order_relaxed); y = input::mouseY.load(std::memory_order_relaxed); };
             ctx->is_mouse_button_held = [](input::MouseButton b) { return input::is_mouse_button_held(b); };
             ctx->is_mouse_button_down = [](input::MouseButton b) { return input::is_mouse_button_down(b); };
 
             ctx->draw_sprite = almondnamespace::raylibrenderer::draw_sprite;
             ctx->add_texture = &add_texture_default;
-            ctx->add_atlas = +[](const TextureAtlas& a) {
-                return add_atlas_default(a, ContextType::RayLib);
-                };
+            ctx->add_atlas = +[](const TextureAtlas& a) { return add_atlas_default(a, ContextType::RayLib); };
 
             AddContextForBackend(ContextType::RayLib, std::move(ctx));
-        }
-#endif
-
-#if defined(ALMOND_USING_SFML)
-        {
-            auto ctx = std::make_shared<Context>();
-            ctx->type = ContextType::SFML;
-            ctx->backendName = "SFML";
-
-            ctx->initialize = []() {};
-            ctx->cleanup = sfml_cleanup_adapter;
-            ctx->process = sfml_process_adapter;
-            ctx->clear = []() {};
-            ctx->present = []() {};
-            ctx->get_width = []() { return 800; };
-            ctx->get_height = []() { return 600; };
-
-            ctx->is_key_held = [](input::Key k) { return input::is_key_held(k); };
-            ctx->is_key_down = [](input::Key k) { return input::is_key_down(k); };
-            ctx->get_mouse_position = [](int& x, int& y) {
-                x = input::mouseX.load(std::memory_order_relaxed);
-                y = input::mouseY.load(std::memory_order_relaxed);
-                };
-            ctx->is_mouse_button_held = [](input::MouseButton b) { return input::is_mouse_button_held(b); };
-            ctx->is_mouse_button_down = [](input::MouseButton b) { return input::is_mouse_button_down(b); };
-
-            ctx->registry_get = [](const char*) { return 0; };
-            ctx->draw_sprite = sfmltextures::draw_sprite;
-
-            ctx->add_texture = &add_texture_default;
-            ctx->add_atlas = +[](const TextureAtlas& a) {
-                return add_atlas_default(a, ContextType::SFML);
-                };
-
-            AddContextForBackend(ContextType::SFML, std::move(ctx));
-        }
-#endif
-
-#if defined(ALMOND_USING_VULKAN)
-        {
-            auto ctx = std::make_shared<Context>();
-            ctx->type = ContextType::Vulkan;
-            ctx->backendName = "Vulkan";
-
-            ctx->initialize = []() {};
-            ctx->cleanup = []() {};
-            ctx->process = [](std::shared_ptr<core::Context> c, CommandQueue& q) -> bool {
-                if (!c) return false;
-                atlasmanager::process_pending_uploads(c->type);
-                q.drain();
-                return true;
-                };
-            ctx->clear = []() {};
-            ctx->present = []() {};
-            ctx->get_width = []() { return 800; };
-            ctx->get_height = []() { return 600; };
-
-            ctx->is_key_held = [](input::Key k) { return input::is_key_held(k); };
-            ctx->is_key_down = [](input::Key k) { return input::is_key_down(k); };
-            ctx->get_mouse_position = [](int& x, int& y) {
-                x = input::mouseX.load(std::memory_order_relaxed);
-                y = input::mouseY.load(std::memory_order_relaxed);
-                };
-            ctx->is_mouse_button_held = [](input::MouseButton b) { return input::is_mouse_button_held(b); };
-            ctx->is_mouse_button_down = [](input::MouseButton b) { return input::is_mouse_button_down(b); };
-
-            ctx->add_texture = &add_texture_default;
-            ctx->add_atlas = +[](const TextureAtlas& a) {
-                return add_atlas_default(a, ContextType::Vulkan);
-                };
-
-            AddContextForBackend(ContextType::Vulkan, std::move(ctx));
-        }
-#endif
-
-#if defined(ALMOND_USING_DIRECTX)
-        {
-            auto ctx = std::make_shared<Context>();
-            ctx->type = ContextType::DirectX;
-            ctx->backendName = "DirectX";
-
-            ctx->initialize = []() {};
-            ctx->cleanup = []() {};
-            ctx->process = [](std::shared_ptr<core::Context> c, CommandQueue& q) -> bool {
-                if (!c) return false;
-                atlasmanager::process_pending_uploads(c->type);
-                q.drain();
-                return true;
-                };
-            ctx->clear = []() {};
-            ctx->present = []() {};
-            ctx->get_width = []() { return 800; };
-            ctx->get_height = []() { return 600; };
-
-            ctx->is_key_held = [](input::Key k) { return input::is_key_held(k); };
-            ctx->is_key_down = [](input::Key k) { return input::is_key_down(k); };
-            ctx->get_mouse_position = [](int& x, int& y) {
-                x = input::mouseX.load(std::memory_order_relaxed);
-                y = input::mouseY.load(std::memory_order_relaxed);
-                };
-            ctx->is_mouse_button_held = [](input::MouseButton b) { return input::is_mouse_button_held(b); };
-            ctx->is_mouse_button_down = [](input::MouseButton b) { return input::is_mouse_button_down(b); };
-
-            ctx->add_texture = &add_texture_default;
-            ctx->add_atlas = +[](const TextureAtlas& a) {
-                return add_atlas_default(a, ContextType::DirectX);
-                };
-
-            AddContextForBackend(ContextType::DirectX, std::move(ctx));
-        }
-#endif
-
-#if defined(ALMOND_USING_CUSTOM)
-        {
-            auto ctx = std::make_shared<Context>();
-            ctx->type = ContextType::Custom;
-            ctx->backendName = "Custom";
-
-            ctx->initialize = []() {};
-            ctx->cleanup = []() {};
-            ctx->process = [](std::shared_ptr<core::Context> c, CommandQueue& q) -> bool {
-                if (!c) return false;
-                atlasmanager::process_pending_uploads(c->type);
-                q.drain();
-                return true;
-                };
-            ctx->clear = []() {};
-            ctx->present = []() {};
-            ctx->get_width = []() { return 800; };
-            ctx->get_height = []() { return 600; };
-
-            ctx->is_key_held = [](input::Key k) { return input::is_key_held(k); };
-            ctx->is_key_down = [](input::Key k) { return input::is_key_down(k); };
-            ctx->get_mouse_position = [](int& x, int& y) {
-                x = input::mouseX.load(std::memory_order_relaxed);
-                y = input::mouseY.load(std::memory_order_relaxed);
-                };
-            ctx->is_mouse_button_held = [](input::MouseButton b) { return input::is_mouse_button_held(b); };
-            ctx->is_mouse_button_down = [](input::MouseButton b) { return input::is_mouse_button_down(b); };
-
-            ctx->add_texture = &add_texture_default;
-            ctx->add_atlas = +[](const TextureAtlas& a) {
-                return add_atlas_default(a, ContextType::Custom);
-                };
-
-            AddContextForBackend(ContextType::Custom, std::move(ctx));
         }
 #endif
 
@@ -759,26 +512,15 @@ namespace almondnamespace::core
             ctx->cleanup = softrenderer_cleanup_adapter;
             ctx->process = softrenderer_process_adapter;
 
-            // If your software backend has these, wire them. Otherwise keep null.
-            // ctx->clear = ...
-            // ctx->present = ...
-            // ctx->get_width = almondnamespace::anativecontext::get_width;
-            // ctx->get_height = almondnamespace::anativecontext::get_height;
-
             ctx->is_key_held = [](input::Key k) { return input::is_key_held(k); };
             ctx->is_key_down = [](input::Key k) { return input::is_key_down(k); };
-            ctx->get_mouse_position = [](int& x, int& y) {
-                x = input::mouseX.load(std::memory_order_relaxed);
-                y = input::mouseY.load(std::memory_order_relaxed);
-                };
+            ctx->get_mouse_position = [](int& x, int& y) { x = input::mouseX.load(std::memory_order_relaxed); y = input::mouseY.load(std::memory_order_relaxed); };
             ctx->is_mouse_button_held = [](input::MouseButton b) { return input::is_mouse_button_held(b); };
             ctx->is_mouse_button_down = [](input::MouseButton b) { return input::is_mouse_button_down(b); };
 
             ctx->draw_sprite = almondnamespace::anativecontext::draw_sprite;
             ctx->add_texture = &add_texture_default;
-            ctx->add_atlas = +[](const TextureAtlas& a) {
-                return add_atlas_default(a, ContextType::Software);
-                };
+            ctx->add_atlas = +[](const TextureAtlas& a) { return add_atlas_default(a, ContextType::Software); };
 
             AddContextForBackend(ContextType::Software, std::move(ctx));
         }
@@ -805,23 +547,15 @@ namespace almondnamespace::core
 
             if (auto* window = ctx->windowData)
             {
-                if (window->running) {
-                    anyRunning = true;
-                }
-                else {
-                    window->commandQueue.drain();
-                }
+                if (window->running) anyRunning = true;
+                else window->commandQueue.drain();
                 continue;
             }
 
             CommandQueue localQueue;
-            if (!ctx->process) {
-                localQueue.drain();
-                continue;
-            }
+            if (!ctx->process) { localQueue.drain(); continue; }
 
-            if (ctx->process_safe(ctx, localQueue))
-                anyRunning = true;
+            if (ctx->process_safe(ctx, localQueue)) anyRunning = true;
         }
 
         return anyRunning;

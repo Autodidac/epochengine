@@ -34,21 +34,10 @@
 //#include "pch.h"
 
 #include "..\include\aengine.config.hpp"
-#include "..\include\aengine.hpp"
 
-#if defined(_WIN32)
-#   ifdef ALMOND_USING_WINMAIN
-#       include "../include/aframework.hpp"
-#   endif
-#   ifndef WIN32_LEAN_AND_MEAN
-#       define WIN32_LEAN_AND_MEAN
-#   endif
-//#   define ALMOND_USING_WINMAIN
-#   include <shellapi.h>
-#endif
+//#include "..\include\aengine.hpp"
 
 #define ALMOND_SINGLE_PARENT 1
-
 
 // -----------------------------
 // Standard library imports
@@ -119,6 +108,11 @@ import asfmlcontext;
 #endif
 #if defined(ALMOND_USING_RAYLIB)
 import acontext.raylib.context;
+#endif
+
+#if defined(_WIN32)
+import <windows.h>;        // pulls winuser.h, winnt.h, etc
+//import <wtypes.h>;
 #endif
 
 namespace input = almondnamespace::input;
@@ -508,7 +502,7 @@ namespace almondnamespace::core
 
                 if (!ok)
                 {
-                    MessageBoxW(nullptr, L"Failed to initialize contexts!", L"Error", MB_ICONERROR | MB_OK);
+                    //MessageBoxW(nullptr, L"Failed to initialize contexts!", L"Error", MB_ICONERROR | MB_OK);
                     return -1;
                 }
 

@@ -27,7 +27,7 @@
 
 //import aengine.platform;
 //import aengine.config;
-#include "aengine.config.hpp" 		// for ALMOND_USING_SDL
+#include "aengine.config.hpp" // for ALMOND_USING Macros 
 
 //export import aengine.platform;
 //export import aengine.engine_components;

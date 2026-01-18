@@ -24,8 +24,19 @@
 module;
 
 //#include "aplatform.hpp"
-#include "aengine.config.hpp"   // may bring in <windows.h>, etc.
+
+#include <include/aengine.config.hpp> // for ALMOND_USING Macros   // may bring in <windows.h>, etc.
 //#include "arobusttime.hpp"     // time::Timer, time::createTimer(...)
+#if defined(ALMOND_USING_SOFTWARE_RENDERER)
+#   if defined(_WIN32)
+#       ifdef ALMOND_USING_WINMAIN
+#         include <aframework.hpp>
+#       endif
+#       ifndef WIN32_LEAN_AND_MEAN
+#           define WIN32_LEAN_AND_MEAN
+#       endif
+#   endif
+#endif
 
 export module acontext.softrenderer.state;
 
@@ -36,7 +47,7 @@ import <functional>;
 import <memory>;
 import <vector>;
 
-import aengine.platform;
+//import aengine.platform;  
 import aengine.core.time;
 
 #if defined(ALMOND_USING_SOFTWARE_RENDERER)

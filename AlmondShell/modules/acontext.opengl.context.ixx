@@ -24,16 +24,46 @@
 // acontext.opengl.context.ixx
 module;
 
+#include "..\\include\\aengine.config.hpp"
+
 // OS + GL headers in global module fragment.
 #if defined(_WIN32)
 #   ifdef ALMOND_USING_WINMAIN
-#       include "../include/aframework.hpp"
+#       include <include/aframework.hpp>
 #   endif
 #   ifndef WIN32_LEAN_AND_MEAN
 #       define WIN32_LEAN_AND_MEAN
 #   endif
-#   include <glad/glad.h>
-#   include <GL/wglext.h>
+#include <wingdi.h>
+
+// -----------------------------------------------------------------------------
+// IMPORTANT:
+// wglext.h (and glad_wgl.h) require OpenGL base types (GLenum/GLint/GLuint/etc).
+// Ensure glad.h (preferred) or gl.h is included BEFORE wglext/glad_wgl.
+// -----------------------------------------------------------------------------
+
+#if defined(__has_include)
+#  if __has_include(<glad/glad.h>)
+#    include <glad/glad.h>
+#  else
+#    include <GL/gl.h>
+#  endif
+#else
+#  include <glad/glad.h>
+#endif
+
+#if defined(__has_include)
+#  if __has_include(<glad/glad_wgl.h>)
+#    include <glad/glad_wgl.h>
+#  else
+#    include <GL/wglext.h>
+#  endif
+#else
+#  include <GL/wglext.h>
+#endif
+
+//#   include <glad/glad.h>
+//#   include <GL/wglext.h>
 #elif defined(__linux__)
 #   include <glad/glad.h>
 #   include <X11/Xlib.h>
@@ -42,7 +72,6 @@ module;
 #   include <GL/glxext.h>
 #endif
 
-#include "..\\include\\aengine.config.hpp"
 
 export module acontext.opengl.context;
 

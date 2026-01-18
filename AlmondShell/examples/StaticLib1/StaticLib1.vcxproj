@@ -421,6 +421,12 @@
     <ClCompile Update="C:\Users\iammi\source\repos\epochengine\AlmondShell\src modules\acontext.opengl.platform.win.cppm">
       <FileType>Document</FileType>
     </ClCompile>
+    <ClCompile Update="C:\Users\iammi\source\repos\epochengine\AlmondShell\src modules\acontext.raylib.api.cppm">
+      <FileType>Document</FileType>
+    </ClCompile>
+    <ClCompile Update="C:\Users\iammi\source\repos\epochengine\AlmondShell\src modules\acontext.raylib.api.ixx">
+      <FileType>Document</FileType>
+    </ClCompile>
     <ClCompile Update="C:\Users\iammi\source\repos\epochengine\AlmondShell\src modules\acontext.raylib.platform.impl.cppm">
       <FileType>Document</FileType>
     </ClCompile>

@@ -25,7 +25,7 @@
 module;
 
 // configuration
-#include "..\\include\\aengine.config.hpp"
+#include "../include/aengine.config.hpp"
 
 #if defined(_WIN32)
 #   ifdef ALMOND_USING_WINMAIN

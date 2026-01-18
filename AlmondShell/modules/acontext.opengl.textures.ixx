@@ -23,23 +23,43 @@
  **************************************************************/
 module;
 
-// aengine.opengl.textures module interface
+// -----------------------------------------------------------------------------
+// Global module fragment: macros + platform / C headers live here.
+// -----------------------------------------------------------------------------
 
-//#include "atypes.hpp"
-//#include "aopenglplatform.hpp"
-//#include "aopenglcontext.hpp"
-//#include "aopenglstate.hpp"
+#include "../include/aengine.config.hpp"
 
-//#include "acontext.hpp"
-//#include "acontextmultiplexer.hpp"
-//#include "aatlasmanager.hpp"
-//#include "aatlastexture.hpp"
-//#include "aimageloader.hpp"
-//#include "atexture.hpp"
-//#include "aspritehandle.hpp"
-//#include "acommandline.hpp"
-#include "..\include\aengine.config.hpp"
-//#include "..\include\aengine.hpp"
+#if defined(ALMOND_USING_OPENGL)
+
+// Make sure GL loaders see any platform defines they need.
+#if defined(_WIN32)
+#  ifndef WIN32_LEAN_AND_MEAN
+#    define WIN32_LEAN_AND_MEAN
+#  endif
+#  ifndef NOMINMAX
+#    define NOMINMAX
+#  endif
+#  include <windows.h>
+#endif
+
+// Prefer GLAD (what you’re already using elsewhere). This provides GLuint,
+// GLenum and all gl* function prototypes.
+#if defined(__has_include)
+#  if __has_include(<glad/glad.h>)
+#    include <glad/glad.h>
+#  else
+     // Fallback (not ideal, but better than nothing)
+#    if defined(_WIN32)
+#      include <GL/gl.h>
+#    elif defined(__linux__)
+#      include <GL/gl.h>
+#    endif
+#  endif
+#else
+#  include <glad/glad.h>
+#endif
+
+#endif // ALMOND_USING_OPENGL
 
 export module acontext.opengl.textures;
 
@@ -59,10 +79,9 @@ import aengine.platform;
 
 #ifdef ALMOND_USING_OPENGL
 
-import aengine.cli; 
+import aengine.cli;
 import aengine.core.context;
 import aengine.context.multiplexer;
-//import aengine.core.types;
 
 import acontext.opengl.platform;
 import acontext.opengl.state;
@@ -73,11 +92,16 @@ import atexture;
 import aimage.loader;
 import aspritehandle;
 
+// If u32/u64 are yours and not from <cstdint>, you must import the module that
+// defines them. Uncomment the correct one in your project.
+// import atypes;
+
 export namespace almondnamespace::opengltextures
 {
     namespace detail
     {
-        inline almondnamespace::openglcontext::PlatformGL::PlatformGLContext to_platform_context(const almondnamespace::openglstate::OpenGL4State& state) noexcept
+        inline almondnamespace::openglcontext::PlatformGL::PlatformGLContext
+            to_platform_context(const almondnamespace::openglstate::OpenGL4State& state) noexcept
         {
             almondnamespace::openglcontext::PlatformGL::PlatformGLContext ctx{};
 #if defined(_WIN32)
@@ -114,8 +138,6 @@ export namespace almondnamespace::opengltextures
 
     inline std::unordered_map<const TextureAtlas*, AtlasGPU, TextureAtlasPtrHash, TextureAtlasPtrEqual> opengl_gpu_atlases;
 
-    // forward declare OpenGL4State to avoid pulling in aopenglcontext here
-    //namespace openglcontext { struct OpenGL4State; }
     struct BackendData {
         std::unordered_map<const TextureAtlas*, AtlasGPU,
             TextureAtlasPtrHash, TextureAtlasPtrEqual> gpu_atlases;
@@ -139,26 +161,22 @@ export namespace almondnamespace::opengltextures
         return *data;
     }
 
-   // using almondnamespace::openglcontext::s_openglstate;
     using Handle = uint32_t;
 
-    inline std::atomic_uint8_t s_generation{ 1 };
+    inline std::atomic_uint8_t  s_generation{ 1 };
     inline std::atomic_uint32_t s_dumpSerial{ 0 };
 
-    [[nodiscard]]
-    inline Handle make_handle(int atlasIdx, int localIdx) noexcept {
+    [[nodiscard]] inline Handle make_handle(int atlasIdx, int localIdx) noexcept {
         return (Handle(s_generation.load(std::memory_order_relaxed)) << 24)
             | ((atlasIdx & 0xFFF) << 12)
             | (localIdx & 0xFFF);
     }
 
-    [[nodiscard]]
-    inline bool is_handle_live(Handle h) noexcept {
+    [[nodiscard]] inline bool is_handle_live(Handle h) noexcept {
         return uint8_t(h >> 24) == s_generation.load(std::memory_order_relaxed);
     }
 
-    [[nodiscard]]
-    inline ImageData ensure_rgba(const ImageData& img) {
+    [[nodiscard]] inline ImageData ensure_rgba(const ImageData& img) {
         const size_t pixelCount = static_cast<size_t>(img.width) * img.height;
         const size_t channels = img.pixels.size() / pixelCount;
 
@@ -183,7 +201,8 @@ export namespace almondnamespace::opengltextures
 
     inline std::string make_dump_name(int atlasIdx, std::string_view tag) {
         std::filesystem::create_directories("atlas_dump");
-        return std::format("atlas_dump/{}_{}_{}.ppm", tag, atlasIdx, s_dumpSerial.fetch_add(1, std::memory_order_relaxed));
+        return std::format("atlas_dump/{}_{}_{}.ppm", tag, atlasIdx,
+            s_dumpSerial.fetch_add(1, std::memory_order_relaxed));
     }
 
     inline void dump_atlas(const TextureAtlas& atlas, int atlasIdx) {
@@ -303,13 +322,13 @@ export namespace almondnamespace::opengltextures
         upload_atlas_to_gpu(atlas);
     }
 
-    // Pipeline glue (was removed; draw_sprite still calls it)
     inline bool ensure_created_pipeline(almondnamespace::openglstate::OpenGL4State& glState)
     {
         return almondnamespace::openglquad::ensure_quad_pipeline(glState);
     }
 
-    inline void clear_gpu_atlases() noexcept {
+    inline void clear_gpu_atlases() noexcept
+    {
         BackendData* oglData = nullptr;
         {
             std::shared_lock lock(core::g_backendsMutex);
@@ -332,7 +351,8 @@ export namespace almondnamespace::opengltextures
         s_generation.fetch_add(1, std::memory_order_relaxed);
     }
 
-    inline Handle load_atlas(const TextureAtlas& atlas, int atlasIndex = -1) {
+    inline Handle load_atlas(const TextureAtlas& atlas, int atlasIndex = -1)
+    {
         atlasmanager::ensure_uploaded(atlas);
         const int resolvedIndex = (atlasIndex >= 0) ? atlasIndex : atlas.get_index();
         return make_handle(resolvedIndex, 0);
@@ -358,7 +378,7 @@ export namespace almondnamespace::opengltextures
         return make_handle(atlas.get_index(), addedOpt->index);
     }
 
-    inline uint32_t upload_texture(const uint8_t* pixels, int width, int height) 
+    inline uint32_t upload_texture(const uint8_t* pixels, int width, int height)
     {
         GLuint tex = 0;
         glGenTextures(1, &tex);
@@ -373,14 +393,14 @@ export namespace almondnamespace::opengltextures
 
         glBindTexture(GL_TEXTURE_2D, 0);
 
-        return tex;
+        return static_cast<uint32_t>(tex);
     }
 
-    // Diagnostic draw_sprite version
     inline void draw_sprite(SpriteHandle handle,
         std::span<const TextureAtlas* const> atlases,
         float x, float y, float width, float height) noexcept
     {
+        // (unchanged from your version)
         if (!handle.is_valid()) {
             std::cerr << "[DrawSprite] Invalid sprite handle.\n";
             return;
@@ -420,12 +440,6 @@ export namespace almondnamespace::opengltextures
         backend.glState.width = static_cast<unsigned int>(w);
         backend.glState.height = static_cast<unsigned int>(h);
 
-#if defined(DEBUG_TEXTURE_RENDERING)
-        std::cerr << "[DrawSprite] Inputs: x=" << x
-            << ", y=" << y << ", w=" << width
-            << ", h=" << height << '\n';
-#endif
-
         const int atlasIdx = int(handle.atlasIndex);
         const int localIdx = int(handle.localIndex);
 
@@ -438,6 +452,7 @@ export namespace almondnamespace::opengltextures
             std::cerr << "[DrawSprite] Null atlas pointer at index: " << atlasIdx << '\n';
             return;
         }
+
         AtlasRegion region{};
         std::string spriteName;
         if (!atlas->try_get_entry_info(localIdx, region, &spriteName)) {
@@ -447,7 +462,6 @@ export namespace almondnamespace::opengltextures
 
         ensure_uploaded(*atlas);
 
-        // 🔑 FIX: use backend.gpu_atlases, not global opengl_gpu_atlases
         GLuint tex = 0;
         {
             std::lock_guard<std::mutex> gpuLock(backend.gpuMutex);
@@ -476,7 +490,6 @@ export namespace almondnamespace::opengltextures
         glActiveTexture(GL_TEXTURE0);
         glBindTexture(GL_TEXTURE_2D, tex);
 
-        // disable mipmapping for pixel perfect rendering
         glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
         glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
         glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
@@ -488,53 +501,30 @@ export namespace almondnamespace::opengltextures
         float drawWidth = widthNormalized ? (std::max)(width * float(w), 1.0f) : width;
         float drawHeight = heightNormalized ? (std::max)(height * float(h), 1.0f) : height;
 
-        float drawX = (widthNormalized && x >= 0.f && x <= 1.f)
-            ? x * float(w)
-            : x;
-        float drawY = (heightNormalized && y >= 0.f && y <= 1.f)
-            ? y * float(h)
-            : y;
+        float drawX = (widthNormalized && x >= 0.f && x <= 1.f) ? x * float(w) : x;
+        float drawY = (heightNormalized && y >= 0.f && y <= 1.f) ? y * float(h) : y;
 
         const float u0 = region.u1;
         const float du = region.u2 - region.u1;
-        // OpenGL expects the texture origin in the bottom-left corner, while the
-        // atlas data is stored with a top-left origin.  Flip the V span so the
-        // sprite appears upright without modifying shared atlas data.
         const float v0 = region.v2;
         const float dv = region.v1 - region.v2;
 
         if (backend.glState.uUVRegionLoc >= 0)
             glUniform4f(backend.glState.uUVRegionLoc, u0, v0, du, dv);
 
-        // Flip Y pixel coordinate *before* normalization
         float flippedY = h - (drawY + drawHeight * 0.5f);
 
-        // Convert to NDC [-1, 1], center coords
         float ndc_x = ((drawX + drawWidth * 0.5f) / float(w)) * 2.f - 1.f;
         float ndc_y = (flippedY / float(h)) * 2.f - 1.f;
         float ndc_w = (drawWidth / float(w)) * 2.f;
         float ndc_h = (drawHeight / float(h)) * 2.f;
 
-#if defined(DEBUG_TEXTURE_RENDERING_VERY_VERBOSE)
-        std::cerr << "[DrawSprite] Atlas entries count: " << atlas->entry_count() << "\n";
-        std::cerr << "[DrawSprite] Requested sprite index: " << localIdx << "\n";
-
-        if (y < 0) {
-            std::cerr << "[Warning] Negative y coordinate: " << y << '\n';
-        }
-
-        std::cerr << "[DrawSprite] Using region for '" << spriteName << "': "
-            << "u1=" << region.u1 << ", v1=" << region.v1
-            << ", u2=" << region.u2 << ", v2=" << region.v2
-            << ", x=" << region.x << ", y=" << region.y
-            << ", w=" << region.width << ", h=" << region.height << '\n';
-#endif
-
         if (backend.glState.uTransformLoc >= 0)
             glUniform4f(backend.glState.uTransformLoc, ndc_x, ndc_y, ndc_w, ndc_h);
 
         glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, nullptr);
-        GLenum err = glGetError();
+
+        const GLenum err = glGetError();
         if (err != GL_NO_ERROR) {
             std::cerr << "[OpenGL ERROR] glDrawElements failed: " << std::hex << err << "\n";
         }
@@ -542,20 +532,8 @@ export namespace almondnamespace::opengltextures
         glBindVertexArray(0);
         glBindTexture(GL_TEXTURE_2D, 0);
         glDisable(GL_BLEND);
-
-#if defined(DEBUG_TEXTURE_RENDERING_VERY_VERBOSE)
-        std::cerr << "[DrawSprite] Atlas '" << atlas->name
-            << "' Sprite '" << spriteName
-            << "' AtlasIdx=" << atlasIdx
-            << " SpriteIdx=" << localIdx << '\n';
-
-        std::cerr << "[DrawSprite] Final quad NDC: X=" << ndc_x
-            << " Y=" << ndc_y
-            << " W=" << ndc_w
-            << " H=" << ndc_h << "\n";
-#endif
     }
 
-} // namespace almondnamespace::opengl
+} // namespace almondnamespace::opengltextures
 
 #endif // ALMOND_USING_OPENGL

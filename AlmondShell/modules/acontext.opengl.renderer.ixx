@@ -4,40 +4,33 @@
 
 module;
 
-#include "..\include\aengine.config.hpp"
+// Global module fragment: macros + headers only.
+#include <include/aengine.config.hpp> // for ALMOND_USING Macros
+
+#if defined(ALMOND_USING_OPENGL)
+    // IMPORTANT:
+    // OpenGL symbols must be declared in *this* module unit.
+    // Do not rely on other modules/TUs "bringing in" gl* names.
+    //
+    // Use the same loader you use everywhere else (GLAD).
+    // If your project provides a different header path for GLAD, adjust here.
+#   include <glad/glad.h>
+#endif
 
 export module acontext.opengl.renderer;
-
-
-// ────────────────────────────────────────────────────────────
-// STANDARD LIBRARY MODULE IMPORTS
-// ────────────────────────────────────────────────────────────
 
 import <cstdint>;
 import <iostream>;
 
-// ────────────────────────────────────────────────────────────
-// GLOBAL MODULE FRAGMENT (headers + macros ONLY)
-// ────────────────────────────────────────────────────────────
-
-//#include "aengineconfig.hpp"
-//#include "aopenglcontext.hpp"
-//#include "aspritehandle.hpp"
-//#include "aopengltextures.hpp"
-//#include "aopenglquad.hpp"
-//#include "aopenglstate.hpp"
-
 import aengine.platform;
+import aengine.cli;
+
 import acontext.opengl.context;
-import aspritehandle;
-import acontext.opengl.textures;
 import acontext.opengl.state;
 import acontext.opengl.quad;
-import aengine.cli;
-// ────────────────────────────────────────────────────────────
-// MODULE DECLARATION
-// ────────────────────────────────────────────────────────────
+import acontext.opengl.textures;
 
+import aspritehandle;
 
 #if defined(ALMOND_USING_OPENGL)
 
@@ -84,10 +77,10 @@ export namespace almondnamespace::openglrenderer
 
     inline void check_gl_error(const char* location) noexcept
     {
-        GLenum err = glGetError();
+        const GLenum err = glGetError();
         if (err != GL_NO_ERROR)
             std::cerr << "[GL ERROR] " << location << " : 0x"
-            << std::hex << err << std::dec << '\n';
+            << std::hex << static_cast<unsigned int>(err) << std::dec << '\n';
     }
 
     inline bool is_handle_live(const SpriteHandle& h) noexcept
@@ -167,9 +160,7 @@ export namespace almondnamespace::openglrenderer
     inline void begin_frame()
     {
         glClearColor(0.f, 0.f, 1.f, 1.f);
-        glViewport(0, 0,
-            core::cli::window_width,
-            core::cli::window_height);
+        glViewport(0, 0, core::cli::window_width, core::cli::window_height);
         glClear(GL_COLOR_BUFFER_BIT);
     }
 

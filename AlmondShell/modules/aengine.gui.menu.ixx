@@ -1,7 +1,7 @@
 
 module; // REQUIRED global module fragment
 
-#include "aengine.config.hpp" 		// for ALMOND_USING_SDL
+#include <include/aengine.config.hpp> // for ALMOND_USING Macros 		// for ALMOND_USING_SDL
 export module aengine.gui.menu;
 
 // ------------------------------------------------------------

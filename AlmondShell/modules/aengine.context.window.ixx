@@ -1,14 +1,16 @@
 module;
 
 #include "aengine.hpp"          // DEFAULT_WINDOW_WIDTH, DEFAULT_WINDOW_HEIGHT
-#include "aengine.config.hpp" 		// for ALMOND_USING_SDL
+#include <include/aengine.config.hpp> // for ALMOND_USING Macros 		// for ALMOND_USING_SDL
 
 #if defined(_WIN32)
 #   ifdef ALMOND_USING_WINMAIN
 #       include "../include/aframework.hpp"
 #   endif
 #endif
-
+#include <glad/glad.h>
+#include <SDL3/SDL.h>
+#include <SDL3/SDL_version.h>
 export module aengine.context.window;
 
 import <string>;

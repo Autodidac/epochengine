@@ -1,15 +1,25 @@
 ﻿module;
 
+#include <include/aengine.config.hpp> // for ALMOND_USING Macros
+
 #if defined(_WIN32) && !defined(ALMOND_MAIN_HEADLESS)
-#   ifdef ALMOND_USING_WINMAIN
-#       include "../include/aframework.hpp"
-#   endif
+// Preprocessor hygiene MUST come before windows.h
 #   ifndef WIN32_LEAN_AND_MEAN
 #       define WIN32_LEAN_AND_MEAN
 #   endif
+#   ifndef NOMINMAX
+#       define NOMINMAX
+#   endif
+#   ifndef _WINSOCKAPI_
+#       define _WINSOCKAPI_
+#   endif
+
+    // Optional: if you still need your framework helpers, include it AFTER windows.h
+#   include <include/aframework.hpp>
 #endif
 
 export module aengine.core.context;
+
 
 // Std
 import <algorithm>;
@@ -36,6 +46,7 @@ import aatlas.texture;
 import aatlas.manager;   // reacquire atlas vector inside queued draw
 import aspritehandle;
 import aimage.loader;
+import acontext.raylib.api; // for ImageData
 
 export namespace almondnamespace::core
 {

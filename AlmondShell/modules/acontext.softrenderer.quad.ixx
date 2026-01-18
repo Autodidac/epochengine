@@ -15,7 +15,7 @@
 
 module;
 
-#include "aengine.config.hpp"
+#include <include/aengine.config.hpp> // for ALMOND_USING Macros
 
 export module acontext.softrenderer.quad;
 

@@ -32,6 +32,7 @@
 #ifndef ALMOND_MAIN_HANDLED
 #ifndef ALMOND_MAIN_HEADLESS
 #ifdef _WIN32
+
 #define ALMOND_USING_WINMAIN
 #endif
 #endif
@@ -99,7 +100,7 @@
 #include <SFML/Graphics.hpp>
 #endif
 
-//#ifdef ALMOND_USING_RAYLIB
+#ifdef ALMOND_USING_RAYLIB
 //#include <glad/glad.h>
 //
 //#if defined(_WIN32)
@@ -126,74 +127,74 @@
 //#undef DrawTextExW
 //#undef Rectangle
 //#undef PlaySoundW
+#endif
+//
+//#ifdef ALMOND_USING_OPENGL
+//#include <glad/glad.h>
+//
+//#if defined(_WIN32)
+//#if defined(__has_include) && __has_include(<glad/glad_wgl.h>)
+//#include <glad/glad_wgl.h>
+//#elif defined(__has_include) && __has_include(<GL/wglext.h>)
+//#include <GL/wglext.h>
+//#else
+//#ifndef WGL_CONTEXT_MAJOR_VERSION_ARB
+//#define WGL_CONTEXT_MAJOR_VERSION_ARB 0x2091
 //#endif
-
-#ifdef ALMOND_USING_OPENGL
-#include <glad/glad.h>
-
-#if defined(_WIN32)
-#if defined(__has_include) && __has_include(<glad/glad_wgl.h>)
-#include <glad/glad_wgl.h>
-#elif defined(__has_include) && __has_include(<GL/wglext.h>)
-#include <GL/wglext.h>
-#else
-#ifndef WGL_CONTEXT_MAJOR_VERSION_ARB
-#define WGL_CONTEXT_MAJOR_VERSION_ARB 0x2091
-#endif
-#ifndef WGL_CONTEXT_MINOR_VERSION_ARB
-#define WGL_CONTEXT_MINOR_VERSION_ARB 0x2092
-#endif
-#ifndef WGL_CONTEXT_PROFILE_MASK_ARB
-#define WGL_CONTEXT_PROFILE_MASK_ARB 0x9126
-#endif
-#ifndef WGL_CONTEXT_CORE_PROFILE_BIT_ARB
-#define WGL_CONTEXT_CORE_PROFILE_BIT_ARB 0x00000001
-#endif
-#ifndef PFNWGLCREATECONTEXTATTRIBSARBPROC
-typedef HGLRC(WINAPI* PFNWGLCREATECONTEXTATTRIBSARBPROC)(HDC, HGLRC, const int*);
-#endif
-#endif
-#endif
-#endif
-
-#ifdef ALMOND_USING_SDL
-#include <glad/glad.h>
-#include <SDL3/SDL.h>
-#include <SDL3/SDL_version.h>
-
-#ifndef ALMOND_MAIN_HEADLESS
-#define SDL_MAIN_HANDLED
-#endif
-
-#include <SDL3/SDL_main.h>
-#include <SDL3/SDL_scancode.h>
-#include <SDL3_image/SDL_image.h>
-#include <SDL3/SDL_events.h>
-#include <SDL3/SDL_video.h>
-#include <SDL3/SDL_render.h>
-#include <SDL3/SDL_surface.h>
-#include <SDL3/SDL_opengl.h>
-#endif
-
-#ifdef ALMOND_USING_VOLK
-#define VK_NO_PROTOTYPES
-#include <volk.h>
-#define ALMOND_USING_GLM
-#endif
-
-#ifdef ALMOND_USING_VULKAN_WITH_GLFW
-#define GLFW_INCLUDE_VULKAN
-#define ALMOND_USING_VULKAN
-#endif
-
-#ifdef ALMOND_USING_GLM
-#include <glm/glm.hpp>
-#endif
-
-#ifdef ALMOND_USING_VULKAN
-#include <vulkan/vulkan.h>
-#ifdef _WIN32
-#include <vulkan/vulkan_win32.h>
-#endif
-#endif
-
+//#ifndef WGL_CONTEXT_MINOR_VERSION_ARB
+//#define WGL_CONTEXT_MINOR_VERSION_ARB 0x2092
+//#endif
+//#ifndef WGL_CONTEXT_PROFILE_MASK_ARB
+//#define WGL_CONTEXT_PROFILE_MASK_ARB 0x9126
+//#endif
+//#ifndef WGL_CONTEXT_CORE_PROFILE_BIT_ARB
+//#define WGL_CONTEXT_CORE_PROFILE_BIT_ARB 0x00000001
+//#endif
+//#ifndef PFNWGLCREATECONTEXTATTRIBSARBPROC
+//typedef HGLRC(WINAPI* PFNWGLCREATECONTEXTATTRIBSARBPROC)(HDC, HGLRC, const int*);
+//#endif
+//#endif
+//#endif
+//#endif
+//
+//#ifdef ALMOND_USING_SDL
+//#include <glad/glad.h>
+//#include <SDL3/SDL.h>
+//#include <SDL3/SDL_version.h>
+//
+//#ifndef ALMOND_MAIN_HEADLESS
+//#define SDL_MAIN_HANDLED
+//#endif
+//
+//#include <SDL3/SDL_main.h>
+//#include <SDL3/SDL_scancode.h>
+//#include <SDL3_image/SDL_image.h>
+//#include <SDL3/SDL_events.h>
+//#include <SDL3/SDL_video.h>
+//#include <SDL3/SDL_render.h>
+//#include <SDL3/SDL_surface.h>
+//#include <SDL3/SDL_opengl.h>
+//#endif
+//
+//#ifdef ALMOND_USING_VOLK
+//#define VK_NO_PROTOTYPES
+//#include <volk.h>
+//#define ALMOND_USING_GLM
+//#endif
+//
+//#ifdef ALMOND_USING_VULKAN_WITH_GLFW
+//#define GLFW_INCLUDE_VULKAN
+//#define ALMOND_USING_VULKAN
+//#endif
+//
+//#ifdef ALMOND_USING_GLM
+//#include <glm/glm.hpp>
+//#endif
+//
+//#ifdef ALMOND_USING_VULKAN
+//#include <vulkan/vulkan.h>
+//#ifdef _WIN32
+//#include <vulkan/vulkan_win32.h>
+//#endif
+//#endif
+//

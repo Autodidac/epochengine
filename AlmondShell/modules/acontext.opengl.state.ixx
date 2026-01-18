@@ -10,28 +10,40 @@
  *   AlmondShell - Modular C++ Framework                      *
  *                                                            *
  *   SPDX-License-Identifier: LicenseRef-MIT-NoSell           *
- *                                                            *
- *   Provided "AS IS", without warranty of any kind.          *
- *   Use permitted for Non-Commercial Purposes ONLY,          *
- *   without prior commercial licensing agreement.            *
- *                                                            *
- *   Redistribution Allowed with This Notice and              *
- *   LICENSE file. No obligation to disclose modifications.   *
- *                                                            *
- *   See LICENSE file for full terms.                         *
- *                                                            *
  **************************************************************/
- // acontext.opengl.state.ixx  (was aopenglstate.hpp)
 
 module;
 
-// Keep platform macros/types and GL headers in the global module fragment.
-#include "..\include\aengine.config.hpp"
+// Global module fragment: macros + native headers + GL typedefs only.
+#include <include/aengine.config.hpp> // for ALMOND_USING Macros
+
+#if defined(ALMOND_USING_OPENGL)
+
+#if defined(_WIN32)
+#   ifndef WIN32_LEAN_AND_MEAN
+#       define WIN32_LEAN_AND_MEAN
+#   endif
+#   ifndef NOMINMAX
+#       define NOMINMAX
+#   endif
+#   ifndef _WINSOCKAPI_
+#       define _WINSOCKAPI_
+#   endif
+
+#   include <windows.h>
+#   include <wingdi.h>
+#endif
+
+// OpenGL basic typedefs (GLuint, GLint, etc.)
+// IMPORTANT: do NOT include GL/wglext.h here.
+#   include <glad/glad.h>
 
 #if defined(__linux__)
-#    include <X11/Xlib.h>
-#    include <GL/glx.h>
+#   include <X11/Xlib.h>
+#   include <GL/glx.h>
 #endif
+
+#endif // ALMOND_USING_OPENGL
 
 export module acontext.opengl.state;
 
@@ -39,9 +51,8 @@ import <array>;
 import <bitset>;
 import <functional>;
 
-import aengine.platform;      // for HWND, HDC, HGLRC, Display, etc.
-import aengine.core.time;        // time::Timer, time::createTimer(...)
-import acontext.opengl.platform; // PlatformGLContext   
+import aengine.core.time;          // timing::Timer, timing::createTimer(...)
+import acontext.opengl.platform;   // PlatformGLContext
 
 #if defined(ALMOND_USING_OPENGL)
 
@@ -49,29 +60,29 @@ export namespace almondnamespace::openglstate
 {
     struct OpenGL4State
     {
-#ifdef ALMOND_USING_WINMAIN
-        HWND  hwnd{};
-        HDC   hdc = nullptr;
-        HGLRC hglrc = nullptr;
+#if defined(_WIN32)
+        HWND    hwnd = nullptr;
+        HDC     hdc = nullptr;
+        HGLRC   hglrc = nullptr;
 
-        HGLRC  glContext{}; // Store GL context created
         WNDPROC oldWndProc = nullptr;
         WNDPROC getOldWndProc() const noexcept { return oldWndProc; }
 
         HWND parent = nullptr;
-        std::function<void(int, int)> onResize;
+        std::function<void(int, int)> onResize{};
+
         unsigned int width{ 400 };
         unsigned int height{ 300 };
 
         bool running{ false };
 
 #elif defined(__linux__)
-        ::Window   window = 0;
+        ::Window    window = 0;
         GLXDrawable drawable = 0;
         Display* display = nullptr;
-        GLXContext glxContext = nullptr;
+        GLXContext  glxContext = nullptr;
         GLXFBConfig fbConfig = nullptr;
-        Colormap   colormap = 0;
+        Colormap    colormap = 0;
 
         bool ownsDisplay = false;
         bool ownsWindow = false;
@@ -89,19 +100,20 @@ export namespace almondnamespace::openglstate
             std::array<bool, 5> prevDown{};
             int lastX = 0;
             int lastY = 0;
-        } mouse;
+        } mouse{};
 
         struct KeyboardState
         {
-            std::bitset<256> down;
-            std::bitset<256> pressed;
-            std::bitset<256> prevDown;
-        } keyboard;
+            std::bitset<256> down{};
+            std::bitset<256> pressed{};
+            std::bitset<256> prevDown{};
+        } keyboard{};
 
         timing::Timer pollTimer = timing::createTimer(1.0);
         timing::Timer fpsTimer = timing::createTimer(1.0);
         int frameCount = 0;
 
+        // GL objects / uniform locations
         GLuint shader = 0;
         GLint  uUVRegionLoc = -1;
         GLint  uTransformLoc = -1;
@@ -112,8 +124,8 @@ export namespace almondnamespace::openglstate
         GLuint fbo = 0;
     };
 
-    // Inline global instance, header-only style
+    // header-dominant style: single TU-safe in C++20+ modules
     inline OpenGL4State s_openglstate{};
-} // namespace almondnamespace::openglstate
+}
 
 #endif // ALMOND_USING_OPENGL

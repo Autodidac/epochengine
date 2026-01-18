@@ -100,6 +100,9 @@
     <Filter Include="Source Files\scripts">
       <UniqueIdentifier>{3be7745a-41c9-465a-8afe-9ac47d8de45d}</UniqueIdentifier>
     </Filter>
+    <Filter Include="Module Files\cppm\core">
+      <UniqueIdentifier>{60f884ca-531b-43d9-8094-e9a030f5e25f}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="$(MSBuildThisFileDirectory)src\pch.h">
@@ -115,6 +118,9 @@
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="$(MSBuildThisFileDirectory)include\aengine.hpp">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="$(MSBuildThisFileDirectory)include\aframework_wgl.hpp">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>
@@ -461,21 +467,6 @@
     <ClCompile Include="$(MSBuildThisFileDirectory)modules\anet.ixx">
       <Filter>Module Files\ixx\core\networking</Filter>
     </ClCompile>
-    <ClCompile Include="$(MSBuildThisFileDirectory)src modules\aeditor.cppm">
-      <Filter>Module Files\cppm</Filter>
-    </ClCompile>
-    <ClCompile Include="$(MSBuildThisFileDirectory)src modules\aengine.gui.cppm">
-      <Filter>Module Files\cppm</Filter>
-    </ClCompile>
-    <ClCompile Include="$(MSBuildThisFileDirectory)src modules\aengine.scripting.compiler.cppm">
-      <Filter>Module Files\cppm</Filter>
-    </ClCompile>
-    <ClCompile Include="$(MSBuildThisFileDirectory)src modules\afilewatch.cppm">
-      <Filter>Module Files\cppm</Filter>
-    </ClCompile>
-    <ClCompile Include="$(MSBuildThisFileDirectory)src modules\afont.renderer.impl.cppm">
-      <Filter>Module Files\cppm</Filter>
-    </ClCompile>
     <ClCompile Include="$(MSBuildThisFileDirectory)modules\acontext.opengl.state.ixx">
       <Filter>Module Files\ixx\core\context\backends\opengl</Filter>
     </ClCompile>
@@ -525,9 +516,30 @@
       <Filter>Module Files\cppm</Filter>
     </ClCompile>
     <ClCompile Include="$(MSBuildThisFileDirectory)src modules\aengine.context.cppm">
-      <Filter>Module Files\cppm</Filter>
+      <Filter>Module Files\cppm\core</Filter>
+    </ClCompile>
+    <ClCompile Include="$(MSBuildThisFileDirectory)src modules\aengine.gui.cppm">
+      <Filter>Module Files\cppm\core</Filter>
+    </ClCompile>
+    <ClCompile Include="$(MSBuildThisFileDirectory)src modules\aengine.scripting.compiler.cppm">
+      <Filter>Module Files\cppm\core</Filter>
+    </ClCompile>
+    <ClCompile Include="$(MSBuildThisFileDirectory)src modules\afilewatch.cppm">
+      <Filter>Module Files\cppm\core</Filter>
+    </ClCompile>
+    <ClCompile Include="$(MSBuildThisFileDirectory)src modules\afont.renderer.impl.cppm">
+      <Filter>Module Files\cppm\core</Filter>
+    </ClCompile>
+    <ClCompile Include="$(MSBuildThisFileDirectory)src modules\aeditor.cppm">
+      <Filter>Module Files\cppm\core</Filter>
     </ClCompile>
     <ClCompile Include="$(MSBuildThisFileDirectory)src modules\acontext.raylib.api.cppm">
+      <Filter>Module Files\cppm\crossplatform</Filter>
+    </ClCompile>
+    <ClCompile Include="$(MSBuildThisFileDirectory)src modules\aengine.context.win.cppm">
+      <Filter>Module Files\cppm\crossplatform</Filter>
+    </ClCompile>
+    <ClCompile Include="$(MSBuildThisFileDirectory)src modules\acontext.raylib.context.win.cppm">
       <Filter>Module Files\cppm\crossplatform</Filter>
     </ClCompile>
   </ItemGroup>

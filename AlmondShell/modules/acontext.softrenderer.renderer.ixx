@@ -27,7 +27,7 @@
 module;
 
 //#include "aplatform.hpp"
-#include "aengine.config.hpp"
+#include <include/aengine.config.hpp> // for ALMOND_USING Macros
 
 export module acontext.softrenderer.renderer;
 

@@ -18,10 +18,11 @@
 
 module;
 
-// Feature flags (defines ALMOND_USING_*)
-#include "aengine.config.hpp"
-
 #if defined(__linux__)
+
+// Feature flags (defines ALMOND_USING_*)
+#include <include/aengine.config.hpp> // for ALMOND_USING Macros
+
 
 // X11 / GLX headers must be includes (not module imports)
 #include <X11/Xatom.h>

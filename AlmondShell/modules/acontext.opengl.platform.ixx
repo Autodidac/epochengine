@@ -5,37 +5,48 @@
 module;
 
 // Global module fragment: macros + native headers only.
-#include "..\\include\\aengine.config.hpp"
-#include "..\\include\\aengine.hpp"
+#include <include/aengine.config.hpp> // for ALMOND_USING Macros
 
 #if defined(ALMOND_USING_OPENGL)
 
 #if defined(_WIN32)
-#  ifdef ALMOND_USING_WINMAIN
-#    include "../include/aframework.hpp"
-#  endif
-#  ifndef WIN32_LEAN_AND_MEAN
-#    define WIN32_LEAN_AND_MEAN
-#  endif
-#  include <glad/glad.h>
-#  include <GL/wglext.h>
+
+// Keep Windows macros local and consistent.
+#ifndef WIN32_LEAN_AND_MEAN
+#   define WIN32_LEAN_AND_MEAN
+#endif
+#ifndef NOMINMAX
+#   define NOMINMAX
+#endif
+#ifndef _WINSOCKAPI_
+#   define _WINSOCKAPI_
+#endif
+
+// NOTE:
+// - DO NOT include any GL headers here.
+// - DO NOT include GL/wglext.h here.
+// This module only needs core WGL + Win32 types and functions.
+#include <aframework.hpp>
+#include <wingdi.h>
 
 #elif defined(__linux__)
-#  pragma push_macro("Font")
-#  define Font almondshell_X11Font
-#  include <X11/Xlib.h>
-#  include <GL/glx.h>
-#  pragma pop_macro("Font")
-#  include <dlfcn.h>
-#  include <cstdint>
+
+#   pragma push_macro("Font")
+#   define Font almondshell_X11Font
+#   include <X11/Xlib.h>
+#   include <GL/glx.h>
+#   pragma pop_macro("Font")
+#   include <dlfcn.h>
+#   include <cstdint>
+
 #endif
 
 #endif // ALMOND_USING_OPENGL
 
 export module acontext.opengl.platform;
 
-import <utility>;
 import <cstdint>;
+import <utility>;
 
 #if defined(ALMOND_USING_OPENGL)
 
@@ -84,10 +95,6 @@ export namespace almondnamespace::openglcontext::PlatformGL
     }
 #endif
 
-    // -----------------------------
-    // Platform implementation (here)
-    // -----------------------------
-
     inline PlatformGLContext get_current() noexcept
     {
         PlatformGLContext ctx{};
@@ -134,7 +141,6 @@ export namespace almondnamespace::openglcontext::PlatformGL
 #elif defined(__linux__)
         if (auto* dpy = ::glXGetCurrentDisplay())
             (void)::glXMakeCurrent(dpy, 0, nullptr);
-#else
 #endif
     }
 
@@ -154,6 +160,7 @@ export namespace almondnamespace::openglcontext::PlatformGL
         if (!name) return nullptr;
 
 #if defined(_WIN32)
+        // wglGetProcAddress handles extensions; may return sentinel values.
         if (auto p = reinterpret_cast<void*>(::wglGetProcAddress(name)))
         {
             const auto v = reinterpret_cast<std::uintptr_t>(p);
@@ -168,7 +175,8 @@ export namespace almondnamespace::openglcontext::PlatformGL
         return reinterpret_cast<void*>(::GetProcAddress(opengl32, name));
 
 #elif defined(__linux__)
-        if (auto p = ::glXGetProcAddressARB(reinterpret_cast<const GLubyte*>(name)))
+        // glXGetProcAddressARB returns function pointer for extensions
+        if (auto p = ::glXGetProcAddressARB(reinterpret_cast<const unsigned char*>(name)))
             return reinterpret_cast<void*>(p);
 
         static void* libGL = ::dlopen("libGL.so.1", RTLD_LAZY | RTLD_LOCAL);
@@ -225,7 +233,7 @@ export namespace almondnamespace::openglcontext::PlatformGL
             target_ = {};
         }
 
-        [[nodiscard]] bool success() const noexcept { return success_; }
+        [[nodiscard]] bool success()  const noexcept { return success_; }
         [[nodiscard]] bool switched() const noexcept { return switched_; }
         [[nodiscard]] const PlatformGLContext& target() const noexcept { return target_; }
 

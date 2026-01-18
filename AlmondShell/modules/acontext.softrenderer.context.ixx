@@ -32,7 +32,7 @@
 module;
 
 //#include "aplatform.hpp"
-#include "aengine.config.hpp"
+#include <include/aengine.config.hpp> // for ALMOND_USING Macros
 
 #if defined(_WIN32)
 #   ifdef ALMOND_USING_WINMAIN

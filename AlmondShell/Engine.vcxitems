@@ -23,6 +23,7 @@
     <ClInclude Include="$(MSBuildThisFileDirectory)include\aengine.config.hpp" />
     <ClInclude Include="$(MSBuildThisFileDirectory)include\aengine.hpp" />
     <ClInclude Include="$(MSBuildThisFileDirectory)include\aframework.hpp" />
+    <ClInclude Include="$(MSBuildThisFileDirectory)include\aframework_wgl.hpp" />
     <ClInclude Include="$(MSBuildThisFileDirectory)src\pch.h" />
     <ClInclude Include="$(MSBuildThisFileDirectory)src\resource.h" />
   </ItemGroup>
@@ -182,6 +183,7 @@
     <ClCompile Include="$(MSBuildThisFileDirectory)modules\avulkantexture.ixx" />
     <ClCompile Include="$(MSBuildThisFileDirectory)modules\avulkantriangle.ixx" />
     <ClCompile Include="$(MSBuildThisFileDirectory)src modules\acontext.raylib.api.cppm" />
+    <ClCompile Include="$(MSBuildThisFileDirectory)src modules\acontext.raylib.context.win.cppm" />
     <ClCompile Include="$(MSBuildThisFileDirectory)src modules\aengine.context.cppm" />
     <ClCompile Include="$(MSBuildThisFileDirectory)src modules\aengine.context.multiplexer.linux.cppm" />
     <ClCompile Include="$(MSBuildThisFileDirectory)src modules\aengine.context.multiplexer.win.cppm" />
@@ -191,6 +193,7 @@
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">true</ExcludedFromBuild>
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|x64'">true</ExcludedFromBuild>
     </ClCompile>
+    <ClCompile Include="$(MSBuildThisFileDirectory)src modules\aengine.context.win.cppm" />
     <ClCompile Include="$(MSBuildThisFileDirectory)src modules\aengine.gui.cppm" />
     <ClCompile Include="$(MSBuildThisFileDirectory)src modules\aengine.scripting.compiler.cppm" />
     <ClCompile Include="$(MSBuildThisFileDirectory)src modules\afilewatch.cppm" />
