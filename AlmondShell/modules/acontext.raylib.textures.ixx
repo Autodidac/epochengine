@@ -96,14 +96,22 @@ export namespace almondnamespace::raylibtextures
         try
         {
             auto& backend = get_raylib_backend();
-            std::scoped_lock lock(backend.gpuMutex);
 
-            for (auto& [_, gpu] : backend.gpu_atlases)
+            // Move textures out under lock, destroy them unlocked.
+            std::vector<almondnamespace::raylib_api::Texture2D> to_free;
             {
-                if (gpu.texture.id != 0)
-                    almondnamespace::raylib_api::unload_texture(gpu.texture);
+                std::scoped_lock lock(backend.gpuMutex);
+                to_free.reserve(backend.gpu_atlases.size());
+                for (auto& [_, gpu] : backend.gpu_atlases)
+                {
+                    if (gpu.texture.id != 0)
+                        to_free.push_back(gpu.texture);
+                }
+                backend.gpu_atlases.clear();
             }
-            backend.gpu_atlases.clear();
+
+            for (auto& t : to_free)
+                almondnamespace::raylib_api::unload_texture(t);
 
             if (auto ctx = almondnamespace::core::get_current_render_context(); ctx && ctx->native_drawable)
             {
@@ -180,18 +188,12 @@ export namespace almondnamespace::raylibtextures
         return { std::move(rgba), img.width, img.height, 4 };
     }
 
-    inline void upload_atlas_to_gpu_locked(BackendData& backend, const TextureAtlas& atlas)
+    // ---- Core rule: no raylib calls while holding gpuMutex ----
+    inline almondnamespace::raylib_api::Texture2D upload_texture_raylib(const TextureAtlas& atlas)
     {
+        // Ensure pixels exist (may rebuild CPU-side).
         if (atlas.pixel_data.empty())
             const_cast<TextureAtlas&>(atlas).rebuild_pixels();
-
-        AtlasGPU& gpu = backend.gpu_atlases[&atlas];
-
-        if (gpu.version == atlas.version && gpu.texture.id != 0)
-            return;
-
-        if (gpu.texture.id != 0)
-            almondnamespace::raylib_api::unload_texture(gpu.texture);
 
         almondnamespace::raylib_api::Image img{};
         img.data = const_cast<unsigned char*>(atlas.pixel_data.data());
@@ -200,23 +202,95 @@ export namespace almondnamespace::raylibtextures
         img.mipmaps = 1;
         img.format = almondnamespace::raylib_api::pixelformat_rgba8;
 
-        gpu.texture = almondnamespace::raylib_api::load_texture_from_image(img);
-        gpu.version = atlas.version;
-        gpu.width = static_cast<u32>(atlas.width);
-        gpu.height = static_cast<u32>(atlas.height);
+        return almondnamespace::raylib_api::load_texture_from_image(img);
+    }
 
-        dump_atlas_rgb_ppm(atlas, atlas.index);
-
-        std::cerr << "[Raylib] Uploaded atlas '" << atlas.name
-            << "' (tex id " << gpu.texture.id
-            << ", version " << gpu.version << ")\n";
+    // Fast check: only attempt upload when the current context is a raylib context.
+    // This avoids “helpfully” uploading while some other backend (OpenGL/SDL) is current.
+    [[nodiscard]] inline bool is_raylib_backend_current() noexcept
+    {
+        try
+        {
+            auto ctx = almondnamespace::core::get_current_render_context();
+            if (!ctx) return false;
+            return ctx->type == almondnamespace::core::ContextType::RayLib;
+        }
+        catch (...) { return false; }
     }
 
     export inline void ensure_uploaded(const TextureAtlas& atlas)
     {
+        // If you call this while docking/multiplexer has a different backend current,
+        // do NOT upload. Let the next raylib-active frame handle it.
+        if (!is_raylib_backend_current())
+            return;
+
         auto& backend = get_raylib_backend();
-        std::scoped_lock lock(backend.gpuMutex);
-        upload_atlas_to_gpu_locked(backend, atlas);
+
+        // 1) Cheap read under lock: do we already have the right version?
+        {
+            std::scoped_lock lock(backend.gpuMutex);
+            auto it = backend.gpu_atlases.find(&atlas);
+            if (it != backend.gpu_atlases.end())
+            {
+                const AtlasGPU& gpu = it->second;
+                if (gpu.version == atlas.version && gpu.texture.id != 0)
+                    return;
+            }
+        }
+
+        // 2) Upload unlocked (raylib/GL work).
+        almondnamespace::raylib_api::Texture2D newTex = upload_texture_raylib(atlas);
+
+        if (newTex.id == 0)
+        {
+            // Raylib already printed warnings; add one line of ours.
+            std::cerr << "[Raylib] Upload failed for atlas '" << atlas.name
+                << "' (version " << atlas.version << ")\n";
+            return;
+        }
+
+        // Optional: dump only when a *new* texture is successfully created.
+        dump_atlas_rgb_ppm(atlas, atlas.index);
+
+        // 3) Commit under lock; if someone else updated in the meantime, keep the newest.
+        almondnamespace::raylib_api::Texture2D oldTex{};
+        bool freeOld = false;
+
+        {
+            std::scoped_lock lock(backend.gpuMutex);
+            AtlasGPU& gpu = backend.gpu_atlases[&atlas];
+
+            // If another thread beat us to it with same/newer version, drop ours.
+            if (gpu.texture.id != 0 && gpu.version >= atlas.version)
+            {
+                // Keep existing; delete our newly created texture.
+                oldTex = newTex;
+                freeOld = true;
+            }
+            else
+            {
+                // Replace existing (if any) and commit.
+                if (gpu.texture.id != 0)
+                {
+                    oldTex = gpu.texture;
+                    freeOld = true;
+                }
+
+                gpu.texture = newTex;
+                gpu.version = atlas.version;
+                gpu.width = static_cast<u32>(atlas.width);
+                gpu.height = static_cast<u32>(atlas.height);
+
+                std::cerr << "[Raylib] Uploaded atlas '" << atlas.name
+                    << "' (tex id " << gpu.texture.id
+                    << ", version " << gpu.version << ")\n";
+            }
+        }
+
+        // 4) Free old texture(s) unlocked.
+        if (freeOld && oldTex.id != 0)
+            almondnamespace::raylib_api::unload_texture(oldTex);
     }
 
     export inline const almondnamespace::raylib_api::Texture2D* try_get_texture(const TextureAtlas& atlas) noexcept
@@ -246,15 +320,23 @@ export namespace almondnamespace::raylibtextures
         try
         {
             auto& backend = get_raylib_backend();
-            std::scoped_lock lock(backend.gpuMutex);
 
-            for (auto& [_, gpu] : backend.gpu_atlases)
+            std::vector<almondnamespace::raylib_api::Texture2D> to_free;
             {
-                if (gpu.texture.id != 0)
-                    almondnamespace::raylib_api::unload_texture(gpu.texture);
+                std::scoped_lock lock(backend.gpuMutex);
+                to_free.reserve(backend.gpu_atlases.size());
+
+                for (auto& [_, gpu] : backend.gpu_atlases)
+                {
+                    if (gpu.texture.id != 0)
+                        to_free.push_back(gpu.texture);
+                }
+
+                backend.gpu_atlases.clear();
             }
 
-            backend.gpu_atlases.clear();
+            for (auto& t : to_free)
+                almondnamespace::raylib_api::unload_texture(t);
         }
         catch (...) {}
     }

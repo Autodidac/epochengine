@@ -348,7 +348,7 @@ export namespace almondnamespace::core
     // ---------------------------------------------------------------------
     // Backend registry (existing)
     // ---------------------------------------------------------------------
-    struct BackendState
+    export struct BackendState
     {
         std::shared_ptr<Context>              master;
         std::vector<std::shared_ptr<Context>> duplicates;

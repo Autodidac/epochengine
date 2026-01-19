@@ -72,6 +72,7 @@ module;
 #   include <GL/glxext.h>
 #endif
 
+#include <chrono>
 
 export module acontext.opengl.context;
 
@@ -93,12 +94,13 @@ import aengine.telemetry;
 import acontext.opengl.textures;
 import acontext.opengl.state;
 import acontext.opengl.platform;
+import acontext.opengl.quad;
 
 // ------------------------------------------------------------
 // Standard library
 // ------------------------------------------------------------
 import <algorithm>;
-import <chrono>;
+//import <chrono>;
 import <cstdint>;
 import <format>;
 import <functional>;
@@ -109,7 +111,6 @@ import <string>;
 import <string_view>;
 import <utility>;
 import <vector>;
-import acontext.opengl.quad;
 
 export namespace almondnamespace::openglcontext
 {

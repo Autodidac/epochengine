@@ -527,7 +527,7 @@
     <ClCompile Include="$(MSBuildThisFileDirectory)src modules\afilewatch.cppm">
       <Filter>Module Files\cppm\core</Filter>
     </ClCompile>
-    <ClCompile Include="$(MSBuildThisFileDirectory)src modules\afont.renderer.impl.cppm">
+    <ClCompile Include="$(MSBuildThisFileDirectory)src modules\afont.renderer.cpp">
       <Filter>Module Files\cppm\core</Filter>
     </ClCompile>
     <ClCompile Include="$(MSBuildThisFileDirectory)src modules\aeditor.cppm">

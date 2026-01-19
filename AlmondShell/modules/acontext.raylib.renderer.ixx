@@ -5,20 +5,25 @@
  *  ██╔══██║██║     ██║╚██╔╝██║ ██║   ██║██║╚██╗██║██║  ██║   *
  *  ██║  ██║███████╗██║ ╚═╝ ██║ ╚██████╔╝██║ ╚████║██████╔╝   *
  *  ╚═╝  ╚═╝╚══════╝╚═╝     ╚═╝  ╚═════╝ ╚═╝  ╚═══╝╚═════╝    *
- *                                                            *
- *   This file is part of the Almond Project.                 *
- *   AlmondShell - Modular C++ Framework                      *
- *                                                            *
- *   SPDX-License-Identifier: LicenseRef-MIT-NoSell           *
- *                                                            *
- *   Provided "AS IS", without warranty of any kind.          *
- *   Use permitted for Non-Commercial Purposes ONLY,          *
- *   without prior commercial licensing agreement.            *
  **************************************************************/
 
 module;
 
-#include <include/aengine.config.hpp> // for ALMOND_USING Macros
+#include <include/aengine.config.hpp>
+
+#if defined(_WIN32)
+#   ifndef WIN32_LEAN_AND_MEAN
+#       define WIN32_LEAN_AND_MEAN
+#   endif
+#   ifndef NOMINMAX
+#       define NOMINMAX
+#   endif
+// Same collision avoidance as your context TU.
+#   define CloseWindow CloseWindow_Win32
+#   include <Windows.h>
+#   undef CloseWindow
+#   include <wingdi.h>
+#endif
 
 export module acontext.raylib.renderer;
 
@@ -34,18 +39,40 @@ import acontext.raylib.api;
 
 #if defined(ALMOND_USING_RAYLIB)
 
-export namespace almondnamespace::raylibrenderer
+namespace almondnamespace::raylibrenderer
 {
-    export inline void begin_frame()
+#if defined(_WIN32)
+    struct make_current_guard
     {
-        almondnamespace::raylib_api::begin_drawing();
-        almondnamespace::raylib_api::clear_background(almondnamespace::raylib_api::raywhite);
-    }
+        HDC   prev_dc{};
+        HGLRC prev_rc{};
+        bool  changed{ false };
 
-    export inline void end_frame()
-    {
-        almondnamespace::raylib_api::end_drawing();
-    }
+        make_current_guard(HDC dc, HGLRC rc) noexcept
+        {
+            prev_dc = ::wglGetCurrentDC();
+            prev_rc = ::wglGetCurrentContext();
+
+            if (dc && rc && (prev_dc != dc || prev_rc != rc))
+                changed = (::wglMakeCurrent(dc, rc) != FALSE);
+        }
+
+        ~make_current_guard() noexcept
+        {
+            if (!changed) return;
+
+            if (prev_dc && prev_rc)
+                (void)::wglMakeCurrent(prev_dc, prev_rc);
+            else
+                (void)::wglMakeCurrent(nullptr, nullptr);
+        }
+    };
+#endif
+
+    // DO NOT call BeginDrawing/EndDrawing here.
+    // The context layer owns frame boundaries; this renderer only issues draw calls.
+    export inline void begin_frame() {}
+    export inline void end_frame() {}
 
     export inline void draw_sprite(
         SpriteHandle handle,
@@ -68,7 +95,18 @@ export namespace almondnamespace::raylibrenderer
         if (!atlas->try_get_entry_info(i, r))
             return;
 
+        auto& st = almondnamespace::raylibstate::s_raylibstate;
+        if (!st.running)
+            return;
+
+#if defined(_WIN32)
+        // Hard requirement: raylib GL context must be current for uploads + draw calls.
+        make_current_guard guard{ st.hdc, st.hglrc };
+#endif
+
+        // Upload (this will no-op if cached + correct version).
         almondnamespace::raylibtextures::ensure_uploaded(*atlas);
+
         const auto* texPtr = almondnamespace::raylibtextures::try_get_texture(*atlas);
         if (!texPtr || texPtr->id == 0)
             return;

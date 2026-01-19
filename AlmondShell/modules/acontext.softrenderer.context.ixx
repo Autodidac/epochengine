@@ -43,12 +43,14 @@ module;
 #   endif
 #endif
 
+#include <chrono>
+
 export module acontext.softrenderer.context;
 
 import aengine.platform;
 
 import <algorithm>;
-import <chrono>;
+//import <chrono>;
 import <cstdint>;
 import <functional>;
 import <iostream>;

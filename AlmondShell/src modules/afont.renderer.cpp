@@ -2,8 +2,12 @@ module;
 
 #define STB_TRUETYPE_IMPLEMENTATION
 #include "stb_truetype.h"
+#undef STB_TRUETYPE_IMPLEMENTATION
 
-export module afont.renderer:impl;
+// If stb_truetype.h uses STBTT_STATIC, define it in the header or here (optional).
+// #define STBTT_STATIC
+
+module afont.renderer;
 
 import <algorithm>;
 import <array>;
@@ -12,6 +16,8 @@ import <fstream>;
 import <iostream>;
 import <mutex>;
 import <optional>;
+import <string>;
+import <unordered_map>;
 import <utility>;
 import <vector>;
 
@@ -88,7 +94,7 @@ namespace almondnamespace::font
                 .width = 2048,
                 .height = 2048,
                 .generate_mipmaps = false
-            });
+                });
         }
 
         auto* registrar = atlasmanager::get_registrar(atlas_name);
@@ -129,8 +135,9 @@ namespace almondnamespace::font
             {
                 const int slice_x = static_cast<int>(atlas_entry.region.x) + baked.x0;
                 const int slice_y = static_cast<int>(atlas_entry.region.y) + baked.y0;
-                const std::string glyph_name = name + "_pt" + std::to_string(size_pt)
-                    + "_cp" + std::to_string(static_cast<std::uint32_t>(codepoint));
+                const std::string glyph_name =
+                    name + "_pt" + std::to_string(size_pt) +
+                    "_cp" + std::to_string(static_cast<std::uint32_t>(codepoint));
 
                 std::optional<AtlasEntry> glyph_entry;
                 {
@@ -155,21 +162,18 @@ namespace almondnamespace::font
             total_advance += stored_glyph.advance;
             max_advance = (std::max)(max_advance, stored_glyph.advance);
             ++advance_count;
+
             if (codepoint == U' ')
-            {
                 metrics.spaceAdvance = stored_glyph.advance;
-            }
         }
 
         if (advance_count > 0)
-        {
             metrics.averageAdvance = total_advance / static_cast<float>(advance_count);
-        }
+
         metrics.maxAdvance = (std::max)(metrics.maxAdvance, max_advance);
+
         if (metrics.spaceAdvance <= 0.0f)
-        {
             metrics.spaceAdvance = metrics.averageAdvance;
-        }
 
         asset.atlas_index = atlas.get_index();
         asset.metrics = metrics;
@@ -177,11 +181,7 @@ namespace almondnamespace::font
 
         almondnamespace::atlasmanager::ensure_uploaded(atlas);
 
-        loaded_fonts_.emplace(
-            name,
-            std::move(asset)
-        );
-
+        loaded_fonts_.emplace(name, std::move(asset));
         return true;
     }
 
@@ -235,7 +235,7 @@ namespace almondnamespace::font
             return false;
         }
 
-        int font_offset = stbtt_GetFontOffsetForIndex(font_buffer.data(), 0);
+        const int font_offset = stbtt_GetFontOffsetForIndex(font_buffer.data(), 0);
         if (font_offset < 0)
         {
             std::cerr << "[FontRenderer] Invalid font offset for '" << ttf_path << "'\n";
@@ -253,6 +253,7 @@ namespace almondnamespace::font
         int raw_descent = 0;
         int raw_line_gap = 0;
         stbtt_GetFontVMetrics(&font, &raw_ascent, &raw_descent, &raw_line_gap);
+
         const float scale = stbtt_ScaleForPixelHeight(&font, size_pt);
         out_metrics.ascent = static_cast<float>(raw_ascent) * scale;
         out_metrics.descent = static_cast<float>(-raw_descent) * scale;
@@ -269,11 +270,12 @@ namespace almondnamespace::font
             std::cerr << "[FontRenderer] Failed to begin packing for font '" << ttf_path << "'\n";
             return false;
         }
+
         stbtt_PackSetOversampling(&pack_context, 2, 2);
 
         const std::array<std::pair<int, int>, 2> ranges_info{ {
-            {32, 126},        // Basic Latin
-            {160, 255}        // Latin-1 Supplement
+            {32, 126},
+            {160, 255}
         } };
 
         std::size_t total_chars = 0;
@@ -346,6 +348,7 @@ namespace almondnamespace::font
 
         out_glyphs.reserve(total_chars);
         packed_offset = 0;
+
         for (std::size_t range_index = 0; range_index < ranges_info.size(); ++range_index)
         {
             const auto [first_codepoint, last_codepoint] = ranges_info[range_index];
@@ -370,9 +373,7 @@ namespace almondnamespace::font
 
                 out_metrics.maxAdvance = (std::max)(out_metrics.maxAdvance, baked.glyph.advance);
                 if (first_codepoint + glyph_index == 32)
-                {
                     out_metrics.spaceAdvance = baked.glyph.advance;
-                }
 
                 out_glyphs.emplace_back(static_cast<char32_t>(first_codepoint + glyph_index), std::move(baked));
             }
@@ -394,8 +395,9 @@ namespace almondnamespace::font
                         continue;
 
                     const float kern_px = static_cast<float>(kern) * scale;
-                    const std::uint64_t key = (static_cast<std::uint64_t>(left_cp) << 32)
-                        | static_cast<std::uint64_t>(right_cp);
+                    const std::uint64_t key =
+                        (static_cast<std::uint64_t>(left_cp) << 32) |
+                        static_cast<std::uint64_t>(right_cp);
                     out_kerning[key] = kern_px;
                 }
             }

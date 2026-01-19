@@ -13,6 +13,25 @@ module;
 
 #include <include/aengine.config.hpp> // for ALMOND_USING Macros
 
+#if defined(_WIN32)
+#   ifndef WIN32_LEAN_AND_MEAN
+#       define WIN32_LEAN_AND_MEAN
+#   endif
+#   ifndef NOMINMAX
+#       define NOMINMAX
+#   endif
+
+// Win32 has BOOL CloseWindow(HWND). Raylib has void CloseWindow(void).
+// Prevent the collision in this TU by temporarily renaming Win32's symbol name during header include.
+#   define CloseWindow CloseWindow_Win32
+#   include <Windows.h>
+#   undef CloseWindow
+
+#   include <wingdi.h> // HGLRC + wgl*
+#endif
+
+#include <iostream>
+
 export module acontext.raylib.context;
 
 import <algorithm>;
@@ -38,9 +57,6 @@ import acontext.raylib.api;
 
 namespace almondnamespace::raylibcontext
 {
-    // ------------------------------------------------------------
-    // Portable types
-    // ------------------------------------------------------------
     using NativeWindowHandle = void*;
 
     inline std::string& title_storage()
@@ -49,9 +65,45 @@ namespace almondnamespace::raylibcontext
         return s_title;
     }
 
-    // ------------------------------------------------------------
-    // Initialization
-    // ------------------------------------------------------------
+#if defined(_WIN32)
+    namespace detail
+    {
+        [[nodiscard]] inline HGLRC current_context() noexcept { return ::wglGetCurrentContext(); }
+        [[nodiscard]] inline HDC   current_dc() noexcept { return ::wglGetCurrentDC(); }
+
+        inline bool make_current(HDC dc, HGLRC rc) noexcept
+        {
+            return ::wglMakeCurrent(dc, rc) != FALSE;
+        }
+
+        inline void clear_current() noexcept
+        {
+            (void)::wglMakeCurrent(nullptr, nullptr);
+        }
+
+        [[nodiscard]] inline bool contexts_match(HDC a_dc, HGLRC a_rc, HDC b_dc, HGLRC b_rc) noexcept
+        {
+            return a_dc == b_dc && a_rc == b_rc;
+        }
+
+        // Debug helper: verify the multiplexer has made the raylib context current
+        inline void debug_expect_raylib_current(const almondnamespace::raylibstate::RaylibState& st, const char* where)
+        {
+#if defined(_DEBUG)
+            const auto dc = current_dc();
+            const auto rc = current_context();
+            if (dc != st.hdc || rc != st.hglrc)
+            {
+                std::cerr << "[Raylib] WARNING: raylib context not current at " << where
+                    << " (current dc/rc != raylib dc/rc)\n";
+            }
+#else
+            (void)st; (void)where;
+#endif
+        }
+    }
+#endif
+
     export inline bool raylib_initialize(
         std::shared_ptr<core::Context> ctx,
         NativeWindowHandle /*parent*/ = nullptr,
@@ -72,6 +124,24 @@ namespace almondnamespace::raylibcontext
         if (!title.empty())
             title_storage() = std::move(title);
 
+        // Prevent re-initializing raylib (it creates a new window + GL context).
+        if (st.running)
+        {
+            if (ctx)
+            {
+                ctx->hwnd = static_cast<decltype(ctx->hwnd)>(almondnamespace::raylib_api::get_window_handle());
+                if constexpr (requires { ctx->native_window; })
+                    ctx->native_window = almondnamespace::raylib_api::get_window_handle();
+            }
+            return true;
+        }
+
+#if defined(_WIN32)
+        // Capture whatever context the multiplexer/docking currently has bound.
+        const HDC   previousDC = detail::current_dc();
+        const HGLRC previousContext = detail::current_context();
+#endif
+
         almondnamespace::raylib_api::set_config_flags(
             static_cast<unsigned>(almondnamespace::raylib_api::flag_msaa_4x_hint));
 
@@ -84,26 +154,58 @@ namespace almondnamespace::raylibcontext
 
         if (ctx)
         {
-            // The multiplexer expects ctx->hwnd to become the backend-created HWND.
             ctx->hwnd = static_cast<decltype(ctx->hwnd)>(almondnamespace::raylib_api::get_window_handle());
-
-            // If you also keep native_window, keep it consistent (optional).
             if constexpr (requires { ctx->native_window; })
                 ctx->native_window = almondnamespace::raylib_api::get_window_handle();
         }
 
 #if defined(_WIN32)
         {
-            // Keep raylibstate coherent too (so the Win32 glue module can rely on it).
-            auto hwnd = static_cast<HWND>(almondnamespace::raylib_api::get_window_handle());
-            st.hwnd = hwnd;
+            st.hwnd = static_cast<HWND>(almondnamespace::raylib_api::get_window_handle());
+            st.ownsDC = false;
+
+            // Capture raylib's dc/rc as they exist immediately after InitWindow.
+            st.hdc = detail::current_dc();
+            st.hglrc = detail::current_context();
+
+            // Fallback if raylib didn't leave them current (rare but possible).
+            if ((!st.hdc || !st.hglrc) && st.hwnd)
+            {
+                // This requires the DC; GetDC is okay here because we're not calling raylib's CloseWindow symbol.
+                st.hdc = ::GetDC(st.hwnd);
+                st.ownsDC = (st.hdc != nullptr);
+
+                st.hglrc = detail::current_context();
+            }
+
+            if (!st.hdc || !st.hglrc)
+            {
+                std::cerr << "[Raylib] Failed to acquire Win32 GL handles after InitWindow\n";
+                if (st.ownsDC && st.hdc && st.hwnd)
+                    ::ReleaseDC(st.hwnd, st.hdc);
+
+                st.hdc = nullptr;
+                st.hglrc = nullptr;
+                st.ownsDC = false;
+                st.running = false;
+                st.cleanupIssued = false;
+                return false;
+            }
+
+            // Restore previous GL binding if raylib stole it.
+            if (!detail::contexts_match(previousDC, previousContext, st.hdc, st.hglrc))
+            {
+                if (previousDC && previousContext)
+                    (void)detail::make_current(previousDC, previousContext);
+                else
+                    detail::clear_current();
+            }
         }
 #else
         {
             st.hwnd = almondnamespace::raylib_api::get_window_handle();
         }
 #endif
-
 
         st.running = true;
         st.cleanupIssued = false;
@@ -115,14 +217,16 @@ namespace almondnamespace::raylibcontext
         return true;
     }
 
-    // ------------------------------------------------------------
-    // Per-frame processing
-    // ------------------------------------------------------------
     export inline void raylib_process()
     {
         auto& st = almondnamespace::raylibstate::s_raylibstate;
         if (!st.running)
             return;
+
+#if defined(_WIN32)
+        // Expect the multiplexer to have activated this backend before calling process.
+        detail::debug_expect_raylib_current(st, "raylib_process");
+#endif
 
         const int w = almondnamespace::raylib_api::get_screen_width();
         const int h = almondnamespace::raylib_api::get_screen_height();
@@ -139,14 +243,16 @@ namespace almondnamespace::raylibcontext
         }
     }
 
-    // ------------------------------------------------------------
-    // Frame helpers
-    // ------------------------------------------------------------
     export inline void raylib_clear(float r, float g, float b, float /*a*/)
     {
         auto& st = almondnamespace::raylibstate::s_raylibstate;
         if (!st.running)
             return;
+
+#if defined(_WIN32)
+        // DO NOT wglMakeCurrent here. Multiplexer owns context switching.
+        detail::debug_expect_raylib_current(st, "raylib_clear");
+#endif
 
         almondnamespace::raylib_api::begin_drawing();
         almondnamespace::raylib_api::clear_background(
@@ -164,12 +270,13 @@ namespace almondnamespace::raylibcontext
         if (!st.running)
             return;
 
+#if defined(_WIN32)
+        detail::debug_expect_raylib_current(st, "raylib_present");
+#endif
+
         almondnamespace::raylib_api::end_drawing();
     }
 
-    // ------------------------------------------------------------
-    // Shutdown
-    // ------------------------------------------------------------
     export inline void raylib_cleanup(std::shared_ptr<core::Context>)
     {
         auto& st = almondnamespace::raylibstate::s_raylibstate;
@@ -181,15 +288,22 @@ namespace almondnamespace::raylibcontext
         almondnamespace::atlasmanager::unregister_backend_uploader(
             almondnamespace::core::ContextType::RayLib);
 
+#if defined(_WIN32)
+        // Cleanup should be called when raylib backend is active; don't steal context here.
+        detail::debug_expect_raylib_current(st, "raylib_cleanup");
+#endif
+
         almondnamespace::raylibtextures::shutdown_current_context_backend();
         almondnamespace::raylib_api::close_window();
+
+#if defined(_WIN32)
+        if (st.ownsDC && st.hdc && st.hwnd)
+            ::ReleaseDC(st.hwnd, st.hdc);
+#endif
 
         st = {};
     }
 
-    // ------------------------------------------------------------
-    // Utilities
-    // ------------------------------------------------------------
     export inline void raylib_set_window_title(std::string_view title)
     {
         title_storage().assign(title.begin(), title.end());
@@ -218,12 +332,3 @@ namespace almondnamespace::raylibcontext
 }
 
 #endif // ALMOND_USING_RAYLIB
-
-
-
-
-
-
-
-
-

@@ -24,6 +24,8 @@ module;
 #  include <windows.h>   // HWND, RECT, LONG_PTR, SetParent, GetWindowLongPtr, etc.
 #endif
 
+#include <chrono> 
+
 #include <SDL3/SDL.h>    // keep in GMF because it’s a C header with macros
 
 export module acontext.sdl.context;
@@ -43,7 +45,7 @@ import aengine.telemetry;
 
 // Std
 import <algorithm>;
-import <chrono>;
+//import <chrono>;  // as include for intellisense stability, this can probably be changed in the future
 import <cstdint>;
 import <functional>;
 import <iostream>;
@@ -323,13 +325,18 @@ export namespace almondnamespace::sdlcontext
         const auto frameStart = std::chrono::steady_clock::now();
 
         const core::ContextType backendType = ctx ? ctx->type : core::ContextType::SDL;
-        const std::uintptr_t windowId =
-            (ctx && ctx->windowData)
-            ? reinterpret_cast<std::uintptr_t>(ctx->windowData->hwnd)
+
+        std::uintptr_t windowId = 0u;
 #if defined(_WIN32)
-            : reinterpret_cast<std::uintptr_t>(sdlcontext.hwnd);
+        if (ctx && ctx->windowData)
+            windowId = reinterpret_cast<std::uintptr_t>(ctx->windowData->hwnd);
+        else
+            windowId = reinterpret_cast<std::uintptr_t>(sdlcontext.hwnd);
 #else
-            : 0u;
+        if (ctx && ctx->windowData)
+            windowId = reinterpret_cast<std::uintptr_t>(ctx->windowData->hwnd);
+        else
+            windowId = 0u;
 #endif
 
         SDL_Event sdl_event{};
@@ -360,25 +367,20 @@ export namespace almondnamespace::sdlcontext
         SDL_SetRenderDrawColor(sdl_renderer.renderer, 124, 0, 255, 255);
         SDL_RenderClear(sdl_renderer.renderer);
 
-        {
-            std::size_t depth = 0;
-            {
-                const auto depth = queue.depth();
-
-            }
-
-            telemetry::emit_gauge(
-                "renderer.command_queue.depth",
-                static_cast<std::int64_t>(depth),
-                telemetry::RendererTelemetryTags{ backendType, windowId });
-        }
+        const std::size_t depth = queue.depth();
+        telemetry::emit_gauge(
+            "renderer.command_queue.depth",
+            static_cast<std::int64_t>(depth),
+            telemetry::RendererTelemetryTags{ backendType, windowId });
 
         queue.drain();
 
         SDL_RenderPresent(sdl_renderer.renderer);
 
         const auto frameEnd = std::chrono::steady_clock::now();
-        const auto frameMs = std::chrono::duration<double, std::milli>(frameEnd - frameStart).count();
+
+        // This form is correct and tends to avoid MSVC IntelliSense chrono bugs.
+        const double frameMs = std::chrono::duration<double, std::milli>(frameEnd - frameStart).count();
 
         telemetry::emit_histogram_ms(
             "renderer.frame.time_ms",

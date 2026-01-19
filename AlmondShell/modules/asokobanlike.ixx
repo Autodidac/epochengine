@@ -113,12 +113,13 @@ export namespace almondnamespace::sokobanlike
             };
 
             // Always try to load a background sprite if available
-            ensureSprite("bg");
-            ensureSprite("wall");
-            ensureSprite("floor");
-            ensureSprite("goal");
-            ensureSprite("box");
-            ensureSprite("player");
+           // ensureSprite("bg");
+           // ensureSprite("wall");
+          //  ensureSprite("floor");
+          //  ensureSprite("goal");
+          //  ensureSprite("box");
+         //   ensureSprite("player");
+            ensureSprite("atestimage");
 
             if (createdAtlas || registered)
             {

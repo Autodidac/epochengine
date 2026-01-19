@@ -21,18 +21,23 @@
  *   See LICENSE file for full terms.                         *
  *                                                            *
  **************************************************************/
+ //
  // aengine.context.multiplexer.win.cppm
+ //
 module;
 
 // configuration
-#include "../include/aengine.config.hpp"
+#include <include/aengine.config.hpp>
 
 #if defined(_WIN32)
 #   ifdef ALMOND_USING_WINMAIN
-#       include "../include/aframework.hpp"
+#       include <include/aframework.hpp>
 #   endif
 #   ifndef WIN32_LEAN_AND_MEAN
 #       define WIN32_LEAN_AND_MEAN
+#   endif
+#   ifndef NOMINMAX
+#       define NOMINMAX
 #   endif
 #   include <windowsx.h>
 #   include <commctrl.h>
@@ -79,6 +84,7 @@ import acontext.sdl.context;
 #endif
 #if defined(ALMOND_USING_RAYLIB)
 import acontext.raylib.context;
+import acontext.raylib.context.win;
 #endif
 #if defined(ALMOND_USING_SOFTWARE_RENDERER)
 import acontext.softrenderer.context;
@@ -88,7 +94,7 @@ import acontext.softrenderer.context;
 
 namespace
 {
-    // TU-owned globals. Accessed via almondnamespace::core::Threads()/Drag().
+    // TU-owned globals.
     std::unordered_map<HWND, std::thread> g_threads;
     almondnamespace::core::DragState       g_drag;
 
@@ -102,13 +108,10 @@ namespace
         switch (msg)
         {
         case WM_NCDESTROY:
-            // We allocated SubCtx in MakeDockable; free it here.
             delete ctx;
             return DefSubclassProc(hwnd, msg, wp, lp);
 
         case WM_CLOSE:
-            // Child close should not kill the process when docked.
-            // Only the actual *parent* window closing triggers WM_QUIT (handled in ParentProc).
             ::DestroyWindow(hwnd);
             return 0;
 
@@ -223,22 +226,6 @@ namespace almondnamespace::core
             [&](const std::unique_ptr<WindowData>& w) { return w && w->context && w->context.get() == ctx.get(); });
         return (it != windows.end()) ? it->get() : nullptr;
     }
-
-    // ------------------------------------------------------------
-    // MultiContextManager (static)
-    // ------------------------------------------------------------
-    //void MultiContextManager::SetCurrent(std::shared_ptr<Context> ctx)
-    //{
-    //    // Must qualify: currentContext is a static data member of the class.
-    //    MultiContextManager::currentContext = std::move(ctx);
-    //}
-
-    //std::shared_ptr<Context> MultiContextManager::GetCurrent()
-    //{
-    //    return MultiContextManager::currentContext;
-    //}
-
-
 
     // ------------------------------------------------------------
     // MultiContextManager (public helpers)
@@ -489,7 +476,7 @@ namespace almondnamespace::core
 #endif
 
                     auto winPtr = std::make_unique<contextwindow::WindowData>(hwnd, hdc, glrc, true, type);
-                    winPtr->running = true; // critical: default-constructed WindowData is not guaranteed to be running
+                    winPtr->running = true;
                     winPtr->titleWide = windowTitle;
                     winPtr->titleNarrow = narrowTitle;
 
@@ -506,9 +493,6 @@ namespace almondnamespace::core
 
                 std::vector<std::shared_ptr<Context>> ctxs;
 
-                // IMPORTANT: do not call CloneContext() while holding g_backendsMutex.
-                // If CloneContext() ever evolves to touch g_backends/g_backendsMutex (directly or indirectly),
-                // calling it under this lock will deadlock.
                 std::shared_ptr<Context> master;
                 std::vector<std::shared_ptr<Context>> free_dups;
                 free_dups.reserve(static_cast<size_t>((std::max)(0, count - 1)));
@@ -522,7 +506,7 @@ namespace almondnamespace::core
                         return;
                     }
 
-                    BackendState& state = it->second;
+                    almondnamespace::core::BackendState& state = it->second;
                     master = state.master;
 
                     for (auto& dup : state.duplicates)
@@ -582,8 +566,6 @@ namespace almondnamespace::core
                         w->context = ctx;
                         w->width = width;
                         w->height = height;
-
-                        // Ensure WindowData starts "alive".
                         w->running = true;
 
                         if (!ctx->onResize && w->onResize) ctx->onResize = w->onResize;
@@ -596,74 +578,13 @@ namespace almondnamespace::core
                             : almondnamespace::text::narrow_utf8(backend::BuildChildWindowTitle(type, static_cast<int>(i)));
                     }
 
-                    const HWND placeholderHwnd = hwnd;
-                    const HWND hostParent = parent;
+                    // Stash title for render thread init paths (Raylib/SDL).
+                    if (w && w->titleNarrow.empty())
+                        w->titleNarrow = narrowTitle;
 
-                    auto adopt_backend_window = [&](HWND actualHwnd)
-                        {
-                            if (!w || !ctx || !actualHwnd || actualHwnd == placeholderHwnd) return;
-
-                            const HWND previous = w->hwnd;
-
-                            if (hostParent)
-                            {
-                                ::SetParent(actualHwnd, hostParent);
-
-                                LONG_PTR style = ::GetWindowLongPtr(actualHwnd, GWL_STYLE);
-                                style &= ~(WS_POPUP | WS_OVERLAPPEDWINDOW);
-                                style |= (WS_CHILD | WS_VISIBLE | WS_CLIPCHILDREN | WS_CLIPSIBLINGS);
-                                ::SetWindowLongPtr(actualHwnd, GWL_STYLE, style);
-
-                                LONG_PTR exStyle = ::GetWindowLongPtr(actualHwnd, GWL_EXSTYLE);
-                                exStyle &= ~WS_EX_APPWINDOW;
-                                exStyle |= WS_EX_NOPARENTNOTIFY;
-                                ::SetWindowLongPtr(actualHwnd, GWL_EXSTYLE, exStyle);
-
-                                MakeDockable(actualHwnd, hostParent);
-                            }
-                            else
-                            {
-                                ::SetParent(actualHwnd, nullptr);
-                            }
-
-                            ::ShowWindow(actualHwnd, SW_SHOW);
-
-                            w->hwnd = actualHwnd;
-                            w->hdc = ctx->hdc;
-                            w->glContext = ctx->hglrc;
-                            w->context = ctx;
-                            w->usesSharedContext = false;
-                            w->running = true;
-                            ctx->windowData = w;
-
-                            RECT client{};
-                            if (::GetClientRect(actualHwnd, &client))
-                            {
-                                const int actualWidth = clamp_positive(static_cast<int>(client.right - client.left));
-                                const int actualHeight = clamp_positive(static_cast<int>(client.bottom - client.top));
-                                w->width = actualWidth;
-                                w->height = actualHeight;
-                                ctx->width = actualWidth;
-                                ctx->height = actualHeight;
-                            }
-
-                            if (previous && previous != actualHwnd)
-                            {
-                                auto& threads = Threads();
-                                if (threads.contains(previous))
-                                {
-                                    auto node = threads.extract(previous);
-                                    if (!node.empty())
-                                    {
-                                        node.key() = actualHwnd;
-                                        threads.insert(std::move(node));
-                                    }
-                                }
-                                ::DestroyWindow(previous);
-                            }
-                        };
-
-                    // ---------------- Immediate backend initialization ----------------
+                    // ---------------- Backend initialization policy ----------------
+                    // OpenGL uses the placeholder HWND and a context we create here -> safe to init now.
+                    // Raylib/SDL create their own HWND/GL context internally -> MUST init on the render thread.
                     switch (type)
                     {
 #if defined(ALMOND_USING_OPENGL)
@@ -677,7 +598,12 @@ namespace almondnamespace::core
                             else
                             {
                                 std::cerr << "[Init] Running OpenGL init for hwnd=" << hwnd << "\n";
-                                almondnamespace::openglcontext::opengl_initialize(ctx, hwnd, ctx->width, ctx->height, w ? w->onResize : nullptr);
+                                almondnamespace::openglcontext::opengl_initialize(
+                                    ctx,
+                                    hwnd,
+                                    ctx->width,
+                                    ctx->height,
+                                    w ? w->onResize : nullptr);
                                 ::wglMakeCurrent(nullptr, nullptr);
                             }
                         }
@@ -686,28 +612,27 @@ namespace almondnamespace::core
 #if defined(ALMOND_USING_SOFTWARE_RENDERER)
                     case ContextType::Software:
                         std::cerr << "[Init] Initializing Software renderer for hwnd=" << hwnd << "\n";
-                        almondnamespace::anativecontext::softrenderer_initialize(ctx, hwnd, ctx->width, ctx->height, w ? w->onResize : nullptr);
+                        almondnamespace::anativecontext::softrenderer_initialize(
+                            ctx,
+                            hwnd,
+                            ctx->width,
+                            ctx->height,
+                            w ? w->onResize : nullptr);
                         break;
 #endif
 #if defined(ALMOND_USING_RAYLIB)
                     case ContextType::RayLib:
-                        std::cerr << "[Init] Initializing RayLib context for hwnd=" << hostParent << "\n";
-                        almondnamespace::raylibcontext::raylib_initialize(ctx, hostParent, ctx->width, ctx->height, w ? w->onResize : nullptr, narrowTitle);
+                        std::cerr << "[Init] Deferring Raylib init to render thread. host=" << hwnd << "\n";
                         break;
 #endif
 #if defined(ALMOND_USING_SDL)
                     case ContextType::SDL:
-                        std::cerr << "[Init] Initializing SDL context for hwnd=" << hostParent << "\n";
-                        almondnamespace::sdlcontext::sdl_initialize(ctx, hostParent, ctx->width, ctx->height, w ? w->onResize : nullptr, narrowTitle);
+                        std::cerr << "[Init] Deferring SDL init to render thread. host=" << hwnd << "\n";
                         break;
 #endif
                     default:
                         break;
                     }
-
-                    // Some backends (SDL/Raylib) create their own HWND; adopt it.
-                    if (type == ContextType::SDL || type == ContextType::RayLib)
-                        adopt_backend_window(ctx->hwnd);
                 }
             };
 
@@ -726,6 +651,9 @@ namespace almondnamespace::core
         (void)SFMLWinCount;
 
         ArrangeDockedWindowsGrid();
+
+        // Start threads after windows exist and titles/sizes are known.
+        StartRenderThreads();
 
         {
             std::shared_lock lock(g_backendsMutex);
@@ -776,7 +704,7 @@ namespace almondnamespace::core
         std::shared_ptr<Context> ctx;
         {
             std::unique_lock lock(g_backendsMutex);
-            auto& state = core::g_backends[type];
+            auto& state = almondnamespace::core::g_backends[type];
 
             if (!state.master)
             {
@@ -882,6 +810,14 @@ namespace almondnamespace::core
                 windowId = reinterpret_cast<std::uintptr_t>(window->hwnd);
         }
 
+#if defined(ALMOND_USING_RAYLIB)
+        // Keep raylib's real child HWND sized to the dock-cell client rect.
+        if (contextType == core::ContextType::RayLib)
+        {
+            almondnamespace::raylibcontext::win::adopt_parent(reinterpret_cast<void*>(hwnd));
+        }
+#endif
+
         if (window)
         {
             window->commandQueue.enqueue([
@@ -904,6 +840,7 @@ namespace almondnamespace::core
                         "renderer.resize.latest_dimensions",
                         h,
                         telemetry::RendererTelemetryTags{ contextType, windowId, "height" });
+
                     if (cb) cb(w, h);
                 });
         }
@@ -1014,7 +951,6 @@ namespace almondnamespace::core
             ::SetWindowPos(win.hwnd, nullptr, c * cw, r * ch, cw, ch,
                 SWP_NOZORDER | SWP_NOACTIVATE | SWP_SHOWWINDOW);
 
-            // Queue resize into that window's render queue.
             HandleResize(win.hwnd, cw, ch);
         }
     }
@@ -1052,11 +988,59 @@ namespace almondnamespace::core
 
         struct ResetGuard { ~ResetGuard() { MultiContextManager::SetCurrent(nullptr); } } resetGuard;
 
-        if (ctx->initialize) ctx->initialize_safe();
-        else
+        // ------------------------------------------------------------
+        // CRITICAL FIX:
+        // Raylib/SDL must be created+initialized on the SAME thread that will render them.
+        // (They create their own WGL context internally.)
+        // ------------------------------------------------------------
+#if defined(ALMOND_USING_RAYLIB)
+        if (ctx->type == ContextType::RayLib)
         {
-            win.running = false;
-            return;
+            std::cerr << "[RenderThread] Raylib init. host=" << win.hwnd << "\n";
+            almondnamespace::raylibcontext::raylib_initialize(
+                ctx,
+                win.hwnd,
+                static_cast<unsigned>(ctx->width),
+                static_cast<unsigned>(ctx->height),
+                win.onResize ? win.onResize : ctx->onResize,
+                win.titleNarrow);
+
+            almondnamespace::raylibcontext::win::adopt_parent(reinterpret_cast<void*>(win.hwnd));
+        }
+#endif
+#if defined(ALMOND_USING_SDL)
+        if (ctx->type == ContextType::SDL)
+        {
+            std::cerr << "[RenderThread] SDL init. host=" << win.hwnd << "\n";
+            almondnamespace::sdlcontext::sdl_initialize(
+                ctx,
+                win.hwnd,
+                static_cast<unsigned>(ctx->width),
+                static_cast<unsigned>(ctx->height),
+                win.onResize ? win.onResize : ctx->onResize,
+                win.titleNarrow);
+        }
+#endif
+
+        // For backends that use the placeholder HWND/contexts we created (OpenGL/Software),
+        // keep the existing initialize path.
+        const bool skipGenericInit =
+#if defined(ALMOND_USING_RAYLIB)
+            (ctx->type == ContextType::RayLib) ||
+#endif
+#if defined(ALMOND_USING_SDL)
+            (ctx->type == ContextType::SDL) ||
+#endif
+            false;
+
+        if (!skipGenericInit)
+        {
+            if (ctx->initialize) ctx->initialize_safe();
+            else
+            {
+                win.running = false;
+                return;
+            }
         }
 
         while (running.load(std::memory_order_acquire) && win.running)
@@ -1064,10 +1048,7 @@ namespace almondnamespace::core
             bool keepRunning = true;
 
             {
-                std::size_t depth = 0;
-                {
-                    const auto depth = win.commandQueue.depth();
-                }
+                const std::size_t depth = win.commandQueue.depth();
                 telemetry::emit_gauge(
                     "renderer.command_queue.depth",
                     static_cast<std::int64_t>(depth),
