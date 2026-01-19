@@ -1,9 +1,5 @@
 // src modules/afilewatch.cppm
 
-module;
-
-export module autility.filewatch;
-
 import <algorithm>;
 import <cstdint>;
 import <filesystem>;

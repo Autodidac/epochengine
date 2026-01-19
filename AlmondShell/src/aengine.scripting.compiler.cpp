@@ -21,9 +21,6 @@
  *   See LICENSE file for full terms.                         *
  *                                                            *
  **************************************************************/
-module;  // aengine.scripting.compiler.cppm / .ixx
-
-export module aengine.scripting.compiler;
 
 // Prefer standard library module imports in the module purview.
 import <cstdlib>;
@@ -33,11 +30,11 @@ import <string>;
 import <string_view>;
 import <vector>;
 
-export namespace almondnamespace::compiler
+namespace almondnamespace::compiler
 {
     // Builds a single TU into a shared library (DLL/.so).
     // Returns true on success (exit code == 0).
-    export inline bool compile_script_to_dll(
+    inline bool compile_script_to_dll(
         const std::filesystem::path& input,
         const std::filesystem::path& output
     )

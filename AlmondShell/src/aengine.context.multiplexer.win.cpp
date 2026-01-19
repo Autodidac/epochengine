@@ -22,11 +22,9 @@
  *                                                            *
  **************************************************************/
  //
- // aengine.context.multiplexer.win.cppm
+ // aengine.context.multiplexer.win.cpp  (TU implementation; NOT a module partition)
  //
-module;
 
-// configuration
 #include <include/aengine.config.hpp>
 
 #if defined(_WIN32)
@@ -61,8 +59,6 @@ module;
 
 #   include <glad/glad.h>
 #endif
-
-export module aengine.context.multiplexer:win;
 
 import aengine.platform;
 import autility.string.converter;
@@ -131,7 +127,7 @@ namespace
 namespace almondnamespace::core
 {
     // ------------------------------------------------------------
-    // Exported helpers
+    // Exported helpers (declared in the interface module)
     // ------------------------------------------------------------
     std::unordered_map<HWND, std::thread>& Threads() noexcept { return g_threads; }
     DragState& Drag() noexcept { return g_drag; }
@@ -143,9 +139,7 @@ namespace almondnamespace::core
         if (!hwnd) return;
         auto* ctx = new SubCtx{ parent };
         if (!::SetWindowSubclass(hwnd, DockableProc, 1, reinterpret_cast<DWORD_PTR>(ctx)))
-        {
             delete ctx;
-        }
 #else
         (void)hwnd;
         (void)parent;
@@ -475,7 +469,7 @@ namespace almondnamespace::core
                     }
 #endif
 
-                    auto winPtr = std::make_unique<contextwindow::WindowData>(hwnd, hdc, glrc, true, type);
+                    auto winPtr = std::make_unique<WindowData>(hwnd, hdc, glrc, true, type);
                     winPtr->running = true;
                     winPtr->titleWide = windowTitle;
                     winPtr->titleNarrow = narrowTitle;
@@ -506,7 +500,7 @@ namespace almondnamespace::core
                         return;
                     }
 
-                    almondnamespace::core::BackendState& state = it->second;
+                    BackendState& state = it->second;
                     master = state.master;
 
                     for (auto& dup : state.duplicates)
@@ -516,8 +510,7 @@ namespace almondnamespace::core
                     }
                 }
 
-                if (!master)
-                    return;
+                if (!master) return;
 
                 ctxs.reserve(static_cast<size_t>(count));
                 ctxs.push_back(master);
@@ -534,8 +527,7 @@ namespace almondnamespace::core
                     auto cloned = CloneContext(*master);
                     {
                         std::unique_lock lock(g_backendsMutex);
-                        auto& state = g_backends[type];
-                        state.duplicates.push_back(cloned);
+                        g_backends[type].duplicates.push_back(cloned);
                     }
                     ctxs.push_back(std::move(cloned));
                 }
@@ -574,16 +566,16 @@ namespace almondnamespace::core
 
                     if (narrowTitle.empty())
                     {
-                        narrowTitle = (i < createdTitles.size()) ? createdTitles[i]
+                        narrowTitle = (i < createdTitles.size())
+                            ? createdTitles[i]
                             : almondnamespace::text::narrow_utf8(backend::BuildChildWindowTitle(type, static_cast<int>(i)));
                     }
 
-                    // Stash title for render thread init paths (Raylib/SDL).
                     if (w && w->titleNarrow.empty())
                         w->titleNarrow = narrowTitle;
 
                     // ---------------- Backend initialization policy ----------------
-                    // OpenGL uses the placeholder HWND and a context we create here -> safe to init now.
+                    // OpenGL uses the placeholder HWND + wgl contexts -> safe to init now.
                     // Raylib/SDL create their own HWND/GL context internally -> MUST init on the render thread.
                     switch (type)
                     {
@@ -651,8 +643,6 @@ namespace almondnamespace::core
         (void)SFMLWinCount;
 
         ArrangeDockedWindowsGrid();
-
-        // Start threads after windows exist and titles/sizes are known.
         StartRenderThreads();
 
         {
@@ -704,7 +694,7 @@ namespace almondnamespace::core
         std::shared_ptr<Context> ctx;
         {
             std::unique_lock lock(g_backendsMutex);
-            auto& state = almondnamespace::core::g_backends[type];
+            auto& state = g_backends[type];
 
             if (!state.master)
             {
@@ -762,9 +752,7 @@ namespace almondnamespace::core
 
         auto& threads = Threads();
         if (!threads.contains(hwnd) && rawWin)
-        {
             threads[hwnd] = std::thread([this, rawWin]() { RenderLoop(*rawWin); });
-        }
 
         ArrangeDockedWindowsGrid();
     }
@@ -811,11 +799,8 @@ namespace almondnamespace::core
         }
 
 #if defined(ALMOND_USING_RAYLIB)
-        // Keep raylib's real child HWND sized to the dock-cell client rect.
         if (contextType == core::ContextType::RayLib)
-        {
             almondnamespace::raylibcontext::win::adopt_parent(reinterpret_cast<void*>(hwnd));
-        }
 #endif
 
         if (window)
@@ -966,9 +951,7 @@ namespace almondnamespace::core
         }
 
         for (auto& [hwnd, th] : g_threads)
-        {
             if (th.joinable()) th.join();
-        }
         g_threads.clear();
 
         if (s_activeInstance == this) s_activeInstance = nullptr;
@@ -984,15 +967,11 @@ namespace almondnamespace::core
         }
 
         ctx->windowData = &win;
-        SetCurrent(ctx);
+        MultiContextManager::SetCurrent(ctx);
 
         struct ResetGuard { ~ResetGuard() { MultiContextManager::SetCurrent(nullptr); } } resetGuard;
 
-        // ------------------------------------------------------------
-        // CRITICAL FIX:
         // Raylib/SDL must be created+initialized on the SAME thread that will render them.
-        // (They create their own WGL context internally.)
-        // ------------------------------------------------------------
 #if defined(ALMOND_USING_RAYLIB)
         if (ctx->type == ContextType::RayLib)
         {
@@ -1022,8 +1001,6 @@ namespace almondnamespace::core
         }
 #endif
 
-        // For backends that use the placeholder HWND/contexts we created (OpenGL/Software),
-        // keep the existing initialize path.
         const bool skipGenericInit =
 #if defined(ALMOND_USING_RAYLIB)
             (ctx->type == ContextType::RayLib) ||
@@ -1036,11 +1013,7 @@ namespace almondnamespace::core
         if (!skipGenericInit)
         {
             if (ctx->initialize) ctx->initialize_safe();
-            else
-            {
-                win.running = false;
-                return;
-            }
+            else { win.running = false; return; }
         }
 
         while (running.load(std::memory_order_acquire) && win.running)

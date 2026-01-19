@@ -11,12 +11,11 @@
  *
  *   SPDX-License-Identifier: LicenseRef-MIT-NoSell
  **************************************************************/
- // aengine.context.cppm
-module;
+ //
+ // aengine.context.cpp  (TU implementation; NOT a module interface)
+ //
 
 #include <include/aengine.config.hpp> // macros only — must NOT include windows
-
-export module aengine.context;
 
 import <algorithm>;
 import <cstdint>;

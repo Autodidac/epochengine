@@ -13,9 +13,6 @@
     <Filter Include="Module Files\ixx">
       <UniqueIdentifier>{7820e8e5-34fa-4ff1-b5c7-bc66bb5c4488}</UniqueIdentifier>
     </Filter>
-    <Filter Include="Module Files\cppm">
-      <UniqueIdentifier>{d7c950b5-3050-4190-8793-7522382cedb5}</UniqueIdentifier>
-    </Filter>
     <Filter Include="Module Files\ixx\core">
       <UniqueIdentifier>{451a6ad6-c07d-4fc2-8b2c-5f709574e3c3}</UniqueIdentifier>
     </Filter>
@@ -48,9 +45,6 @@
     </Filter>
     <Filter Include="Header Files">
       <UniqueIdentifier>{e556c93a-d317-4752-b807-f1dd084ff695}</UniqueIdentifier>
-    </Filter>
-    <Filter Include="Module Files\cppm\crossplatform">
-      <UniqueIdentifier>{c3944531-7e90-4bef-b427-d741cb669b8e}</UniqueIdentifier>
     </Filter>
     <Filter Include="Module Files\ixx\core\platform">
       <UniqueIdentifier>{a2017f7c-ed47-428d-a368-49f143de6297}</UniqueIdentifier>
@@ -100,11 +94,11 @@
     <Filter Include="Source Files\scripts">
       <UniqueIdentifier>{3be7745a-41c9-465a-8afe-9ac47d8de45d}</UniqueIdentifier>
     </Filter>
-    <Filter Include="Module Files\cppm\core">
-      <UniqueIdentifier>{60f884ca-531b-43d9-8094-e9a030f5e25f}</UniqueIdentifier>
+    <Filter Include="Source Files\crossplatform">
+      <UniqueIdentifier>{25421697-64d4-4f63-b88e-3a7ff454c0b7}</UniqueIdentifier>
     </Filter>
-    <Filter Include="Module Files\cppm\crossplatform\linux">
-      <UniqueIdentifier>{6bab900a-1fae-4bfc-bbd7-0b10489a61bc}</UniqueIdentifier>
+    <Filter Include="Module Files\ixx\games\gamecore">
+      <UniqueIdentifier>{52ee0543-9b00-43b5-b44c-726f6cd8cfd9}</UniqueIdentifier>
     </Filter>
   </ItemGroup>
   <ItemGroup>
@@ -206,9 +200,6 @@
     <ClCompile Include="$(MSBuildThisFileDirectory)modules\afroggerlike.ixx">
       <Filter>Module Files\ixx\games</Filter>
     </ClCompile>
-    <ClCompile Include="$(MSBuildThisFileDirectory)modules\agamecore.ixx">
-      <Filter>Module Files\ixx\games</Filter>
-    </ClCompile>
     <ClCompile Include="$(MSBuildThisFileDirectory)modules\acellularsim.ixx">
       <Filter>Module Files\ixx\games</Filter>
     </ClCompile>
@@ -223,12 +214,6 @@
     </ClCompile>
     <ClCompile Include="$(MSBuildThisFileDirectory)modules\autility.codeinspector.ixx">
       <Filter>Module Files\ixx\utilities</Filter>
-    </ClCompile>
-    <ClCompile Include="$(MSBuildThisFileDirectory)modules\aenduserapplication.ixx">
-      <Filter>Module Files\ixx\games</Filter>
-    </ClCompile>
-    <ClCompile Include="$(MSBuildThisFileDirectory)modules\aapplicationmodule.ixx">
-      <Filter>Module Files\ixx\games</Filter>
     </ClCompile>
     <ClCompile Include="$(MSBuildThisFileDirectory)modules\aautility.noheapguard.ixx">
       <Filter>Module Files\ixx\utilities</Filter>
@@ -482,12 +467,6 @@
     <ClCompile Include="$(MSBuildThisFileDirectory)modules\aengine.bindings.ixx">
       <Filter>Module Files\ixx\utilities</Filter>
     </ClCompile>
-    <ClCompile Include="$(MSBuildThisFileDirectory)src\aengine.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="$(MSBuildThisFileDirectory)src modules\aengine.context.multiplexer.win.cppm">
-      <Filter>Module Files\cppm\crossplatform</Filter>
-    </ClCompile>
     <ClCompile Include="$(MSBuildThisFileDirectory)modules\aengine.core.context.ixx">
       <Filter>Module Files\ixx\core\context</Filter>
     </ClCompile>
@@ -506,44 +485,56 @@
     <ClCompile Include="$(MSBuildThisFileDirectory)modules\acontext.raylib.renderer.ixx">
       <Filter>Module Files\ixx\core\context\backends\raylib</Filter>
     </ClCompile>
-    <ClCompile Include="$(MSBuildThisFileDirectory)src\scripts\editor_launcher.ascript.cpp">
-      <Filter>Source Files\scripts</Filter>
-    </ClCompile>
     <ClCompile Include="$(MSBuildThisFileDirectory)modules\aengine.telemetry.ixx">
       <Filter>Module Files\ixx\utilities</Filter>
     </ClCompile>
-    <ClCompile Include="$(MSBuildThisFileDirectory)src modules\renderer_smoke_harness.cppm">
-      <Filter>Module Files\cppm</Filter>
-    </ClCompile>
-    <ClCompile Include="$(MSBuildThisFileDirectory)src modules\aengine.context.cppm">
-      <Filter>Module Files\cppm\core</Filter>
-    </ClCompile>
-    <ClCompile Include="$(MSBuildThisFileDirectory)src modules\aengine.gui.cppm">
-      <Filter>Module Files\cppm\core</Filter>
-    </ClCompile>
-    <ClCompile Include="$(MSBuildThisFileDirectory)src modules\aengine.scripting.compiler.cppm">
-      <Filter>Module Files\cppm\core</Filter>
-    </ClCompile>
-    <ClCompile Include="$(MSBuildThisFileDirectory)src modules\afilewatch.cppm">
-      <Filter>Module Files\cppm\core</Filter>
-    </ClCompile>
-    <ClCompile Include="$(MSBuildThisFileDirectory)src modules\afont.renderer.cpp">
-      <Filter>Module Files\cppm\core</Filter>
-    </ClCompile>
-    <ClCompile Include="$(MSBuildThisFileDirectory)src modules\aeditor.cppm">
-      <Filter>Module Files\cppm\core</Filter>
-    </ClCompile>
-    <ClCompile Include="$(MSBuildThisFileDirectory)src modules\aengine.context.win.cppm">
-      <Filter>Module Files\cppm\crossplatform</Filter>
-    </ClCompile>
-    <ClCompile Include="$(MSBuildThisFileDirectory)src modules\aengine.context.multiplexer.linux.cppm">
-      <Filter>Module Files\cppm\crossplatform\linux</Filter>
-    </ClCompile>
-    <ClCompile Include="$(MSBuildThisFileDirectory)src modules\acontext.raylib.api.ixx">
+    <ClCompile Include="$(MSBuildThisFileDirectory)modules\acontext.raylib.context.win.ixx">
       <Filter>Module Files\ixx\core\context\backends\raylib</Filter>
     </ClCompile>
-    <ClCompile Include="$(MSBuildThisFileDirectory)src modules\acontext.raylib.context.win.ixx">
+    <ClCompile Include="$(MSBuildThisFileDirectory)modules\acontext.raylib.api.ixx">
       <Filter>Module Files\ixx\core\context\backends\raylib</Filter>
+    </ClCompile>
+    <ClCompile Include="$(MSBuildThisFileDirectory)modules\aengine.context.win.ixx">
+      <Filter>Module Files\ixx\core\context</Filter>
+    </ClCompile>
+    <ClCompile Include="$(MSBuildThisFileDirectory)src\aeditor.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="$(MSBuildThisFileDirectory)src\aengine.context.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="$(MSBuildThisFileDirectory)src\aengine.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="$(MSBuildThisFileDirectory)src\aengine.gui.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="$(MSBuildThisFileDirectory)src\aengine.scripting.compiler.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="$(MSBuildThisFileDirectory)src\afilewatch.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="$(MSBuildThisFileDirectory)src\afont.renderer.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="$(MSBuildThisFileDirectory)src\renderer_smoke_harness.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="$(MSBuildThisFileDirectory)src\aengine.context.multiplexer.win.cpp">
+      <Filter>Source Files\crossplatform</Filter>
+    </ClCompile>
+    <ClCompile Include="$(MSBuildThisFileDirectory)src\aengine.context.multiplexer.linux.cpp">
+      <Filter>Source Files\crossplatform</Filter>
+    </ClCompile>
+    <ClCompile Include="$(MSBuildThisFileDirectory)modules\agamecore.ixx">
+      <Filter>Module Files\ixx\games\gamecore</Filter>
+    </ClCompile>
+    <ClCompile Include="$(MSBuildThisFileDirectory)modules\aenduserapplication.ixx">
+      <Filter>Module Files\ixx\games\gamecore</Filter>
+    </ClCompile>
+    <ClCompile Include="$(MSBuildThisFileDirectory)modules\aapplicationmodule.ixx">
+      <Filter>Module Files\ixx\games\gamecore</Filter>
     </ClCompile>
   </ItemGroup>
 </Project>

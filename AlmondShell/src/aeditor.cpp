@@ -30,7 +30,8 @@ module;
 //
 //#include "agui.hpp"
 
-import aeditor;
+export module aeditor;
+
 import autility.filewatch;
 
 namespace almondnamespace

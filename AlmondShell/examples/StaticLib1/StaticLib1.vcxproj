@@ -439,6 +439,9 @@
     <ClCompile Update="C:\Users\iammi\source\repos\epochengine\AlmondShell\src modules\aengine.context.multiplexer.win.cppm">
       <FileType>Document</FileType>
     </ClCompile>
+    <ClCompile Update="C:\Users\iammi\source\repos\epochengine\AlmondShell\src modules\aengine.context.win.ixx">
+      <FileType>Document</FileType>
+    </ClCompile>
     <ClCompile Update="C:\Users\iammi\source\repos\epochengine\AlmondShell\src modules\afont.renderer.cppm">
       <FileType>Document</FileType>
     </ClCompile>
@@ -446,6 +449,12 @@
       <FileType>Document</FileType>
     </ClCompile>
     <ClCompile Update="C:\Users\iammi\source\repos\epochengine\AlmondShell\src\acontextmultiplexer_win.cppm">
+      <FileType>Document</FileType>
+    </ClCompile>
+    <ClCompile Update="C:\Users\iammi\source\repos\epochengine\AlmondShell\src\aengine.gui.cpp">
+      <FileType>Document</FileType>
+    </ClCompile>
+    <ClCompile Update="C:\Users\iammi\source\repos\epochengine\AlmondShell\src\aengine.gui.ixx">
       <FileType>Document</FileType>
     </ClCompile>
     <ClCompile Update="C:\Users\iammi\source\repos\epochengine\AlmondShell\src\aopenglplatform_win.cppm">

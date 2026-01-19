@@ -15,18 +15,19 @@
  *   Use permitted for Non-Commercial Purposes ONLY,          *
  *   without prior commercial licensing agreement.            *
  **************************************************************/
-
-module;
+ //
+ // aengine.context.multiplexer.linux.cpp  (TU implementation; NOT a module interface)
+ //
 
 #if defined(__linux__)
 
 // Feature flags (defines ALMOND_USING_*)
 #include <include/aengine.config.hpp> // for ALMOND_USING Macros
 
-
 // X11 / GLX headers must be includes (not module imports)
 #include <X11/Xatom.h>
 #include <X11/extensions/Xrandr.h>
+#include <GL/glx.h>
 #include <GL/glxext.h>
 
 // If you use GLAD on Linux, include it here (raylib/sdl/opengl paths share it)
@@ -34,33 +35,28 @@ module;
 #   include <glad/glad.h>
 #endif
 
-#endif // __linux__
-
-export module aengine.context.multiplexer.linux;
-
-#if defined(__linux__)
-
 // ---- std ----
-import <algorithm>;
-import <atomic>;
-import <chrono>;
-import <cstdint>;
-import <cstring>;
-import <exception>;
-import <functional>;
-import <iostream>;
-import <memory>;
-import <mutex>;
-import <shared_mutex>;
-import <stdexcept>;
-import <string>;
-import <string_view>;
-import <thread>;
-import <utility>;
-import <vector>;
+#include <algorithm>
+#include <atomic>
+#include <chrono>
+#include <cstdint>
+#include <cstring>
+#include <exception>
+#include <functional>
+#include <iostream>
+#include <memory>
+#include <mutex>
+#include <shared_mutex>
+#include <stdexcept>
+#include <string>
+#include <string_view>
+#include <thread>
+#include <unordered_map>
+#include <utility>
+#include <vector>
 
-// ---- engine interfaces/types ----
-import aengine.context.multiplexer;   // exports MultiContextManager, RenderCommand, etc.
+// ---- engine interfaces/types (modules you already own) ----
+import aengine.context.multiplexer;   // MultiContextManager (decls)
 import aengine.core.context;          // Context, InitializeAllContexts(), CloneContext(), g_backends, etc.
 import aengine.context.window;        // WindowData
 import aengine.context.type;          // ContextType
@@ -85,7 +81,6 @@ import acontext.sdl.context;          // almondnamespace::sdlcontext::sdl_initia
 #   if defined(ALMOND_USING_SOFTWARE_RENDERER)
 import acontext.softrenderer.context; // almondnamespace::anativecontext::softrenderer_initialize
 #   endif
-
 
 namespace almondnamespace::platform
 {
@@ -571,7 +566,6 @@ namespace almondnamespace::core
                                     return false;
                                 }
 
-                                // X11 window is still owned by the multiplexer; raylib may manage internals separately.
                                 return true;
                             };
                     }
@@ -965,6 +959,7 @@ namespace almondnamespace::core
                         "renderer.resize.latest_dimensions",
                         clampedHeight,
                         telemetry::RendererTelemetryTags{ contextType, windowId, "height" });
+
                     if (cb) cb(clampedWidth, clampedHeight);
                 });
         }
@@ -994,16 +989,6 @@ namespace almondnamespace::core
 
         if (it != windows.end() && *it)
             (*it)->EnqueueCommand(std::move(cmd));
-    }
-
-    void MultiContextManager::SetCurrent(std::shared_ptr<core::Context> ctx)
-    {
-        currentContext = std::move(ctx);
-    }
-
-    std::shared_ptr<core::Context> MultiContextManager::GetCurrent()
-    {
-        return currentContext;
     }
 
     WindowData* MultiContextManager::findWindowByHWND(HWND hwnd)
@@ -1092,7 +1077,7 @@ namespace almondnamespace::core
         }
 
         ctx->windowData = &win;
-        SetCurrent(ctx);
+        MultiContextManager::SetCurrent(ctx);
 
         struct ResetGuard
         {

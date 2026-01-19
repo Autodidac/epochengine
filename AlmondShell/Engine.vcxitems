@@ -55,7 +55,10 @@
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="$(MSBuildThisFileDirectory)modules\a2048like.ixx" />
+    <ClCompile Include="$(MSBuildThisFileDirectory)modules\acontext.raylib.api.ixx" />
+    <ClCompile Include="$(MSBuildThisFileDirectory)modules\acontext.raylib.context.win.ixx" />
     <ClCompile Include="$(MSBuildThisFileDirectory)modules\acontext.raylib.input.ixx" />
+    <ClCompile Include="$(MSBuildThisFileDirectory)modules\aengine.context.win.ixx" />
     <ClCompile Include="$(MSBuildThisFileDirectory)modules\aengine.gui.menu.ixx" />
     <ClCompile Include="$(MSBuildThisFileDirectory)modules\aengine.telemetry.ixx" />
     <ClCompile Include="$(MSBuildThisFileDirectory)modules\ascripting.system.ixx" />
@@ -182,25 +185,21 @@
     <ClCompile Include="$(MSBuildThisFileDirectory)modules\avulkanswapchain.ixx" />
     <ClCompile Include="$(MSBuildThisFileDirectory)modules\avulkantexture.ixx" />
     <ClCompile Include="$(MSBuildThisFileDirectory)modules\avulkantriangle.ixx" />
-    <ClCompile Include="$(MSBuildThisFileDirectory)src modules\acontext.raylib.api.ixx" />
-    <ClCompile Include="$(MSBuildThisFileDirectory)src modules\acontext.raylib.context.win.ixx" />
-    <ClCompile Include="$(MSBuildThisFileDirectory)src modules\aengine.context.cppm" />
-    <ClCompile Include="$(MSBuildThisFileDirectory)src modules\aengine.context.multiplexer.linux.cppm" />
-    <ClCompile Include="$(MSBuildThisFileDirectory)src modules\aengine.context.multiplexer.win.cppm" />
-    <ClCompile Include="$(MSBuildThisFileDirectory)src modules\aeditor.cppm">
+    <ClCompile Include="$(MSBuildThisFileDirectory)src\aeditor.cpp">
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">true</ExcludedFromBuild>
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">true</ExcludedFromBuild>
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">true</ExcludedFromBuild>
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|x64'">true</ExcludedFromBuild>
     </ClCompile>
-    <ClCompile Include="$(MSBuildThisFileDirectory)src modules\aengine.context.win.cppm" />
-    <ClCompile Include="$(MSBuildThisFileDirectory)src modules\aengine.gui.cppm" />
-    <ClCompile Include="$(MSBuildThisFileDirectory)src modules\aengine.scripting.compiler.cppm" />
-    <ClCompile Include="$(MSBuildThisFileDirectory)src modules\afilewatch.cppm" />
-    <ClCompile Include="$(MSBuildThisFileDirectory)src modules\afont.renderer.cpp" />
-    <ClCompile Include="$(MSBuildThisFileDirectory)src modules\renderer_smoke_harness.cppm" />
+    <ClCompile Include="$(MSBuildThisFileDirectory)src\aengine.context.cpp" />
+    <ClCompile Include="$(MSBuildThisFileDirectory)src\aengine.context.multiplexer.linux.cpp" />
+    <ClCompile Include="$(MSBuildThisFileDirectory)src\aengine.context.multiplexer.win.cpp" />
     <ClCompile Include="$(MSBuildThisFileDirectory)src\aengine.cpp" />
-    <ClCompile Include="$(MSBuildThisFileDirectory)src\scripts\editor_launcher.ascript.cpp">
+    <ClCompile Include="$(MSBuildThisFileDirectory)src\aengine.gui.cpp" />
+    <ClCompile Include="$(MSBuildThisFileDirectory)src\aengine.scripting.compiler.cpp" />
+    <ClCompile Include="$(MSBuildThisFileDirectory)src\afilewatch.cpp" />
+    <ClCompile Include="$(MSBuildThisFileDirectory)src\afont.renderer.cpp" />
+    <ClCompile Include="$(MSBuildThisFileDirectory)src\renderer_smoke_harness.cpp">
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">true</ExcludedFromBuild>
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">true</ExcludedFromBuild>
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">true</ExcludedFromBuild>

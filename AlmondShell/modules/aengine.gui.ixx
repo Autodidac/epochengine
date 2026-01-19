@@ -1,8 +1,7 @@
-
 export module aengine.gui;
 
 import aengine.core.context;
-import aspritehandle; // must export SpriteHandle (you have aspritehandle.ixx)
+import aspritehandle;
 
 import <cstdint>;
 import <memory>;
@@ -13,7 +12,6 @@ import <vector>;
 
 export namespace almondnamespace::gui
 {
-    // ---- Basic math / data types (were in agui.hpp) ----
     export struct Vec2
     {
         float x{};
@@ -26,12 +24,12 @@ export namespace almondnamespace::gui
         friend constexpr Vec2 operator+(Vec2 a, Vec2 b) noexcept { a += b; return a; }
     };
 
-    struct Color
+    export struct Color
     {
         std::uint8_t r{}, g{}, b{}, a{ 255 };
     };
 
-    enum class EventType : std::uint8_t
+    export enum class EventType : std::uint8_t
     {
         None = 0,
         MouseMove,
@@ -46,8 +44,8 @@ export namespace almondnamespace::gui
     {
         EventType type{ EventType::None };
         Vec2 mouse_pos{};
-        int key{};                 // platform-agnostic key code (legacy behavior)
-        std::string text{};        // for TextInput
+        int key{};
+        std::string text{};
     };
 
     export struct WidgetBounds
@@ -56,14 +54,14 @@ export namespace almondnamespace::gui
         Vec2 size{};
     };
 
-    struct EditBoxResult
+    export struct EditBoxResult
     {
         bool active{};
         bool changed{};
         bool submitted{};
     };
 
-    struct ConsoleWindowOptions
+    export struct ConsoleWindowOptions
     {
         std::string_view title{};
         Vec2 position{};
@@ -77,12 +75,11 @@ export namespace almondnamespace::gui
         bool multiline_input{ false };
     };
 
-    struct ConsoleWindowResult
+    export struct ConsoleWindowResult
     {
         EditBoxResult input{};
     };
 
-    // ---- Public API ----
     export void push_input(const InputEvent& e) noexcept;
 
     export void begin_frame(const std::shared_ptr<core::Context>& ctx,

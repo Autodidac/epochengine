@@ -22,12 +22,7 @@
  *                                                            *
  **************************************************************/
 
-module; // aengine.gui.cppm (converted from legacy agui.cpp)
-export module aengine.gui; // agui.cppm
-
-// NOTE:
-// Do NOT `import aengine.gui;` inside this module. A module cannot import itself.
-// If you need interface/impl separation, use partitions (`export module aengine.gui:part;`).
+ // aengine.gui.cpp  (TU version of former aengine.gui module unit)
 
 import aengine.core.context;
 import aengine.context.multiplexer;
@@ -59,7 +54,9 @@ import <unordered_map>;
 import <utility>;
 import <vector>;
 
-export namespace almondnamespace::gui
+import aengine.gui;
+
+namespace almondnamespace::gui
 {
     using Context = almondnamespace::core::Context;
 
@@ -74,14 +71,13 @@ export namespace almondnamespace::gui
     constexpr const char* kDefaultFontName = "__agui_default_font";
     constexpr const char* kDefaultFontFile = "Roboto-Regular.ttf";
 
-    // These types are assumed to already exist in your GUI interface.
-    // If they live elsewhere, keep the imports aligned.
-    export struct Vec2 { float x{}; float y{}; };
-    export inline Vec2 operator+(Vec2 a, Vec2 b) noexcept { return { a.x + b.x, a.y + b.y }; }
-    export inline Vec2& operator+=(Vec2& a, Vec2 b) noexcept { a.x += b.x; a.y += b.y; return a; }
+    // TU: these must NOT be 'export'. Put them in a header if you need external visibility.
+    struct Vec2 { float x{}; float y{}; };
+    inline Vec2 operator+(Vec2 a, Vec2 b) noexcept { return { a.x + b.x, a.y + b.y }; }
+    inline Vec2& operator+=(Vec2& a, Vec2 b) noexcept { a.x += b.x; a.y += b.y; return a; }
 
-    export enum class EventType : std::uint8_t { MouseMove, MouseDown, MouseUp, KeyDown, TextInput };
-    export struct InputEvent
+    //enum class EventType : std::uint8_t { MouseMove, MouseDown, MouseUp, KeyDown, TextInput };
+    struct InputEvent
     {
         EventType type{};
         Vec2 mouse_pos{};
@@ -89,10 +85,10 @@ export namespace almondnamespace::gui
         std::string text{};
     };
 
-    export struct WidgetBounds { Vec2 pos{}; Vec2 size{}; };
+    struct WidgetBounds { Vec2 pos{}; Vec2 size{}; };
 
-    export struct EditBoxResult { bool active{}; bool changed{}; bool submitted{}; };
-    export struct ConsoleWindowOptions
+    struct EditBoxResult { bool active{}; bool changed{}; bool submitted{}; };
+    struct ConsoleWindowOptions
     {
         std::string_view title{ "Console" };
         Vec2 position{};
@@ -103,7 +99,7 @@ export namespace almondnamespace::gui
         std::size_t max_input_chars{ 1024 };
         bool multiline_input{};
     };
-    export struct ConsoleWindowResult { EditBoxResult input{}; };
+    struct ConsoleWindowResult { EditBoxResult input{}; };
 
     struct GuiFontCache
     {
@@ -133,8 +129,10 @@ export namespace almondnamespace::gui
         font::FontRenderer fontRenderer{};
     };
 
-    inline GuiResources g_resources{};
-    inline std::mutex g_resourceMutex;
+    // TU: do NOT use 'inline' globals unless you're intentionally making header-only.
+    // These are definitions and belong in exactly one TU.
+    static GuiResources g_resources{};
+    static std::mutex g_resourceMutex;
 
     struct PtrHash { std::size_t operator()(const void* p) const noexcept { return std::hash<const void*>{}(p); } };
 
@@ -144,8 +142,8 @@ export namespace almondnamespace::gui
         bool fontAtlasUploaded = false;
     };
 
-    inline std::unordered_map<const void*, UploadState, PtrHash> g_uploadedContexts;
-    inline std::mutex g_uploadMutex;
+    static std::unordered_map<const void*, UploadState, PtrHash> g_uploadedContexts;
+    static std::mutex g_uploadMutex;
 
     struct FrameState
     {
@@ -172,11 +170,11 @@ export namespace almondnamespace::gui
         std::vector<InputEvent> events{};
     };
 
-    thread_local FrameState g_frame{};
-    thread_local std::vector<InputEvent> g_pendingEvents{};
-    thread_local const void* g_activeWidget = nullptr;
+    static thread_local FrameState g_frame{};
+    static thread_local std::vector<InputEvent> g_pendingEvents{};
+    static thread_local const void* g_activeWidget = nullptr;
 
-    [[nodiscard]] std::vector<std::uint8_t> make_solid_pixels(
+    [[nodiscard]] static std::vector<std::uint8_t> make_solid_pixels(
         std::uint8_t r, std::uint8_t g, std::uint8_t b, std::uint8_t a,
         std::uint32_t w, std::uint32_t h)
     {
@@ -191,7 +189,7 @@ export namespace almondnamespace::gui
         return pixels;
     }
 
-    [[nodiscard]] SpriteHandle add_sprite(
+    [[nodiscard]] static SpriteHandle add_sprite(
         TextureAtlas& atlas,
         const std::string& name,
         const std::vector<std::uint8_t>& pixels,
@@ -228,27 +226,27 @@ export namespace almondnamespace::gui
         return handle;
     }
 
-    [[nodiscard]] std::filesystem::path find_default_font_path()
+    [[nodiscard]] static std::filesystem::path find_default_font_path()
     {
         auto resolve_env_font_path = []() -> std::filesystem::path
-        {
-#if defined(_WIN32)
-            char* envBuf = nullptr;
-            size_t len = 0;
-
-            if (_dupenv_s(&envBuf, &len, "ALMOND_GUI_FONT_PATH") == 0 && envBuf)
             {
-                std::filesystem::path envPath{ envBuf };
-                free(envBuf);
-                return envPath;
-            }
-            return {};
+#if defined(_WIN32)
+                char* envBuf = nullptr;
+                size_t len = 0;
+
+                if (_dupenv_s(&envBuf, &len, "ALMOND_GUI_FONT_PATH") == 0 && envBuf)
+                {
+                    std::filesystem::path envPath{ envBuf };
+                    free(envBuf);
+                    return envPath;
+                }
+                return {};
 #else
-            if (const char* envValue = std::getenv("ALMOND_GUI_FONT_PATH"))
-                return std::filesystem::path{ envValue };
-            return {};
+                if (const char* envValue = std::getenv("ALMOND_GUI_FONT_PATH"))
+                    return std::filesystem::path{ envValue };
+                return {};
 #endif
-        };
+            };
 
         if (std::filesystem::path envPath = resolve_env_font_path(); !envPath.empty())
         {
@@ -266,16 +264,16 @@ export namespace almondnamespace::gui
         };
 
         const auto try_with_root = [&](const std::filesystem::path& root) -> std::filesystem::path
-        {
-            for (const auto& rel : relativeCandidates)
             {
-                std::filesystem::path candidate = root.empty() ? rel : (root / rel);
-                std::error_code ec;
-                if (!candidate.empty() && std::filesystem::exists(candidate, ec))
-                    return candidate;
-            }
-            return {};
-        };
+                for (const auto& rel : relativeCandidates)
+                {
+                    std::filesystem::path candidate = root.empty() ? rel : (root / rel);
+                    std::error_code ec;
+                    if (!candidate.empty() && std::filesystem::exists(candidate, ec))
+                        return candidate;
+                }
+                return {};
+            };
 
         if (auto path = try_with_root({}); !path.empty())
             return path;
@@ -294,7 +292,7 @@ export namespace almondnamespace::gui
         return {};
     }
 
-    void populate_font_lookup(GuiFontCache& font)
+    static void populate_font_lookup(GuiFontCache& font)
     {
         font.glyphLookup.fill(nullptr);
         font.fallbackGlyph = nullptr;
@@ -309,10 +307,10 @@ export namespace almondnamespace::gui
         }
 
         auto setFallback = [&](unsigned char ch)
-        {
-            if (ch < font.glyphLookup.size() && font.glyphLookup[ch])
-                font.fallbackGlyph = font.glyphLookup[ch];
-        };
+            {
+                if (ch < font.glyphLookup.size() && font.glyphLookup[ch])
+                    font.fallbackGlyph = font.glyphLookup[ch];
+            };
 
         setFallback(static_cast<unsigned char>('?'));
         if (!font.fallbackGlyph)
@@ -321,7 +319,7 @@ export namespace almondnamespace::gui
             font.fallbackGlyph = &font.asset->glyphs.begin()->second;
     }
 
-    void ensure_font_loaded_locked()
+    static void ensure_font_loaded_locked()
     {
         if (g_resources.font.asset)
             return;
@@ -361,7 +359,7 @@ export namespace almondnamespace::gui
         }
     }
 
-    void ensure_resources()
+    static void ensure_resources()
     {
         std::scoped_lock lock(g_resourceMutex);
 
@@ -408,7 +406,7 @@ export namespace almondnamespace::gui
         ensure_font_loaded_locked();
     }
 
-    void ensure_backend_upload(Context& ctx)
+    static void ensure_backend_upload(Context& ctx)
     {
         ensure_resources();
 
@@ -431,7 +429,7 @@ export namespace almondnamespace::gui
         }
     }
 
-    void draw_sprite(const SpriteHandle& handle, float x, float y, float w, float h)
+    static void draw_sprite(const SpriteHandle& handle, float x, float y, float w, float h)
     {
         if (!handle.is_valid())
             return;
@@ -445,12 +443,12 @@ export namespace almondnamespace::gui
         {
             auto ctxShared = g_frame.ctxShared;
             ctx->windowData->commandQueue.enqueue([ctxShared, handle, x, y, w, h]()
-            {
-                if (!ctxShared)
-                    return;
-                const auto& atlasesRT = almondnamespace::atlasmanager::get_atlas_vector();
-                ctxShared->draw_sprite_safe(handle, atlasesRT, x, y, w, h);
-            });
+                {
+                    if (!ctxShared)
+                        return;
+                    const auto& atlasesRT = almondnamespace::atlasmanager::get_atlas_vector();
+                    ctxShared->draw_sprite_safe(handle, atlasesRT, x, y, w, h);
+                });
             queued = true;
         }
 
@@ -458,9 +456,7 @@ export namespace almondnamespace::gui
         {
             bool onRenderThread = false;
             if (auto current = core::MultiContextManager::GetCurrent())
-            {
                 onRenderThread = (current.get() == ctx);
-            }
 
             if (!ctx->windowData || onRenderThread)
             {
@@ -470,12 +466,12 @@ export namespace almondnamespace::gui
         }
     }
 
-    [[nodiscard]] bool point_in_rect(Vec2 p, float x, float y, float w, float h) noexcept
+    [[nodiscard]] static bool point_in_rect(Vec2 p, float x, float y, float w, float h) noexcept
     {
         return (p.x >= x && p.x <= x + w && p.y >= y && p.y <= y + h);
     }
 
-    [[nodiscard]] float base_line_height(float scale) noexcept
+    [[nodiscard]] static float base_line_height(float scale) noexcept
     {
         const auto& metrics = g_resources.font.metrics;
         if (metrics.ascent > 0.0f || metrics.descent > 0.0f)
@@ -483,7 +479,7 @@ export namespace almondnamespace::gui
         return 8.0f * scale;
     }
 
-    [[nodiscard]] float line_advance_amount(float scale) noexcept
+    [[nodiscard]] static float line_advance_amount(float scale) noexcept
     {
         const auto& metrics = g_resources.font.metrics;
         if (metrics.ascent > 0.0f || metrics.descent > 0.0f || metrics.lineGap > 0.0f)
@@ -491,7 +487,7 @@ export namespace almondnamespace::gui
         return base_line_height(scale);
     }
 
-    [[nodiscard]] float baseline_offset(float scale) noexcept
+    [[nodiscard]] static float baseline_offset(float scale) noexcept
     {
         const auto& metrics = g_resources.font.metrics;
         if (metrics.ascent > 0.0f)
@@ -499,7 +495,7 @@ export namespace almondnamespace::gui
         return base_line_height(scale);
     }
 
-    [[nodiscard]] float space_advance(float scale) noexcept
+    [[nodiscard]] static float space_advance(float scale) noexcept
     {
         if (g_resources.font.metrics.spaceAdvance > 0.0f)
             return g_resources.font.metrics.spaceAdvance * scale;
@@ -510,7 +506,7 @@ export namespace almondnamespace::gui
         return 8.0f * scale;
     }
 
-    [[nodiscard]] const font::Glyph* lookup_glyph(unsigned char ch) noexcept
+    [[nodiscard]] static const font::Glyph* lookup_glyph(unsigned char ch) noexcept
     {
         if (!g_resources.font.asset)
             return nullptr;
@@ -524,7 +520,7 @@ export namespace almondnamespace::gui
         return g_resources.font.fallbackGlyph;
     }
 
-    [[nodiscard]] std::optional<unsigned char> next_drawable_char(std::string_view text, std::size_t index) noexcept
+    [[nodiscard]] static std::optional<unsigned char> next_drawable_char(std::string_view text, std::size_t index) noexcept
     {
         if (index >= text.size())
             return std::nullopt;
@@ -540,7 +536,7 @@ export namespace almondnamespace::gui
         return std::nullopt;
     }
 
-    [[nodiscard]] float kerning_adjust(unsigned char left, unsigned char right, float scale) noexcept
+    [[nodiscard]] static float kerning_adjust(unsigned char left, unsigned char right, float scale) noexcept
     {
         if (!g_resources.font.asset)
             return 0.0f;
@@ -551,7 +547,7 @@ export namespace almondnamespace::gui
         return kern * scale;
     }
 
-    [[nodiscard]] float glyph_advance(unsigned char ch, float scale) noexcept
+    [[nodiscard]] static float glyph_advance(unsigned char ch, float scale) noexcept
     {
         if (ch == '\t')
             return space_advance(scale) * static_cast<float>(kTabSpaces);
@@ -565,7 +561,8 @@ export namespace almondnamespace::gui
         return 8.0f * scale;
     }
 
-    [[nodiscard]] float glyph_advance_with_kerning(unsigned char ch,
+    [[nodiscard]] static float glyph_advance_with_kerning(
+        unsigned char ch,
         std::optional<unsigned char> next,
         float scale) noexcept
     {
@@ -575,7 +572,7 @@ export namespace almondnamespace::gui
         return advance;
     }
 
-    [[nodiscard]] float measure_text_width(std::string_view text, float scale) noexcept
+    [[nodiscard]] static float measure_text_width(std::string_view text, float scale) noexcept
     {
         float current = 0.0f;
         float maxWidth = 0.0f;
@@ -595,7 +592,7 @@ export namespace almondnamespace::gui
         return (std::max)(maxWidth, current);
     }
 
-    [[nodiscard]] float measure_wrapped_text_height(std::string_view text, float width, float scale) noexcept
+    [[nodiscard]] static float measure_wrapped_text_height(std::string_view text, float width, float scale) noexcept
     {
         ensure_resources();
         const float effectiveWidth = (std::max)(space_advance(scale), width);
@@ -630,7 +627,7 @@ export namespace almondnamespace::gui
         return (std::max)(baseHeight, totalHeight);
     }
 
-    [[nodiscard]] Vec2 compute_caret_position(std::string_view text, float x, float y, float width, float scale) noexcept
+    [[nodiscard]] static Vec2 compute_caret_position(std::string_view text, float x, float y, float width, float scale) noexcept
     {
         ensure_resources();
         const float effectiveWidth = (std::max)(space_advance(scale), width);
@@ -664,7 +661,7 @@ export namespace almondnamespace::gui
         return { penX, caretTop };
     }
 
-    float draw_wrapped_text(std::string_view text, float x, float y, float width, float scale)
+    static float draw_wrapped_text(std::string_view text, float x, float y, float width, float scale)
     {
         ensure_resources();
         if (!g_frame.ctx || !g_resources.font.asset)
@@ -720,7 +717,7 @@ export namespace almondnamespace::gui
         return baseHeight + static_cast<float>(lines - 1) * lineAdvance;
     }
 
-    void draw_text_line(std::string_view text, float x, float y, float scale, std::optional<float> indent = std::nullopt)
+    static void draw_text_line(std::string_view text, float x, float y, float scale, std::optional<float> indent = std::nullopt)
     {
         ensure_resources();
         if (!g_frame.ctx || !g_resources.font.asset)
@@ -758,13 +755,13 @@ export namespace almondnamespace::gui
         }
     }
 
-    void draw_caret(float x, float y, float height)
+    static void draw_caret(float x, float y, float height)
     {
         const float caretWidth = (std::max)(1.0f, space_advance(kFontScale) * 0.1f);
         draw_sprite(g_resources.buttonActive, x, y, caretWidth, height);
     }
 
-    void reset_frame()
+    static void reset_frame()
     {
         g_frame.cursor = {};
         g_frame.origin = {};
@@ -773,24 +770,26 @@ export namespace almondnamespace::gui
         g_frame.lastButtonBounds.reset();
     }
 
-    export void set_cursor(Vec2 position) noexcept
+    // TU-friendly public API (no 'export'). Put these in a header if you want them callable elsewhere.
+
+    void set_cursor(Vec2 position) noexcept
     {
         if (!g_frame.insideWindow) return;
         g_frame.cursor = position;
     }
 
-    export void advance_cursor(Vec2 delta) noexcept
+    void advance_cursor(Vec2 delta) noexcept
     {
         if (!g_frame.insideWindow) return;
         g_frame.cursor += delta;
     }
 
-    export void push_input(const InputEvent& e) noexcept
+    void push_input(const InputEvent& e) noexcept
     {
         g_pendingEvents.push_back(e);
     }
 
-    export void begin_frame(const std::shared_ptr<core::Context>& ctx, float dt, Vec2 mouse_pos, bool mouse_down) noexcept
+    void begin_frame(const std::shared_ptr<core::Context>& ctx, float dt, Vec2 mouse_pos, bool mouse_down) noexcept
     {
         core::Context* rawCtx = ctx.get();
         if (rawCtx)
@@ -840,7 +839,7 @@ export namespace almondnamespace::gui
         reset_frame();
     }
 
-    export void end_frame() noexcept
+    void end_frame() noexcept
     {
         g_frame.ctxShared.reset();
         g_frame.ctx = nullptr;
@@ -850,7 +849,7 @@ export namespace almondnamespace::gui
         g_frame.justReleased = false;
     }
 
-    export void begin_window(std::string_view title, Vec2 position, Vec2 size) noexcept
+    void begin_window(std::string_view title, Vec2 position, Vec2 size) noexcept
     {
         if (!g_frame.ctx) return;
 
@@ -870,12 +869,12 @@ export namespace almondnamespace::gui
         advance_cursor({ 0.0f, titleHeight + kContentPadding });
     }
 
-    export void end_window() noexcept
+    void end_window() noexcept
     {
         g_frame.insideWindow = false;
     }
 
-    export bool button(std::string_view label, Vec2 size) noexcept
+    bool button(std::string_view label, Vec2 size) noexcept
     {
         if (!g_frame.insideWindow || !g_frame.ctx) return false;
 
@@ -906,26 +905,26 @@ export namespace almondnamespace::gui
         return hovered && g_frame.justPressed;
     }
 
-    export std::optional<WidgetBounds> last_button_bounds() noexcept
+    std::optional<WidgetBounds> last_button_bounds() noexcept
     {
         return g_frame.lastButtonBounds;
     }
 
-    export float line_height() noexcept
+    float line_height() noexcept
     {
         try { ensure_resources(); }
         catch (...) { return 16.0f; }
         return line_advance_amount(kFontScale);
     }
 
-    export float glyph_width() noexcept
+    float glyph_width() noexcept
     {
         try { ensure_resources(); }
         catch (...) { return 8.0f; }
         return space_advance(kFontScale);
     }
 
-    export void label(std::string_view text) noexcept
+    void label(std::string_view text) noexcept
     {
         if (!g_frame.insideWindow || !g_frame.ctx) return;
 
@@ -933,7 +932,7 @@ export namespace almondnamespace::gui
         advance_cursor({ 0.0f, line_advance_amount(kFontScale) });
     }
 
-    export EditBoxResult edit_box(std::string& text, Vec2 size, std::size_t max_chars, bool multiline) noexcept
+    EditBoxResult edit_box(std::string& text, Vec2 size, std::size_t max_chars, bool multiline) noexcept
     {
         EditBoxResult result{};
         if (!g_frame.insideWindow || !g_frame.ctx) return result;
@@ -1046,7 +1045,7 @@ export namespace almondnamespace::gui
         return result;
     }
 
-    export void text_box(std::string_view text, Vec2 size) noexcept
+    void text_box(std::string_view text, Vec2 size) noexcept
     {
         if (!g_frame.insideWindow || !g_frame.ctx) return;
 
@@ -1080,7 +1079,7 @@ export namespace almondnamespace::gui
         advance_cursor({ 0.0f, height + kContentPadding });
     }
 
-    export ConsoleWindowResult console_window(const ConsoleWindowOptions& options) noexcept
+    ConsoleWindowResult console_window(const ConsoleWindowOptions& options) noexcept
     {
         ConsoleWindowResult result{};
         if (!g_frame.ctx) return result;
@@ -1129,4 +1128,4 @@ export namespace almondnamespace::gui
         end_window();
         return result;
     }
-}
+} // namespace almondnamespace::gui
