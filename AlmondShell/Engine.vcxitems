@@ -182,12 +182,18 @@
     <ClCompile Include="$(MSBuildThisFileDirectory)modules\avulkanswapchain.ixx" />
     <ClCompile Include="$(MSBuildThisFileDirectory)modules\avulkantexture.ixx" />
     <ClCompile Include="$(MSBuildThisFileDirectory)modules\avulkantriangle.ixx" />
-    <ClCompile Include="$(MSBuildThisFileDirectory)src modules\acontext.raylib.api.cpp" />
-    <ClCompile Include="$(MSBuildThisFileDirectory)src modules\acontext.raylib.context.win.cpp" />
+    <ClCompile Include="$(MSBuildThisFileDirectory)src modules\acontext.raylib.api.ixx" />
+    <ClCompile Include="$(MSBuildThisFileDirectory)src modules\acontext.raylib.context.win.ixx" />
     <ClCompile Include="$(MSBuildThisFileDirectory)src modules\aengine.context.cpp" />
     <ClCompile Include="$(MSBuildThisFileDirectory)src modules\aengine.context.multiplexer.linux.cpp" />
     <ClCompile Include="$(MSBuildThisFileDirectory)src modules\aengine.context.multiplexer.win.cpp" />
     <ClCompile Include="$(MSBuildThisFileDirectory)src modules\aeditor.cpp">
+    <ClCompile Include="$(MSBuildThisFileDirectory)src modules\acontext.raylib.api.ixx" />
+    <ClCompile Include="$(MSBuildThisFileDirectory)src modules\acontext.raylib.context.win.ixx" />
+    <ClCompile Include="$(MSBuildThisFileDirectory)src modules\aengine.context.cppm" />
+    <ClCompile Include="$(MSBuildThisFileDirectory)src modules\aengine.context.multiplexer.linux.cppm" />
+    <ClCompile Include="$(MSBuildThisFileDirectory)src modules\aengine.context.multiplexer.win.cppm" />
+    <ClCompile Include="$(MSBuildThisFileDirectory)src modules\aeditor.cppm">
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">true</ExcludedFromBuild>
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">true</ExcludedFromBuild>
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">true</ExcludedFromBuild>
