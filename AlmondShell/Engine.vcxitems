@@ -182,8 +182,8 @@
     <ClCompile Include="$(MSBuildThisFileDirectory)modules\avulkanswapchain.ixx" />
     <ClCompile Include="$(MSBuildThisFileDirectory)modules\avulkantexture.ixx" />
     <ClCompile Include="$(MSBuildThisFileDirectory)modules\avulkantriangle.ixx" />
-    <ClCompile Include="$(MSBuildThisFileDirectory)src modules\acontext.raylib.api.cppm" />
-    <ClCompile Include="$(MSBuildThisFileDirectory)src modules\acontext.raylib.context.win.cppm" />
+    <ClCompile Include="$(MSBuildThisFileDirectory)src modules\acontext.raylib.api.ixx" />
+    <ClCompile Include="$(MSBuildThisFileDirectory)src modules\acontext.raylib.context.win.ixx" />
     <ClCompile Include="$(MSBuildThisFileDirectory)src modules\aengine.context.cppm" />
     <ClCompile Include="$(MSBuildThisFileDirectory)src modules\aengine.context.multiplexer.linux.cppm" />
     <ClCompile Include="$(MSBuildThisFileDirectory)src modules\aengine.context.multiplexer.win.cppm" />

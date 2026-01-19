@@ -533,17 +533,17 @@
     <ClCompile Include="$(MSBuildThisFileDirectory)src modules\aeditor.cppm">
       <Filter>Module Files\cppm\core</Filter>
     </ClCompile>
-    <ClCompile Include="$(MSBuildThisFileDirectory)src modules\acontext.raylib.api.cppm">
-      <Filter>Module Files\cppm\crossplatform</Filter>
-    </ClCompile>
     <ClCompile Include="$(MSBuildThisFileDirectory)src modules\aengine.context.win.cppm">
-      <Filter>Module Files\cppm\crossplatform</Filter>
-    </ClCompile>
-    <ClCompile Include="$(MSBuildThisFileDirectory)src modules\acontext.raylib.context.win.cppm">
       <Filter>Module Files\cppm\crossplatform</Filter>
     </ClCompile>
     <ClCompile Include="$(MSBuildThisFileDirectory)src modules\aengine.context.multiplexer.linux.cppm">
       <Filter>Module Files\cppm\crossplatform\linux</Filter>
+    </ClCompile>
+    <ClCompile Include="$(MSBuildThisFileDirectory)src modules\acontext.raylib.api.ixx">
+      <Filter>Module Files\ixx\core\context\backends\raylib</Filter>
+    </ClCompile>
+    <ClCompile Include="$(MSBuildThisFileDirectory)src modules\acontext.raylib.context.win.ixx">
+      <Filter>Module Files\ixx\core\context\backends\raylib</Filter>
     </ClCompile>
   </ItemGroup>
 </Project>
