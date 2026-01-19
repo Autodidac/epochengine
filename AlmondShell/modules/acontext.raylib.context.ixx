@@ -217,6 +217,19 @@ namespace almondnamespace::raylibcontext
         return true;
     }
 
+    export inline bool raylib_make_current() noexcept
+    {
+#if defined(_WIN32)
+        auto& st = almondnamespace::raylibstate::s_raylibstate;
+        if (!st.hdc || !st.hglrc)
+            return false;
+
+        return detail::make_current(st.hdc, st.hglrc);
+#else
+        return true;
+#endif
+    }
+
     export inline void raylib_process()
     {
         auto& st = almondnamespace::raylibstate::s_raylibstate;
