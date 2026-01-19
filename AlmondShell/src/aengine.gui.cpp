@@ -76,7 +76,6 @@ namespace almondnamespace::gui
     inline Vec2 operator+(Vec2 a, Vec2 b) noexcept { return { a.x + b.x, a.y + b.y }; }
     inline Vec2& operator+=(Vec2& a, Vec2 b) noexcept { a.x += b.x; a.y += b.y; return a; }
 
-    //enum class EventType : std::uint8_t { MouseMove, MouseDown, MouseUp, KeyDown, TextInput };
     struct InputEvent
     {
         EventType type{};
