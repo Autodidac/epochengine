@@ -976,7 +976,7 @@ namespace almondnamespace::core
         if (ctx->type == ContextType::RayLib)
         {
             std::cerr << "[RenderThread] Raylib init. host=" << win.hwnd << "\n";
-            almondnamespace::raylibcontext::raylib_initialize(
+            const bool initialized = almondnamespace::raylibcontext::raylib_initialize(
                 ctx,
                 win.hwnd,
                 static_cast<unsigned>(ctx->width),
@@ -984,6 +984,13 @@ namespace almondnamespace::core
                 win.onResize ? win.onResize : ctx->onResize,
                 win.titleNarrow);
 
+            if (!initialized)
+            {
+                win.running = false;
+                return;
+            }
+
+            (void)almondnamespace::raylibcontext::raylib_make_current();
             almondnamespace::raylibcontext::win::adopt_parent(reinterpret_cast<void*>(win.hwnd));
         }
 #endif
@@ -1019,6 +1026,11 @@ namespace almondnamespace::core
         while (running.load(std::memory_order_acquire) && win.running)
         {
             bool keepRunning = true;
+
+#if defined(ALMOND_USING_RAYLIB)
+            if (ctx->type == ContextType::RayLib)
+                (void)almondnamespace::raylibcontext::raylib_make_current();
+#endif
 
             {
                 const std::size_t depth = win.commandQueue.depth();

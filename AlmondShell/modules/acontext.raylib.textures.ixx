@@ -19,6 +19,17 @@ module;
 
 #include <include/aengine.config.hpp> // for ALMOND_USING Macros
 
+#if defined(_WIN32)
+#   ifndef WIN32_LEAN_AND_MEAN
+#       define WIN32_LEAN_AND_MEAN
+#   endif
+#   ifndef NOMINMAX
+#       define NOMINMAX
+#   endif
+#   include <Windows.h>
+#   include <wingdi.h>
+#endif
+
 export module acontext.raylib.textures;
 
 import <atomic>;
@@ -40,6 +51,7 @@ import aatlas.texture;
 import aimage.loader;
 import atexture;
 import acontext.raylib.api;
+import acontext.raylib.state;
 
 #if defined(ALMOND_USING_RAYLIB)
 
@@ -218,12 +230,25 @@ export namespace almondnamespace::raylibtextures
         catch (...) { return false; }
     }
 
+#if defined(_WIN32)
+    inline void ensure_raylib_context_current() noexcept
+    {
+        auto& st = almondnamespace::raylibstate::s_raylibstate;
+        if (st.hdc && st.hglrc)
+            (void)::wglMakeCurrent(st.hdc, st.hglrc);
+    }
+#else
+    inline void ensure_raylib_context_current() noexcept {}
+#endif
+
     export inline void ensure_uploaded(const TextureAtlas& atlas)
     {
         // If you call this while docking/multiplexer has a different backend current,
         // do NOT upload. Let the next raylib-active frame handle it.
         if (!is_raylib_backend_current())
             return;
+
+        ensure_raylib_context_current();
 
         auto& backend = get_raylib_backend();
 
