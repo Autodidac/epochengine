@@ -65,6 +65,8 @@ export namespace almondnamespace::raylibtextures
     {
         almondnamespace::raylib_api::Texture2D texture{};
         u64 version = static_cast<u64>(-1);
+        u64 uploadingVersion = static_cast<u64>(-1);
+        bool uploading = false;
         u32 width = 0;
         u32 height = 0;
     };
@@ -255,13 +257,13 @@ export namespace almondnamespace::raylibtextures
         // 1) Cheap read under lock: do we already have the right version?
         {
             std::scoped_lock lock(backend.gpuMutex);
-            auto it = backend.gpu_atlases.find(&atlas);
-            if (it != backend.gpu_atlases.end())
-            {
-                const AtlasGPU& gpu = it->second;
-                if (gpu.version == atlas.version && gpu.texture.id != 0)
-                    return;
-            }
+            AtlasGPU& gpu = backend.gpu_atlases[&atlas];
+            if (gpu.version == atlas.version && gpu.texture.id != 0)
+                return;
+            if (gpu.uploading && gpu.uploadingVersion == atlas.version)
+                return;
+            gpu.uploading = true;
+            gpu.uploadingVersion = atlas.version;
         }
 
         // 2) Upload unlocked (raylib/GL work).
@@ -272,6 +274,15 @@ export namespace almondnamespace::raylibtextures
             // Raylib already printed warnings; add one line of ours.
             std::cerr << "[Raylib] Upload failed for atlas '" << atlas.name
                 << "' (version " << atlas.version << ")\n";
+            {
+                std::scoped_lock lock(backend.gpuMutex);
+                auto it = backend.gpu_atlases.find(&atlas);
+                if (it != backend.gpu_atlases.end())
+                {
+                    it->second.uploading = false;
+                    it->second.uploadingVersion = static_cast<u64>(-1);
+                }
+            }
             return;
         }
 
@@ -285,6 +296,8 @@ export namespace almondnamespace::raylibtextures
         {
             std::scoped_lock lock(backend.gpuMutex);
             AtlasGPU& gpu = backend.gpu_atlases[&atlas];
+            gpu.uploading = false;
+            gpu.uploadingVersion = static_cast<u64>(-1);
 
             // If another thread beat us to it with same/newer version, drop ours.
             if (gpu.texture.id != 0 && gpu.version >= atlas.version)
