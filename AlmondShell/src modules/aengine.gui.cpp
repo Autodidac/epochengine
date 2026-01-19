@@ -22,7 +22,7 @@
  *                                                            *
  **************************************************************/
 
-module; // aengine.gui.cppm (converted from legacy agui.cpp)
+module; // aengine.gui.cpp (converted from legacy agui.cpp)
 export module aengine.gui; // agui.cppm
 
 // NOTE:

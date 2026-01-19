@@ -42,7 +42,7 @@ performed for OpenGL and Raylib immediately after the first resize.
 1. **Automated launch harness** – extend the existing smoke harness to accept a
    `--capture` flag. When set, spawn the renderer with deterministic window sizes
    (1280×720 baseline) before scripted resizes and dock actions. The harness
-   entry point lives at `AlmondShell/src modules/renderer_smoke_harness.cppm` and builds
+   entry point lives at `AlmondShell/src modules/renderer_smoke_harness.cpp` and builds
    as the `almondshell_renderer_smoke` target.
 2. **Frame capture** –
    - OpenGL: trigger RenderDoc capture on the second frame after each resize.

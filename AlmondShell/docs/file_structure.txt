@@ -156,17 +156,17 @@
 │   │   │── avulkantexture.ixx
 │   │   │── avulkantriangle.ixx
 │   │── Module bridge units (.cppm)
-│   │   │── aengine.context.cppm
+│   │   │── aengine.context.cpp
 │
 │── src modules/
 │   │── Module implementation units (.cppm)
 │   │   │── acompiler.cppm
-│   │   │── aeditor.cppm
-│   │   │── aengine.context.multiplexer.win.cppm
+│   │   │── aeditor.cpp
+│   │   │── aengine.context.multiplexer.win.cpp
 │   │   │── aengine.cppm
-│   │   │── aengine.gui.cppm
-│   │   │── aengine.scripting.compiler.cppm
-│   │   │── afilewatch.cppm
+│   │   │── aengine.gui.cpp
+│   │   │── aengine.scripting.compiler.cpp
+│   │   │── afilewatch.cpp
 │   │   │── afont.renderer.cppm
 │   │   │── aopenglplatform_win.cppm
 │

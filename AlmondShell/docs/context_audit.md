@@ -6,8 +6,8 @@ The following table summarises the current state of every file whose name includ
 | --- | --- | --- | --- |
 | `modules/aengine.core.context.ixx` | Active | Core context abstraction referenced throughout the engine. | No |
 | `modules/aengine.context.control.ixx` | Active | Provides command helpers for draw operations; required by the multiplexer. | No |
-| `modules/aengine.context.multiplexer.ixx` | Active | Coordinates backend switching; heavily used by `src modules/aengine.context.multiplexer.win.cppm`. | No |
-| `src modules/aengine.context.multiplexer.win.cppm` | Active | Implements multiplexer runtime; necessary for desktop builds. | No |
+| `modules/aengine.context.multiplexer.ixx` | Active | Coordinates backend switching; heavily used by `src modules/aengine.context.multiplexer.win.cpp`. | No |
+| `src modules/aengine.context.multiplexer.win.cpp` | Active | Implements multiplexer runtime; necessary for desktop builds. | No |
 | `modules/acontext.opengl.renderer.ixx` | Legacy Stub | Mostly commented-out scaffolding with alternate renderer hooks; not referenced at runtime. | Maybe |
 | `modules/acontext.opengl.state.ixx` | Active | Shares renderer state structs across backends; used by Raylib helpers. | No |
 | `modules/aengine.context.type.ixx` | Active | Enumerations for backend selection; consumed by virtually every renderer. | No |

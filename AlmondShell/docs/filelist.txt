@@ -88,7 +88,7 @@ Context/back-end stack:
 •       aengine.context.type.ixx
 •       aengine.context.window.ixx
 •       aengine.context.sdl.ixx
-•       aengine.context.cppm (bridge for import scanning)
+•       aengine.context.cpp (bridge for import scanning)
 •       acontext.noop.context.ixx
 •       acontext.opengl.context.ixx / acontext.opengl.platform.ixx / acontext.opengl.quad.ixx
 •       acontext.opengl.renderer.ixx / acontext.opengl.state.ixx / acontext.opengl.textures.ixx

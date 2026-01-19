@@ -1,4 +1,4 @@
-// src modules/afilewatch.cppm
+// src modules/afilewatch.cpp
 
 module;
 

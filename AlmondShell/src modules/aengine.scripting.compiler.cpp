@@ -21,7 +21,7 @@
  *   See LICENSE file for full terms.                         *
  *                                                            *
  **************************************************************/
-module;  // aengine.scripting.compiler.cppm / .ixx
+module;  // aengine.scripting.compiler.cpp / .ixx
 
 export module aengine.scripting.compiler;
 

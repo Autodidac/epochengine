@@ -22,7 +22,7 @@ module;
 // Fix the include graph: do NOT include windows.h (directly or indirectly)
 // in anything reachable from this module.
 #   if defined(_WIN32) && (defined(_WINDOWS_) || defined(_INC_WINDOWS) || defined(_WINUSER_))
-#       error "acontext.raylib.api.cppm must not see <windows.h> before <raylib.h>. Move Win32 includes out of aengine.config.hpp / central headers."
+#       error "acontext.raylib.api.cpp must not see <windows.h> before <raylib.h>. Move Win32 includes out of aengine.config.hpp / central headers."
 #   endif
 
 // Do NOT define RAYLIB_STATIC unless you are actually linking a static raylib build.

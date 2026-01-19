@@ -41,7 +41,7 @@ endif()
 add_executable(almondshell ${ALMONDSHELL_SOURCES})
 
 add_executable(almondshell_renderer_smoke
-    "src modules/renderer_smoke_harness.cppm"
+    "src modules/renderer_smoke_harness.cpp"
 )
 
 set(ALMONDSHELL_MODULE_DIR ${CMAKE_CURRENT_SOURCE_DIR}/modules)
