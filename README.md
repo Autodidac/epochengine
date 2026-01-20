@@ -184,10 +184,14 @@ runtime:
   of the box via `ALMOND_USING_OPENGL`; additional options include
   `ALMOND_USING_SOFTWARE_RENDERER`, `ALMOND_USING_VULKAN`, and the placeholder
   `ALMOND_USING_DIRECTX` flag.
-- **Raylib integration notes** – When `ALMOND_USING_RAYLIB` is enabled the
-  configuration defines `RAYLIB_NO_WINDOW` and remaps select symbols (e.g.
-  `CloseWindow`, `ShowCursor`, `LoadImageW`) before including `raylib.h` to avoid
-  Windows header conflicts.
+- **Raylib integration notes** – The `RAYLIB_NO_WINDOW` define and symbol remaps
+  (e.g. `CloseWindow`, `ShowCursor`, `LoadImageW`) are present but commented out
+  by default in `aengine.config.hpp`. Enable them only when you need to include
+  `raylib.h` from that header and you have a headless/embedded Raylib build that
+  should not spawn its own window. The multi-context Raylib path expects Raylib
+  to create a single native window so it can be adopted into the docking host;
+  `RAYLIB_NO_WINDOW` disables that flow and is incompatible with the
+  multi-context window manager.
 
 Review and adjust these switches before building to tailor the engine to your
 toolchain and desired runtime footprint.
