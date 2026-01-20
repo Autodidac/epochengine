@@ -111,6 +111,22 @@ namespace almondnamespace::anativecontext
 export namespace almondnamespace::anativecontext
 {
 
+    void softrenderer_resize(int width, int height)
+    {
+        auto& sr = s_softrendererstate;
+        sr.width = (std::max)(1, width);
+        sr.height = (std::max)(1, height);
+
+        sr.framebuffer.assign(
+            std::size_t(sr.width) * std::size_t(sr.height),
+            0xFF000000u);
+
+#if defined(_WIN32)
+        sr.bmi.bmiHeader.biWidth = sr.width;
+        sr.bmi.bmiHeader.biHeight = -sr.height;
+#endif
+    }
+
     // Exported API (what your engine calls)
     bool softrenderer_initialize(
         std::shared_ptr<core::Context> ctx,
@@ -133,7 +149,14 @@ export namespace almondnamespace::anativecontext
         sr.width = static_cast<int>(w);
         sr.height = static_cast<int>(h);
         sr.running = true;
-        sr.onResize = std::move(onResize);
+
+        ctx->onResize = [resize = std::move(onResize)](int newWidth, int newHeight) mutable
+            {
+                softrenderer_resize(newWidth, newHeight);
+                if (resize)
+                    resize(newWidth, newHeight);
+            };
+        sr.onResize = ctx->onResize;
 
         // Allocate framebuffer
         sr.framebuffer.assign(std::size_t(w) * std::size_t(h), 0xFF000000u);
