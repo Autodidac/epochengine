@@ -495,9 +495,7 @@ export namespace almondnamespace::openglcontext
 
     inline void opengl_present()
     {
-        auto& backend = opengltextures::get_opengl_backend();
-        auto ctx = detail::state_to_platform_context(backend.glState);
-        PlatformGL::swap_buffers(ctx);
+        // OpenGL swap is handled once per frame in opengl_process.
     }
 
     inline int opengl_get_width()
