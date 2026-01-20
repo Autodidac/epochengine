@@ -103,6 +103,53 @@ namespace almondnamespace::raylibcontext
 #endif
         }
 
+        inline void adopt_raylib_window(
+            almondnamespace::raylibstate::RaylibState& st,
+            std::shared_ptr<core::Context> ctx,
+            HWND parent,
+            HWND raylibHwnd)
+        {
+            if (!raylibHwnd)
+            {
+                std::cerr << "[Raylib] WARNING: Raylib returned a null window handle.\n";
+                return;
+            }
+
+            st.parent = parent;
+            st.hwnd = raylibHwnd;
+
+            if (parent && parent != raylibHwnd)
+            {
+                if (::GetParent(raylibHwnd) != parent)
+                {
+                    ::SetParent(raylibHwnd, parent);
+                }
+
+                LONG_PTR style = ::GetWindowLongPtrW(raylibHwnd, GWL_STYLE);
+                style &= ~static_cast<LONG_PTR>(WS_OVERLAPPEDWINDOW);
+                style |= (WS_CHILD | WS_VISIBLE | WS_CLIPSIBLINGS | WS_CLIPCHILDREN);
+                ::SetWindowLongPtrW(raylibHwnd, GWL_STYLE, style);
+                ::SetWindowPos(raylibHwnd,
+                    nullptr,
+                    0,
+                    0,
+                    static_cast<int>(st.width),
+                    static_cast<int>(st.height),
+                    SWP_NOZORDER | SWP_NOACTIVATE | SWP_FRAMECHANGED | SWP_SHOWWINDOW);
+            }
+
+            if (ctx)
+            {
+                ctx->hwnd = raylibHwnd;
+                ctx->native_window = raylibHwnd;
+                if (ctx->windowData)
+                {
+                    ctx->windowData->hwnd = raylibHwnd;
+                    ctx->windowData->hwndChild = parent;
+                }
+            }
+        }
+
     }
 #endif
 
@@ -198,6 +245,15 @@ namespace almondnamespace::raylibcontext
             static_cast<int>(st.width),
             static_cast<int>(st.height),
             title_storage().c_str());
+
+#if defined(_WIN32)
+        const HWND raylibHwnd = static_cast<HWND>(almondnamespace::raylib_api::get_window_handle());
+        const HWND parentHwnd = static_cast<HWND>(parent);
+        if (parentHwnd || raylibHwnd)
+        {
+            detail::adopt_raylib_window(st, ctx, parentHwnd, raylibHwnd);
+        }
+#endif
 
         almondnamespace::raylib_api::set_target_fps(0);
 
