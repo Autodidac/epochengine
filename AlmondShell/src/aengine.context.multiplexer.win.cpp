@@ -269,8 +269,9 @@ namespace almondnamespace::core
         wc.lpfnWndProc = ParentProc;
         wc.hInstance = hInst;
         wc.lpszClassName = name;
-        wc.style = CS_OWNDC | CS_HREDRAW | CS_VREDRAW;
+        wc.style = CS_OWNDC;
         wc.hCursor = ::LoadCursor(nullptr, IDC_ARROW);
+        wc.hbrBackground = nullptr;
         return ::RegisterClassW(&wc);
     }
 
@@ -280,9 +281,9 @@ namespace almondnamespace::core
         wc.lpfnWndProc = ChildProc;
         wc.hInstance = hInst;
         wc.lpszClassName = name;
-        wc.style = CS_OWNDC | CS_HREDRAW | CS_VREDRAW;
+        wc.style = CS_OWNDC;
         wc.hCursor = ::LoadCursor(nullptr, IDC_ARROW);
-        wc.hbrBackground = reinterpret_cast<HBRUSH>(COLOR_WINDOW + 1);
+        wc.hbrBackground = nullptr;
         return ::RegisterClassW(&wc);
     }
 
@@ -1117,11 +1118,16 @@ namespace almondnamespace::core
             mgr->ArrangeDockedWindowsGrid();
             return 0;
 
+        case WM_ERASEBKGND:
+            return 1;
+
         case WM_PAINT:
         {
             PAINTSTRUCT ps{};
             HDC hdc = ::BeginPaint(hwnd, &ps);
+#if defined(_DEBUG)
             ::FillRect(hdc, &ps.rcPaint, (HBRUSH)(COLOR_WINDOW + 1));
+#endif
             ::EndPaint(hwnd, &ps);
             return 0;
         }
@@ -1281,11 +1287,16 @@ namespace almondnamespace::core
             ::DragFinish(reinterpret_cast<HDROP>(wParam));
             return 0;
 
+        case WM_ERASEBKGND:
+            return 1;
+
         case WM_PAINT:
         {
             PAINTSTRUCT ps{};
             HDC hdc = ::BeginPaint(hwnd, &ps);
+#if defined(_DEBUG)
             ::FillRect(hdc, &ps.rcPaint, (HBRUSH)(COLOR_WINDOW + 1));
+#endif
             ::EndPaint(hwnd, &ps);
             return 0;
         }
