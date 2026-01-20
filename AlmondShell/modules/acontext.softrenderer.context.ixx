@@ -325,8 +325,7 @@ export namespace almondnamespace::anativecontext
         const float invDestW = 1.0f / static_cast<float>(destW);
         const float invDestH = 1.0f / static_cast<float>(destH);
 
-        // Assumption (matches your “atlas_vector[idx] assigned” + working blit):
-        // atlas->pixel_data is packed 0xAARRGGBB (u32 per pixel), same as framebuffer.
+        // atlas->pixel_data is byte RGBA, matching softrenderer_draw_quad().
         for (int py = clipY0; py < clipY1; ++py)
         {
             const float v = (py - destY) * invDestH;
@@ -346,13 +345,15 @@ export namespace almondnamespace::anativecontext
                     continue;
 
                 const size_t srcIndex =
-                    static_cast<size_t>(atlasY) * static_cast<size_t>(atlas->width) + static_cast<size_t>(atlasX);
+                    (static_cast<size_t>(atlasY) * static_cast<size_t>(atlas->width) + static_cast<size_t>(atlasX)) * 4u;
 
-                if (srcIndex >= static_cast<size_t>(atlas->pixel_data.size()))
+                if (srcIndex + 3u >= static_cast<size_t>(atlas->pixel_data.size()))
                     continue;
 
-                const uint32_t src = atlas->pixel_data[srcIndex];
-                const uint8_t srcA = static_cast<uint8_t>((src >> 24) & 0xFF);
+                const uint8_t srcR = atlas->pixel_data[srcIndex + 0];
+                const uint8_t srcG = atlas->pixel_data[srcIndex + 1];
+                const uint8_t srcB = atlas->pixel_data[srcIndex + 2];
+                const uint8_t srcA = atlas->pixel_data[srcIndex + 3];
                 if (srcA == 0)
                     continue;
 
@@ -363,10 +364,6 @@ export namespace almondnamespace::anativecontext
 
                 const float a = static_cast<float>(srcA) / 255.0f;
                 const float ia = 1.0f - a;
-
-                const uint8_t srcR = static_cast<uint8_t>((src >> 16) & 0xFF);
-                const uint8_t srcG = static_cast<uint8_t>((src >> 8) & 0xFF);
-                const uint8_t srcB = static_cast<uint8_t>(src & 0xFF);
 
                 const uint8_t dstR = static_cast<uint8_t>((dst >> 16) & 0xFF);
                 const uint8_t dstG = static_cast<uint8_t>((dst >> 8) & 0xFF);
