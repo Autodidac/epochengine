@@ -16,25 +16,22 @@ set(CMAKE_CXX_EXTENSIONS OFF)
 
 set(ALMONDSHELL_SOURCES
     src/aengine.cpp
+    src/aengine.context.cpp
+    src/aengine.gui.cpp
+    src/aengine.scripting.compiler.cpp
     src/aeditor.cpp
-    src/agui.cpp
-    src/afontrenderer.cpp
     src/afilewatch.cpp
-    src/ascriptingsystem.cpp
-    src/acompiler.cpp
-    src/updater_bootstrap.cpp
+    src/afont.renderer.cpp
 )
 
 if(WIN32)
     list(APPEND ALMONDSHELL_SOURCES
-        src/acontextmultiplexer_win.cpp
-        src/aopenglplatform_win.cpp
+        src/aengine.context.multiplexer.win.cpp
         src/WinResource.rc
     )
 elseif(UNIX AND NOT APPLE)
     list(APPEND ALMONDSHELL_SOURCES
-        src/acontextmultiplexer_linux.cpp
-        src/aopenglplatform_linux.cpp
+        src/aengine.context.multiplexer.linux.cpp
     )
 endif()
 
