@@ -105,7 +105,7 @@ import acontext.softrenderer.context;
 import acontext.sdl.context;
 #endif
 #if defined(ALMOND_USING_SFML)
-import asfmlcontext;
+import acontext.sfml.context;
 #endif
 #if defined(ALMOND_USING_RAYLIB)
 import acontext.raylib.context;
