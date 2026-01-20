@@ -75,9 +75,6 @@ import aengine.telemetry;
 #if defined(ALMOND_USING_OPENGL)
 import acontext.opengl.context;
 #endif
-#if defined(ALMOND_USING_SDL)
-import acontext.sdl.context;
-#endif
 #if defined(ALMOND_USING_SOFTWARE_RENDERER)
 import acontext.softrenderer.context;
 #endif
@@ -87,6 +84,10 @@ import acontext.sfml.context;
 #if defined(ALMOND_USING_RAYLIB)
 import acontext.raylib.context;
 #endif
+#if defined(ALMOND_USING_SDL)
+import acontext.sdl.context;
+#endif
+
 #if defined(_WIN32)
 
 namespace
@@ -1041,16 +1042,16 @@ namespace almondnamespace::core
 #endif
 
         const bool skipGenericInit =
-#if defined(ALMOND_USING_RAYLIB)
-            (ctx->type == ContextType::RayLib) ||
-#endif
-#if defined(ALMOND_USING_SDL)
-            (ctx->type == ContextType::SDL) ||
-#endif
 #if defined(ALMOND_USING_SFML)
 			(ctx->type == ContextType::SFML) ||
 #endif
+#if defined(ALMOND_USING_RAYLIB)
+            (ctx->type == ContextType::RayLib) ||
+#endif
 
+#if defined(ALMOND_USING_SDL)
+            (ctx->type == ContextType::SDL) ||
+#endif
             false;
 
         if (!skipGenericInit)

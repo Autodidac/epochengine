@@ -448,35 +448,6 @@ namespace almondnamespace::core
             AddContextForBackend(ContextType::OpenGL, std::move(ctx));
         }
 #endif
-
-#if defined(ALMOND_USING_SDL)
-        {
-            auto ctx = std::make_shared<Context>();
-            ctx->type = ContextType::SDL;
-            ctx->backendName = "SDL";
-
-            ctx->initialize = sdl_initialize_adapter;
-            ctx->cleanup = sdl_cleanup_adapter;
-            ctx->process = sdl_process_adapter;
-            //ctx->clear = almondnamespace::sdlcontext::sdl_clear;
-            //ctx->present = almondnamespace::sdlcontext::sdl_present;
-            //ctx->get_width = almondnamespace::sdlcontext::sdl_get_width;
-            //ctx->get_height = almondnamespace::sdlcontext::sdl_get_height;
-
-            ctx->is_key_held = [](input::Key k) { return input::is_key_held(k); };
-            ctx->is_key_down = [](input::Key k) { return input::is_key_down(k); };
-            ctx->get_mouse_position = [](int& x, int& y) { x = input::mouseX.load(std::memory_order_relaxed); y = input::mouseY.load(std::memory_order_relaxed); };
-            ctx->is_mouse_button_held = [](input::MouseButton b) { return input::is_mouse_button_held(b); };
-            ctx->is_mouse_button_down = [](input::MouseButton b) { return input::is_mouse_button_down(b); };
-
-            ctx->draw_sprite = sdltextures::draw_sprite;
-            ctx->add_texture = &add_texture_default;
-            ctx->add_atlas = +[](const TextureAtlas& a) { return add_atlas_default(a, ContextType::SDL); };
-
-            AddContextForBackend(ContextType::SDL, std::move(ctx));
-        }
-#endif
-
 #if defined(ALMOND_USING_SFML)
         {
             auto ctx = std::make_shared<Context>();
@@ -504,6 +475,9 @@ namespace almondnamespace::core
             AddContextForBackend(ContextType::SFML, std::move(ctx));
         }
 #endif
+
+
+
 
 #if defined(ALMOND_USING_RAYLIB)
         {
@@ -561,6 +535,34 @@ namespace almondnamespace::core
             ctx->add_atlas = +[](const TextureAtlas& a) { return add_atlas_default(a, ContextType::RayLib); };
 
             AddContextForBackend(ContextType::RayLib, std::move(ctx));
+        }
+#endif
+
+#if defined(ALMOND_USING_SDL)
+        {
+            auto ctx = std::make_shared<Context>();
+            ctx->type = ContextType::SDL;
+            ctx->backendName = "SDL";
+
+            ctx->initialize = sdl_initialize_adapter;
+            ctx->cleanup = sdl_cleanup_adapter;
+            ctx->process = sdl_process_adapter;
+            //ctx->clear = almondnamespace::sdlcontext::sdl_clear;
+            //ctx->present = almondnamespace::sdlcontext::sdl_present;
+            //ctx->get_width = almondnamespace::sdlcontext::sdl_get_width;
+            //ctx->get_height = almondnamespace::sdlcontext::sdl_get_height;
+
+            ctx->is_key_held = [](input::Key k) { return input::is_key_held(k); };
+            ctx->is_key_down = [](input::Key k) { return input::is_key_down(k); };
+            ctx->get_mouse_position = [](int& x, int& y) { x = input::mouseX.load(std::memory_order_relaxed); y = input::mouseY.load(std::memory_order_relaxed); };
+            ctx->is_mouse_button_held = [](input::MouseButton b) { return input::is_mouse_button_held(b); };
+            ctx->is_mouse_button_down = [](input::MouseButton b) { return input::is_mouse_button_down(b); };
+
+            ctx->draw_sprite = sdltextures::draw_sprite;
+            ctx->add_texture = &add_texture_default;
+            ctx->add_atlas = +[](const TextureAtlas& a) { return add_atlas_default(a, ContextType::SDL); };
+
+            AddContextForBackend(ContextType::SDL, std::move(ctx));
         }
 #endif
 

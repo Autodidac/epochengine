@@ -23,6 +23,12 @@ module;
 #   endif
 #endif
 
+
+#if defined(ALMOND_USING_SFML)
+#define SFML_STATIC
+#include <SFML/Graphics.hpp>
+#endif
+
 export module acontext.sfml.state;
 
 import aengine.platform;

@@ -26,6 +26,11 @@ module;
 #   include <SDL3/SDL_version.h>
 #endif
 
+#if defined(ALMOND_USING_SFML)
+#define SFML_STATIC
+#include <SFML/Graphics.hpp>
+#endif
+
 // If any include above dragged in <windows.h>, defuse min/max anyway.
 #if defined(_WIN32)
 #   ifdef min

@@ -54,12 +54,12 @@
 // Engine Context Config
 // ------------------------------------------------------------
 
-#define ALMOND_SINGLE_PARENT 1
+#define ALMOND_SINGLE_PARENT 0
 
 #define ALMOND_USING_OPENGL 1
-//#define ALMOND_USING_SDL 1
 #define ALMOND_USING_SFML 1
 //#define ALMOND_USING_RAYLIB 1
+#define ALMOND_USING_SDL 1
 #define ALMOND_USING_SOFTWARE_RENDERER 1
 
 #if defined(ALMOND_FORCE_DISABLE_SDL)
@@ -107,8 +107,8 @@
 // ============================================================
 
 #ifdef ALMOND_USING_SFML
-#define SFML_STATIC
-#include <SFML/Graphics.hpp>
+//#define SFML_STATIC
+//#include <SFML/Graphics.hpp>
 #endif
 
 #ifdef ALMOND_USING_RAYLIB

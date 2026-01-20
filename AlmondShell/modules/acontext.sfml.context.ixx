@@ -23,12 +23,14 @@ module;
 #  endif
 #endif
 
+#define SFML_STATIC
 #include <SFML/Graphics/RenderWindow.hpp>
 #include <SFML/Graphics/Color.hpp>
 #include <SFML/Window/Event.hpp>
 #include <SFML/Window/ContextSettings.hpp>
 #include <SFML/Window/VideoMode.hpp>
 #include <SFML/Window/WindowStyle.hpp>
+#include <SFML/Graphics.hpp>
 
 export module acontext.sfml.context;
 

@@ -494,7 +494,7 @@
     <ClCompile Include="$(MSBuildThisFileDirectory)modules\acontext.raylib.api.ixx">
       <Filter>Module Files\ixx\core\context\backends\raylib</Filter>
     </ClCompile>
-    <ClCompile Include="$(MSBuildThisFileDirectory)modules\aengine.context.win.ixx">
+    <ClCompile Include="$(MSBuildThisFileDirectory)modules\aengine.context.platform.utils.ixx">
       <Filter>Module Files\ixx\core\context</Filter>
     </ClCompile>
     <ClCompile Include="$(MSBuildThisFileDirectory)src\aeditor.cpp">

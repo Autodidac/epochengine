@@ -23,9 +23,9 @@ module;
 
 // Win32 has BOOL CloseWindow(HWND). Raylib has void CloseWindow(void).
 // Prevent the collision in this TU by temporarily renaming Win32's symbol name during header include.
-#   define CloseWindow CloseWindow_Win32
+//#   define CloseWindow CloseWindow_Win32
 #   include <Windows.h>
-#   undef CloseWindow
+//#   undef CloseWindow
 
 #   include <wingdi.h> // HGLRC + wgl*
 #endif
@@ -407,7 +407,7 @@ namespace almondnamespace::raylibcontext
         almondnamespace::raylibtextures::shutdown_current_context_backend();
         if (st.offscreen.id != 0)
             almondnamespace::raylib_api::unload_render_texture(st.offscreen);
-        almondnamespace::raylib_api::close_window();
+     //   almondnamespace::raylib_api::close_window();
 
 #if defined(_WIN32)
         if (st.ownsDC && st.hdc && st.hwnd)

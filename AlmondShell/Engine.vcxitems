@@ -60,7 +60,7 @@
     <ClCompile Include="$(MSBuildThisFileDirectory)modules\acontext.raylib.api.ixx" />
     <ClCompile Include="$(MSBuildThisFileDirectory)modules\acontext.raylib.context.win.ixx" />
     <ClCompile Include="$(MSBuildThisFileDirectory)modules\acontext.raylib.input.ixx" />
-    <ClCompile Include="$(MSBuildThisFileDirectory)modules\aengine.context.win.ixx" />
+    <ClCompile Include="$(MSBuildThisFileDirectory)modules\aengine.context.platform.utils.ixx" />
     <ClCompile Include="$(MSBuildThisFileDirectory)modules\aengine.gui.menu.ixx" />
     <ClCompile Include="$(MSBuildThisFileDirectory)modules\aengine.telemetry.ixx" />
     <ClCompile Include="$(MSBuildThisFileDirectory)modules\ascripting.system.ixx" />
