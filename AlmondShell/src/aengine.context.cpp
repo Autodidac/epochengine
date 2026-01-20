@@ -55,6 +55,7 @@ import "adirectxtextures.hpp";
 #endif
 #ifdef ALMOND_USING_SFML
 import acontext.sfml.context;
+import acontext.sfml.textures;
 #endif
 #ifdef ALMOND_USING_CUSTOM
 import "acustomcontext.hpp";
@@ -205,6 +206,33 @@ namespace
 #endif
 
 #if defined(ALMOND_USING_SFML)
+    void sfml_initialize_adapter()
+    {
+        auto ctx = almondnamespace::core::MultiContextManager::GetCurrent();
+        if (!ctx) return;
+
+        void* native = ctx_native_window_handle(ctx);
+
+        const unsigned w = static_cast<unsigned>((std::max)(1, ctx->width));
+        const unsigned h = static_cast<unsigned>((std::max)(1, ctx->height));
+
+        try {
+            (void)almondnamespace::sfmlcontext::sfml_initialize(
+                ctx,
+                reinterpret_cast<HWND>(native),
+                w,
+                h,
+                ctx->onResize
+            );
+        }
+        catch (const std::exception& e) {
+            std::cerr << "[SFML] init exception: " << e.what() << "\n";
+        }
+        catch (...) {
+            std::cerr << "[SFML] init unknown exception\n";
+        }
+    }
+
     void sfml_cleanup_adapter()
     {
         if (auto ctx = almondnamespace::core::MultiContextManager::GetCurrent()) {
@@ -442,6 +470,34 @@ namespace almondnamespace::core
             ctx->add_atlas = +[](const TextureAtlas& a) { return add_atlas_default(a, ContextType::SDL); };
 
             AddContextForBackend(ContextType::SDL, std::move(ctx));
+        }
+#endif
+
+#if defined(ALMOND_USING_SFML)
+        {
+            auto ctx = std::make_shared<Context>();
+            ctx->type = ContextType::SFML;
+            ctx->backendName = "SFML";
+
+            ctx->initialize = sfml_initialize_adapter;
+            ctx->cleanup = sfml_cleanup_adapter;
+            ctx->process = sfml_process_adapter;
+            ctx->clear = almondnamespace::sfmlcontext::sfml_clear;
+            ctx->present = almondnamespace::sfmlcontext::sfml_present;
+            ctx->get_width = almondnamespace::sfmlcontext::sfml_get_width;
+            ctx->get_height = almondnamespace::sfmlcontext::sfml_get_height;
+
+            ctx->is_key_held = [](input::Key k) { return input::is_key_held(k); };
+            ctx->is_key_down = [](input::Key k) { return input::is_key_down(k); };
+            ctx->get_mouse_position = [](int& x, int& y) { x = input::mouseX.load(std::memory_order_relaxed); y = input::mouseY.load(std::memory_order_relaxed); };
+            ctx->is_mouse_button_held = [](input::MouseButton b) { return input::is_mouse_button_held(b); };
+            ctx->is_mouse_button_down = [](input::MouseButton b) { return input::is_mouse_button_down(b); };
+
+            ctx->draw_sprite = almondnamespace::sfmlcontext::draw_sprite;
+            ctx->add_texture = &add_texture_default;
+            ctx->add_atlas = +[](const TextureAtlas& a) { return add_atlas_default(a, ContextType::SFML); };
+
+            AddContextForBackend(ContextType::SFML, std::move(ctx));
         }
 #endif
 
