@@ -5,6 +5,7 @@
     "fmt",
     "glad",
     "glm",
+		"sfml",
     "opengl",
     "sdl3",
     "sdl3-image",
