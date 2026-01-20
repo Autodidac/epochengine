@@ -350,16 +350,16 @@
     <ClCompile Include="$(MSBuildThisFileDirectory)modules\acontext.noop.context.ixx">
       <Filter>Module Files\ixx\core\context\backends\noop</Filter>
     </ClCompile>
-    <ClCompile Include="$(MSBuildThisFileDirectory)modules\asfmlcontext.ixx">
+    <ClCompile Include="$(MSBuildThisFileDirectory)modules\acontext.sfml.context.ixx">
       <Filter>Module Files\ixx\core\context\backends\sfml</Filter>
     </ClCompile>
-    <ClCompile Include="$(MSBuildThisFileDirectory)modules\asfmlrenderer.ixx">
+    <ClCompile Include="$(MSBuildThisFileDirectory)modules\acontext.sfml.renderer.ixx">
       <Filter>Module Files\ixx\core\context\backends\sfml</Filter>
     </ClCompile>
-    <ClCompile Include="$(MSBuildThisFileDirectory)modules\asfmlstate.ixx">
+    <ClCompile Include="$(MSBuildThisFileDirectory)modules\acontext.sfml.state.ixx">
       <Filter>Module Files\ixx\core\context\backends\sfml</Filter>
     </ClCompile>
-    <ClCompile Include="$(MSBuildThisFileDirectory)modules\asfmltextures.ixx">
+    <ClCompile Include="$(MSBuildThisFileDirectory)modules\acontext.sfml.textures.ixx">
       <Filter>Module Files\ixx\core\context\backends\sfml</Filter>
     </ClCompile>
     <ClCompile Include="$(MSBuildThisFileDirectory)modules\aecs.components.ixx">

@@ -138,10 +138,10 @@
     <ClCompile Include="$(MSBuildThisFileDirectory)modules\asceneserializer.ixx" />
     <ClCompile Include="$(MSBuildThisFileDirectory)modules\ascenesnapshot.ixx" />
     <ClCompile Include="$(MSBuildThisFileDirectory)modules\acontext.sdl.state.ixx" />
-    <ClCompile Include="$(MSBuildThisFileDirectory)modules\asfmlcontext.ixx" />
-    <ClCompile Include="$(MSBuildThisFileDirectory)modules\asfmlrenderer.ixx" />
-    <ClCompile Include="$(MSBuildThisFileDirectory)modules\asfmlstate.ixx" />
-    <ClCompile Include="$(MSBuildThisFileDirectory)modules\asfmltextures.ixx" />
+    <ClCompile Include="$(MSBuildThisFileDirectory)modules\acontext.sfml.context.ixx" />
+    <ClCompile Include="$(MSBuildThisFileDirectory)modules\acontext.sfml.renderer.ixx" />
+    <ClCompile Include="$(MSBuildThisFileDirectory)modules\acontext.sfml.state.ixx" />
+    <ClCompile Include="$(MSBuildThisFileDirectory)modules\acontext.sfml.textures.ixx" />
     <ClCompile Include="$(MSBuildThisFileDirectory)modules\aslidingpuzzlelike.ixx" />
     <ClCompile Include="$(MSBuildThisFileDirectory)modules\asnakelike.ixx" />
     <ClCompile Include="$(MSBuildThisFileDirectory)modules\acontext.softrenderer.context.ixx" />
