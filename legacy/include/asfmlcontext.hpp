@@ -89,6 +89,14 @@ namespace almondnamespace::sfmlcontext
             return false;
         }
 
+        auto* windowPtr = sfmlcontext.window.get();
+
+        if (ctx && ctx->windowData) {
+            ctx->windowData->sfml_window = windowPtr;
+        }
+
+        state::s_sfmlstate.window.sfml_window = windowPtr;
+
         sfmlcontext.hwnd = sfmlcontext.window->getNativeHandle();
         sfmlcontext.hdc = GetDC(sfmlcontext.hwnd);
         sfmlcontext.glContext = wglGetCurrentContext();
@@ -119,6 +127,15 @@ namespace almondnamespace::sfmlcontext
             if (sfmlcontext.onResize)
                 sfmlcontext.onResize(width, height);
         }
+
+        if (ctx && ctx->windowData) {
+            ctx->windowData->set_size(static_cast<int>(sfmlcontext.width), static_cast<int>(sfmlcontext.height));
+        }
+
+        state::s_sfmlstate.set_dimensions(
+            static_cast<int>(sfmlcontext.width),
+            static_cast<int>(sfmlcontext.height));
+        state::s_sfmlstate.running = true;
 
         std::cout << "[SFML] HWND=" << sfmlcontext.hwnd
             << " HDC=" << sfmlcontext.hdc
@@ -258,6 +275,14 @@ namespace almondnamespace::sfmlcontext
 
     inline void sfml_cleanup(std::shared_ptr<almondnamespace::core::Context>& ctx)
     {
+        if (ctx && ctx->windowData) {
+            ctx->windowData->sfml_window = nullptr;
+        }
+        state::s_sfmlstate.window.sfml_window = nullptr;
+        state::s_sfmlstate.running = false;
+
+        clear_gpu_atlases();
+
         if (sfmlcontext.running && sfmlcontext.window) {
             sfmlcontext.window->close();
             sfmlcontext.window.reset();
