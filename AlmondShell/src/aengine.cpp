@@ -46,8 +46,6 @@
 #  include <windows.h>
 #endif
 
-#define ALMOND_SINGLE_PARENT 1
-
 // -----------------------------
 // Standard library imports
 // -----------------------------

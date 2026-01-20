@@ -510,7 +510,7 @@ namespace almondnamespace::core
                         return;
                     }
 
-                    BackendState& state = it->second;
+                    core::BackendState& state = it->second;
                     master = state.master;
 
                     for (auto& dup : state.duplicates)
@@ -600,13 +600,13 @@ namespace almondnamespace::core
                             else
                             {
                                 std::cerr << "[Init] Running OpenGL init for hwnd=" << hwnd << "\n";
-                                //almondnamespace::openglcontext::opengl_initialize(
-                                //    ctx,
-                                //    hwnd,
-                                //    ctx->width,
-                                //    ctx->height,
-                                //    w ? w->onResize : nullptr);
-                                //::wglMakeCurrent(nullptr, nullptr);
+                                almondnamespace::openglcontext::opengl_initialize(
+                                    ctx,
+                                    hwnd,
+                                    ctx->width,
+                                    ctx->height,
+                                    w ? w->onResize : nullptr);
+                                ::wglMakeCurrent(nullptr, nullptr);
                             }
                         }
                         break;
@@ -614,12 +614,12 @@ namespace almondnamespace::core
 #if defined(ALMOND_USING_SOFTWARE_RENDERER)
                     case ContextType::Software:
                         std::cerr << "[Init] Initializing Software renderer for hwnd=" << hwnd << "\n";
-                        //almondnamespace::anativecontext::softrenderer_initialize(
-                        //    ctx,
-                        //    hwnd,
-                        //    ctx->width,
-                        //    ctx->height,
-                        //    w ? w->onResize : nullptr);
+                        almondnamespace::anativecontext::softrenderer_initialize(
+                            ctx,
+                            hwnd,
+                            ctx->width,
+                            ctx->height,
+                            w ? w->onResize : nullptr);
                         break;
 #endif
 #if defined(ALMOND_USING_RAYLIB)
@@ -660,7 +660,6 @@ namespace almondnamespace::core
 #if defined(ALMOND_USING_SFML)
         make_backend_windows(ContextType::SFML, SFMLWinCount);
 #endif
-
 
         ArrangeDockedWindowsGrid();
         StartRenderThreads();
@@ -1023,6 +1022,21 @@ namespace almondnamespace::core
                 win.titleNarrow);
         }
 #endif
+#if defined(ALMOND_USING_SFML)
+        if (ctx->type == ContextType::SFML)
+        {
+            std::cerr << "[RenderThread] SFML init. host=" << win.hwnd << "\n";
+            const bool ok = almondnamespace::sfmlcontext::sfml_initialize(
+                ctx, 
+                win.hwnd,
+                static_cast<unsigned>(ctx->width),
+                static_cast<unsigned>(ctx->height),
+                win.onResize ? win.onResize : ctx->onResize
+                );
+
+            if (!ok) { win.running = false; return; }
+        }
+#endif
 
         const bool skipGenericInit =
 #if defined(ALMOND_USING_RAYLIB)
@@ -1033,22 +1047,6 @@ namespace almondnamespace::core
 #endif
 #if defined(ALMOND_USING_SFML)
 			(ctx->type == ContextType::SFML) ||
-            //{
-                //std::cerr << "[RenderThread] SFML init. host=" << win.hwnd << "\n";
-                //const bool ok = almondnamespace::sfmlcontext::sfml_initialize(
-                //    ctx,
-                //    win.hwnd,
-                //    static_cast<unsigned>(ctx->width),
-                //    static_cast<unsigned>(ctx->height),
-                //    win.onResize ? win.onResize : ctx->onResize,
-                //    win.titleNarrow);
-
-                //if (!ok)
-                //{
-                //    win.running = false;
-                //    return;
-                //}
-            //}
 #endif
 
             false;
