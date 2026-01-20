@@ -1,6 +1,6 @@
 module;
 
-#include "aengine.hpp"          // DEFAULT_WINDOW_WIDTH, DEFAULT_WINDOW_HEIGHT
+//#include "aengine.hpp"          // DEFAULT_WINDOW_WIDTH, DEFAULT_WINDOW_HEIGHT
 
 export module aengine.core.commandline;
 
@@ -11,6 +11,9 @@ import <string_view>;
 
 //import aengine;
 import aengine.version;
+
+inline constexpr int DEFAULT_WINDOW_WIDTH = 1280;
+inline constexpr int DEFAULT_WINDOW_HEIGHT = 720;
 
 export namespace almondnamespace::core::cli 
 {

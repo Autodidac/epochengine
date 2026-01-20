@@ -245,7 +245,7 @@ namespace
         almondnamespace::core::CommandQueue& queue)
     {
         if (!ctx) return false;
-        return almondnamespace::sfmlcontext::sfml_process(*ctx, queue);
+        return almondnamespace::sfmlcontext::sfml_process(ctx, queue);
     }
 #endif
 

@@ -14,6 +14,12 @@ module;
 #    define NOMINMAX
 #  endif
 #  include <windows.h>
+#  ifdef min
+#    undef min
+#  endif
+#  ifdef max
+#    undef max
+#  endif
 #endif
 
 #include <SFML/Graphics/RenderWindow.hpp>
@@ -21,6 +27,7 @@ module;
 #include <SFML/Window/Event.hpp>
 #include <SFML/Window/ContextSettings.hpp>
 #include <SFML/Window/VideoMode.hpp>
+#include <SFML/Window/WindowStyle.hpp>
 
 export module acontext.sfml.context;
 
@@ -127,9 +134,9 @@ export namespace almondnamespace::sfmlcontext
         settings.minorVersion = 3;
         settings.attributeFlags = sf::ContextSettings::Core;
 
-        sf::VideoMode mode({ sfmlcontext.width, sfmlcontext.height }, 32);
+        sf::VideoMode mode(sfmlcontext.width, sfmlcontext.height, 32u);
         sfmlcontext.window = std::make_unique<sf::RenderWindow>(
-            mode, "SFML Window", sf::State::Windowed, settings);
+            mode, "SFML Window", sf::Style::Default, settings);
 
         if (!sfmlcontext.window || !sfmlcontext.window->isOpen())
         {
@@ -149,7 +156,7 @@ export namespace almondnamespace::sfmlcontext
         state::s_sfmlstate.window.sfml_window = windowPtr;
 
 #if defined(_WIN32)
-        sfmlcontext.hwnd = sfmlcontext.window->getNativeHandle();
+        sfmlcontext.hwnd = static_cast<HWND>(sfmlcontext.window->getSystemHandle());
         sfmlcontext.hdc = GetDC(sfmlcontext.hwnd);
         sfmlcontext.glContext = wglGetCurrentContext();
         if (!sfmlcontext.glContext)
@@ -205,7 +212,7 @@ export namespace almondnamespace::sfmlcontext
     {
         if (!sfmlcontext.window)
             throw std::runtime_error("[SFML] Window not initialized.");
-        sfmlcontext.window->clear(sf::Color::Black);
+        //sfmlcontext.window->clear(sf::Color::Black);
     }
 
     inline void sfml_end_frame()
@@ -251,13 +258,20 @@ export namespace almondnamespace::sfmlcontext
             return false;
         }
 
-        while (auto event = sfmlcontext.window->pollEvent())
+        sf::Event event{};
+        while (sfmlcontext.window->pollEvent(event))
         {
-            if (event->is<sf::Event::Closed>())
+            if (event.type == sf::Event::Closed)
             {
                 sfmlcontext.window->close();
                 sfmlcontext.running = false;
                 state::s_sfmlstate.mark_should_close(true);
+            }
+            else if (event.type == sf::Event::Resized)
+            {
+                const int w = static_cast<int>((std::max)(1u, event.size.width));
+                const int h = static_cast<int>((std::max)(1u, event.size.height));
+                if (sfmlcontext.onResize) sfmlcontext.onResize(w, h);
             }
         }
 

@@ -1,24 +1,40 @@
 module;
 
-#include "aengine.hpp"          // DEFAULT_WINDOW_WIDTH, DEFAULT_WINDOW_HEIGHT
+//#include "aengine.hpp" // DEFAULT_WINDOW_WIDTH, DEFAULT_WINDOW_HEIGHT
 
 export module acontext.sdl.state;
 
 import aengine.platform;
-//import aengine.config;
-
-
-#if defined(_WIN32)
-import <Windows.h>;
-#endif
 
 import <array>;
 import <bitset>;
 import <functional>;
 import <SDL3/SDL.h>;
+
 import aengine.core.time;
 import aengine.context.window;
-//import aengine; // DEFAULT_WINDOW_WIDTH, DEFAULT_WINDOW_HEIGHT
+
+inline constexpr int DEFAULT_WINDOW_WIDTH = 1280;
+inline constexpr int DEFAULT_WINDOW_HEIGHT = 720;
+
+// Win32 forward decls MUST be here (module purview), not in the global module fragment.
+#if defined(_WIN32)
+namespace almondnamespace::win32
+{
+    struct HWND__;
+    struct HDC__;
+    struct HGLRC__;
+    using HWND = HWND__*;
+    using HDC = HDC__*;
+    using HGLRC = HGLRC__*;
+
+    using LRESULT = long long;
+    using WPARAM = unsigned long long;
+    using LPARAM = long long;
+
+    using WNDPROC = LRESULT(__stdcall*)(HWND, unsigned int, WPARAM, LPARAM);
+}
+#endif
 
 export namespace almondnamespace::sdlcontext::state
 {
@@ -64,17 +80,21 @@ export namespace almondnamespace::sdlcontext::state
         almondnamespace::timing::Timer fpsTimer = almondnamespace::timing::createTimer(1.0);
         int frameCount = 0;
 
-#ifdef _WIN32
+#if defined(_WIN32)
     private:
-        WNDPROC oldWndProc_ = nullptr;
-        HWND parent_ = nullptr;
+        almondnamespace::win32::WNDPROC oldWndProc_ = nullptr;
+        almondnamespace::win32::HWND    parent_ = nullptr;
 
     public:
-        WNDPROC getOldWndProc() const noexcept { return oldWndProc_; }
-        void setOldWndProc(WNDPROC proc) noexcept { oldWndProc_ = proc; }
+        auto getOldWndProc() const noexcept { return oldWndProc_; }
+        void setOldWndProc(almondnamespace::win32::WNDPROC proc) noexcept { oldWndProc_ = proc; }
 
-        void setParent(HWND parent) noexcept { parent_ = parent; }
-        HWND getParent() const noexcept { return parent_; }
+        void setParent(almondnamespace::win32::HWND parent) noexcept { parent_ = parent; }
+        auto getParent() const noexcept { return parent_; }
+
+        // If you want these accessors, WindowData must expose real HWND/HDC/HGLRC types
+        // (meaning a Win32 header/module somewhere). Otherwise remove these.
+        // almondnamespace::win32::HWND  hwnd() const noexcept { return (almondnamespace::win32::HWND)window.hwnd; }
 #endif
 
         void mark_should_close(bool value) noexcept
@@ -89,13 +109,6 @@ export namespace almondnamespace::sdlcontext::state
             screenHeight = h;
             window.set_size(w, h);
         }
-
-#if defined(_WIN32)
-        HWND hwnd() const noexcept { return window.hwnd; }
-        HDC hdc() const noexcept { return window.hdc; }
-        HGLRC glrc() const noexcept { return window.glrc; }
-#endif
-        //SDL_Window* sdl_window() const noexcept { return window.getWindowHandle; }
     };
 
     SDL3State& get_sdl_state() noexcept;
@@ -103,7 +116,7 @@ export namespace almondnamespace::sdlcontext::state
 
 namespace almondnamespace::sdlcontext::state
 {
-    SDL3State& get_sdl_state() noexcept
+    inline SDL3State& get_sdl_state() noexcept
     {
         static SDL3State state{};
         return state;

@@ -78,13 +78,15 @@ import acontext.opengl.context;
 #if defined(ALMOND_USING_SDL)
 import acontext.sdl.context;
 #endif
-#if defined(ALMOND_USING_RAYLIB)
-import acontext.raylib.context;
-#endif
 #if defined(ALMOND_USING_SOFTWARE_RENDERER)
 import acontext.softrenderer.context;
 #endif
-
+#if defined(ALMOND_USING_SFML)
+import acontext.sfml.context;
+#endif
+#if defined(ALMOND_USING_RAYLIB)
+import acontext.raylib.context;
+#endif
 #if defined(_WIN32)
 
 namespace
@@ -598,13 +600,13 @@ namespace almondnamespace::core
                             else
                             {
                                 std::cerr << "[Init] Running OpenGL init for hwnd=" << hwnd << "\n";
-                                almondnamespace::openglcontext::opengl_initialize(
-                                    ctx,
-                                    hwnd,
-                                    ctx->width,
-                                    ctx->height,
-                                    w ? w->onResize : nullptr);
-                                ::wglMakeCurrent(nullptr, nullptr);
+                                //almondnamespace::openglcontext::opengl_initialize(
+                                //    ctx,
+                                //    hwnd,
+                                //    ctx->width,
+                                //    ctx->height,
+                                //    w ? w->onResize : nullptr);
+                                //::wglMakeCurrent(nullptr, nullptr);
                             }
                         }
                         break;
@@ -612,12 +614,12 @@ namespace almondnamespace::core
 #if defined(ALMOND_USING_SOFTWARE_RENDERER)
                     case ContextType::Software:
                         std::cerr << "[Init] Initializing Software renderer for hwnd=" << hwnd << "\n";
-                        almondnamespace::anativecontext::softrenderer_initialize(
-                            ctx,
-                            hwnd,
-                            ctx->width,
-                            ctx->height,
-                            w ? w->onResize : nullptr);
+                        //almondnamespace::anativecontext::softrenderer_initialize(
+                        //    ctx,
+                        //    hwnd,
+                        //    ctx->width,
+                        //    ctx->height,
+                        //    w ? w->onResize : nullptr);
                         break;
 #endif
 #if defined(ALMOND_USING_RAYLIB)
@@ -630,6 +632,12 @@ namespace almondnamespace::core
                         std::cerr << "[Init] Deferring SDL init to render thread. host=" << hwnd << "\n";
                         break;
 #endif
+#if defined(ALMOND_USING_SFML)
+                    case ContextType::SFML:
+                        std::cerr << "[Init] Deferring SFML init to render thread. host=" << hwnd << "\n";
+                        break;
+#endif
+
                     default:
                         break;
                     }
@@ -648,7 +656,11 @@ namespace almondnamespace::core
 #if defined(ALMOND_USING_SOFTWARE_RENDERER)
         make_backend_windows(ContextType::Software, SoftwareWinCount);
 #endif
-        (void)SFMLWinCount;
+       // (void)SFMLWinCount; // place holder
+#if defined(ALMOND_USING_SFML)
+        make_backend_windows(ContextType::SFML, SFMLWinCount);
+#endif
+
 
         ArrangeDockedWindowsGrid();
         StartRenderThreads();
@@ -1019,6 +1031,26 @@ namespace almondnamespace::core
 #if defined(ALMOND_USING_SDL)
             (ctx->type == ContextType::SDL) ||
 #endif
+#if defined(ALMOND_USING_SFML)
+			(ctx->type == ContextType::SFML) ||
+            //{
+                //std::cerr << "[RenderThread] SFML init. host=" << win.hwnd << "\n";
+                //const bool ok = almondnamespace::sfmlcontext::sfml_initialize(
+                //    ctx,
+                //    win.hwnd,
+                //    static_cast<unsigned>(ctx->width),
+                //    static_cast<unsigned>(ctx->height),
+                //    win.onResize ? win.onResize : ctx->onResize,
+                //    win.titleNarrow);
+
+                //if (!ok)
+                //{
+                //    win.running = false;
+                //    return;
+                //}
+            //}
+#endif
+
             false;
 
         if (!skipGenericInit)

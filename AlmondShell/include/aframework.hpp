@@ -22,8 +22,10 @@
  *                                                            *
  **************************************************************/
 #pragma once
+
 #if defined(_WIN32)
 
+ // Keep Win32 headers slim and non-toxic.
 #ifndef WIN32_LEAN_AND_MEAN
 #  define WIN32_LEAN_AND_MEAN
 #endif
@@ -31,6 +33,9 @@
 #  define NOMINMAX
 #endif
 
+// If you actually use winsock, prefer including <winsock2.h> BEFORE <windows.h>
+// in the *one* translation unit/module that needs it, instead of forcing _WINSOCKAPI_.
+// Leaving this here only if you know you never want winsock1.
 #ifndef _WINSOCKAPI_
 #  define _WINSOCKAPI_
 #endif
@@ -39,4 +44,12 @@
 #include <windowsx.h>
 #include <shellapi.h>
 
+// Absolute last line of defense: SFML (and others) require std::min/std::max to be real.
+#ifdef min
+#  undef min
 #endif
+#ifdef max
+#  undef max
+#endif
+
+#endif // _WIN32

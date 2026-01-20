@@ -139,7 +139,13 @@ export namespace almondnamespace::sfmlcontext
             return;
         }
 
-        sf::Image image({ atlas.width, atlas.height }, atlas.pixel_data.data());
+        sf::Image image{};
+        image.create(
+            static_cast<unsigned>(atlas.width),
+            static_cast<unsigned>(atlas.height),
+            reinterpret_cast<const sf::Uint8*>(atlas.pixel_data.data())
+        );
+
 
         if (!gpu.texture.loadFromImage(image))
         {
@@ -175,7 +181,8 @@ export namespace almondnamespace::sfmlcontext
 
     inline Handle load_atlas(const TextureAtlas& atlas, int atlasIndex = -1)
     {
-        atlasmanager::ensure_uploaded(atlas);
+        ensure_uploaded(atlas);
+
         const int resolvedIndex = (atlasIndex >= 0) ? atlasIndex : atlas.get_index();
         return make_handle(resolvedIndex, 0);
     }
@@ -196,7 +203,7 @@ export namespace almondnamespace::sfmlcontext
             throw std::runtime_error("atlas_add_texture: Failed to add: " + id);
         }
 
-        atlasmanager::ensure_uploaded(atlas);
+        ensure_uploaded(atlas);
 
         return make_handle(atlas.get_index(), addedOpt->index);
     }

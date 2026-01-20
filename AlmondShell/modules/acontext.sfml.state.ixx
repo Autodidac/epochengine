@@ -1,7 +1,27 @@
 module;
 
-#include "aengine.hpp" // DEFAULT_WINDOW_WIDTH, DEFAULT_WINDOW_HEIGHT
-#include <include/aengine.config.hpp>
+// Must be before anything that might pull <windows.h> (directly or indirectly)
+#if defined(_WIN32)
+#   ifndef WIN32_LEAN_AND_MEAN
+#       define WIN32_LEAN_AND_MEAN
+#   endif
+#   ifndef NOMINMAX
+#       define NOMINMAX
+#   endif
+#endif
+
+#include "aengine.hpp"          // DEFAULT_WINDOW_WIDTH, DEFAULT_WINDOW_HEIGHT
+#include "aengine.config.hpp"   // ALMOND_USING_* macros
+
+// If some include above already pulled windows.h, nuke the macros anyway.
+#if defined(_WIN32)
+#   ifdef min
+#       undef min
+#   endif
+#   ifdef max
+#       undef max
+#   endif
+#endif
 
 export module acontext.sfml.state;
 

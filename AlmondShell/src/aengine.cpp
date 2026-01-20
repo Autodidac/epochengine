@@ -34,8 +34,17 @@
 //#include "pch.h"
 
 #include "..\include\aengine.config.hpp"
+#include "..\include\aengine.hpp"
 
-//#include "..\include\aengine.hpp"
+#if defined(_WIN32)
+#  ifndef WIN32_LEAN_AND_MEAN
+#    define WIN32_LEAN_AND_MEAN
+#  endif
+#  ifndef NOMINMAX
+#    define NOMINMAX
+#  endif
+#  include <windows.h>
+#endif
 
 #define ALMOND_SINGLE_PARENT 1
 
@@ -109,11 +118,6 @@ import acontext.sfml.context;
 #endif
 #if defined(ALMOND_USING_RAYLIB)
 import acontext.raylib.context;
-#endif
-
-#if defined(_WIN32)
-import <windows.h>;        // pulls winuser.h, winnt.h, etc
-//import <wtypes.h>;
 #endif
 
 namespace input = almondnamespace::input;
@@ -501,7 +505,7 @@ namespace almondnamespace::core
                     hi,
                     /*RayLib*/   1,
                     /*SDL*/      1,
-                    /*SFML*/     0,
+                    /*SFML*/     1,
                     /*OpenGL*/   1,
                     /*Software*/ 1,
                     ALMOND_SINGLE_PARENT == 1
@@ -558,7 +562,7 @@ namespace almondnamespace::core
                     nullptr,
                     /*RayLib*/   1,
                     /*SDL*/      1,
-                    /*SFML*/     0,
+                    /*SFML*/     1,
                     /*OpenGL*/   1,
                     /*Software*/ 1,
                     ALMOND_SINGLE_PARENT == 1
@@ -624,7 +628,7 @@ namespace urls
     const std::string branch = "main/";
 
     const std::string version_url = github_raw_base + owner + repo + "/" + branch + "/modules/aengine.version.ixx";
-    const std::string binary_url = github_base + owner + repo + "/releases/latest/download/autodlupdater.exe";
+    const std::string binary_url = github_base + owner + repo + "/releases/latest/download/ConsoleApplication1.exe";
 }
 
 #if defined(_WIN32) && defined(ALMOND_USING_WINMAIN)
