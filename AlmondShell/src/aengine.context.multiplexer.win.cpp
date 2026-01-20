@@ -996,8 +996,6 @@ namespace almondnamespace::core
                 win.running = false;
                 return;
             }
-
-            (void)almondnamespace::raylibcontext::raylib_make_current();
         }
 #endif
 #if defined(ALMOND_USING_SDL)
@@ -1032,11 +1030,6 @@ namespace almondnamespace::core
         while (running.load(std::memory_order_acquire) && win.running)
         {
             bool keepRunning = true;
-
-#if defined(ALMOND_USING_RAYLIB)
-            if (ctx->type == ContextType::RayLib)
-                (void)almondnamespace::raylibcontext::raylib_make_current();
-#endif
 
             {
                 const std::size_t depth = win.commandQueue.depth();

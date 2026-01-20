@@ -288,14 +288,6 @@ namespace almondnamespace::raylibcontext
         if (!st.running)
             return;
 
-#if defined(_WIN32)
-        // Reality check: with multi-backend + queued commands, the current context can drift.
-        // Raylib requires its own context current for BeginDrawing/EndDrawing. If multiplexer
-        // didn't activate it (or it was stolen), heal here.
-        (void)raylib_make_current();
-        detail::debug_expect_raylib_current(st, "raylib_clear");
-#endif
-
         if (st.offscreen.id == 0)
             return;
 
@@ -315,41 +307,10 @@ namespace almondnamespace::raylibcontext
         if (!st.running)
             return;
 
-#if defined(_WIN32)
-        (void)raylib_make_current();
-        detail::debug_expect_raylib_current(st, "raylib_present");
-#endif
-
         if (st.offscreen.id == 0)
             return;
 
         almondnamespace::raylib_api::end_texture_mode();
-
-        almondnamespace::raylib_api::begin_drawing();
-
-        const auto& tex = st.offscreen.texture;
-        const almondnamespace::raylib_api::Rectangle src{
-            0.0f,
-            0.0f,
-            static_cast<float>(tex.width),
-            -static_cast<float>(tex.height)
-        };
-        const almondnamespace::raylib_api::Rectangle dst{
-            0.0f,
-            0.0f,
-            static_cast<float>(st.width),
-            static_cast<float>(st.height)
-        };
-
-        almondnamespace::raylib_api::draw_texture_pro(
-            tex,
-            src,
-            dst,
-            almondnamespace::raylib_api::Vector2{ 0.0f, 0.0f },
-            0.0f,
-            almondnamespace::raylib_api::white);
-
-        almondnamespace::raylib_api::end_drawing();
     }
 
     export inline void raylib_cleanup(std::shared_ptr<core::Context>)
