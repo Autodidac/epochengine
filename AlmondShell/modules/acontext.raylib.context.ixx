@@ -236,6 +236,16 @@ namespace almondnamespace::raylibcontext
         if (!st.running)
             return;
 
+        if (almondnamespace::raylib_api::window_should_close())
+        {
+            st.running = false;
+            if (auto cur = almondnamespace::core::get_current_render_context(); cur && cur->windowData)
+                cur->windowData->running = false;
+            else if (st.owner_ctx && st.owner_ctx->windowData)
+                st.owner_ctx->windowData->running = false;
+            return;
+        }
+
 #if defined(_WIN32)
         // Expect the multiplexer to have activated this backend before calling process.
         detail::debug_expect_raylib_current(st, "raylib_process");
