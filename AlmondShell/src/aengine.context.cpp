@@ -400,7 +400,8 @@ namespace almondnamespace::core
             ctx->cleanup = opengl_cleanup_adapter;
             ctx->process = opengl_process_adapter;
             ctx->clear = almondnamespace::openglcontext::opengl_clear;
-            ctx->present = almondnamespace::openglcontext::opengl_present;
+            // OpenGL swaps in opengl_process; keep present unset to avoid double-swap.
+            ctx->present = nullptr;
             ctx->get_width = almondnamespace::openglcontext::opengl_get_width;
             ctx->get_height = almondnamespace::openglcontext::opengl_get_height;
 
