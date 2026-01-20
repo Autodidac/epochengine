@@ -41,6 +41,7 @@ import <functional>;
 import <memory>;
 import <string>;
 import <string_view>;
+import <thread>;
 import <utility>;
 
 import aengine.core.context;
@@ -101,12 +102,38 @@ namespace almondnamespace::raylibcontext
             (void)st; (void)where;
 #endif
         }
+
     }
 #endif
 
+    namespace detail
+    {
+        inline void ensure_offscreen_target(almondnamespace::raylibstate::RaylibState& st, unsigned w, unsigned h)
+        {
+            const unsigned clampedW = (std::max)(1u, w);
+            const unsigned clampedH = (std::max)(1u, h);
+
+            if (st.offscreen.id != 0 &&
+                st.offscreenWidth == clampedW &&
+                st.offscreenHeight == clampedH)
+            {
+                return;
+            }
+
+            if (st.offscreen.id != 0)
+                almondnamespace::raylib_api::unload_render_texture(st.offscreen);
+
+            st.offscreen = almondnamespace::raylib_api::load_render_texture(
+                static_cast<int>(clampedW),
+                static_cast<int>(clampedH));
+            st.offscreenWidth = clampedW;
+            st.offscreenHeight = clampedH;
+        }
+    }
+
     export inline bool raylib_initialize(
         std::shared_ptr<core::Context> ctx,
-        NativeWindowHandle /*parent*/ = nullptr,
+        NativeWindowHandle parent = nullptr,
         unsigned width = 0,
         unsigned height = 0,
         std::function<void(int, int)> resizeCallback = nullptr,
@@ -119,20 +146,13 @@ namespace almondnamespace::raylibcontext
 
         st.width = (std::max)(1u, width);
         st.height = (std::max)(1u, height);
-        st.onResize = std::move(resizeCallback);
 
         if (!title.empty())
             title_storage() = std::move(title);
 
-        // Prevent re-initializing raylib (it creates a new window + GL context).
+        // Prevent re-initializing raylib (it initializes global state once).
         if (st.running)
         {
-            if (ctx)
-            {
-                ctx->hwnd = static_cast<decltype(ctx->hwnd)>(almondnamespace::raylib_api::get_window_handle());
-                if constexpr (requires { ctx->native_window; })
-                    ctx->native_window = almondnamespace::raylib_api::get_window_handle();
-            }
             return true;
         }
 
@@ -140,6 +160,35 @@ namespace almondnamespace::raylibcontext
         // Capture whatever context the multiplexer/docking currently has bound.
         const HDC   previousDC = detail::current_dc();
         const HGLRC previousContext = detail::current_context();
+#endif
+
+        st.owner_ctx = ctx.get();
+        st.owner_thread = std::this_thread::get_id();
+        st.userResize = std::move(resizeCallback);
+
+#if defined(_WIN32)
+        st.hwnd = static_cast<HWND>(parent ? parent : (ctx ? ctx->hwnd : nullptr));
+        st.hdc = ctx ? ctx->hdc : detail::current_dc();
+        st.hglrc = ctx ? ctx->hglrc : detail::current_context();
+        st.ownsDC = false;
+
+        if (!st.hdc || !st.hglrc)
+        {
+            std::cerr << "[Raylib] Missing host OpenGL context for Raylib initialization.\n";
+            st.running = false;
+            st.cleanupIssued = false;
+            return false;
+        }
+#else
+        st.hwnd = parent ? parent : (ctx ? ctx->hwnd : nullptr);
+#endif
+
+#if defined(_WIN32)
+        if (st.hdc && st.hglrc &&
+            !detail::contexts_match(previousDC, previousContext, st.hdc, st.hglrc))
+        {
+            (void)detail::make_current(st.hdc, st.hglrc);
+        }
 #endif
 
         almondnamespace::raylib_api::set_config_flags(
@@ -152,60 +201,41 @@ namespace almondnamespace::raylibcontext
 
         almondnamespace::raylib_api::set_target_fps(0);
 
-        if (ctx)
+        st.onResize = [](int w, int h)
         {
-            ctx->hwnd = static_cast<decltype(ctx->hwnd)>(almondnamespace::raylib_api::get_window_handle());
-            if constexpr (requires { ctx->native_window; })
-                ctx->native_window = almondnamespace::raylib_api::get_window_handle();
-        }
+            auto& state = almondnamespace::raylibstate::s_raylibstate;
+            const int clampedW = (std::max)(1, w);
+            const int clampedH = (std::max)(1, h);
+            state.width = static_cast<unsigned>(clampedW);
+            state.height = static_cast<unsigned>(clampedH);
+
+            almondnamespace::raylib_api::set_window_size(clampedW, clampedH);
+
+            (void)raylib_make_current();
+            detail::ensure_offscreen_target(state, state.width, state.height);
+#if defined(_WIN32)
+            detail::debug_expect_raylib_current(state, "raylib_resize");
+#endif
+
+            if (state.userResize)
+                state.userResize(clampedW, clampedH);
+        };
+
+        detail::ensure_offscreen_target(st, st.width, st.height);
 
 #if defined(_WIN32)
+        // Restore previous GL binding for the dock/multiplexer host.
+        if (!detail::contexts_match(previousDC, previousContext, st.hdc, st.hglrc))
         {
-            st.hwnd = static_cast<HWND>(almondnamespace::raylib_api::get_window_handle());
-            st.ownsDC = false;
-
-            // Capture raylib's dc/rc as they exist immediately after InitWindow.
-            st.hdc = detail::current_dc();
-            st.hglrc = detail::current_context();
-
-            // Fallback if raylib didn't leave them current (rare but possible).
-            if ((!st.hdc || !st.hglrc) && st.hwnd)
-            {
-                // This requires the DC; GetDC is okay here because we're not calling raylib's CloseWindow symbol.
-                st.hdc = ::GetDC(st.hwnd);
-                st.ownsDC = (st.hdc != nullptr);
-
-                st.hglrc = detail::current_context();
-            }
-
-            if (!st.hdc || !st.hglrc)
-            {
-                std::cerr << "[Raylib] Failed to acquire Win32 GL handles after InitWindow\n";
-                if (st.ownsDC && st.hdc && st.hwnd)
-                    ::ReleaseDC(st.hwnd, st.hdc);
-
-                st.hdc = nullptr;
-                st.hglrc = nullptr;
-                st.ownsDC = false;
-                st.running = false;
-                st.cleanupIssued = false;
-                return false;
-            }
-
-            // Restore previous GL binding if raylib stole it.
-            if (!detail::contexts_match(previousDC, previousContext, st.hdc, st.hglrc))
-            {
-                if (previousDC && previousContext)
-                    (void)detail::make_current(previousDC, previousContext);
-                else
-                    detail::clear_current();
-            }
-        }
-#else
-        {
-            st.hwnd = almondnamespace::raylib_api::get_window_handle();
+            if (previousDC && previousContext)
+                (void)detail::make_current(previousDC, previousContext);
+            else
+                detail::clear_current();
         }
 #endif
+
+        if (ctx)
+            ctx->onResize = st.onResize;
 
         st.running = true;
         st.cleanupIssued = false;
@@ -250,20 +280,6 @@ namespace almondnamespace::raylibcontext
         // Expect the multiplexer to have activated this backend before calling process.
         detail::debug_expect_raylib_current(st, "raylib_process");
 #endif
-
-        const int w = almondnamespace::raylib_api::get_screen_width();
-        const int h = almondnamespace::raylib_api::get_screen_height();
-
-        if (w > 0 && h > 0 &&
-            (static_cast<unsigned>(w) != st.width ||
-                static_cast<unsigned>(h) != st.height))
-        {
-            st.width = static_cast<unsigned>(w);
-            st.height = static_cast<unsigned>(h);
-
-            if (st.onResize)
-                st.onResize(w, h);
-        }
     }
 
     export inline void raylib_clear(float r, float g, float b, float /*a*/)
@@ -280,7 +296,10 @@ namespace almondnamespace::raylibcontext
         detail::debug_expect_raylib_current(st, "raylib_clear");
 #endif
 
-        almondnamespace::raylib_api::begin_drawing();
+        if (st.offscreen.id == 0)
+            return;
+
+        almondnamespace::raylib_api::begin_texture_mode(st.offscreen);
         almondnamespace::raylib_api::clear_background(
             almondnamespace::raylib_api::Color{
                 static_cast<unsigned char>(std::clamp(r, 0.0f, 1.0f) * 255.0f),
@@ -300,6 +319,35 @@ namespace almondnamespace::raylibcontext
         (void)raylib_make_current();
         detail::debug_expect_raylib_current(st, "raylib_present");
 #endif
+
+        if (st.offscreen.id == 0)
+            return;
+
+        almondnamespace::raylib_api::end_texture_mode();
+
+        almondnamespace::raylib_api::begin_drawing();
+
+        const auto& tex = st.offscreen.texture;
+        const almondnamespace::raylib_api::Rectangle src{
+            0.0f,
+            0.0f,
+            static_cast<float>(tex.width),
+            -static_cast<float>(tex.height)
+        };
+        const almondnamespace::raylib_api::Rectangle dst{
+            0.0f,
+            0.0f,
+            static_cast<float>(st.width),
+            static_cast<float>(st.height)
+        };
+
+        almondnamespace::raylib_api::draw_texture_pro(
+            tex,
+            src,
+            dst,
+            almondnamespace::raylib_api::Vector2{ 0.0f, 0.0f },
+            0.0f,
+            almondnamespace::raylib_api::white);
 
         almondnamespace::raylib_api::end_drawing();
     }
@@ -321,6 +369,8 @@ namespace almondnamespace::raylibcontext
 #endif
 
         almondnamespace::raylibtextures::shutdown_current_context_backend();
+        if (st.offscreen.id != 0)
+            almondnamespace::raylib_api::unload_render_texture(st.offscreen);
         almondnamespace::raylib_api::close_window();
 
 #if defined(_WIN32)
@@ -354,7 +404,7 @@ namespace almondnamespace::raylibcontext
 
     export inline NativeWindowHandle raylib_get_native_window()
     {
-        return almondnamespace::raylib_api::get_window_handle();
+        return almondnamespace::raylibstate::s_raylibstate.hwnd;
     }
 }
 
