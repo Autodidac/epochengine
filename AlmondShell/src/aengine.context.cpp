@@ -284,21 +284,10 @@ namespace
     {
         if (!ctx) return false;
 
-        // Raylib's Win32/WGL context can be displaced by other backend work (notably
-        // atlas uploads) inside the same render thread. The command queue often contains
-        // raylib_clear/present which must run with raylib's own DC/RC current.
-        // Treat raylib like the old code: bind its context at the start of the frame
-        // AND immediately before draining queued commands.
-        (void)almondnamespace::raylibcontext::raylib_make_current();
-
         almondnamespace::raylibcontext::raylib_process();
 
-        // Uploads may touch GL and may temporarily change the current context.
-        (void)almondnamespace::raylibcontext::raylib_make_current();
         almondnamespace::atlasmanager::process_pending_uploads(almondnamespace::core::ContextType::RayLib);
 
-        // Re-assert raylib currentness for queued clear/present and any draw calls.
-        (void)almondnamespace::raylibcontext::raylib_make_current();
         queue.drain();
 
         return almondnamespace::raylibstate::s_raylibstate.running;
