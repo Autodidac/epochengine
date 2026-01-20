@@ -22,7 +22,7 @@ This guide summarises the build-time switches exposed from `modules/aengine.ixx`
 | --- | --- | --- | --- |
 | Context provider | `ALMOND_USING_SDL` | On | SDL3 context backed by the runtime multiplexer. Works alongside Raylib for tooling scenarios. |
 | Context provider | `ALMOND_USING_RAYLIB` | On | Raylib context hosted inside the multiplexer. Disabled only when building ultra-minimal shells. |
-| Context provider | `ALMOND_USING_SFML` | Off | SFML support is intentionally disabled until upstream releases a stable v3.0. |
+| Context provider | `ALMOND_USING_SFML` | On | SFML 3.0.2+ context support backed by the multiplexer. Requires SFML graphics/window/system dependencies to be available to the build. |
 | Renderer | `ALMOND_USING_SOFTWARE_RENDERER` | On | CPU rasteriser used as a fallback and validation layer. |
 | Renderer | `ALMOND_USING_OPENGL` | On | Primary GPU renderer. Required for editor-style workflows. |
 | Renderer | `ALMOND_USING_VULKAN` | Off | Stubbed configuration. Enabling requires matching updates in the examples and is not supported in AlmondShell today. |
@@ -41,8 +41,12 @@ Supported mixes:
 
 Unsupported mixes:
 
-- **SFML, Vulkan, or DirectX** – These paths are stubbed and intentionally disabled until their respective integrations stabilise.
+- **Vulkan or DirectX** – These paths are stubbed and intentionally disabled until their respective integrations stabilise.
 - **Renderer-less builds** – Disabling both `ALMOND_USING_OPENGL` and `ALMOND_USING_SOFTWARE_RENDERER` prevents the texture managers from initialising and is not supported.
+
+## SFML dependencies
+
+Ensure SFML's graphics, window, and system libraries are available to the linker (`sfml-graphics`, `sfml-window`, `sfml-system`). The Visual Studio items project includes these by default; other generators should link the same modules.
 
 ## Linux packaging guidance
 
