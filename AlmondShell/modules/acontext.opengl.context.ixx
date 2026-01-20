@@ -202,7 +202,42 @@ export namespace almondnamespace::openglcontext
 
         glState.width = w;
         glState.height = h;
-        ctx->onResize = std::move(onResize);
+        auto* glStatePtr = &glState;
+
+        ctx->onResize = [glStatePtr, resize = std::move(onResize)](int newWidth, int newHeight) mutable
+            {
+                const int clampedWidth = (std::max)(1, newWidth);
+                const int clampedHeight = (std::max)(1, newHeight);
+
+                glStatePtr->width = static_cast<unsigned int>(clampedWidth);
+                glStatePtr->height = static_cast<unsigned int>(clampedHeight);
+
+#if defined(_WIN32)
+                if (glStatePtr->hwnd)
+                {
+                    ::SetWindowPos(
+                        glStatePtr->hwnd,
+                        nullptr,
+                        0,
+                        0,
+                        clampedWidth,
+                        clampedHeight,
+                        SWP_NOZORDER | SWP_NOACTIVATE | SWP_NOMOVE);
+                }
+#elif defined(__linux__)
+                if (glStatePtr->display && glStatePtr->window)
+                {
+                    XResizeWindow(glStatePtr->display, glStatePtr->window,
+                        static_cast<unsigned int>(clampedWidth),
+                        static_cast<unsigned int>(clampedHeight));
+                    XFlush(glStatePtr->display);
+                    glStatePtr->drawable = glStatePtr->window;
+                }
+#endif
+
+                if (resize)
+                    resize(clampedWidth, clampedHeight);
+            };
 
         PlatformGL::ScopedContext contextGuard;
 
