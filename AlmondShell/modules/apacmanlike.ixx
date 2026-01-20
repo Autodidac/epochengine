@@ -127,7 +127,7 @@ export namespace almondnamespace::pacmanlike
             // Your Context::clear_safe() takes no args (per the error log).
             ctx->clear_safe();
 
-            auto& atlasVec = atlasmanager::get_atlas_vector();
+            auto atlasVec = atlasmanager::get_atlas_vector_snapshot(); // by value
             std::span<const TextureAtlas* const> atlasSpan(atlasVec.data(), atlasVec.size());
 
             const float cw = float((std::max)(1, ctx->get_width_safe())) / float(GRID_W);

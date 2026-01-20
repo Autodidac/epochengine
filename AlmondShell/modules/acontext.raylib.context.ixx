@@ -273,7 +273,10 @@ namespace almondnamespace::raylibcontext
             return;
 
 #if defined(_WIN32)
-        // DO NOT wglMakeCurrent here. Multiplexer owns context switching.
+        // Reality check: with multi-backend + queued commands, the current context can drift.
+        // Raylib requires its own context current for BeginDrawing/EndDrawing. If multiplexer
+        // didn't activate it (or it was stolen), heal here.
+        (void)raylib_make_current();
         detail::debug_expect_raylib_current(st, "raylib_clear");
 #endif
 
@@ -294,6 +297,7 @@ namespace almondnamespace::raylibcontext
             return;
 
 #if defined(_WIN32)
+        (void)raylib_make_current();
         detail::debug_expect_raylib_current(st, "raylib_present");
 #endif
 

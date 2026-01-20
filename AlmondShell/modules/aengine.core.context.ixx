@@ -261,7 +261,8 @@ export namespace almondnamespace::core
                     auto self = weak.lock();
                     if (!self || !self->draw_sprite) return;
 
-                    const auto& av = almondnamespace::atlasmanager::get_atlas_vector();
+                    // Snapshot by value (safe)
+                    auto av = almondnamespace::atlasmanager::get_atlas_vector_snapshot();
                     std::span<const TextureAtlas* const> span(av.data(), av.size());
                     self->draw_sprite(sprite, span, x, y, w, hgt);
                 });

@@ -17,7 +17,7 @@ import <optional>;
 import <iostream>;
 import <algorithm>;
 import <mutex>;
-import <shared_mutex>;
+import <shared_mutex>; // legacy include; this module now uses recursive_mutex for atlas entry protection
 import <unordered_map>;
 import <memory>;    // std::unique_ptr
 import <utility>;   // std::pair
@@ -155,7 +155,7 @@ export namespace almondnamespace
 
         [[nodiscard]] size_t entry_count() const noexcept
         {
-            std::shared_lock lock(entriesMutex);
+            std::lock_guard lock(entriesMutex);
             return entries.size();
         }
 
@@ -164,7 +164,7 @@ export namespace almondnamespace
             AtlasRegion& outRegion,
             std::string* outName = nullptr) const
         {
-            std::shared_lock lock(entriesMutex);
+            std::lock_guard lock(entriesMutex);
 
             if (index < 0 || static_cast<size_t>(index) >= entries.size())
                 return false;
@@ -204,7 +204,16 @@ export namespace almondnamespace
         void rebuild_pixels() const;
 
     private:
-        mutable std::shared_mutex entriesMutex;
+        // IMPORTANT:
+        // This atlas is accessed by both upload/build paths and GUI query paths.
+        // In practice, some call chains re-enter atlas reads while holding the write lock
+        // on the SAME THREAD (e.g. build/add -> code that queries regions for debug/GUI).
+        // std::shared_mutex is not re-entrant; that pattern deadlocks (and MSVC will often
+        // trip a debug check).
+        //
+        // We use std::recursive_mutex as a pragmatic correctness fix. If you want the
+        // shared-read perf back later, switch to a snapshot/RCU-style structure.
+        mutable std::recursive_mutex entriesMutex;
         std::unordered_map<std::string, AtlasRegion> lookup;
         std::vector<std::vector<bool>> occupancy;
 
@@ -223,7 +232,7 @@ namespace almondnamespace
             return std::nullopt;
         }
 
-        std::unique_lock<std::shared_mutex> lock(entriesMutex);
+        std::unique_lock<std::recursive_mutex> lock(entriesMutex);
 
         if (lookup.contains(id)) {
             std::cerr << "[Atlas] Duplicate ID: '" << id << "'\n";
@@ -275,7 +284,7 @@ namespace almondnamespace
         int w,
         int h)
     {
-        std::unique_lock<std::shared_mutex> lock(entriesMutex);
+        std::unique_lock<std::recursive_mutex> lock(entriesMutex);
 
         if (w <= 0 || h <= 0) {
             std::cerr << "[Atlas] Invalid slice size for '" << id << "'\n";
@@ -322,14 +331,14 @@ namespace almondnamespace
 
     inline std::optional<AtlasRegion> TextureAtlas::get_region(const std::string& id) const
     {
-        std::shared_lock<std::shared_mutex> lock(entriesMutex);
+        std::lock_guard lock(entriesMutex);
         auto it = lookup.find(id);
         return (it != lookup.end()) ? std::optional{ it->second } : std::nullopt;
     }
 
     inline void TextureAtlas::rebuild_pixels() const
     {
-        std::unique_lock<std::shared_mutex> lock(entriesMutex);
+        std::unique_lock<std::recursive_mutex> lock(entriesMutex);
         const size_t size = static_cast<size_t>(width) * height * 4;
         if (pixel_data.size() != size) {
             pixel_data.resize(size);

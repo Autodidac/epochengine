@@ -291,7 +291,7 @@ export namespace almondnamespace::tetrislike
             auto& [handle, u0, v0, u1, v1, px, py] = *entry;
             if (!spritepool::is_alive(handle)) return;
 
-            auto& atlasVec = atlasmanager::get_atlas_vector();
+            auto atlasVec = atlasmanager::get_atlas_vector_snapshot(); // by value
             std::span<const TextureAtlas* const> atlasSpan(atlasVec.data(), atlasVec.size());
 
             // Placed blocks

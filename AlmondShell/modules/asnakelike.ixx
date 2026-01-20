@@ -50,13 +50,13 @@ export namespace almondnamespace::snakelike
             // Example: draw head as a sanity check (or bg if you have it)
             if (auto it = sprites.find("head"); it != sprites.end() && spritepool::is_alive(it->second))
             {
-                // Snapshot, not reference.
-                auto atlasesVec = atlasmanager::get_atlas_vector(); // must return by value (snapshot)
-                std::span<const TextureAtlas* const> atlases(atlasesVec.data(), atlasesVec.size());
+                auto atlasVec = atlasmanager::get_atlas_vector_snapshot(); // by value
+                std::span<const TextureAtlas* const> atlasSpan(atlasVec.data(), atlasVec.size());
+
 
                 ctx->draw_sprite_safe(
                     it->second,
-                    atlases,
+                    atlasSpan,
                     0.0f, 0.0f,
                     float(ctx->get_width_safe()),
                     float(ctx->get_height_safe()));

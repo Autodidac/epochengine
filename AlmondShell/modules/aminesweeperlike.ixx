@@ -152,7 +152,7 @@ export namespace almondnamespace::minesweeperlike
             const float cellW = float(ctx->get_width_safe()) / GRID_W;
             const float cellH = float(ctx->get_height_safe()) / GRID_H;
 
-            auto& atlasVec = atlasmanager::get_atlas_vector();
+            auto atlasVec = atlasmanager::get_atlas_vector_snapshot(); // by value
             std::span<const TextureAtlas* const> atlasSpan(atlasVec.data(), atlasVec.size());
 
             for (int y = 0; y < GRID_H; ++y)

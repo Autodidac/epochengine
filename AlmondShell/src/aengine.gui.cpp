@@ -348,13 +348,12 @@ namespace almondnamespace::gui
         g_resources.font.metrics = g_resources.font.asset->metrics;
         populate_font_lookup(g_resources.font);
 
-        const auto& atlasVec = almondnamespace::atlasmanager::get_atlas_vector();
+        auto atlasVec = almondnamespace::atlasmanager::get_atlas_vector_snapshot(); // by value
         if (g_resources.font.asset->atlas_index >= 0 &&
             static_cast<std::size_t>(g_resources.font.asset->atlas_index) < atlasVec.size())
         {
-            g_resources.font.atlas = atlasVec[g_resources.font.asset->atlas_index];
-            if (g_resources.font.atlas)
-                almondnamespace::atlasmanager::ensure_uploaded(*g_resources.font.atlas);
+            g_resources.font.atlas = atlasVec[static_cast<std::size_t>(g_resources.font.asset->atlas_index)];
+            // DO NOT call ensure_uploaded() here (see next section)
         }
     }
 
@@ -379,7 +378,7 @@ namespace almondnamespace::gui
                     throw std::runtime_error("[agui] Unable to create GUI atlas");
             }
 
-            TextureAtlas& atlas = atlasIt->second;
+            TextureAtlas& atlas = *atlasIt->second;   // FIX
             g_resources.atlas = &atlas;
 
             g_resources.windowBackground = add_sprite(atlas, "__agui/window_bg",
@@ -404,6 +403,7 @@ namespace almondnamespace::gui
 
         ensure_font_loaded_locked();
     }
+
 
     static void ensure_backend_upload(Context& ctx)
     {
@@ -437,31 +437,33 @@ namespace almondnamespace::gui
         if (!ctx)
             return;
 
-        bool queued = false;
+        // Queue onto the window render thread if we have one.
         if (ctx->windowData && g_frame.ctxShared)
         {
             auto ctxShared = g_frame.ctxShared;
+
             ctx->windowData->commandQueue.enqueue([ctxShared, handle, x, y, w, h]()
                 {
                     if (!ctxShared)
                         return;
-                    const auto& atlasesRT = almondnamespace::atlasmanager::get_atlas_vector();
-                    ctxShared->draw_sprite_safe(handle, atlasesRT, x, y, w, h);
+
+                    auto atlases = almondnamespace::atlasmanager::get_atlas_vector_snapshot();
+                    std::span<const TextureAtlas* const> span(atlases.data(), atlases.size());
+                    ctxShared->draw_sprite_safe(handle, span, x, y, w, h);
                 });
-            queued = true;
+
+            return;
         }
 
-        if (!queued)
-        {
-            bool onRenderThread = false;
-            if (auto current = core::MultiContextManager::GetCurrent())
-                onRenderThread = (current.get() == ctx);
+        bool onRenderThread = false;
+        if (auto current = core::MultiContextManager::GetCurrent())
+            onRenderThread = (current.get() == ctx);
 
-            if (!ctx->windowData || onRenderThread)
-            {
-                const auto& atlases = almondnamespace::atlasmanager::get_atlas_vector();
-                ctx->draw_sprite_safe(handle, atlases, x, y, w, h);
-            }
+        if (!ctx->windowData || onRenderThread)
+        {
+            auto atlases = almondnamespace::atlasmanager::get_atlas_vector_snapshot();
+            std::span<const TextureAtlas* const> span(atlases.data(), atlases.size());
+            ctx->draw_sprite_safe(handle, span, x, y, w, h);
         }
     }
 
@@ -780,7 +782,8 @@ namespace almondnamespace::gui
     void advance_cursor(Vec2 delta) noexcept
     {
         if (!g_frame.insideWindow) return;
-        g_frame.cursor += delta;
+        g_frame.cursor.x += delta.x;
+        g_frame.cursor.y += delta.y;
     }
 
     void push_input(const InputEvent& e) noexcept

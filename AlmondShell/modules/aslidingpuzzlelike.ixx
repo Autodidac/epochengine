@@ -52,8 +52,9 @@ export namespace almondnamespace::slidinglike
             // Draw a simple full-screen background sprite if present
             if (auto it = sprites.find("bg"); it != sprites.end() && spritepool::is_alive(it->second))
             {
-                auto& atlasVec = atlasmanager::get_atlas_vector();
+                auto atlasVec = atlasmanager::get_atlas_vector_snapshot(); // by value
                 std::span<const TextureAtlas* const> atlasSpan(atlasVec.data(), atlasVec.size());
+
                 ctx->draw_sprite_safe(it->second, atlasSpan, 0.0f, 0.0f,
                     float(ctx->get_width_safe()), float(ctx->get_height_safe()));
             }

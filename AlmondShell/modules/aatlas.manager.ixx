@@ -1,19 +1,29 @@
-﻿// aatlas.manager.ixx
-module;
+﻿module;
 export module aatlas.manager;
 
-// Keep platform glue centralized (your request: platform should own the OS headers).
 import aengine.platform;
 
-// Engine-facing modules (convert these headers to modules with these names, or rename imports to match yours)
-import asprite.pool;         // SpriteHandle, allocate()
-import aatlas.texture;       // TextureAtlas, AtlasConfig, Texture, u8/u32/u64
-import aspriteregistry;     // SpriteRegistry
-import aspritehandle;       // SpriteHandle definition (if split)
-import aengine.context.type;        // core::ContextType (or wherever you keep it)
+import asprite.pool;
+import aatlas.texture;
+import aspriteregistry;
+import aspritehandle;
+import aengine.context.type;
 
-// STL
-import std;
+import <atomic>;
+import <cstdint>;
+import <exception>;
+import <functional>;
+import <iostream>;
+import <memory>;
+import <mutex>;
+import <optional>;
+import <queue>;
+import <shared_mutex>;
+import <string>;
+import <tuple>;
+import <unordered_map>;
+import <utility>;
+import <vector>;
 
 export namespace almondnamespace::atlasmanager
 {
@@ -21,29 +31,31 @@ export namespace almondnamespace::atlasmanager
     using almondnamespace::spritepool::allocate;
 
     using almondnamespace::TextureAtlas;
+    using almondnamespace::AtlasConfig;
+    using almondnamespace::Texture;
+    using almondnamespace::u8;
+    using almondnamespace::u32;
+    using almondnamespace::u64;
 
-    // Preserve header-era visibility/ODR semantics:
     export inline SpriteRegistry registry{};
-    export inline std::unordered_map<std::string, TextureAtlas> atlas_map{};
+
+    // Stable addresses (no rehash-move invalidation).
+    export inline std::unordered_map<std::string, std::unique_ptr<TextureAtlas>> atlas_map{};
 
     export inline std::shared_mutex atlasMutex{};
     export inline std::shared_mutex registrarMutex{};
 
-    export inline std::atomic<int> nextAtlasIndex{ 0 }; // unique atlas id allocator
+    export inline std::atomic<int> nextAtlasIndex{ 0 };
 
-    // --- Global atlas vector for direct atlasIndex lookup ---
+    // Stable pointers to heap atlases.
     export inline std::vector<const TextureAtlas*> atlas_vector{};
 
     export struct AtlasRegistrar
     {
-        TextureAtlas& atlas;  // Reference to the shared atlas
+        TextureAtlas& atlas;
 
-        explicit AtlasRegistrar(TextureAtlas& atlas_) noexcept
-            : atlas(atlas_)
-        {
-        }
+        explicit AtlasRegistrar(TextureAtlas& atlas_) noexcept : atlas(atlas_) {}
 
-        // Bulk registration from slices (name, x, y, w, h) when loading from a texture atlas file
         bool register_atlas_sprites_by_custom_sizes(
             const std::vector<std::tuple<std::string, int, int, int, int>>& sliceRects)
         {
@@ -63,7 +75,7 @@ export namespace almondnamespace::atlasmanager
                     return false;
                 }
 
-                handle.atlasIndex = atlas.get_index();
+                handle.atlasIndex = static_cast<std::uint32_t>(atlas.get_index());
                 handle.localIndex = static_cast<std::uint32_t>(added->index);
 
                 registry.add(name, handle,
@@ -75,7 +87,6 @@ export namespace almondnamespace::atlasmanager
             return true;
         }
 
-        // Single sprite registration into an automatically constructed shared atlas
         std::optional<SpriteHandle> register_atlas_sprites_by_image(
             const std::string& name,
             const std::vector<u8>& pixels,
@@ -96,7 +107,6 @@ export namespace almondnamespace::atlasmanager
             }
 
             auto& added = *addedOpt;
-            const int localIndex = added.index;
 
             auto allocated = allocate();
             if (!allocated.is_valid())
@@ -109,7 +119,7 @@ export namespace almondnamespace::atlasmanager
                 allocated.id,
                 allocated.generation,
                 static_cast<std::uint32_t>(sharedAtlas.index),
-                static_cast<std::uint32_t>(localIndex)
+                static_cast<std::uint32_t>(added.index)
             };
 
             registry.add(name, handle,
@@ -127,23 +137,27 @@ export namespace almondnamespace::atlasmanager
     export inline void update_atlas_vector_locked()
     {
         int maxIndex = -1;
-        for (const auto& [name, atlas] : atlas_map)
+
+        for (const auto& [name, up] : atlas_map)
         {
+            const auto& atlas = *up;
             std::cerr << "[update_atlas_vector] Atlas '" << name << "' index: " << atlas.index << "\n";
             if (atlas.index > maxIndex)
                 maxIndex = atlas.index;
         }
 
-        if (maxIndex >= 0)
-        {
-            if (atlas_vector.size() <= static_cast<std::size_t>(maxIndex))
-                atlas_vector.resize(static_cast<std::size_t>(maxIndex) + 1, nullptr);
+        if (maxIndex < 0)
+            return;
 
-            for (const auto& [name, atlas] : atlas_map)
-            {
-                atlas_vector[atlas.index] = &atlas;
-                std::cerr << "[update_atlas_vector] atlas_vector[" << atlas.index << "] assigned for '" << name << "'\n";
-            }
+        if (atlas_vector.size() <= static_cast<std::size_t>(maxIndex))
+            atlas_vector.resize(static_cast<std::size_t>(maxIndex) + 1, nullptr);
+
+        for (const auto& [name, up] : atlas_map)
+        {
+            const auto* atlas = up.get();
+            atlas_vector[static_cast<std::size_t>(atlas->index)] = atlas;
+            std::cerr << "[update_atlas_vector] atlas_vector[" << atlas->index
+                << "] assigned for '" << name << "'\n";
         }
     }
 
@@ -158,7 +172,7 @@ export namespace almondnamespace::atlasmanager
         struct BackendUploadState
         {
             std::function<void(const TextureAtlas&)> ensureFn{};
-            std::queue<const TextureAtlas*>          pending{};
+            std::queue<const TextureAtlas*> pending{};
             std::unordered_map<const TextureAtlas*, u64> uploadedVersions{};
             std::unordered_map<const TextureAtlas*, u64> pendingVersions{};
         };
@@ -198,46 +212,36 @@ export namespace almondnamespace::atlasmanager
         AtlasConfig copy = config;
         copy.index = nextAtlasIndex.fetch_add(1, std::memory_order_relaxed);
 
-        std::unique_lock atlasLock(atlasMutex);
-
-        // Construct the atlas IN PLACE (no move, no copy)
-        auto [it, inserted] =
-            atlas_map.emplace(
-                std::piecewise_construct,
-                std::forward_as_tuple(config.name),
-                std::forward_as_tuple() // default-construct TextureAtlas
-            );
-
-        if (!inserted)
-        {
-            std::cerr << "[create_atlas] Atlas already exists: "
-                << config.name << "\n";
-            return false;
-        }
-
-        TextureAtlas& atlas = it->second;
-
-        // Initialize after construction
-        if (!atlas.init(copy))
-        {
-            atlas_map.erase(it);
-            std::cerr << "[create_atlas] Failed to initialize atlas '"
-                << config.name << "'\n";
-            return false;
-        }
-
-        update_atlas_vector_locked();
-        atlasLock.unlock();
+        TextureAtlas* atlasPtr = nullptr;
 
         {
-            std::unique_lock registrarLock(registrarMutex);
-            registrar_map.emplace(
-                config.name,
-                std::make_unique<AtlasRegistrar>(atlas)
-            );
+            std::unique_lock<std::shared_mutex> atlasLock(atlasMutex);
+
+            if (atlas_map.contains(config.name))
+            {
+                std::cerr << "[create_atlas] Atlas already exists: " << config.name << "\n";
+                return false;
+            }
+
+            auto up = std::make_unique<TextureAtlas>();
+            if (!up->init(copy))
+            {
+                std::cerr << "[create_atlas] Failed to initialize atlas '" << config.name << "'\n";
+                return false;
+            }
+
+            atlasPtr = up.get();
+            atlas_map.emplace(config.name, std::move(up));
+
+            update_atlas_vector_locked();
         }
 
-        notify_backends_of_new_atlas(atlas);
+        {
+            std::unique_lock<std::shared_mutex> registrarLock(registrarMutex);
+            registrar_map.emplace(config.name, std::make_unique<AtlasRegistrar>(*atlasPtr));
+        }
+
+        notify_backends_of_new_atlas(*atlasPtr);
         return true;
     }
 
@@ -248,12 +252,7 @@ export namespace almondnamespace::atlasmanager
         return (it != registrar_map.end()) ? it->second.get() : nullptr;
     }
 
-    export inline const std::vector<const TextureAtlas*>& get_atlas_vector()
-    {
-        std::shared_lock lock(atlasMutex);
-        return atlas_vector;
-    }
-
+    // Snapshot-by-value only (safe).
     export inline std::vector<const TextureAtlas*> get_atlas_vector_snapshot()
     {
         std::shared_lock lock(atlasMutex);
@@ -273,10 +272,8 @@ export namespace almondnamespace::atlasmanager
         state.uploadedVersions.clear();
 
         std::shared_lock atlasLock(atlasMutex);
-        for (auto& [_, atlas] : atlas_map)
-        {
-            detail::enqueue_locked(state, atlas);
-        }
+        for (auto& [_, up] : atlas_map)
+            detail::enqueue_locked(state, *up);
     }
 
     export inline void unregister_backend_uploader(core::ContextType type)
@@ -341,8 +338,8 @@ export namespace almondnamespace::atlasmanager
         if (tasks.empty())
             return;
 
-        const bool previousProcessing = detail::processingUploads;
-        auto previousBackend = detail::activeBackend;
+        const bool prevProcessing = detail::processingUploads;
+        auto prevBackend = detail::activeBackend;
         detail::processingUploads = true;
         detail::activeBackend = type;
 
@@ -368,8 +365,8 @@ export namespace almondnamespace::atlasmanager
             }
         }
 
-        detail::processingUploads = previousProcessing;
-        detail::activeBackend = previousBackend;
+        detail::processingUploads = prevProcessing;
+        detail::activeBackend = prevBackend;
 
         if (completed.empty())
             return;
@@ -382,9 +379,7 @@ export namespace almondnamespace::atlasmanager
                 return;
 
             for (const auto& task : completed)
-            {
                 it->second.uploadedVersions[task.atlas] = task.version;
-            }
         }
     }
 
@@ -393,9 +388,6 @@ export namespace almondnamespace::atlasmanager
         enqueue_upload_for_all(atlas);
 
         if (detail::activeBackend && !detail::processingUploads)
-        {
             process_pending_uploads(*detail::activeBackend);
-        }
     }
-
 } // namespace almondnamespace::atlasmanager
