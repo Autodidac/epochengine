@@ -43,7 +43,7 @@ namespace gui = almondnamespace::gui;
 export namespace almondnamespace::menu
 {
     enum class Choice {
-        Snake, Tetris, Pacman, Sokoban,
+        Snake, Tetris, Pacman, Frogger, Sokoban,
         Minesweep, Puzzle, Bejeweled, Fourty,
         Sandsim, Cellular, Settings, Exit
     };
@@ -196,6 +196,7 @@ export namespace almondnamespace::menu
                 { Choice::Snake,      "Snake",      DefaultButtonSize },
                 { Choice::Tetris,    "Tetris",     DefaultButtonSize },
                 { Choice::Pacman,    "Pacman",     DefaultButtonSize },
+				{ Choice::Frogger,   "Frogger",    DefaultButtonSize },
                 { Choice::Sokoban,   "Sokoban",    DefaultButtonSize },
                 { Choice::Minesweep, "Minesweep",  DefaultButtonSize },
                 { Choice::Puzzle,    "Puzzle",     DefaultButtonSize },

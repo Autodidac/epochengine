@@ -84,6 +84,7 @@ import ascene;
 import asnakelike;
 import atetrislike;
 import apacmanlike;
+import afroggerlike;
 import asokobanlike;
 import amatch3like;
 
@@ -180,6 +181,7 @@ namespace almondnamespace::core
                 Snake,
                 Tetris,
                 Pacman,
+                Frogger,
                 Sokoban,
                 Match3,
                 Sliding,
@@ -333,6 +335,8 @@ namespace almondnamespace::core
                                         begin_scene([] { return std::make_unique<almondnamespace::snakelike::SnakeLikeScene>(); }, SceneID::Snake);
                                     else if (*choice == Choice::Tetris)
                                         begin_scene([] { return std::make_unique<almondnamespace::tetrislike::TetrisLikeScene>(); }, SceneID::Tetris);
+                                    else if (*choice == Choice::Frogger)
+                                        begin_scene([] { return std::make_unique<almondnamespace::froggerlike::FroggerLikeScene>(); }, SceneID::Frogger);
                                     else if (*choice == Choice::Pacman)
                                         begin_scene([] { return std::make_unique<almondnamespace::pacmanlike::PacmanLikeScene>(); }, SceneID::Pacman);
                                     else if (*choice == Choice::Sokoban)
@@ -363,6 +367,7 @@ namespace almondnamespace::core
                             case SceneID::Snake:
                             case SceneID::Tetris:
                             case SceneID::Pacman:
+							case SceneID::Frogger:
                             case SceneID::Sokoban:
                             case SceneID::Match3:
                             case SceneID::Sliding:
