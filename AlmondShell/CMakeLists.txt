@@ -99,12 +99,14 @@ endif()
 
 option(ALMOND_ENABLE_RAYLIB "Enable the Raylib backend" ON)
 option(ALMOND_ENABLE_SDL "Enable the SDL backend" ON)
+option(ALMOND_ENABLE_SFML "Enable the SFML backend" ON)
 option(ALMOND_ENABLE_OPENGL "Enable the OpenGL backend" ON)
 option(ALMOND_ENABLE_SOFTWARE_RENDERER "Enable the software renderer backend" ON)
 option(ALMOND_REQUIRE_OPTIONAL_DEPENDENCIES "Treat missing optional backend dependencies as a configuration error" OFF)
 
 set(ALMOND_RAYLIB_ACTIVE ${ALMOND_ENABLE_RAYLIB})
 set(ALMOND_SDL_ACTIVE ${ALMOND_ENABLE_SDL})
+set(ALMOND_SFML_ACTIVE ${ALMOND_ENABLE_SFML})
 set(ALMOND_OPENGL_ACTIVE ${ALMOND_ENABLE_OPENGL})
 set(ALMOND_SOFTWARE_RENDERER_ACTIVE ${ALMOND_ENABLE_SOFTWARE_RENDERER})
 
@@ -199,6 +201,35 @@ if(ALMOND_SDL_ACTIVE)
     endif()
 endif()
 
+if(ALMOND_SFML_ACTIVE)
+    find_package(SFML 3.0 COMPONENTS graphics window system QUIET)
+    if(SFML_FOUND)
+        target_link_libraries(almondshell PRIVATE sfml-graphics sfml-window sfml-system)
+    elseif(PkgConfig_FOUND)
+        pkg_check_modules(SFML QUIET sfml-graphics sfml-window sfml-system)
+        if(SFML_FOUND)
+            target_include_directories(almondshell PRIVATE ${SFML_INCLUDE_DIRS})
+            target_link_libraries(almondshell PRIVATE ${SFML_LIBRARIES})
+        else()
+            if(ALMOND_REQUIRE_OPTIONAL_DEPENDENCIES)
+                message(FATAL_ERROR "SFML was not found. Install it via vcpkg or rerun with -DALMOND_ENABLE_SFML=OFF.")
+            else()
+                message(WARNING "SFML was not found; the SFML backend will be disabled. Configure with -DALMOND_ENABLE_SFML=OFF to silence this warning or enable ALMOND_REQUIRE_OPTIONAL_DEPENDENCIES to treat it as an error.")
+                set(ALMOND_SFML_ACTIVE OFF)
+                set(ALMOND_ENABLE_SFML OFF CACHE BOOL "Enable the SFML backend" FORCE)
+            endif()
+        endif()
+    else()
+        if(ALMOND_REQUIRE_OPTIONAL_DEPENDENCIES)
+            message(FATAL_ERROR "SFML was not found. Install it via vcpkg or rerun with -DALMOND_ENABLE_SFML=OFF.")
+        else()
+            message(WARNING "SFML was not found; the SFML backend will be disabled. Configure with -DALMOND_ENABLE_SFML=OFF to silence this warning or enable ALMOND_REQUIRE_OPTIONAL_DEPENDENCIES to treat it as an error.")
+            set(ALMOND_SFML_ACTIVE OFF)
+            set(ALMOND_ENABLE_SFML OFF CACHE BOOL "Enable the SFML backend" FORCE)
+        endif()
+    endif()
+endif()
+
 find_package(OpenGL COMPONENTS OpenGL QUIET)
 if(OpenGL_FOUND)
     target_link_libraries(almondshell PRIVATE OpenGL::GL)
@@ -274,6 +305,8 @@ target_compile_definitions(almondshell PRIVATE
     $<$<NOT:$<BOOL:${ALMOND_RAYLIB_ACTIVE}>>:ALMOND_FORCE_DISABLE_RAYLIB>
     $<$<BOOL:${ALMOND_SDL_ACTIVE}>:ALMOND_FORCE_ENABLE_SDL>
     $<$<NOT:$<BOOL:${ALMOND_SDL_ACTIVE}>>:ALMOND_FORCE_DISABLE_SDL>
+    $<$<BOOL:${ALMOND_SFML_ACTIVE}>:ALMOND_FORCE_ENABLE_SFML>
+    $<$<NOT:$<BOOL:${ALMOND_SFML_ACTIVE}>>:ALMOND_FORCE_DISABLE_SFML>
     $<$<BOOL:${ALMOND_OPENGL_ACTIVE}>:ALMOND_FORCE_ENABLE_OPENGL>
     $<$<NOT:$<BOOL:${ALMOND_OPENGL_ACTIVE}>>:ALMOND_FORCE_DISABLE_OPENGL>
     $<$<BOOL:${ALMOND_SOFTWARE_RENDERER_ACTIVE}>:ALMOND_FORCE_ENABLE_SOFTWARE_RENDERER>
