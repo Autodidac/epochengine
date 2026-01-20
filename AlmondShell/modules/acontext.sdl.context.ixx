@@ -133,6 +133,11 @@ export namespace almondnamespace::sdlcontext
             ctx->virtualHeight = sdlcontext.virtualHeight;
             ctx->framebufferWidth = sdlcontext.framebufferWidth;
             ctx->framebufferHeight = sdlcontext.framebufferHeight;
+            if (ctx->windowData)
+            {
+                ctx->windowData->width = sdlcontext.width;
+                ctx->windowData->height = sdlcontext.height;
+            }
         }
     }
 
@@ -245,6 +250,12 @@ export namespace almondnamespace::sdlcontext
 
             if (ctx)
                 ctx->hwnd = sdlcontext.hwnd;
+
+            if (ctx && ctx->windowData)
+            {
+                ctx->windowData->hwnd = sdlcontext.hwnd;
+                ctx->windowData->host_hwnd = sdlcontext.parent;
+            }
         }
 #else
         if (ctx)

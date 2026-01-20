@@ -59,6 +59,7 @@ export namespace almondnamespace::core
 #   if !defined(ALMOND_MAIN_HEADLESS)
         HWND  hwnd = nullptr;
         HWND  hwndChild = nullptr;
+        HWND  host_hwnd = nullptr;
         HDC   hdc = nullptr;
 
         HGLRC glrc = nullptr;
