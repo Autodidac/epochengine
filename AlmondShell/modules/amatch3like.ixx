@@ -15,6 +15,8 @@ import aengine.core.logger;       // logger::Logger
 import aengine.core.time;         // timing::Timer
 
 // C++ std
+import <algorithm>;
+import <array>;
 import <cstdint>;
 import <span>;
 import <stdexcept>;
@@ -36,6 +38,7 @@ export namespace almondnamespace::match3like
         {
             Scene::load();
             setupSprites();
+            initializeGrid();
         }
 
         bool frame(std::shared_ptr<core::Context> ctx, core::WindowData*) override
@@ -49,14 +52,41 @@ export namespace almondnamespace::match3like
 
             ctx->clear_safe();
 
-            // Draw a simple full-screen background sprite if present
+            auto atlasVec = atlasmanager::get_atlas_vector_snapshot(); // by value
+            std::span<const TextureAtlas* const> atlasSpan(atlasVec.data(), atlasVec.size());
+
             if (auto it = sprites.find("bg"); it != sprites.end() && spritepool::is_alive(it->second))
             {
-                auto atlasVec = atlasmanager::get_atlas_vector_snapshot(); // by value
-                std::span<const TextureAtlas* const> atlasSpan(atlasVec.data(), atlasVec.size());
-
                 ctx->draw_sprite_safe(it->second, atlasSpan, 0.0f, 0.0f,
                     float(ctx->get_width_safe()), float(ctx->get_height_safe()));
+            }
+
+            const float width = float(ctx->get_width_safe());
+            const float height = float(ctx->get_height_safe());
+            const float cellSize = std::min(width / float(kCols), height / float(kRows));
+            const float offsetX = (width - cellSize * float(kCols)) * 0.5f;
+            const float offsetY = (height - cellSize * float(kRows)) * 0.5f;
+            constexpr std::array<std::string_view, 6> gemNames = {
+                "gem0", "gem1", "gem2", "gem3", "gem4", "gem5"
+            };
+
+            for (int row = 0; row < kRows; ++row)
+            {
+                for (int col = 0; col < kCols; ++col)
+                {
+                    const int gemIndex = grid[static_cast<size_t>(row * kCols + col)];
+                    if (gemIndex < 0 || gemIndex >= static_cast<int>(gemNames.size()))
+                        continue;
+
+                    auto it = sprites.find(std::string(gemNames[static_cast<size_t>(gemIndex)]));
+                    if (it == sprites.end() || !spritepool::is_alive(it->second))
+                        continue;
+
+                    ctx->draw_sprite_safe(it->second, atlasSpan,
+                        offsetX + cellSize * float(col),
+                        offsetY + cellSize * float(row),
+                        cellSize, cellSize);
+                }
             }
 
             ctx->present_safe();
@@ -116,7 +146,7 @@ export namespace almondnamespace::match3like
             };
 
             // Always try to load a background sprite if available
-          //  ensureSprite("bg");
+            ensureSprite("bg");
             ensureSprite("gem0");
             ensureSprite("gem1");
             ensureSprite("gem2");
@@ -132,6 +162,21 @@ export namespace almondnamespace::match3like
         }
 
         std::unordered_map<std::string, SpriteHandle> sprites{};
+        static constexpr int kRows = 8;
+        static constexpr int kCols = 8;
+        std::vector<int> grid{};
+
+        void initializeGrid()
+        {
+            grid.resize(static_cast<size_t>(kRows * kCols));
+            for (int row = 0; row < kRows; ++row)
+            {
+                for (int col = 0; col < kCols; ++col)
+                {
+                    grid[static_cast<size_t>(row * kCols + col)] = (row + col) % 6;
+                }
+            }
+        }
     };
 
     inline bool run_match3like(std::shared_ptr<core::Context> ctx)

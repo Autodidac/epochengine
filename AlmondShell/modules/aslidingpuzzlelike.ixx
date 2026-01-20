@@ -15,6 +15,7 @@ import aengine.core.logger;       // logger::Logger
 import aengine.core.time;         // timing::Timer
 
 // C++ std
+import <algorithm>;
 import <cstdint>;
 import <span>;
 import <stdexcept>;
@@ -36,6 +37,7 @@ export namespace almondnamespace::slidinglike
         {
             Scene::load();
             setupSprites();
+            initializeGrid();
         }
 
         bool frame(std::shared_ptr<core::Context> ctx, core::WindowData*) override
@@ -49,14 +51,36 @@ export namespace almondnamespace::slidinglike
 
             ctx->clear_safe();
 
-            // Draw a simple full-screen background sprite if present
+            auto atlasVec = atlasmanager::get_atlas_vector_snapshot(); // by value
+            std::span<const TextureAtlas* const> atlasSpan(atlasVec.data(), atlasVec.size());
+
             if (auto it = sprites.find("bg"); it != sprites.end() && spritepool::is_alive(it->second))
             {
-                auto atlasVec = atlasmanager::get_atlas_vector_snapshot(); // by value
-                std::span<const TextureAtlas* const> atlasSpan(atlasVec.data(), atlasVec.size());
-
                 ctx->draw_sprite_safe(it->second, atlasSpan, 0.0f, 0.0f,
                     float(ctx->get_width_safe()), float(ctx->get_height_safe()));
+            }
+
+            const float width = float(ctx->get_width_safe());
+            const float height = float(ctx->get_height_safe());
+            const float cellSize = std::min(width / float(kCols), height / float(kRows));
+            const float offsetX = (width - cellSize * float(kCols)) * 0.5f;
+            const float offsetY = (height - cellSize * float(kRows)) * 0.5f;
+
+            for (int row = 0; row < kRows; ++row)
+            {
+                for (int col = 0; col < kCols; ++col)
+                {
+                    const int value = grid[static_cast<size_t>(row * kCols + col)];
+                    const char* spriteName = (value == 0) ? "empty" : "tile";
+                    auto it = sprites.find(spriteName);
+                    if (it == sprites.end() || !spritepool::is_alive(it->second))
+                        continue;
+
+                    ctx->draw_sprite_safe(it->second, atlasSpan,
+                        offsetX + cellSize * float(col),
+                        offsetY + cellSize * float(row),
+                        cellSize, cellSize);
+                }
             }
 
             ctx->present_safe();
@@ -116,10 +140,9 @@ export namespace almondnamespace::slidinglike
             };
 
             // Always try to load a background sprite if available
-          //  ensureSprite("bg");
-            //ensureSprite("tile");
-            //ensureSprite("empty");
-            ensureSprite("atestimage");
+            ensureSprite("bg");
+            ensureSprite("tile");
+            ensureSprite("empty");
 
             if (createdAtlas || registered)
             {
@@ -129,6 +152,26 @@ export namespace almondnamespace::slidinglike
         }
 
         std::unordered_map<std::string, SpriteHandle> sprites{};
+        static constexpr int kRows = 4;
+        static constexpr int kCols = 4;
+        std::vector<int> grid{};
+
+        void initializeGrid()
+        {
+            grid.resize(static_cast<size_t>(kRows * kCols));
+            int value = 1;
+            for (int row = 0; row < kRows; ++row)
+            {
+                for (int col = 0; col < kCols; ++col)
+                {
+                    const size_t index = static_cast<size_t>(row * kCols + col);
+                    if (index == grid.size() - 1)
+                        grid[index] = 0;
+                    else
+                        grid[index] = value++;
+                }
+            }
+        }
     };
 
     export bool run_slidingpuzzle(std::shared_ptr<core::Context> ctx)
