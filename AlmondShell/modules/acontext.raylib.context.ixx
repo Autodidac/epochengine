@@ -310,7 +310,26 @@ namespace almondnamespace::raylibcontext
         if (st.offscreen.id == 0)
             return;
 
+        (void)raylib_make_current();
         almondnamespace::raylib_api::end_texture_mode();
+        almondnamespace::raylib_api::begin_drawing();
+        const float renderWidth = static_cast<float>(almondnamespace::raylib_api::get_render_width());
+        const float renderHeight = static_cast<float>(almondnamespace::raylib_api::get_render_height());
+        const almondnamespace::raylib_api::Rectangle src{
+            0.0f,
+            0.0f,
+            static_cast<float>(st.offscreen.texture.width),
+            -static_cast<float>(st.offscreen.texture.height)
+        };
+        const almondnamespace::raylib_api::Rectangle dst{0.0f, 0.0f, renderWidth, renderHeight};
+        almondnamespace::raylib_api::draw_texture_pro(
+            st.offscreen.texture,
+            src,
+            dst,
+            almondnamespace::raylib_api::Vector2{0.0f, 0.0f},
+            0.0f,
+            almondnamespace::raylib_api::Color{255, 255, 255, 255});
+        almondnamespace::raylib_api::end_drawing();
     }
 
     export inline void raylib_cleanup(std::shared_ptr<core::Context>)
