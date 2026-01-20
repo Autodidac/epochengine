@@ -36,6 +36,7 @@ import aengine.core.context;
 import aengine.context.window;
 import aengine.context.commandqueue;
 import aengine.core.time;
+import aengine.context.multiplexer;
 import aatlas.manager;
 import acontext.sfml.state;
 import acontext.sfml.textures;
@@ -100,7 +101,8 @@ export namespace almondnamespace::sfmlcontext
 #endif
         unsigned int w = 400,
         unsigned int h = 300,
-        std::function<void(int, int)> onResize = nullptr)
+        std::function<void(int, int)> onResize = nullptr,
+        std::string windowTitle = {})
     {
         const unsigned int clampedWidth = (std::max)(1u, w);
         const unsigned int clampedHeight = (std::max)(1u, h);
@@ -147,9 +149,14 @@ export namespace almondnamespace::sfmlcontext
         settings.minorVersion = 1;
         settings.attributeFlags = sf::ContextSettings::Default;
 
+        if (windowTitle.empty() && ctx && ctx->windowData && !ctx->windowData->titleNarrow.empty())
+            windowTitle = ctx->windowData->titleNarrow;
+        if (windowTitle.empty())
+            windowTitle = "SFML Window";
+
         sf::VideoMode mode(sfmlcontext.width, sfmlcontext.height, 32u);
         sfmlcontext.window = std::make_unique<sf::RenderWindow>(
-            mode, "SFML Window", sf::Style::Default, settings);
+            mode, windowTitle, sf::Style::Default, settings);
 
         if (!sfmlcontext.window || !sfmlcontext.window->isOpen())
         {
@@ -172,6 +179,19 @@ export namespace almondnamespace::sfmlcontext
 #if defined(_WIN32)
         sfmlcontext.hwnd = static_cast<HWND>(sfmlcontext.window->getSystemHandle());
         sfmlcontext.hdc = GetDC(sfmlcontext.hwnd);
+
+#if !defined(ALMOND_MAIN_HEADLESS)
+        if (ctx)
+            ctx->hwnd = sfmlcontext.hwnd;
+
+        if (ctx && ctx->windowData)
+        {
+            ctx->windowData->hwnd = sfmlcontext.hwnd;
+            ctx->windowData->set_size(
+                static_cast<int>(sfmlcontext.width),
+                static_cast<int>(sfmlcontext.height));
+        }
+#endif
 
         // Ensure the SFML context is current *on this thread* before capturing HGLRC.
         if (!sfmlcontext.window->setActive(true))
@@ -200,6 +220,8 @@ export namespace almondnamespace::sfmlcontext
             style |= WS_CHILD | WS_VISIBLE;
             SetWindowLongPtr(sfmlcontext.hwnd, GWL_STYLE, style);
 
+            almondnamespace::core::MakeDockable(sfmlcontext.hwnd, sfmlcontext.parent);
+
             RECT client{};
             GetClientRect(sfmlcontext.parent, &client);
             const int width = static_cast<int>((std::max)(static_cast<LONG>(1), client.right - client.left));
@@ -214,6 +236,11 @@ export namespace almondnamespace::sfmlcontext
 
             if (sfmlcontext.onResize)
                 sfmlcontext.onResize(width, height);
+
+#if !defined(ALMOND_MAIN_HEADLESS)
+            if (ctx && ctx->windowData)
+                ctx->windowData->set_size(width, height);
+#endif
         }
 #endif
 

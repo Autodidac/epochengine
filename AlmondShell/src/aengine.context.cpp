@@ -217,12 +217,16 @@ namespace
         const unsigned h = static_cast<unsigned>((std::max)(1, ctx->height));
 
         try {
+            std::string windowTitle{};
+            if (ctx->windowData)
+                windowTitle = ctx->windowData->titleNarrow;
             (void)almondnamespace::sfmlcontext::sfml_initialize(
                 ctx,
                 reinterpret_cast<HWND>(native),
                 w,
                 h,
-                ctx->onResize
+                ctx->onResize,
+                windowTitle
             );
         }
         catch (const std::exception& e) {
