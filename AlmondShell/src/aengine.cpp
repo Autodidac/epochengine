@@ -319,9 +319,11 @@ namespace almondnamespace::core
                                 const bool enter_pressed =
                                     almondnamespace::input::keyPressed.test(almondnamespace::input::Key::Enter);
 
+                                ctx->clear_safe();
                                 gui::begin_frame(ctx, dt, mouse_pos, mouse_left_down);
                                 auto choice = menu.update_and_draw(ctx, win, dt, up_pressed, down_pressed, left_pressed, right_pressed, enter_pressed);
                                 gui::end_frame();
+                                ctx->present_safe();
 
                                 if (choice)
                                 {
