@@ -317,4 +317,19 @@ export namespace almondnamespace::tetrislike
         }
     };
 
+    export bool run_tetrislike(std::shared_ptr<core::Context> ctx)
+    {
+        TetrisLikeScene scene;
+        scene.load();
+
+        auto* window = ctx ? ctx->windowData : nullptr;
+
+        bool running = true;
+        while (running && ctx)
+            running = scene.frame(ctx, window);
+
+        scene.unload();
+        return running;
+    }
+
 } // export namespace almondnamespace

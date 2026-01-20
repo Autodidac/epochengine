@@ -235,7 +235,7 @@ export namespace almondnamespace::pacmanlike
         bool won = false;
     };
 
-    inline bool run_pacman(std::shared_ptr<core::Context> ctx)
+    export bool run_pacman(std::shared_ptr<core::Context> ctx)
     {
         PacmanLikeScene scene;
         scene.load();

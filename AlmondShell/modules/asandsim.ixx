@@ -174,7 +174,7 @@ export namespace almondnamespace::sandsim
         }
     };
 
-    inline bool run_sandsim(std::shared_ptr<core::Context> ctx)
+    export bool run_sandsim(std::shared_ptr<core::Context> ctx)
     {
         SandSimScene scene;
         scene.load();

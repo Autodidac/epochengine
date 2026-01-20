@@ -174,7 +174,7 @@ export namespace almondnamespace::a2048like
         }
     };
 
-    inline bool run_a2048like(std::shared_ptr<core::Context> ctx)
+    export bool run_a2048like(std::shared_ptr<core::Context> ctx)
     {
         A2048LikeScene scene;
         scene.load();
