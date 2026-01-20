@@ -1031,7 +1031,8 @@ namespace almondnamespace::core
                 win.hwnd,
                 static_cast<unsigned>(ctx->width),
                 static_cast<unsigned>(ctx->height),
-                win.onResize ? win.onResize : ctx->onResize
+                win.onResize ? win.onResize : ctx->onResize,
+                win.titleNarrow
                 );
 
             if (!ok) { win.running = false; return; }
