@@ -15,6 +15,8 @@ import aengine.core.logger;       // logger::Logger
 import aengine.core.time;         // timing::Timer
 
 // C++ std
+import <algorithm>;
+import <cmath>;
 import <cstdint>;
 import <span>;
 import <stdexcept>;
@@ -49,14 +51,42 @@ export namespace almondnamespace::froggerlike
 
             ctx->clear_safe();
 
-            // Draw a simple full-screen background sprite if present
+            auto atlasVec = atlasmanager::get_atlas_vector_snapshot(); // by value
+            std::span<const TextureAtlas* const> atlasSpan(atlasVec.data(), atlasVec.size());
+
             if (auto it = sprites.find("bg"); it != sprites.end() && spritepool::is_alive(it->second))
             {
-                auto atlasVec = atlasmanager::get_atlas_vector_snapshot(); // by value
-                std::span<const TextureAtlas* const> atlasSpan(atlasVec.data(), atlasVec.size());
-
                 ctx->draw_sprite_safe(it->second, atlasSpan, 0.0f, 0.0f,
                     float(ctx->get_width_safe()), float(ctx->get_height_safe()));
+            }
+
+            const float width = float((std::max)(1, ctx->get_width_safe()));
+            const float height = float((std::max)(1, ctx->get_height_safe()));
+            const float laneHeight = height / 5.0f;
+            const float spriteSize = (std::min)(width / 6.0f, laneHeight);
+
+            auto drawRow = [&](std::string_view name, int lane, int count, float offset)
+                {
+                    auto it = sprites.find(std::string(name));
+                    if (it == sprites.end() || !spritepool::is_alive(it->second))
+                        return;
+
+                    const float y = laneHeight * lane + (laneHeight - spriteSize) * 0.5f;
+                    for (int i = 0; i < count; ++i)
+                    {
+                        const float x = std::fmod(offset + i * (spriteSize * 1.5f), width);
+                        ctx->draw_sprite_safe(it->second, atlasSpan, x, y, spriteSize, spriteSize);
+                    }
+                };
+
+            drawRow("water", 0, 3, 0.0f);
+            drawRow("log", 1, 3, spriteSize * 0.5f);
+            drawRow("car", 3, 3, spriteSize);
+
+            if (auto it = sprites.find("frog"); it != sprites.end() && spritepool::is_alive(it->second))
+            {
+                const float frogY = laneHeight * 4 + (laneHeight - spriteSize) * 0.5f;
+                ctx->draw_sprite_safe(it->second, atlasSpan, (width - spriteSize) * 0.5f, frogY, spriteSize, spriteSize);
             }
 
             ctx->present_safe();
@@ -132,7 +162,7 @@ export namespace almondnamespace::froggerlike
         std::unordered_map<std::string, SpriteHandle> sprites{};
     };
 
-    bool run_froggerlike(std::shared_ptr<core::Context> ctx)
+    export bool run_froggerlike(std::shared_ptr<core::Context> ctx)
     {
         FroggerLikeScene scene;
         scene.load();

@@ -167,7 +167,7 @@ export namespace almondnamespace::cellularsim
         }
     };
 
-    inline bool run_cellularsim(std::shared_ptr<core::Context> ctx)
+    export bool run_cellularsim(std::shared_ptr<core::Context> ctx)
     {
         CellularSimScene scene;
         scene.load();

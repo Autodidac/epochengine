@@ -254,7 +254,7 @@ export namespace almondnamespace::minesweeperlike
         bool mouseWasDown = false;
     };
 
-    inline bool run_minesweeper(std::shared_ptr<core::Context> ctx)
+    export bool run_minesweeper(std::shared_ptr<core::Context> ctx)
     {
         MinesweeperLikeScene scene;
         scene.load();

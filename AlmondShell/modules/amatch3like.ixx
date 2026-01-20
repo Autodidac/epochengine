@@ -179,7 +179,7 @@ export namespace almondnamespace::match3like
         }
     };
 
-    inline bool run_match3like(std::shared_ptr<core::Context> ctx)
+    export bool run_match3like(std::shared_ptr<core::Context> ctx)
     {
         Match3LikeScene scene;
         scene.load();
