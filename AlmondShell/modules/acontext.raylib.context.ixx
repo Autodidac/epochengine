@@ -311,7 +311,7 @@ namespace almondnamespace::raylibcontext
             return;
 
         (void)raylib_make_current();
-        almondnamespace::raylib_api::end_texture_mode();
+//        almondnamespace::raylib_api::end_texture_mode();
         almondnamespace::raylib_api::begin_drawing();
         const float renderWidth = static_cast<float>(almondnamespace::raylib_api::get_render_width());
         const float renderHeight = static_cast<float>(almondnamespace::raylib_api::get_render_height());
@@ -329,7 +329,7 @@ namespace almondnamespace::raylibcontext
             almondnamespace::raylib_api::Vector2{0.0f, 0.0f},
             0.0f,
             almondnamespace::raylib_api::Color{255, 255, 255, 255});
-        almondnamespace::raylib_api::end_drawing();
+//        almondnamespace::raylib_api::end_drawing();
     }
 
     export inline void raylib_cleanup(std::shared_ptr<core::Context>)
