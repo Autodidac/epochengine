@@ -14,6 +14,7 @@ import aengine.core.logger;       // logger::Logger
 import aengine.core.time;         // timing::Timer
 
 // C++ std
+import <algorithm>;
 import <cstdint>;
 import <span>;
 import <stdexcept>;
@@ -35,6 +36,7 @@ export namespace almondnamespace::a2048like
         {
             Scene::load();
             setupSprites();
+            initializeGrid();
         }
 
         bool frame(std::shared_ptr<core::Context> ctx, core::WindowData*) override
@@ -46,14 +48,36 @@ export namespace almondnamespace::a2048like
 
             ctx->clear_safe();
 
-            // Draw a simple full-screen background sprite if present
+            auto atlasVec = atlasmanager::get_atlas_vector_snapshot(); // by value
+            std::span<const TextureAtlas* const> atlasSpan(atlasVec.data(), atlasVec.size());
+
             if (auto it = sprites.find("bg"); it != sprites.end() && spritepool::is_alive(it->second))
             {
-                auto atlasVec = atlasmanager::get_atlas_vector_snapshot(); // by value
-                std::span<const TextureAtlas* const> atlasSpan(atlasVec.data(), atlasVec.size());
-
                 ctx->draw_sprite_safe(it->second, atlasSpan, 0.0f, 0.0f,
                     float(ctx->get_width_safe()), float(ctx->get_height_safe()));
+            }
+
+            const float width = float(ctx->get_width_safe());
+            const float height = float(ctx->get_height_safe());
+            const float cellSize = std::min(width / float(kCols), height / float(kRows));
+            const float offsetX = (width - cellSize * float(kCols)) * 0.5f;
+            const float offsetY = (height - cellSize * float(kRows)) * 0.5f;
+
+            for (int row = 0; row < kRows; ++row)
+            {
+                for (int col = 0; col < kCols; ++col)
+                {
+                    const int value = grid[static_cast<size_t>(row * kCols + col)];
+                    const auto name = std::to_string(value);
+                    auto it = sprites.find(name);
+                    if (it == sprites.end() || !spritepool::is_alive(it->second))
+                        continue;
+
+                    ctx->draw_sprite_safe(it->second, atlasSpan,
+                        offsetX + cellSize * float(col),
+                        offsetY + cellSize * float(row),
+                        cellSize, cellSize);
+                }
             }
 
             ctx->present_safe();
@@ -113,7 +137,7 @@ export namespace almondnamespace::a2048like
             };
 
             // Always try to load a background sprite if available
-            //ensureSprite("bg");
+            ensureSprite("bg");
             ensureSprite("2");
             ensureSprite("4");
             ensureSprite("6");
@@ -135,6 +159,19 @@ export namespace almondnamespace::a2048like
         }
 
         std::unordered_map<std::string, SpriteHandle> sprites{};
+        static constexpr int kRows = 4;
+        static constexpr int kCols = 4;
+        std::vector<int> grid{};
+
+        void initializeGrid()
+        {
+            grid = {
+                2, 4, 8, 16,
+                32, 64, 128, 256,
+                512, 1024, 2048, 2,
+                4, 8, 16, 32
+            };
+        }
     };
 
     inline bool run_a2048like(std::shared_ptr<core::Context> ctx)
