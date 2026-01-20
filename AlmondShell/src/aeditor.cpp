@@ -30,7 +30,7 @@ module;
 //
 //#include "agui.hpp"
 
-export module aeditor;
+module aeditor;
 
 import autility.filewatch;
 
