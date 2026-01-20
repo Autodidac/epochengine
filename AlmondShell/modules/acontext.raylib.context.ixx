@@ -347,7 +347,11 @@ namespace almondnamespace::raylibcontext
         if (st.offscreen.id == 0)
             return;
 
-//        almondnamespace::raylib_api::begin_texture_mode(st.offscreen);
+        if (!st.frameActive)
+        {
+            almondnamespace::raylib_api::begin_texture_mode(st.offscreen);
+            st.frameActive = true;
+        }
         almondnamespace::raylib_api::clear_background(
             almondnamespace::raylib_api::Color{
                 static_cast<unsigned char>(std::clamp(r, 0.0f, 1.0f) * 255.0f),
@@ -367,7 +371,11 @@ namespace almondnamespace::raylibcontext
             return;
 
         (void)raylib_make_current();
-//        almondnamespace::raylib_api::end_texture_mode();
+        if (st.frameActive)
+        {
+            almondnamespace::raylib_api::end_texture_mode();
+            st.frameActive = false;
+        }
         almondnamespace::raylib_api::begin_drawing();
         const float renderWidth = static_cast<float>(almondnamespace::raylib_api::get_render_width());
         const float renderHeight = static_cast<float>(almondnamespace::raylib_api::get_render_height());
@@ -385,7 +393,11 @@ namespace almondnamespace::raylibcontext
             almondnamespace::raylib_api::Vector2{0.0f, 0.0f},
             0.0f,
             almondnamespace::raylib_api::Color{255, 255, 255, 255});
-//        almondnamespace::raylib_api::end_drawing();
+        almondnamespace::raylib_api::end_drawing();
+
+#if defined(_WIN32)
+        detail::clear_current();
+#endif
     }
 
     export inline void raylib_cleanup(std::shared_ptr<core::Context>)
@@ -405,6 +417,11 @@ namespace almondnamespace::raylibcontext
 #endif
 
         almondnamespace::raylibtextures::shutdown_current_context_backend();
+        if (st.frameActive)
+        {
+            almondnamespace::raylib_api::end_texture_mode();
+            st.frameActive = false;
+        }
         if (st.offscreen.id != 0)
             almondnamespace::raylib_api::unload_render_texture(st.offscreen);
      //   almondnamespace::raylib_api::close_window();

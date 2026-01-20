@@ -74,6 +74,8 @@ export namespace almondnamespace::raylibstate
         // Offscreen render target owned by the host OpenGL context
         almondnamespace::raylib_api::RenderTexture2D offscreen{};
 
+        bool frameActive = false;
+
         // Lifecycle
         bool running = false;
         bool cleanupIssued = false;

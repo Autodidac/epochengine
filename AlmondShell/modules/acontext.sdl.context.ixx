@@ -135,10 +135,15 @@ export namespace almondnamespace::sdlcontext
             ctx->framebufferHeight = sdlcontext.framebufferHeight;
             if (ctx->windowData)
             {
+                ctx->windowData->sdl_window = sdlcontext.window;
                 ctx->windowData->width = sdlcontext.width;
                 ctx->windowData->height = sdlcontext.height;
             }
         }
+
+        auto& sharedState = state::get_sdl_state();
+        sharedState.window.sdl_window = sdlcontext.window;
+        sharedState.set_dimensions(sdlcontext.width, sdlcontext.height);
     }
 
     inline bool sdl_initialize(std::shared_ptr<core::Context> ctx,
@@ -273,6 +278,9 @@ export namespace almondnamespace::sdlcontext
             return false;
         }
 
+        if (SDL_SetRenderVSync(sdlcontext.renderer, 1) != 0)
+            std::cerr << "[SDL] SDL_SetRenderVSync failed: " << SDL_GetError() << "\n";
+
         init_renderer(sdlcontext.renderer);
         sdltextures::sdl_renderer = sdlcontext.renderer;
 
@@ -321,6 +329,7 @@ export namespace almondnamespace::sdlcontext
 
         SDL_ShowWindow(sdlcontext.window);
         sdlcontext.running = true;
+        state::get_sdl_state().running = true;
 
         atlasmanager::register_backend_uploader(core::ContextType::SDL,
             [](const TextureAtlas& atlas)
@@ -356,6 +365,7 @@ export namespace almondnamespace::sdlcontext
             if (sdl_event.type == SDL_EVENT_QUIT)
             {
                 sdlcontext.running = false;
+                state::get_sdl_state().mark_should_close(true);
                 return false;
             }
 
@@ -430,6 +440,10 @@ export namespace almondnamespace::sdlcontext
 
         SDL_Quit();
         sdlcontext.running = false;
+        state::get_sdl_state().running = false;
+        state::get_sdl_state().window.sdl_window = nullptr;
+        sdltextures::sdl_renderer = nullptr;
+        sdltextures::clear_gpu_atlases();
 
 #if defined(_WIN32)
         sdlcontext.hwnd = nullptr;
