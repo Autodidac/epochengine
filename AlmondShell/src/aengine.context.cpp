@@ -54,9 +54,7 @@ import "adirectxrenderer.hpp";
 import "adirectxtextures.hpp";
 #endif
 #ifdef ALMOND_USING_SFML
-import "asfmlcontext.hpp";
-import "asfmlrenderer.hpp";
-import "asfmltextures.hpp";
+import acontext.sfml.context;
 #endif
 #ifdef ALMOND_USING_CUSTOM
 import "acustomcontext.hpp";
