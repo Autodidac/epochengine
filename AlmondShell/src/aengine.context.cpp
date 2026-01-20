@@ -301,9 +301,7 @@ namespace
         almondnamespace::core::CommandQueue& queue)
     {
         if (!ctx) return false;
-        const bool running = almondnamespace::sdlcontext::sdl_process(ctx, queue);
-        queue.drain();
-        return running;
+        return almondnamespace::sdlcontext::sdl_process(ctx, queue);
     }
 #endif
 

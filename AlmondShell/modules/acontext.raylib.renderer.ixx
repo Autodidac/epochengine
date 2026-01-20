@@ -57,6 +57,12 @@ namespace almondnamespace::raylibrenderer
         if (!st.running)
             return;
 
+        if (!st.frameActive && st.offscreen.id != 0)
+        {
+            almondnamespace::raylib_api::begin_texture_mode(st.offscreen);
+            st.frameActive = true;
+        }
+
         // Upload (this will no-op if cached + correct version).
         almondnamespace::raylibtextures::ensure_uploaded(*atlas);
 
@@ -123,13 +129,13 @@ namespace almondnamespace::raylibrenderer
 
         const almondnamespace::raylib_api::Rectangle dst{ px, py, pw, ph };
 
-        //almondnamespace::raylib_api::draw_texture_pro(
-        //    tex,
-        //    src,
-        //    dst,
-        //    almondnamespace::raylib_api::Vector2{ 0.0f, 0.0f },
-        //    0.0f,
-        //    almondnamespace::raylib_api::white);
+        almondnamespace::raylib_api::draw_texture_pro(
+            tex,
+            src,
+            dst,
+            almondnamespace::raylib_api::Vector2{ 0.0f, 0.0f },
+            0.0f,
+            almondnamespace::raylib_api::white);
     }
 }
 

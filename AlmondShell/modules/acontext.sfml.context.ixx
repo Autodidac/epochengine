@@ -126,7 +126,15 @@ export namespace almondnamespace::sfmlcontext
                 sfmlcontext.height = static_cast<unsigned int>((std::max)(1, height));
 
                 if (sfmlcontext.window)
+                {
                     sfmlcontext.window->setSize(sf::Vector2u(sfmlcontext.width, sfmlcontext.height));
+                    sfmlcontext.window->setView(sf::View(
+                        sf::FloatRect(
+                            0.0f,
+                            0.0f,
+                            static_cast<float>(sfmlcontext.width),
+                            static_cast<float>(sfmlcontext.height))));
+                }
 
                 auto locked = weakCtx.lock();
                 refresh_dimensions(locked);
@@ -163,6 +171,8 @@ export namespace almondnamespace::sfmlcontext
             std::cerr << "[SFML] Failed to create SFML window\n";
             return false;
         }
+
+        sfmlcontext.window->setVerticalSyncEnabled(true);
 
         auto* windowPtr = sfmlcontext.window.get();
 
@@ -334,8 +344,6 @@ export namespace almondnamespace::sfmlcontext
             return false;
         }
 
-        queue.drain();
-
         static auto* bgTimer = almondnamespace::timing::getTimer("menu", "bg_color");
         if (!bgTimer)
             bgTimer = &almondnamespace::timing::createNamedTimer("menu", "bg_color");
@@ -346,6 +354,9 @@ export namespace almondnamespace::sfmlcontext
         const unsigned char b = static_cast<unsigned char>((0.5 + 0.5 * std::sin(1.3 + 4.0)) * 255);
 
         sfmlcontext.window->clear(sf::Color(r, g, b));
+
+        queue.drain();
+
         sfmlcontext.window->display();
 
         (void)sfmlcontext.window->setActive(false);
