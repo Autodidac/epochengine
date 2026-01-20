@@ -32,7 +32,6 @@ export namespace almondnamespace::atlasmanager
 
     using almondnamespace::TextureAtlas;
     using almondnamespace::AtlasConfig;
-    using almondnamespace::Texture;
     using almondnamespace::u8;
     using almondnamespace::u32;
     using almondnamespace::u64;

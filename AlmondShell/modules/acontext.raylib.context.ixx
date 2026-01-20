@@ -1,4 +1,4 @@
-﻿/**************************************************************
+/**************************************************************
  *   █████╗ ██╗     ███╗   ███╗   ███╗   ██╗    ██╗██████╗
  *  ██╔══██╗██║     ████╗ ████║ ██╔═══██╗████╗  ██║██╔══██╗
  *  ███████║██║     ██╔████╔██║ ██║   ██║██╔██╗ ██║██║  ██║
@@ -211,7 +211,7 @@ namespace almondnamespace::raylibcontext
 
             almondnamespace::raylib_api::set_window_size(clampedW, clampedH);
 
-            (void)raylib_make_current();
+         //   (void)raylib_make_current();
             detail::ensure_offscreen_target(state, state.width, state.height);
 #if defined(_WIN32)
             detail::debug_expect_raylib_current(state, "raylib_resize");
@@ -291,7 +291,7 @@ namespace almondnamespace::raylibcontext
         if (st.offscreen.id == 0)
             return;
 
-        almondnamespace::raylib_api::begin_texture_mode(st.offscreen);
+//        almondnamespace::raylib_api::begin_texture_mode(st.offscreen);
         almondnamespace::raylib_api::clear_background(
             almondnamespace::raylib_api::Color{
                 static_cast<unsigned char>(std::clamp(r, 0.0f, 1.0f) * 255.0f),
