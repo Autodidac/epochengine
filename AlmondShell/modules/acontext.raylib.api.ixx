@@ -25,6 +25,11 @@ module;
 #       error "acontext.raylib.api.cppm must not see <windows.h> before <raylib.h>. Move Win32 includes out of aengine.config.hpp / central headers."
 #   endif
 
+// Use a headless raylib configuration: we render into host-owned OpenGL contexts.
+#   ifndef RAYLIB_NO_WINDOW
+#       define RAYLIB_NO_WINDOW
+#   endif
+
 // Do NOT define RAYLIB_STATIC unless you are actually linking a static raylib build.
 // For vcpkg shared builds, leave it undefined.
 #   include <raylib.h>
@@ -42,6 +47,7 @@ export namespace almondnamespace::raylib_api
     export using ::Texture2D;
     export using ::Image;
     export using ::Rectangle;
+    export using ::RenderTexture2D;
 
     export inline constexpr ::Color raywhite = ::RAYWHITE;
     export inline constexpr ::Color white = ::WHITE;
@@ -109,6 +115,7 @@ export namespace almondnamespace::raylib_api
     export inline void set_config_flags(unsigned int flags) { ::SetConfigFlags(flags); }
     export inline void init_window(int w, int h, const char* title) { ::InitWindow(w, h, title); }
     export inline void close_window() { ::CloseWindow(); }
+    export inline void set_window_size(int w, int h) { ::SetWindowSize(w, h); }
 
     export inline bool window_should_close() { return ::WindowShouldClose(); }
     export inline bool is_window_ready() { return ::IsWindowReady(); }
@@ -122,6 +129,8 @@ export namespace almondnamespace::raylib_api
     export inline void begin_drawing() { ::BeginDrawing(); }
     export inline void end_drawing() { ::EndDrawing(); }
     export inline void clear_background(::Color c) { ::ClearBackground(c); }
+    export inline void begin_texture_mode(const ::RenderTexture2D& target) { ::BeginTextureMode(target); }
+    export inline void end_texture_mode() { ::EndTextureMode(); }
 
     export inline void set_target_fps(int fps) { ::SetTargetFPS(fps); }
     export inline void set_window_title(const char* t) { ::SetWindowTitle(t); }
@@ -137,6 +146,8 @@ export namespace almondnamespace::raylib_api
 
     export inline ::Texture2D load_texture_from_image(const ::Image& img) { return ::LoadTextureFromImage(img); }
     export inline void unload_texture(const ::Texture2D& tex) { ::UnloadTexture(tex); }
+    export inline ::RenderTexture2D load_render_texture(int w, int h) { return ::LoadRenderTexture(w, h); }
+    export inline void unload_render_texture(const ::RenderTexture2D& tex) { ::UnloadRenderTexture(tex); }
 
     export inline void draw_texture_pro(
         const ::Texture2D& tex,

@@ -21,6 +21,7 @@ import <thread>;
 import aengine.core.time;
 import aengine.cli;
 import aengine.core.context;
+import acontext.raylib.api;
 
 #if defined(ALMOND_USING_RAYLIB)
 
@@ -62,10 +63,16 @@ export namespace almondnamespace::raylibstate
 
         // Optional user resize callback (engine-driven only)
         std::function<void(int, int)> onResize{};
+        std::function<void(int, int)> userResize{};
 
         // Logical dimensions (authoritative values set by multiplexer)
         unsigned width = 0;
         unsigned height = 0;
+        unsigned offscreenWidth = 0;
+        unsigned offscreenHeight = 0;
+
+        // Offscreen render target owned by the host OpenGL context
+        almondnamespace::raylib_api::RenderTexture2D offscreen{};
 
         // Lifecycle
         bool running = false;

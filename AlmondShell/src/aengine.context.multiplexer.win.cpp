@@ -80,7 +80,6 @@ import acontext.sdl.context;
 #endif
 #if defined(ALMOND_USING_RAYLIB)
 import acontext.raylib.context;
-import acontext.raylib.context.win;
 #endif
 #if defined(ALMOND_USING_SOFTWARE_RENDERER)
 import acontext.softrenderer.context;
@@ -130,7 +129,6 @@ namespace almondnamespace::core
     // Raylib embeds a real GLFW-created HWND. Re-parenting must be performed on the
     // thread that owns the host HWND, otherwise Win32 can deadlock via cross-thread
     // synchronous messages during SetParent/SetWindowPos.
-    constexpr UINT WM_ALMOND_RAYLIB_ADOPT_PARENT = WM_APP + 0x51;
 #endif
     // ------------------------------------------------------------
     // Exported helpers (declared in the interface module)
@@ -469,7 +467,11 @@ namespace almondnamespace::core
                     HGLRC glrc = nullptr;
 
 #if defined(ALMOND_USING_OPENGL)
-                    if (type == ContextType::OpenGL)
+                    if (type == ContextType::OpenGL
+#if defined(ALMOND_USING_RAYLIB)
+                        || type == ContextType::RayLib
+#endif
+                        )
                     {
                         glrc = CreateSharedGLContext(hdc);
                     }
@@ -673,7 +675,11 @@ namespace almondnamespace::core
         if (!hdc) hdc = ::GetDC(hwnd);
 
 #if defined(ALMOND_USING_OPENGL)
-        if (type == ContextType::OpenGL && !glContext)
+        if ((type == ContextType::OpenGL
+#if defined(ALMOND_USING_RAYLIB)
+            || type == ContextType::RayLib
+#endif
+            ) && !glContext)
         {
             glContext = CreateSharedGLContext(hdc);
             static bool gladInitialized = false;
@@ -803,11 +809,6 @@ namespace almondnamespace::core
             if (window->hwnd)
                 windowId = reinterpret_cast<std::uintptr_t>(window->hwnd);
         }
-
-#if defined(ALMOND_USING_RAYLIB)
-        if (contextType == core::ContextType::RayLib)
-            ::PostMessageW(hwnd, WM_ALMOND_RAYLIB_ADOPT_PARENT, 0, 0);
-#endif
 
         if (window)
         {
@@ -997,8 +998,6 @@ namespace almondnamespace::core
             }
 
             (void)almondnamespace::raylibcontext::raylib_make_current();
-            // Request embedding on the host HWND thread (avoid cross-thread SetParent deadlocks).
-            ::PostMessageW(win.hwnd, WM_ALMOND_RAYLIB_ADOPT_PARENT, 0, 0);
         }
 #endif
 #if defined(ALMOND_USING_SDL)
@@ -1133,14 +1132,6 @@ namespace almondnamespace::core
 
         switch (msg)
         {
-#if defined(ALMOND_USING_RAYLIB)
-        case WM_ALMOND_RAYLIB_ADOPT_PARENT:
-            // Embed/re-parent raylib's internal GLFW window into this host window.
-            // Must run on THIS thread (owner of `hwnd`).
-            almondnamespace::raylibcontext::win::adopt_parent(reinterpret_cast<void*>(hwnd));
-            return 0;
-#endif
-
         case WM_LBUTTONDOWN:
         {
             ::SetCapture(hwnd);
