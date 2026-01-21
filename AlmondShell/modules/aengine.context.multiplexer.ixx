@@ -175,7 +175,7 @@ export namespace almondnamespace::core
             ContextType type);
 
         void RemoveWindow(HWND hwnd);
-        void ArrangeDockedWindowsGrid() {}
+        void ArrangeDockedWindowsGrid();
         void HandleResize(HWND hwnd, int width, int height);
         void StartRenderThreads();
 
