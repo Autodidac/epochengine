@@ -200,6 +200,11 @@ namespace almondnamespace::core
             if (!win.onResize && win.context->onResize)
                 win.onResize = win.context->onResize;
         }
+
+        [[nodiscard]] inline int clamp_positive(int value) noexcept
+        {
+            return (value < 1) ? 1 : value;
+        }
     } // namespace
 
     // ---- MultiContextManager (Linux impl) ----
@@ -1037,6 +1042,50 @@ namespace almondnamespace::core
                 }
             }
         }
+    }
+
+    void MultiContextManager::ArrangeDockedWindowsGrid()
+    {
+        if (!display) return;
+
+        std::scoped_lock lock(windowsMutex);
+        if (windows.empty()) return;
+
+        const int total = static_cast<int>(windows.size());
+        int cols = 1;
+        int rows = 1;
+        while (cols * rows < total)
+            (cols <= rows ? ++cols : ++rows);
+
+        const int screenIndex = screen >= 0 ? screen : DefaultScreen(display);
+        const int screenWidth = DisplayWidth(display, screenIndex);
+        const int screenHeight = DisplayHeight(display, screenIndex);
+
+        const int cellWidth = clamp_positive(screenWidth / cols);
+        const int cellHeight = clamp_positive(screenHeight / rows);
+
+        for (size_t i = 0; i < windows.size(); ++i)
+        {
+            const int column = static_cast<int>(i) % cols;
+            const int row = static_cast<int>(i) / cols;
+
+            WindowData& win = *windows[i];
+            ::Window xwin = to_xwindow(win.hwnd);
+
+            if (!xwin) continue;
+
+            XMoveResizeWindow(
+                display,
+                xwin,
+                column * cellWidth,
+                row * cellHeight,
+                static_cast<unsigned>(cellWidth),
+                static_cast<unsigned>(cellHeight));
+
+            HandleResize(win.hwnd, cellWidth, cellHeight);
+        }
+
+        XFlush(display);
     }
 
     void MultiContextManager::HandleResize(HWND hwnd, int width, int height)
