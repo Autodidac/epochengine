@@ -265,8 +265,6 @@ namespace almondnamespace::raylibcontext
             state.width = static_cast<unsigned>(clampedW);
             state.height = static_cast<unsigned>(clampedH);
 
-            almondnamespace::raylib_api::set_window_size(clampedW, clampedH);
-
          //   (void)raylib_make_current();
             detail::ensure_offscreen_target(state, state.width, state.height);
 #if defined(_WIN32)

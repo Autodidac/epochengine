@@ -186,9 +186,6 @@ export namespace almondnamespace::sdlcontext
                 sdlcontext.virtualWidth = sdlcontext.width;
                 sdlcontext.virtualHeight = sdlcontext.height;
 
-                if (sdlcontext.window)
-                    SDL_SetWindowSize(sdlcontext.window, sdlcontext.width, sdlcontext.height);
-
                 auto locked = weakCtx.lock();
                 refresh_dimensions(locked);
 
