@@ -65,6 +65,7 @@ export module acontext.opengl.textures;
 
 import <algorithm>;
 import <atomic>;
+import <cstdint>;
 import <filesystem>;
 import <format>;
 import <fstream>;
@@ -113,6 +114,23 @@ export namespace almondnamespace::opengltextures
             ctx.context = state.glxContext;
 #endif
             return ctx;
+        }
+
+        inline almondnamespace::openglcontext::PlatformGL::PlatformGLContext
+            context_to_platform_context(const core::Context* ctx) noexcept
+        {
+            almondnamespace::openglcontext::PlatformGL::PlatformGLContext result{};
+            if (!ctx) return result;
+
+#if defined(_WIN32)
+            result.device = static_cast<HDC>(ctx->native_drawable);
+            result.context = static_cast<HGLRC>(ctx->native_gl_context);
+#elif defined(__linux__)
+            result.display = static_cast<Display*>(ctx->native_drawable);
+            result.drawable = static_cast<GLXDrawable>(reinterpret_cast<std::uintptr_t>(ctx->native_window));
+            result.context = static_cast<GLXContext>(ctx->native_gl_context);
+#endif
+            return result;
         }
     }
 
@@ -407,6 +425,15 @@ export namespace almondnamespace::opengltextures
         }
 
         auto& backend = get_opengl_backend();
+        almondnamespace::openglcontext::PlatformGL::ScopedContext contextGuard;
+        auto desired = detail::context_to_platform_context(core::MultiContextManager::GetCurrent().get());
+        if (!desired.valid()) {
+            desired = detail::to_platform_context(backend.glState);
+        }
+        if (!desired.valid() || !contextGuard.set(desired)) {
+            std::cerr << "[DrawSprite] WARNING: Unable to activate OpenGL context; skipping draw.\n";
+            return;
+        }
 
         if (!ensure_created_pipeline(backend.glState)) {
             std::cerr << "[DrawSprite] Missing quad pipeline; skipping draw\n";
