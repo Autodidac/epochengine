@@ -328,6 +328,30 @@ namespace almondnamespace::raylibcontext
 #endif
     }
 
+    export inline void raylib_idle_frame()
+    {
+        auto& st = almondnamespace::raylibstate::s_raylibstate;
+        if (!st.running)
+            return;
+
+#if defined(_WIN32)
+        (void)raylib_make_current();
+#endif
+
+        if (!st.frameActive)
+        {
+            almondnamespace::raylib_api::begin_drawing();
+            st.frameActive = true;
+        }
+
+        almondnamespace::raylib_api::end_drawing();
+        st.frameActive = false;
+
+#if defined(_WIN32)
+        detail::clear_current();
+#endif
+    }
+
     export inline void raylib_clear(float r, float g, float b, float /*a*/)
     {
         auto& st = almondnamespace::raylibstate::s_raylibstate;
