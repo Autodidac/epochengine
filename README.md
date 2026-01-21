@@ -74,6 +74,16 @@ flowchart LR
 
 ---
 
+## Multiplexer Window Hosting & GUI Rendering
+
+The multiplexer is responsible for creating and owning the host window tree, then wiring each backend context into a dedicated child slot. At startup it registers the parent class (or SDL-hosted root when running under SDL3) and allocates one child HWND per backend window, so the expected steady state is **one child per backend** plus the single parent/root. If the multiplexer ever reports more children than backends, or orphaned children without a matching backend, treat it as a "dead child" regression and inspect the backend creation/teardown path.
+
+SDL and Raylib both follow the same adoption flow: each backend creates its native window, then the multiplexer replaces or re-parents that HWND into the host child slot. For SDL, the backend window handle is swapped into the existing child, so SDL's window object now points at the multiplexer-managed HWND. For Raylib, the multiplexer expects one Raylib window, then re-parents it under the host child; `RAYLIB_NO_WINDOW` bypasses this flow and is not compatible with the embedded layout.
+
+GUI rendering depends on the multiplexer keeping backend contexts current. Atlas uploads (font, UI textures, and sprite sheets) are queued through the shared command queue, and each render thread binds its own context before draining uploads. If GUI elements render black or stay stale, check that the backend context is bound before atlas uploads and that the render thread is draining the queue for every child window.
+
+---
+
 ## Current Snapshot (v0.81.23)
 
 - ✅ **Version metadata alignment** – The engine version helpers, README snapshot, and changelog now advertise the v0.81.23 release together so banners, tooling, and docs agree on the published tag.
