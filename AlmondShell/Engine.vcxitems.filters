@@ -215,9 +215,6 @@
     <ClCompile Include="$(MSBuildThisFileDirectory)modules\autility.codeinspector.ixx">
       <Filter>Module Files\ixx\utilities</Filter>
     </ClCompile>
-    <ClCompile Include="$(MSBuildThisFileDirectory)modules\aautility.noheapguard.ixx">
-      <Filter>Module Files\ixx\utilities</Filter>
-    </ClCompile>
     <ClCompile Include="$(MSBuildThisFileDirectory)modules\autility.filewatch.ixx">
       <Filter>Module Files\ixx\utilities</Filter>
     </ClCompile>

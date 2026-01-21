@@ -120,7 +120,6 @@
     <ClCompile Include="$(MSBuildThisFileDirectory)modules\amipmapatlas.ixx" />
     <ClCompile Include="$(MSBuildThisFileDirectory)modules\amovementevent.ixx" />
     <ClCompile Include="$(MSBuildThisFileDirectory)modules\anet.ixx" />
-    <ClCompile Include="$(MSBuildThisFileDirectory)modules\aautility.noheapguard.ixx" />
     <ClCompile Include="$(MSBuildThisFileDirectory)modules\acontext.noop.context.ixx" />
     <ClCompile Include="$(MSBuildThisFileDirectory)modules\aopenglfreetype.ixx" />
     <ClCompile Include="$(MSBuildThisFileDirectory)modules\acontext.opengl.platform.ixx" />
