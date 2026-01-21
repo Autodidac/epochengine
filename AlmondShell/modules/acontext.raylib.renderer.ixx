@@ -129,13 +129,13 @@ namespace almondnamespace::raylibrenderer
 
         const almondnamespace::raylib_api::Rectangle dst{ px, py, pw, ph };
 
-        almondnamespace::raylib_api::draw_texture_pro(
-            tex,
-            src,
-            dst,
-            almondnamespace::raylib_api::Vector2{ 0.0f, 0.0f },
-            0.0f,
-            almondnamespace::raylib_api::white);
+        //almondnamespace::raylib_api::draw_texture_pro(
+        //    tex,
+        //    src,
+        //    dst,
+        //    almondnamespace::raylib_api::Vector2{ 0.0f, 0.0f },
+        //    0.0f,
+        //    almondnamespace::raylib_api::white);
     }
 }
 

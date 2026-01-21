@@ -347,7 +347,7 @@ namespace almondnamespace::raylibcontext
 
         if (!st.frameActive)
         {
-            almondnamespace::raylib_api::begin_texture_mode(st.offscreen);
+//            almondnamespace::raylib_api::begin_texture_mode(st.offscreen);
             st.frameActive = true;
         }
         almondnamespace::raylib_api::clear_background(
@@ -371,7 +371,7 @@ namespace almondnamespace::raylibcontext
         (void)raylib_make_current();
         if (st.frameActive)
         {
-            almondnamespace::raylib_api::end_texture_mode();
+//            almondnamespace::raylib_api::end_texture_mode();
             st.frameActive = false;
         }
         almondnamespace::raylib_api::begin_drawing();
@@ -391,7 +391,7 @@ namespace almondnamespace::raylibcontext
             almondnamespace::raylib_api::Vector2{0.0f, 0.0f},
             0.0f,
             almondnamespace::raylib_api::Color{255, 255, 255, 255});
-        almondnamespace::raylib_api::end_drawing();
+//        almondnamespace::raylib_api::end_drawing();
 
 #if defined(_WIN32)
         detail::clear_current();
