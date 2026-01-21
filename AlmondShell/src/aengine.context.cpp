@@ -90,11 +90,7 @@ namespace
     {
         try {
             almondnamespace::atlasmanager::ensure_uploaded(atlas);
-            if (auto current = almondnamespace::core::get_current_render_context();
-                current && current->type == type)
-            {
-                almondnamespace::atlasmanager::process_pending_uploads(type);
-            }
+            almondnamespace::atlasmanager::process_pending_uploads(type);
         }
         catch (...) {}
 
