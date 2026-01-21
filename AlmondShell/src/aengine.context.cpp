@@ -621,6 +621,14 @@ namespace almondnamespace::core
             CommandQueue localQueue;
             if (!ctx->process) { localQueue.drain(); continue; }
 
+            const auto previous = core::get_current_render_context();
+            core::set_current_render_context(ctx);
+            struct ResetCurrentContext
+            {
+                std::shared_ptr<Context> previousCtx{};
+                ~ResetCurrentContext() { core::set_current_render_context(std::move(previousCtx)); }
+            } reset{ previous };
+
             if (ctx->process_safe(ctx, localQueue)) anyRunning = true;
         }
 
