@@ -208,10 +208,7 @@ namespace almondnamespace::raylibcontext
 
         if (!st.hdc || !st.hglrc)
         {
-            std::cerr << "[Raylib] Missing host OpenGL context for Raylib initialization.\n";
-            st.running = false;
-            st.cleanupIssued = false;
-            return false;
+            std::cerr << "[Raylib] Missing host OpenGL context; raylib will create its own.\n";
         }
 #else
         st.hwnd = parent ? parent : (ctx ? ctx->hwnd : nullptr);
@@ -237,6 +234,13 @@ namespace almondnamespace::raylibcontext
         // Raylib creates its own OpenGL context. Capture it now so we bind the right dc/rc later.
         st.hdc = detail::current_dc();
         st.hglrc = detail::current_context();
+        if (!st.hdc || !st.hglrc)
+        {
+            std::cerr << "[Raylib] Failed to capture Raylib OpenGL context after initialization.\n";
+            st.running = false;
+            st.cleanupIssued = false;
+            return false;
+        }
         if (ctx && ctx->windowData)
         {
             ctx->windowData->hdc = st.hdc;
