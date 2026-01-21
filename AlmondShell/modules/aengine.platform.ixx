@@ -45,3 +45,12 @@ export namespace almondnamespace
     // This namespace intentionally left minimal.
     // Platform-specific helpers live in other modules.
 }
+
+export namespace almondnamespace::platform
+{
+#if defined(__linux__)
+    bool pump_events();
+#else
+    inline bool pump_events() { return true; }
+#endif
+}
