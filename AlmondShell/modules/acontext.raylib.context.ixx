@@ -46,6 +46,7 @@ import <utility>;
 
 import aengine.core.context;
 import aengine.core.commandline;
+import aengine.context.multiplexer;
 import aatlas.manager;
 
 import acontext.raylib.state;
@@ -115,14 +116,21 @@ namespace almondnamespace::raylibcontext
                 return;
             }
 
-            st.parent = parent;
-            st.hwnd = raylibHwnd;
-
+            HWND dockParent = parent;
             if (parent && parent != raylibHwnd)
             {
-                if (::GetParent(raylibHwnd) != parent)
+                if (const HWND hostParent = ::GetParent(parent); hostParent && hostParent != raylibHwnd)
+                    dockParent = hostParent;
+            }
+
+            st.parent = dockParent;
+            st.hwnd = raylibHwnd;
+
+            if (dockParent && dockParent != raylibHwnd)
+            {
+                if (::GetParent(raylibHwnd) != dockParent)
                 {
-                    ::SetParent(raylibHwnd, parent);
+                    ::SetParent(raylibHwnd, dockParent);
                 }
 
                 LONG_PTR style = ::GetWindowLongPtrW(raylibHwnd, GWL_STYLE);
@@ -136,16 +144,26 @@ namespace almondnamespace::raylibcontext
                     static_cast<int>(st.width),
                     static_cast<int>(st.height),
                     SWP_NOZORDER | SWP_NOACTIVATE | SWP_FRAMECHANGED | SWP_SHOWWINDOW);
+
+                almondnamespace::core::MakeDockable(raylibHwnd, dockParent);
+
+                if (dockParent != parent && parent)
+                {
+                    ::ShowWindow(parent, SW_HIDE);
+                    ::DestroyWindow(parent);
+                }
             }
 
             if (ctx)
             {
+                const HWND previousHost = ctx->windowData ? ctx->windowData->hwnd : nullptr;
                 ctx->hwnd = raylibHwnd;
                 ctx->native_window = raylibHwnd;
                 if (ctx->windowData)
                 {
                     ctx->windowData->hwnd = raylibHwnd;
-                    ctx->windowData->hwndChild = parent;
+                    ctx->windowData->host_hwnd = previousHost ? previousHost : parent;
+                    ctx->windowData->hwndChild = raylibHwnd;
                 }
             }
         }
