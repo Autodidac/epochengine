@@ -1192,6 +1192,13 @@ namespace almondnamespace::core
 
             const int newX = wndRect.left + dx;
             const int newY = wndRect.top + dy;
+            const int currentW = clamp_positive(static_cast<int>(wndRect.right - wndRect.left));
+            const int currentH = clamp_positive(static_cast<int>(wndRect.bottom - wndRect.top));
+
+            RECT clientRect{};
+            ::GetClientRect(hwnd, &clientRect);
+            const int clientW = clamp_positive(static_cast<int>(clientRect.right - clientRect.left));
+            const int clientH = clamp_positive(static_cast<int>(clientRect.bottom - clientRect.top));
 
             if (drag.originalParent)
             {
@@ -1201,12 +1208,12 @@ namespace almondnamespace::core
                 ::ClientToScreen(drag.originalParent, &tl);
                 ::OffsetRect(&prc, tl.x, tl.y);
 
-                const int wndW = wndRect.right - wndRect.left;
-                const int wndH = wndRect.bottom - wndRect.top;
+                int wndW = clientW;
+                int wndH = clientH;
 
                 const bool inside =
                     newX >= prc.left && newY >= prc.top &&
-                    (newX + wndW) <= prc.right && (newY + wndH) <= prc.bottom;
+                    (newX + currentW) <= prc.right && (newY + currentH) <= prc.bottom;
 
                 if (inside)
                 {
@@ -1240,6 +1247,13 @@ namespace almondnamespace::core
                         style |= WS_OVERLAPPEDWINDOW | WS_VISIBLE;
                         ::SetWindowLongPtrW(hwnd, GWL_STYLE, style);
                         ::SetParent(hwnd, nullptr);
+                        RECT adjusted{ 0, 0, clientW, clientH };
+                        const DWORD exStyle = static_cast<DWORD>(::GetWindowLongPtrW(hwnd, GWL_EXSTYLE));
+                        if (::AdjustWindowRectEx(&adjusted, static_cast<DWORD>(style), FALSE, exStyle))
+                        {
+                            wndW = clamp_positive(adjusted.right - adjusted.left);
+                            wndH = clamp_positive(adjusted.bottom - adjusted.top);
+                        }
                         ::SetWindowPos(hwnd, nullptr, newX, newY, wndW, wndH,
                             SWP_NOZORDER | SWP_FRAMECHANGED | SWP_SHOWWINDOW);
                     }
