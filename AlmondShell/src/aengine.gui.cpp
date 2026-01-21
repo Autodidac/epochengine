@@ -62,10 +62,12 @@ namespace almondnamespace::gui
 
     constexpr const char* kAtlasName = "__agui_builtin";
     constexpr float       kContentPadding = 8.0f;
+    constexpr float       kTitleBarPadding = 6.0f;
     constexpr float       kDefaultFontSizePt = 18.0f;
     constexpr float       kFontScale = 1.0f;
     constexpr float       kTitleScale = 1.4f;
     constexpr float       kBoxInnerPadding = 6.0f;
+    constexpr float       kMinLineGapFactor = 0.2f;
     constexpr float       kCaretBlinkPeriod = 1.0f;
     constexpr int         kTabSpaces = 4;
     constexpr const char* kDefaultFontName = "__agui_default_font";
@@ -117,6 +119,7 @@ namespace almondnamespace::gui
         TextureAtlas* atlas = nullptr;
 
         SpriteHandle windowBackground{};
+        SpriteHandle windowTitleBar{};
         SpriteHandle buttonNormal{};
         SpriteHandle buttonHover{};
         SpriteHandle buttonActive{};
@@ -383,6 +386,8 @@ namespace almondnamespace::gui
 
             g_resources.windowBackground = add_sprite(atlas, "__agui/window_bg",
                 make_solid_pixels(0x33, 0x35, 0x38, 0xFF, 8, 8), 8, 8);
+            g_resources.windowTitleBar = add_sprite(atlas, "__agui/window_titlebar",
+                make_solid_pixels(0x2B, 0x2E, 0x33, 0xFF, 8, 8), 8, 8);
             g_resources.buttonNormal = add_sprite(atlas, "__agui/button_normal",
                 make_solid_pixels(0x5B, 0x5F, 0x66, 0xFF, 8, 8), 8, 8);
             g_resources.buttonHover = add_sprite(atlas, "__agui/button_hover",
@@ -484,7 +489,12 @@ namespace almondnamespace::gui
     {
         const auto& metrics = g_resources.font.metrics;
         if (metrics.ascent > 0.0f || metrics.descent > 0.0f || metrics.lineGap > 0.0f)
-            return (metrics.ascent + metrics.descent + metrics.lineGap) * scale;
+        {
+            const float baseHeight = metrics.ascent + metrics.descent;
+            const float minGap = (baseHeight > 0.0f) ? baseHeight * kMinLineGapFactor : 0.0f;
+            const float lineGap = (std::max)(metrics.lineGap, minGap);
+            return (baseHeight + lineGap) * scale;
+        }
         return base_line_height(scale);
     }
 
@@ -861,14 +871,14 @@ namespace almondnamespace::gui
         g_frame.windowSize = size;
         g_frame.insideWindow = true;
 
-        set_cursor({ position.x + kContentPadding, position.y + kContentPadding });
-
         draw_sprite(g_resources.windowBackground, position.x, position.y, size.x, size.y);
 
         const float titleHeight = base_line_height(kTitleScale);
-        draw_text_line(title, position.x + kContentPadding, position.y + kContentPadding, kTitleScale);
+        const float titleBarHeight = titleHeight + 2.0f * kTitleBarPadding;
+        draw_sprite(g_resources.windowTitleBar, position.x, position.y, size.x, titleBarHeight);
+        draw_text_line(title, position.x + kContentPadding, position.y + kTitleBarPadding, kTitleScale);
 
-        advance_cursor({ 0.0f, titleHeight + kContentPadding });
+        set_cursor({ position.x + kContentPadding, position.y + titleBarHeight + kContentPadding });
     }
 
     void end_window() noexcept
