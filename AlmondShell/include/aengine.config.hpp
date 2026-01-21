@@ -54,7 +54,7 @@
 // Engine Context Config
 // ------------------------------------------------------------
 
-#define ALMOND_SINGLE_PARENT 0
+#define ALMOND_SINGLE_PARENT 1
 
 #define ALMOND_USING_OPENGL 1
 #define ALMOND_USING_SFML 1
