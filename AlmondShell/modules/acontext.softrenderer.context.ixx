@@ -110,6 +110,25 @@ namespace almondnamespace::anativecontext
 
 export namespace almondnamespace::anativecontext
 {
+    int get_width();
+    int get_height();
+
+    namespace
+    {
+        inline void refresh_dimensions(core::Context& ctx) noexcept
+        {
+            auto& sr = s_softrendererstate;
+            ctx.width = (std::max)(1, sr.width);
+            ctx.height = (std::max)(1, sr.height);
+            ctx.virtualWidth = ctx.width;
+            ctx.virtualHeight = ctx.height;
+            ctx.framebufferWidth = ctx.width;
+            ctx.framebufferHeight = ctx.height;
+
+            if (ctx.windowData)
+                ctx.windowData->set_size(ctx.width, ctx.height);
+        }
+    }
 
     void softrenderer_resize(int width, int height)
     {
@@ -150,9 +169,17 @@ export namespace almondnamespace::anativecontext
         sr.height = static_cast<int>(h);
         sr.running = true;
 
-        ctx->onResize = [resize = std::move(onResize)](int newWidth, int newHeight) mutable
+        ctx->get_width = get_width;
+        ctx->get_height = get_height;
+
+        refresh_dimensions(*ctx);
+
+        std::weak_ptr<core::Context> weakCtx = ctx;
+        ctx->onResize = [weakCtx, resize = std::move(onResize)](int newWidth, int newHeight) mutable
             {
                 softrenderer_resize(newWidth, newHeight);
+                if (auto locked = weakCtx.lock())
+                    refresh_dimensions(*locked);
                 if (resize)
                     resize(newWidth, newHeight);
             };
@@ -383,6 +410,7 @@ export namespace almondnamespace::anativecontext
     bool softrenderer_process(core::Context& ctx, core::CommandQueue& queue)
     {
         auto& sr = s_softrendererstate;
+        refresh_dimensions(ctx);
         const auto frameStart = std::chrono::steady_clock::now();
         const std::uintptr_t windowId = ctx.windowData
             ? reinterpret_cast<std::uintptr_t>(ctx.windowData->hwnd)
