@@ -420,6 +420,16 @@ export namespace almondnamespace::openglcontext
         // Load GL entry points with the single authoritative loader.
         if (!gladLoadGLLoader(reinterpret_cast<GLADloadproc>(PlatformGL::get_proc_address)))
             throw std::runtime_error("[OpenGL] gladLoadGLLoader failed");
+        const auto* versionBytes = ::glGetString(GL_VERSION);
+        if (!versionBytes)
+            throw std::runtime_error("[OpenGL] glGetString(GL_VERSION) returned null");
+
+        const std::string_view version{
+            reinterpret_cast<const char*>(versionBytes)
+        };
+
+        if (version.empty())
+            throw std::runtime_error("[OpenGL] GL_VERSION string is empty");
 
         ctx->native_window = glState.hwnd;
         ctx->native_drawable = glState.hdc;
@@ -531,6 +541,16 @@ export namespace almondnamespace::openglcontext
 
         if (!gladLoadGLLoader(reinterpret_cast<GLADloadproc>(PlatformGL::get_proc_address)))
             throw std::runtime_error("[OpenGL] gladLoadGLLoader failed");
+        const auto* versionBytes = ::glGetString(GL_VERSION);
+        if (!versionBytes)
+            throw std::runtime_error("[OpenGL] glGetString(GL_VERSION) returned null");
+
+        const std::string_view version{
+            reinterpret_cast<const char*>(versionBytes)
+        };
+
+        if (version.empty())
+            throw std::runtime_error("[OpenGL] GL_VERSION string is empty");
 
         ctx->native_window = reinterpret_cast<void*>(static_cast<std::uintptr_t>(glState.window));
         ctx->native_drawable = display;
