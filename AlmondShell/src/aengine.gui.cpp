@@ -65,7 +65,9 @@ namespace almondnamespace::gui
     constexpr float       kDefaultFontSizePt = 18.0f;
     constexpr float       kFontScale = 1.0f;
     constexpr float       kTitleScale = 1.4f;
+    constexpr float       kLineSpacingFactor = 0.15f;
     constexpr float       kBoxInnerPadding = 6.0f;
+    constexpr float       kTitleBarPadding = 6.0f;
     constexpr float       kCaretBlinkPeriod = 1.0f;
     constexpr int         kTabSpaces = 4;
     constexpr const char* kDefaultFontName = "__agui_default_font";
@@ -124,6 +126,7 @@ namespace almondnamespace::gui
         SpriteHandle textFieldActive{};
         SpriteHandle panelBackground{};
         SpriteHandle consoleBackground{};
+        SpriteHandle titleBar{};
         GuiFontCache font{};
         font::FontRenderer fontRenderer{};
     };
@@ -397,6 +400,8 @@ namespace almondnamespace::gui
                 make_solid_pixels(0x27, 0x29, 0x2E, 0xFF, 8, 8), 8, 8);
             g_resources.consoleBackground = add_sprite(atlas, "__agui/console_bg",
                 make_solid_pixels(0x1F, 0x21, 0x26, 0xFF, 8, 8), 8, 8);
+            g_resources.titleBar = add_sprite(atlas, "__agui/title_bar",
+                make_solid_pixels(0x22, 0x24, 0x28, 0xFF, 8, 8), 8, 8);
 
             g_resources.atlasBuilt = true;
         }
@@ -405,7 +410,7 @@ namespace almondnamespace::gui
     }
 
 
-    static void ensure_backend_upload(Context& ctx)
+    static void perform_backend_upload(Context& ctx)
     {
         ensure_resources();
 
@@ -426,6 +431,31 @@ namespace almondnamespace::gui
             if (handle != 0)
                 state.fontAtlasUploaded = true;
         }
+    }
+
+    static void ensure_backend_upload(Context& ctx)
+    {
+        if (auto current = core::get_current_render_context(); current && current.get() == &ctx)
+        {
+            perform_backend_upload(ctx);
+            return;
+        }
+
+        if (ctx.windowData)
+        {
+            std::weak_ptr<Context> weak = ctx.windowData->context;
+            ctx.windowData->commandQueue.enqueue([weak]()
+                {
+                    if (auto self = weak.lock())
+                    {
+                        try { perform_backend_upload(*self); }
+                        catch (...) { /* GUI optional */ }
+                    }
+                });
+            return;
+        }
+
+        perform_backend_upload(ctx);
     }
 
     static void draw_sprite(const SpriteHandle& handle, float x, float y, float w, float h)
@@ -483,9 +513,13 @@ namespace almondnamespace::gui
     [[nodiscard]] static float line_advance_amount(float scale) noexcept
     {
         const auto& metrics = g_resources.font.metrics;
+        const float baseHeight = base_line_height(scale);
         if (metrics.ascent > 0.0f || metrics.descent > 0.0f || metrics.lineGap > 0.0f)
-            return (metrics.ascent + metrics.descent + metrics.lineGap) * scale;
-        return base_line_height(scale);
+        {
+            const float advance = (metrics.ascent + metrics.descent + metrics.lineGap) * scale;
+            return (std::max)(advance, baseHeight) + baseHeight * kLineSpacingFactor;
+        }
+        return baseHeight + baseHeight * kLineSpacingFactor;
     }
 
     [[nodiscard]] static float baseline_offset(float scale) noexcept
@@ -861,14 +895,14 @@ namespace almondnamespace::gui
         g_frame.windowSize = size;
         g_frame.insideWindow = true;
 
-        set_cursor({ position.x + kContentPadding, position.y + kContentPadding });
-
         draw_sprite(g_resources.windowBackground, position.x, position.y, size.x, size.y);
 
         const float titleHeight = base_line_height(kTitleScale);
-        draw_text_line(title, position.x + kContentPadding, position.y + kContentPadding, kTitleScale);
+        const float titleBarHeight = titleHeight + 2.0f * kTitleBarPadding;
+        draw_sprite(g_resources.titleBar, position.x, position.y, size.x, titleBarHeight);
+        draw_text_line(title, position.x + kContentPadding, position.y + kTitleBarPadding, kTitleScale);
 
-        advance_cursor({ 0.0f, titleHeight + kContentPadding });
+        set_cursor({ position.x + kContentPadding, position.y + titleBarHeight + kContentPadding });
     }
 
     void end_window() noexcept
