@@ -100,6 +100,9 @@
     <Filter Include="Module Files\ixx\games\gamecore">
       <UniqueIdentifier>{52ee0543-9b00-43b5-b44c-726f6cd8cfd9}</UniqueIdentifier>
     </Filter>
+    <Filter Include="Module Files\ixx\events">
+      <UniqueIdentifier>{dd08c2f6-e80e-42ca-8942-208aafb5e109}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="$(MSBuildThisFileDirectory)src\pch.h">
@@ -146,13 +149,7 @@
     <ClCompile Include="$(MSBuildThisFileDirectory)modules\amovementevent.ixx">
       <Filter>Module Files\ixx</Filter>
     </ClCompile>
-    <ClCompile Include="$(MSBuildThisFileDirectory)modules\aeventsystem.ixx">
-      <Filter>Module Files\ixx</Filter>
-    </ClCompile>
     <ClCompile Include="$(MSBuildThisFileDirectory)modules\aeditor.ixx">
-      <Filter>Module Files\ixx</Filter>
-    </ClCompile>
-    <ClCompile Include="$(MSBuildThisFileDirectory)modules\asaveloadsystem.ixx">
       <Filter>Module Files\ixx</Filter>
     </ClCompile>
     <ClCompile Include="$(MSBuildThisFileDirectory)modules\aengine.diagnostics.ixx">
@@ -374,12 +371,6 @@
     <ClCompile Include="$(MSBuildThisFileDirectory)modules\aentity.ixx">
       <Filter>Module Files\ixx\core\ecs</Filter>
     </ClCompile>
-    <ClCompile Include="$(MSBuildThisFileDirectory)modules\aentity.component.manager.ixx">
-      <Filter>Module Files\ixx\core\ecs</Filter>
-    </ClCompile>
-    <ClCompile Include="$(MSBuildThisFileDirectory)modules\aentityhistory.ixx">
-      <Filter>Module Files\ixx\core\ecs</Filter>
-    </ClCompile>
     <ClCompile Include="$(MSBuildThisFileDirectory)modules\aengine.updater.system.ixx">
       <Filter>Module Files\ixx\updater</Filter>
     </ClCompile>
@@ -535,6 +526,18 @@
     </ClCompile>
     <ClCompile Include="$(MSBuildThisFileDirectory)src\aeditor.cpp">
       <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="$(MSBuildThisFileDirectory)modules\aecs.entitycomponentmanager.ixx">
+      <Filter>Module Files\ixx\core\ecs</Filter>
+    </ClCompile>
+    <ClCompile Include="$(MSBuildThisFileDirectory)modules\aecs.entityhistory.ixx">
+      <Filter>Module Files\ixx\core\ecs</Filter>
+    </ClCompile>
+    <ClCompile Include="$(MSBuildThisFileDirectory)modules\aengine.saveloadsystem.ixx">
+      <Filter>Module Files\ixx</Filter>
+    </ClCompile>
+    <ClCompile Include="$(MSBuildThisFileDirectory)modules\aengine.eventsystem.ixx">
+      <Filter>Module Files\ixx\events</Filter>
     </ClCompile>
   </ItemGroup>
 </Project>

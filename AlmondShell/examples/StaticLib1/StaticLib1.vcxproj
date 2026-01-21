@@ -343,6 +343,9 @@
     <ClCompile Update="C:\Users\iammi\source\repos\epochengine\AlmondShell\modules\aengine.diagnostics.ixx">
       <FileType>Document</FileType>
     </ClCompile>
+    <ClCompile Update="C:\Users\iammi\source\repos\epochengine\AlmondShell\modules\aengine.eventsystem.ixx">
+      <FileType>Document</FileType>
+    </ClCompile>
     <ClCompile Update="C:\Users\iammi\source\repos\epochengine\AlmondShell\modules\aengine.gui.ixx">
       <FileType>Document</FileType>
     </ClCompile>

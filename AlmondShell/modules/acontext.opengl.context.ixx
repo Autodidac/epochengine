@@ -24,7 +24,7 @@
 // acontext.opengl.context.ixx
 module;
 
-#include "..\\include\\aengine.config.hpp"
+#include <include/aengine.config.hpp>
 
 // OS + GL headers in global module fragment.
 #if defined(_WIN32)

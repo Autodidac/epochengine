@@ -60,8 +60,11 @@
     <ClCompile Include="$(MSBuildThisFileDirectory)modules\acontext.raylib.api.ixx" />
     <ClCompile Include="$(MSBuildThisFileDirectory)modules\acontext.raylib.context.win.ixx" />
     <ClCompile Include="$(MSBuildThisFileDirectory)modules\acontext.raylib.input.ixx" />
+    <ClCompile Include="$(MSBuildThisFileDirectory)modules\aecs.entitycomponentmanager.ixx" />
+    <ClCompile Include="$(MSBuildThisFileDirectory)modules\aecs.entityhistory.ixx" />
     <ClCompile Include="$(MSBuildThisFileDirectory)modules\aengine.context.platform.utils.ixx" />
     <ClCompile Include="$(MSBuildThisFileDirectory)modules\aengine.gui.menu.ixx" />
+    <ClCompile Include="$(MSBuildThisFileDirectory)modules\aengine.saveloadsystem.ixx" />
     <ClCompile Include="$(MSBuildThisFileDirectory)modules\aengine.telemetry.ixx" />
     <ClCompile Include="$(MSBuildThisFileDirectory)modules\ascripting.system.ixx" />
     <ClCompile Include="$(MSBuildThisFileDirectory)modules\autility.allocator.ixx" />
@@ -105,7 +108,7 @@
     <ClCompile Include="$(MSBuildThisFileDirectory)modules\aengine.handles.ixx" />
     <ClCompile Include="$(MSBuildThisFileDirectory)modules\aengine.systems.ixx" />
     <ClCompile Include="$(MSBuildThisFileDirectory)modules\aentity.ixx" />
-    <ClCompile Include="$(MSBuildThisFileDirectory)modules\aeventsystem.ixx" />
+    <ClCompile Include="$(MSBuildThisFileDirectory)modules\aengine.eventsystem.ixx" />
     <ClCompile Include="$(MSBuildThisFileDirectory)modules\afont.renderer.ixx" />
     <ClCompile Include="$(MSBuildThisFileDirectory)modules\afroggerlike.ixx" />
     <ClCompile Include="$(MSBuildThisFileDirectory)modules\agamecore.ixx" />
@@ -132,7 +135,6 @@
     <ClCompile Include="$(MSBuildThisFileDirectory)modules\acontext.raylib.state.ixx" />
     <ClCompile Include="$(MSBuildThisFileDirectory)modules\acontext.raylib.textures.ixx" />
     <ClCompile Include="$(MSBuildThisFileDirectory)modules\asandsim.ixx" />
-    <ClCompile Include="$(MSBuildThisFileDirectory)modules\asaveloadsystem.ixx" />
     <ClCompile Include="$(MSBuildThisFileDirectory)modules\ascene.ixx" />
     <ClCompile Include="$(MSBuildThisFileDirectory)modules\aengine.updater.config.ixx" />
     <ClCompile Include="$(MSBuildThisFileDirectory)modules\aengine.version.ixx" />
@@ -172,8 +174,6 @@
     <ClCompile Include="$(MSBuildThisFileDirectory)modules\acontext.sdl.renderer.ixx" />
     <ClCompile Include="$(MSBuildThisFileDirectory)modules\acontext.sdl.textures.ixx" />
     <ClCompile Include="$(MSBuildThisFileDirectory)modules\aengine.scripting.compiler.ixx" />
-    <ClCompile Include="$(MSBuildThisFileDirectory)modules\aentity.component.manager.ixx" />
-    <ClCompile Include="$(MSBuildThisFileDirectory)modules\aentityhistory.ixx" />
     <ClCompile Include="$(MSBuildThisFileDirectory)modules\autility.filewatch.ixx" />
     <ClCompile Include="$(MSBuildThisFileDirectory)modules\aframework.ixx" />
     <ClCompile Include="$(MSBuildThisFileDirectory)modules\autility.atomicfunction.ixx" />
