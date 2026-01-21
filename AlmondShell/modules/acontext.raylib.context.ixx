@@ -155,26 +155,13 @@ namespace almondnamespace::raylibcontext
 
     namespace detail
     {
-        inline void ensure_offscreen_target(almondnamespace::raylibstate::RaylibState& st, unsigned w, unsigned h)
+        inline void ensure_frame_started(almondnamespace::raylibstate::RaylibState& st)
         {
-            const unsigned clampedW = (std::max)(1u, w);
-            const unsigned clampedH = (std::max)(1u, h);
-
-            if (st.offscreen.id != 0 &&
-                st.offscreenWidth == clampedW &&
-                st.offscreenHeight == clampedH)
-            {
+            if (st.frameActive)
                 return;
-            }
 
-            if (st.offscreen.id != 0)
-                almondnamespace::raylib_api::unload_render_texture(st.offscreen);
-
-            st.offscreen = almondnamespace::raylib_api::load_render_texture(
-                static_cast<int>(clampedW),
-                static_cast<int>(clampedH));
-            st.offscreenWidth = clampedW;
-            st.offscreenHeight = clampedH;
+            almondnamespace::raylib_api::begin_drawing();
+            st.frameActive = true;
         }
     }
 
@@ -266,7 +253,6 @@ namespace almondnamespace::raylibcontext
             state.height = static_cast<unsigned>(clampedH);
 
          //   (void)raylib_make_current();
-            detail::ensure_offscreen_target(state, state.width, state.height);
 #if defined(_WIN32)
             detail::debug_expect_raylib_current(state, "raylib_resize");
 #endif
@@ -274,8 +260,6 @@ namespace almondnamespace::raylibcontext
             if (state.userResize)
                 state.userResize(clampedW, clampedH);
         };
-
-        detail::ensure_offscreen_target(st, st.width, st.height);
 
 #if defined(_WIN32)
         // Restore previous GL binding for the dock/multiplexer host.
@@ -342,14 +326,7 @@ namespace almondnamespace::raylibcontext
         if (!st.running)
             return;
 
-        if (st.offscreen.id == 0)
-            return;
-
-        if (!st.frameActive)
-        {
-//            almondnamespace::raylib_api::begin_texture_mode(st.offscreen);
-            st.frameActive = true;
-        }
+        detail::ensure_frame_started(st);
         almondnamespace::raylib_api::clear_background(
             almondnamespace::raylib_api::Color{
                 static_cast<unsigned char>(std::clamp(r, 0.0f, 1.0f) * 255.0f),
@@ -365,33 +342,12 @@ namespace almondnamespace::raylibcontext
         if (!st.running)
             return;
 
-        if (st.offscreen.id == 0)
-            return;
-
         (void)raylib_make_current();
         if (st.frameActive)
         {
-//            almondnamespace::raylib_api::end_texture_mode();
+            almondnamespace::raylib_api::end_drawing();
             st.frameActive = false;
         }
-        almondnamespace::raylib_api::begin_drawing();
-        const float renderWidth = static_cast<float>(almondnamespace::raylib_api::get_render_width());
-        const float renderHeight = static_cast<float>(almondnamespace::raylib_api::get_render_height());
-        const almondnamespace::raylib_api::Rectangle src{
-            0.0f,
-            0.0f,
-            static_cast<float>(st.offscreen.texture.width),
-            -static_cast<float>(st.offscreen.texture.height)
-        };
-        const almondnamespace::raylib_api::Rectangle dst{0.0f, 0.0f, renderWidth, renderHeight};
-        almondnamespace::raylib_api::draw_texture_pro(
-            st.offscreen.texture,
-            src,
-            dst,
-            almondnamespace::raylib_api::Vector2{0.0f, 0.0f},
-            0.0f,
-            almondnamespace::raylib_api::Color{255, 255, 255, 255});
-//        almondnamespace::raylib_api::end_drawing();
 
 #if defined(_WIN32)
         detail::clear_current();
@@ -417,11 +373,9 @@ namespace almondnamespace::raylibcontext
         almondnamespace::raylibtextures::shutdown_current_context_backend();
         if (st.frameActive)
         {
-            almondnamespace::raylib_api::end_texture_mode();
+            almondnamespace::raylib_api::end_drawing();
             st.frameActive = false;
         }
-        if (st.offscreen.id != 0)
-            almondnamespace::raylib_api::unload_render_texture(st.offscreen);
      //   almondnamespace::raylib_api::close_window();
 
 #if defined(_WIN32)
