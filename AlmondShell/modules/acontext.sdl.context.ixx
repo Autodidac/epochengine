@@ -157,8 +157,6 @@ export namespace almondnamespace::sdlcontext
         std::function<void(int, int)> onResize = nullptr,
         std::string windowTitle = {})
     {
-        (void)parentWnd;
-
         const int clampedWidth = (std::max)(1, w);
         const int clampedHeight = (std::max)(1, h);
 
@@ -170,7 +168,9 @@ export namespace almondnamespace::sdlcontext
         sdlcontext.framebufferHeight = clampedHeight;
 
 #if defined(_WIN32)
-        sdlcontext.parent = parentWnd;
+        HWND hostWnd = parentWnd;
+        HWND dockParent = hostWnd ? ::GetParent(hostWnd) : nullptr;
+        sdlcontext.parent = dockParent;
 #endif
 
         refresh_dimensions(ctx);
@@ -255,8 +255,26 @@ export namespace almondnamespace::sdlcontext
 
             if (ctx && ctx->windowData)
             {
+                const HWND previousHwnd = ctx->windowData->hwnd;
+                const HDC previousHdc = ctx->windowData->hdc;
                 ctx->windowData->hwnd = sdlcontext.hwnd;
-                ctx->windowData->host_hwnd = sdlcontext.parent;
+                ctx->windowData->host_hwnd = hostWnd;
+                ctx->windowData->hdc = nullptr;
+                ctx->hdc = nullptr;
+
+                if (hostWnd && previousHwnd && previousHwnd != sdlcontext.hwnd)
+                {
+                    if (previousHdc)
+                        ::ReleaseDC(previousHwnd, previousHdc);
+
+                    auto& threads = core::Threads();
+                    auto it = threads.find(previousHwnd);
+                    if (it != threads.end())
+                    {
+                        threads.emplace(sdlcontext.hwnd, std::move(it->second));
+                        threads.erase(it);
+                    }
+                }
             }
         }
 #else
@@ -287,28 +305,28 @@ export namespace almondnamespace::sdlcontext
         refresh_dimensions(ctx);
 
 #if defined(_WIN32)
-        if (sdlcontext.parent)
+        if (hostWnd)
         {
-            SetParent(sdlcontext.hwnd, sdlcontext.parent);
+            if (sdlcontext.parent)
+            {
+                SetParent(sdlcontext.hwnd, sdlcontext.parent);
 
-            LONG_PTR style = GetWindowLongPtr(sdlcontext.hwnd, GWL_STYLE);
-            style &= ~WS_OVERLAPPEDWINDOW;
-            style |= WS_CHILD | WS_VISIBLE;
-            SetWindowLongPtr(sdlcontext.hwnd, GWL_STYLE, style);
+                LONG_PTR style = GetWindowLongPtr(sdlcontext.hwnd, GWL_STYLE);
+                style &= ~WS_OVERLAPPEDWINDOW;
+                style |= WS_CHILD | WS_VISIBLE;
+                SetWindowLongPtr(sdlcontext.hwnd, GWL_STYLE, style);
 
-            // NOTE: your earlier build log showed MakeDockable signature mismatch.
-            // If MakeDockable currently takes 0 args, this call must match it.
-            almondnamespace::core::MakeDockable(sdlcontext.hwnd, sdlcontext.parent);
+                almondnamespace::core::MakeDockable(sdlcontext.hwnd, sdlcontext.parent);
+            }
 
             if (!windowTitle.empty())
             {
-                // naive UTF-8->UTF-16; replace with your string converter if you have one
                 std::wstring wideTitle(windowTitle.begin(), windowTitle.end());
                 SetWindowTextW(sdlcontext.hwnd, wideTitle.c_str());
             }
 
             RECT client{};
-            GetClientRect(sdlcontext.parent, &client);
+            GetClientRect(hostWnd, &client);
 
             const int width = (std::max)(1, static_cast<int>(client.right - client.left));
             const int height = (std::max)(1, static_cast<int>(client.bottom - client.top));
@@ -323,7 +341,11 @@ export namespace almondnamespace::sdlcontext
             if (sdlcontext.onResize)
                 sdlcontext.onResize(width, height);
 
-            PostMessage(sdlcontext.parent, WM_SIZE, 0, MAKELPARAM(width, height));
+            if (sdlcontext.parent)
+                PostMessage(sdlcontext.parent, WM_SIZE, 0, MAKELPARAM(width, height));
+
+            ::ShowWindow(hostWnd, SW_HIDE);
+            ::DestroyWindow(hostWnd);
         }
 #endif
 
