@@ -78,6 +78,9 @@ import acontext.raylib.context;       // almondnamespace::raylibcontext::raylib_
 #   if defined(ALMOND_USING_SDL)
 import acontext.sdl.context;          // almondnamespace::sdlcontext::sdl_initialize
 #   endif
+#   if defined(ALMOND_USING_SFML)
+import acontext.sfml.context;         // almondnamespace::sfmlcontext::sfml_initialize
+#   endif
 #   if defined(ALMOND_USING_SOFTWARE_RENDERER)
 import acontext.softrenderer.context; // almondnamespace::anativecontext::softrenderer_initialize
 #   endif
@@ -363,6 +366,7 @@ namespace almondnamespace::core
                     winPtr->titleNarrow = titleNarrow;
                     winPtr->width = kDefaultWidth;
                     winPtr->height = kDefaultHeight;
+                    winPtr->running = true;
 
                     WindowData* raw = winPtr.get();
                     {
@@ -562,6 +566,40 @@ namespace almondnamespace::core
                                     target, nullptr, width, height, std::move(resize), title))
                                 {
                                     std::cerr << "[Init] Failed to initialize RayLib context for hwnd="
+                                        << target->hwnd << '\n';
+                                    return false;
+                                }
+
+                                return true;
+                            };
+                    }
+#endif
+
+#if defined(ALMOND_USING_SFML)
+                    if (type == ContextType::SFML)
+                    {
+                        const unsigned width = static_cast<unsigned>((std::max)(1, window->width));
+                        const unsigned height = static_cast<unsigned>((std::max)(1, window->height));
+                        const std::string title = (i < narrowTitles.size())
+                            ? narrowTitles[i] : std::string("SFML Dock");
+                        auto resizeCopy = window->onResize;
+
+                        window->threadInitialize =
+                            [ctxWeak = std::weak_ptr<Context>(ctx),
+                            width, height, title,
+                            resize = std::move(resizeCopy)](const std::shared_ptr<Context>& liveCtx) mutable -> bool
+                            {
+                                auto target = liveCtx ? liveCtx : ctxWeak.lock();
+                                if (!target)
+                                {
+                                    std::cerr << "[Init] SFML context unavailable during thread initialization\n";
+                                    return false;
+                                }
+
+                                if (!almondnamespace::sfmlcontext::sfml_initialize(
+                                    target, nullptr, width, height, std::move(resize), title))
+                                {
+                                    std::cerr << "[Init] Failed to initialize SFML context for hwnd="
                                         << target->hwnd << '\n';
                                     return false;
                                 }
@@ -770,6 +808,7 @@ namespace almondnamespace::core
             usesSharedContext,
             type);
 
+        winPtr->running = true;
         winPtr->onResize = std::move(onResize);
         winPtr->context = ctx;
         ctx->windowData = winPtr.get();
@@ -826,6 +865,111 @@ namespace almondnamespace::core
                     catch (...)
                     {
                         std::cerr << "[Init] Unknown exception during OpenGL initialization for hwnd="
+                            << target->hwnd << '\n';
+                        return false;
+                    }
+
+                    return true;
+                };
+        }
+#endif
+
+#if defined(ALMOND_USING_SDL)
+        if (type == ContextType::SDL)
+        {
+            const int width = (std::max)(1, winPtr->width);
+            const int height = (std::max)(1, winPtr->height);
+            const std::string title = !winPtr->titleNarrow.empty()
+                ? winPtr->titleNarrow
+                : std::string("SDL Dock");
+            auto resizeCopy = winPtr->onResize;
+
+            winPtr->threadInitialize =
+                [ctxWeak = std::weak_ptr<Context>(ctx),
+                width, height, title,
+                resize = std::move(resizeCopy)](const std::shared_ptr<Context>& liveCtx) mutable -> bool
+                {
+                    auto target = liveCtx ? liveCtx : ctxWeak.lock();
+                    if (!target)
+                    {
+                        std::cerr << "[Init] SDL context unavailable during thread initialization\n";
+                        return false;
+                    }
+
+                    if (!almondnamespace::sdlcontext::sdl_initialize(
+                        target, nullptr, width, height, std::move(resize), title))
+                    {
+                        std::cerr << "[Init] Failed to initialize SDL context for hwnd="
+                            << target->hwnd << '\n';
+                        return false;
+                    }
+
+                    return true;
+                };
+        }
+#endif
+
+#if defined(ALMOND_USING_RAYLIB)
+        if (type == ContextType::RayLib)
+        {
+            const unsigned width = static_cast<unsigned>((std::max)(1, winPtr->width));
+            const unsigned height = static_cast<unsigned>((std::max)(1, winPtr->height));
+            const std::string title = !winPtr->titleNarrow.empty()
+                ? winPtr->titleNarrow
+                : std::string("Raylib Dock");
+            auto resizeCopy = winPtr->onResize;
+
+            winPtr->threadInitialize =
+                [ctxWeak = std::weak_ptr<Context>(ctx),
+                width, height, title,
+                resize = std::move(resizeCopy)](const std::shared_ptr<Context>& liveCtx) mutable -> bool
+                {
+                    auto target = liveCtx ? liveCtx : ctxWeak.lock();
+                    if (!target)
+                    {
+                        std::cerr << "[Init] RayLib context unavailable during thread initialization\n";
+                        return false;
+                    }
+
+                    if (!almondnamespace::raylibcontext::raylib_initialize(
+                        target, nullptr, width, height, std::move(resize), title))
+                    {
+                        std::cerr << "[Init] Failed to initialize RayLib context for hwnd="
+                            << target->hwnd << '\n';
+                        return false;
+                    }
+
+                    return true;
+                };
+        }
+#endif
+
+#if defined(ALMOND_USING_SFML)
+        if (type == ContextType::SFML)
+        {
+            const unsigned width = static_cast<unsigned>((std::max)(1, winPtr->width));
+            const unsigned height = static_cast<unsigned>((std::max)(1, winPtr->height));
+            const std::string title = !winPtr->titleNarrow.empty()
+                ? winPtr->titleNarrow
+                : std::string("SFML Dock");
+            auto resizeCopy = winPtr->onResize;
+
+            winPtr->threadInitialize =
+                [ctxWeak = std::weak_ptr<Context>(ctx),
+                width, height, title,
+                resize = std::move(resizeCopy)](const std::shared_ptr<Context>& liveCtx) mutable -> bool
+                {
+                    auto target = liveCtx ? liveCtx : ctxWeak.lock();
+                    if (!target)
+                    {
+                        std::cerr << "[Init] SFML context unavailable during thread initialization\n";
+                        return false;
+                    }
+
+                    if (!almondnamespace::sfmlcontext::sfml_initialize(
+                        target, nullptr, width, height, std::move(resize), title))
+                    {
+                        std::cerr << "[Init] Failed to initialize SFML context for hwnd="
                             << target->hwnd << '\n';
                         return false;
                     }
@@ -1104,12 +1248,27 @@ namespace almondnamespace::core
             }
         }
 
-        if (ctx->initialize)
-            ctx->initialize_safe();
-        else
+        const bool skipGenericInit =
+#if defined(ALMOND_USING_SFML)
+            (ctx->type == ContextType::SFML) ||
+#endif
+#if defined(ALMOND_USING_RAYLIB)
+            (ctx->type == ContextType::RayLib) ||
+#endif
+#if defined(ALMOND_USING_SDL)
+            (ctx->type == ContextType::SDL) ||
+#endif
+            false;
+
+        if (!skipGenericInit)
         {
-            win.running = false;
-            return;
+            if (ctx->initialize)
+                ctx->initialize_safe();
+            else
+            {
+                win.running = false;
+                return;
+            }
         }
 
         while (running.load(std::memory_order_acquire) && win.running)
