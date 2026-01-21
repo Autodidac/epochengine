@@ -175,6 +175,61 @@ export namespace almondnamespace::openglcontext
             return result;
         }
 
+#if defined(_WIN32) || defined(__linux__)
+        struct DrawableSize
+        {
+            int width = 0;
+            int height = 0;
+            [[nodiscard]] bool valid() const noexcept { return width > 0 && height > 0; }
+        };
+#endif
+
+#if defined(_WIN32)
+        inline DrawableSize query_drawable_size(const core::Context* ctx,
+            const almondnamespace::openglstate::OpenGL4State& state) noexcept
+        {
+            DrawableSize size{};
+            HWND hwnd = nullptr;
+            if (ctx && ctx->windowData && ctx->windowData->hwnd)
+                hwnd = ctx->windowData->hwnd;
+            if (!hwnd && ctx && ctx->hwnd)
+                hwnd = ctx->hwnd;
+            if (!hwnd)
+                hwnd = state.hwnd;
+
+            if (!hwnd)
+                return size;
+
+            RECT rc{};
+            if (!::GetClientRect(hwnd, &rc))
+                return size;
+
+            size.width = (std::max)(1, static_cast<int>(rc.right - rc.left));
+            size.height = (std::max)(1, static_cast<int>(rc.bottom - rc.top));
+            return size;
+        }
+#elif defined(__linux__)
+        inline DrawableSize query_drawable_size(const PlatformGL::PlatformGLContext& active,
+            const almondnamespace::openglstate::OpenGL4State& state) noexcept
+        {
+            DrawableSize size{};
+            Display* display = active.display ? active.display : state.display;
+            GLXDrawable drawable = active.drawable ? active.drawable : state.drawable;
+
+            if (!display || drawable == 0)
+                return size;
+
+            unsigned int w = 0;
+            unsigned int h = 0;
+            ::glXQueryDrawable(display, drawable, GLX_WIDTH, &w);
+            ::glXQueryDrawable(display, drawable, GLX_HEIGHT, &h);
+
+            size.width = static_cast<int>((std::max)(1u, w));
+            size.height = static_cast<int>((std::max)(1u, h));
+            return size;
+        }
+#endif
+
 #if defined(_WIN32)
         inline bool is_bad_wgl_ptr(void* p) noexcept
         {
@@ -545,6 +600,29 @@ export namespace almondnamespace::openglcontext
 
         atlasmanager::process_pending_uploads(core::ContextType::OpenGL);
 
+        int fbW = (std::max)(1, opengl_get_width());
+        int fbH = (std::max)(1, opengl_get_height());
+#if defined(_WIN32)
+        if (auto size = detail::query_drawable_size(ctx.get(), glState); size.valid())
+        {
+            fbW = size.width;
+            fbH = size.height;
+        }
+#elif defined(__linux__)
+        if (auto size = detail::query_drawable_size(guard.target(), glState); size.valid())
+        {
+            fbW = size.width;
+            fbH = size.height;
+        }
+#endif
+
+        glState.width = static_cast<unsigned int>((std::max)(1, fbW));
+        glState.height = static_cast<unsigned int>((std::max)(1, fbH));
+        ctx->framebufferWidth = fbW;
+        ctx->framebufferHeight = fbH;
+
+        glViewport(0, 0, fbW, fbH);
+
         if (!almondnamespace::openglquad::ensure_quad_pipeline(glState))
         {
             queue.drain();
@@ -552,9 +630,6 @@ export namespace almondnamespace::openglcontext
             return true;
         }
 
-        const int fbW = (std::max)(1, opengl_get_width());
-        const int fbH = (std::max)(1, opengl_get_height());
-        glViewport(0, 0, fbW, fbH);
         telemetry::emit_gauge(
             "renderer.framebuffer.size",
             static_cast<std::int64_t>(fbW),
