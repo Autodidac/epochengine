@@ -234,6 +234,10 @@ namespace almondnamespace::raylibcontext
             title_storage().c_str());
 
 #if defined(_WIN32)
+        // Raylib creates its own OpenGL context. Capture it now so we bind the right dc/rc later.
+        st.hdc = detail::current_dc();
+        st.hglrc = detail::current_context();
+
         const HWND raylibHwnd = static_cast<HWND>(almondnamespace::raylib_api::get_window_handle());
         const HWND parentHwnd = static_cast<HWND>(parent);
         if (parentHwnd || raylibHwnd)
@@ -304,6 +308,10 @@ namespace almondnamespace::raylibcontext
         if (!st.running)
             return;
 
+#if defined(_WIN32)
+        (void)raylib_make_current();
+#endif
+
         if (almondnamespace::raylib_api::window_should_close())
         {
             st.running = false;
@@ -325,6 +333,10 @@ namespace almondnamespace::raylibcontext
         auto& st = almondnamespace::raylibstate::s_raylibstate;
         if (!st.running)
             return;
+
+#if defined(_WIN32)
+        (void)raylib_make_current();
+#endif
 
         detail::ensure_frame_started(st);
         almondnamespace::raylib_api::clear_background(
