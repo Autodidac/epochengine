@@ -358,6 +358,15 @@ namespace almondnamespace::gui
             g_resources.font.atlas = atlasVec[static_cast<std::size_t>(g_resources.font.asset->atlas_index)];
             // DO NOT call ensure_uploaded() here (see next section)
         }
+
+        if (!g_resources.font.atlas)
+        {
+            if (auto it = almondnamespace::atlasmanager::atlas_map.find("font_atlas");
+                it != almondnamespace::atlasmanager::atlas_map.end())
+            {
+                g_resources.font.atlas = it->second.get();
+            }
+        }
     }
 
     static void ensure_resources()
