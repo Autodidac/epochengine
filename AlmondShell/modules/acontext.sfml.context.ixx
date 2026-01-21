@@ -131,15 +131,12 @@ export namespace almondnamespace::sfmlcontext
                 sfmlcontext.height = static_cast<unsigned int>((std::max)(1, height));
 
                 if (sfmlcontext.window)
-                {
-                    sfmlcontext.window->setSize(sf::Vector2u(sfmlcontext.width, sfmlcontext.height));
                     sfmlcontext.window->setView(sf::View(
                         sf::FloatRect(
                             0.0f,
                             0.0f,
                             static_cast<float>(sfmlcontext.width),
                             static_cast<float>(sfmlcontext.height))));
-                }
 
                 auto locked = weakCtx.lock();
                 refresh_dimensions(locked);
