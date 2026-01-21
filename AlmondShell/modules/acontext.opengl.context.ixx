@@ -212,29 +212,6 @@ export namespace almondnamespace::openglcontext
                 glStatePtr->width = static_cast<unsigned int>(clampedWidth);
                 glStatePtr->height = static_cast<unsigned int>(clampedHeight);
 
-#if defined(_WIN32)
-                if (glStatePtr->hwnd)
-                {
-                    ::SetWindowPos(
-                        glStatePtr->hwnd,
-                        nullptr,
-                        0,
-                        0,
-                        clampedWidth,
-                        clampedHeight,
-                        SWP_NOZORDER | SWP_NOACTIVATE | SWP_NOMOVE);
-                }
-#elif defined(__linux__)
-                if (glStatePtr->display && glStatePtr->window)
-                {
-                    XResizeWindow(glStatePtr->display, glStatePtr->window,
-                        static_cast<unsigned int>(clampedWidth),
-                        static_cast<unsigned int>(clampedHeight));
-                    XFlush(glStatePtr->display);
-                    glStatePtr->drawable = glStatePtr->window;
-                }
-#endif
-
                 if (resize)
                     resize(clampedWidth, clampedHeight);
             };
