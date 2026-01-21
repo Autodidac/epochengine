@@ -497,9 +497,6 @@
     <ClCompile Include="$(MSBuildThisFileDirectory)modules\aengine.context.platform.utils.ixx">
       <Filter>Module Files\ixx\core\context</Filter>
     </ClCompile>
-    <ClCompile Include="$(MSBuildThisFileDirectory)src\aeditor.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
     <ClCompile Include="$(MSBuildThisFileDirectory)src\aengine.context.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
@@ -535,6 +532,12 @@
     </ClCompile>
     <ClCompile Include="$(MSBuildThisFileDirectory)modules\aapplicationmodule.ixx">
       <Filter>Module Files\ixx\games\gamecore</Filter>
+    </ClCompile>
+    <ClCompile Include="$(MSBuildThisFileDirectory)src\scripts\editor_launcher.ascript.cpp">
+      <Filter>Source Files\scripts</Filter>
+    </ClCompile>
+    <ClCompile Include="$(MSBuildThisFileDirectory)src\aeditor.cpp">
+      <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>
 </Project>
