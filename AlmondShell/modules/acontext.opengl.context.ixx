@@ -411,11 +411,13 @@ export namespace almondnamespace::openglcontext
             PlatformGL::PlatformGLContext finalCtx{};
             finalCtx.device = glState.hdc;
             finalCtx.context = glState.hglrc;
-            if (!contextGuard.set(finalCtx))
+
+            contextGuard = PlatformGL::ScopedContext{finalCtx};
+            if (!contextGuard.ok())
                 throw std::runtime_error("[OpenGL] PlatformGL::make_current(final) failed");
         }
 
-        // Load GL entry points.
+        // Load GL entry points with the single authoritative loader.
         if (!gladLoadGLLoader(reinterpret_cast<GLADloadproc>(PlatformGL::get_proc_address)))
             throw std::runtime_error("[OpenGL] gladLoadGLLoader failed");
 
@@ -521,7 +523,9 @@ export namespace almondnamespace::openglcontext
             finalCtx.display = display;
             finalCtx.drawable = glState.drawable;
             finalCtx.context = glState.glxContext;
-            if (!contextGuard.set(finalCtx))
+
+            contextGuard = PlatformGL::ScopedContext{finalCtx};
+            if (!contextGuard.ok())
                 throw std::runtime_error("[OpenGL] glXMakeCurrent failed");
         }
 
