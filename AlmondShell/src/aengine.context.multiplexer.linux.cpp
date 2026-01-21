@@ -70,6 +70,8 @@ import autility.string.converter;     // almondnamespace::text::narrow_utf8
 // ---- backends (only referenced when enabled) ----
 #   if defined(ALMOND_USING_OPENGL)
 import acontext.opengl.context;       // almondnamespace::openglcontext::opengl_initialize
+#   endif
+#   if defined(ALMOND_USING_OPENGL) || defined(ALMOND_USING_RAYLIB) || defined(ALMOND_USING_SDL)
 import acontext.opengl.platform;      // almondnamespace::openglcontext::PlatformGL::get_proc_address
 #   endif
 #   if defined(ALMOND_USING_RAYLIB)
@@ -1251,20 +1253,25 @@ namespace almondnamespace::core
             static std::atomic<bool> gladInitialized{ false };
             if (!gladInitialized.load(std::memory_order_acquire))
             {
-                auto loadProc = [](const char* name) -> void*
-                    {
-#if defined(ALMOND_USING_OPENGL)
-                        return almondnamespace::openglcontext::PlatformGL::get_proc_address(name);
-#else
-                        return reinterpret_cast<void*>(
-                            glXGetProcAddressARB(reinterpret_cast<const GLubyte*>(name)));
-#endif
-                    };
+                almondnamespace::openglcontext::PlatformGL::PlatformGLContext finalCtx{};
+                finalCtx.display = localDisplay;
+                finalCtx.drawable = xwin;
+                finalCtx.context = glxCtx;
 
-                if (gladLoadGLLoader(loadProc))
+                almondnamespace::openglcontext::PlatformGL::ScopedContext contextGuard{finalCtx};
+                if (!contextGuard.ok())
+                {
+                    std::cerr << "[Init] PlatformGL::make_current(final) failed on Linux\n";
+                }
+                else if (gladLoadGLLoader(reinterpret_cast<GLADloadproc>(
+                    almondnamespace::openglcontext::PlatformGL::get_proc_address)))
+                {
                     gladInitialized.store(true, std::memory_order_release);
+                }
                 else
+                {
                     std::cerr << "[Init] Failed to load OpenGL functions via GLAD on Linux\n";
+                }
             }
 #endif
         }

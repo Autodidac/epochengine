@@ -247,6 +247,7 @@ export namespace almondnamespace::openglcontext::PlatformGL
 
         [[nodiscard]] bool success()  const noexcept { return success_; }
         [[nodiscard]] bool switched() const noexcept { return switched_; }
+        [[nodiscard]] bool ok() const noexcept { return success_; }
         [[nodiscard]] const PlatformGLContext& target() const noexcept { return target_; }
 
     private:
