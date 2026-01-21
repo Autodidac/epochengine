@@ -113,9 +113,12 @@ export namespace almondnamespace::sfmlcontext
         sfmlcontext.height = clampedHeight;
 
 #if defined(_WIN32)
-        sfmlcontext.parent = parentWnd;
+        const bool attachToHostWindow =
+            parentWnd && ctx && ctx->windowData && ctx->windowData->hwnd == parentWnd;
+        sfmlcontext.parent = attachToHostWindow ? nullptr : parentWnd;
 #else
         (void)parentWnd;
+        const bool attachToHostWindow = false;
 #endif
 
         std::weak_ptr<core::Context> weakCtx = ctx;
@@ -164,9 +167,17 @@ export namespace almondnamespace::sfmlcontext
         if (windowTitle.empty())
             windowTitle = "SFML Window";
 
-        sf::VideoMode mode(sfmlcontext.width, sfmlcontext.height, 32u);
-        sfmlcontext.window = std::make_unique<sf::RenderWindow>(
-            mode, windowTitle, sf::Style::Default, settings);
+        if (attachToHostWindow)
+        {
+            sfmlcontext.window = std::make_unique<sf::RenderWindow>(
+                static_cast<sf::WindowHandle>(parentWnd), settings);
+        }
+        else
+        {
+            sf::VideoMode mode(sfmlcontext.width, sfmlcontext.height, 32u);
+            sfmlcontext.window = std::make_unique<sf::RenderWindow>(
+                mode, windowTitle, sf::Style::Default, settings);
+        }
 
         if (!sfmlcontext.window || !sfmlcontext.window->isOpen())
         {

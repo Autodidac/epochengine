@@ -278,8 +278,11 @@ export namespace almondnamespace::sdlcontext
             return false;
         }
 
-        if (SDL_SetRenderVSync(sdlcontext.renderer, 1) != 0)
-            std::cerr << "[SDL] SDL_SetRenderVSync failed: " << SDL_GetError() << "\n";
+        if (!sdlcontext.parent)
+        {
+            if (SDL_SetRenderVSync(sdlcontext.renderer, 1) != 0)
+                std::cerr << "[SDL] SDL_SetRenderVSync failed: " << SDL_GetError() << "\n";
+        }
 
         init_renderer(sdlcontext.renderer);
         sdltextures::sdl_renderer = sdlcontext.renderer;
