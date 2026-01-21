@@ -1139,11 +1139,61 @@ namespace almondnamespace::core
             return 0;
 
         case WM_CLOSE:
+        {
+            std::vector<HWND> children;
+            {
+                std::scoped_lock lock(mgr->windowsMutex);
+                children.reserve(mgr->windows.size());
+                for (const auto& win : mgr->windows)
+                {
+                    if (win && win->hwnd && ::GetParent(win->hwnd) == hwnd)
+                        children.push_back(win->hwnd);
+                }
+            }
+
+            for (HWND child : children)
+            {
+                RECT clientRect{};
+                ::GetClientRect(child, &clientRect);
+                const int clientW = clamp_positive(static_cast<int>(clientRect.right - clientRect.left));
+                const int clientH = clamp_positive(static_cast<int>(clientRect.bottom - clientRect.top));
+
+                RECT adjusted{ 0, 0, clientW, clientH };
+                LONG_PTR style = ::GetWindowLongPtrW(child, GWL_STYLE);
+                style &= ~WS_CHILD;
+                style |= WS_OVERLAPPEDWINDOW | WS_VISIBLE;
+                ::SetWindowLongPtrW(child, GWL_STYLE, style);
+
+                const DWORD exStyle = static_cast<DWORD>(::GetWindowLongPtrW(child, GWL_EXSTYLE));
+                if (::AdjustWindowRectEx(&adjusted, static_cast<DWORD>(style), FALSE, exStyle))
+                {
+                    const int wndW = clamp_positive(adjusted.right - adjusted.left);
+                    const int wndH = clamp_positive(adjusted.bottom - adjusted.top);
+                    ::SetParent(child, nullptr);
+                    ::SetWindowPos(child, nullptr, 0, 0, wndW, wndH,
+                        SWP_NOMOVE | SWP_NOZORDER | SWP_FRAMECHANGED | SWP_SHOWWINDOW);
+                }
+                else
+                {
+                    ::SetParent(child, nullptr);
+                }
+            }
+
+            mgr->parent = nullptr;
             ::DestroyWindow(hwnd);
             return 0;
+        }
 
         case WM_DESTROY:
-            if (hwnd == mgr->GetParentWindow()) ::PostQuitMessage(0);
+            if (hwnd == mgr->GetParentWindow())
+            {
+                bool hasWindows = false;
+                {
+                    std::scoped_lock lock(mgr->windowsMutex);
+                    hasWindows = !mgr->windows.empty();
+                }
+                if (!hasWindows) ::PostQuitMessage(0);
+            }
             return 0;
         }
 
@@ -1315,6 +1365,16 @@ namespace almondnamespace::core
             ::EndPaint(hwnd, &ps);
             return 0;
         }
+        case WM_CLOSE:
+            ::DestroyWindow(hwnd);
+            return 0;
+
+        case WM_DESTROY:
+            if (auto* mgr = s_activeInstance)
+            {
+                mgr->RemoveWindow(hwnd);
+            }
+            return 0;
 
         default:
             return ::DefWindowProcW(hwnd, msg, wParam, lParam);
