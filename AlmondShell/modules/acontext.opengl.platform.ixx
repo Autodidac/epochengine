@@ -45,7 +45,9 @@ module;
 
 export module acontext.opengl.platform;
 
+import <bit>;
 import <cstdint>;
+import <ranges>;
 import <utility>;
 
 #if defined(ALMOND_USING_OPENGL)
@@ -157,22 +159,32 @@ export namespace almondnamespace::openglcontext::PlatformGL
 
     inline void* get_proc_address(const char* name) noexcept
     {
-        if (!name) return nullptr;
+        if (!name || *name == '\0') return nullptr;
 
 #if defined(_WIN32)
-        // wglGetProcAddress handles extensions; may return sentinel values.
-        if (auto p = reinterpret_cast<void*>(::wglGetProcAddress(name)))
+        // wglGetProcAddress handles extensions but may return sentinel values.
+        const auto wglProc = ::wglGetProcAddress(name);
+        if (wglProc)
         {
-            const auto v = reinterpret_cast<std::uintptr_t>(p);
-            if (v != 0 && v != 1 && v != 2 && v != 3 && v != static_cast<std::uintptr_t>(-1))
-                return p;
+            const auto addr = std::bit_cast<std::uintptr_t>(wglProc);
+            constexpr std::uintptr_t kSentinelValues[] = {
+                0u, 1u, 2u, 3u, static_cast<std::uintptr_t>(-1)
+            };
+
+            const bool isSentinel = std::ranges::any_of(
+                kSentinelValues,
+                [addr](std::uintptr_t s) noexcept { return addr == s; });
+
+            if (!isSentinel)
+                return reinterpret_cast<void*>(wglProc);
         }
 
         static HMODULE opengl32 = ::GetModuleHandleW(L"opengl32.dll");
         if (!opengl32) opengl32 = ::LoadLibraryW(L"opengl32.dll");
         if (!opengl32) return nullptr;
 
-        return reinterpret_cast<void*>(::GetProcAddress(opengl32, name));
+        const auto coreProc = ::GetProcAddress(opengl32, name);
+        return reinterpret_cast<void*>(coreProc);
 
 #elif defined(__linux__)
         // glXGetProcAddressARB returns function pointer for extensions
