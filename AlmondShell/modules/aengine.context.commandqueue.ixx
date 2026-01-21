@@ -9,6 +9,7 @@ export module aengine.context.commandqueue;
 // ------------------------------------------------------------
 // Standard library
 // ------------------------------------------------------------
+import <atomic>;
 import <cstddef>;
 import <functional>;
 import <mutex>;
@@ -31,6 +32,7 @@ export namespace almondnamespace::core
             if (!cmd) return;
             std::lock_guard<std::mutex> lock(mutex_);
             commands_.push(std::move(cmd));
+            depth_.fetch_add(1, std::memory_order_relaxed);
         }
 
         // Remove all queued commands (thread-safe)
@@ -39,6 +41,7 @@ export namespace almondnamespace::core
             std::lock_guard<std::mutex> lock(mutex_);
             std::queue<RenderCommand> empty;
             commands_.swap(empty);
+            depth_.store(0, std::memory_order_relaxed);
         }
 
         // Execute all queued commands. Returns true if anything ran.
@@ -50,6 +53,7 @@ export namespace almondnamespace::core
                 if (commands_.empty())
                     return false;
                 local.swap(commands_);
+                depth_.store(0, std::memory_order_relaxed);
             }
 
             while (!local.empty())
@@ -64,8 +68,7 @@ export namespace almondnamespace::core
         // Depth snapshot for telemetry (thread-safe)
         [[nodiscard]] std::size_t depth() const noexcept
         {
-            std::lock_guard<std::mutex> lock(mutex_);
-            return commands_.size();
+            return depth_.load(std::memory_order_relaxed);
         }
 
         // Optional: run at most one command (useful for budgeted pumping)
@@ -78,6 +81,7 @@ export namespace almondnamespace::core
                     return false;
                 cmd = std::move(commands_.front());
                 commands_.pop();
+                depth_.fetch_sub(1, std::memory_order_relaxed);
             }
             if (cmd) cmd();
             return true;
@@ -86,5 +90,6 @@ export namespace almondnamespace::core
     private:
         mutable std::mutex mutex_;
         std::queue<RenderCommand> commands_;
+        std::atomic_size_t depth_{ 0 };
     };
 }
