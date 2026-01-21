@@ -37,6 +37,7 @@ export module acontext.raylib.context;
 import <algorithm>;
 import <cmath>;
 import <cstdint>;
+import <chrono>;
 import <functional>;
 import <memory>;
 import <string>;
@@ -126,12 +127,14 @@ namespace almondnamespace::raylibcontext
             st.parent = dockParent;
             st.hwnd = raylibHwnd;
 
+            bool attachedToDock = false;
             if (dockParent && dockParent != raylibHwnd)
             {
                 if (::GetParent(raylibHwnd) != dockParent)
                 {
                     ::SetParent(raylibHwnd, dockParent);
                 }
+                attachedToDock = true;
 
                 LONG_PTR style = ::GetWindowLongPtrW(raylibHwnd, GWL_STYLE);
                 style &= ~static_cast<LONG_PTR>(WS_OVERLAPPEDWINDOW);
@@ -147,7 +150,7 @@ namespace almondnamespace::raylibcontext
 
                 almondnamespace::core::MakeDockable(raylibHwnd, dockParent);
 
-                if (dockParent != parent && parent)
+                if (attachedToDock && parent && parent != dockParent)
                 {
                     ::ShowWindow(parent, SW_HIDE);
                     ::DestroyWindow(parent);
@@ -272,9 +275,21 @@ namespace almondnamespace::raylibcontext
 
         const HWND raylibHwnd = static_cast<HWND>(almondnamespace::raylib_api::get_window_handle());
         const HWND parentHwnd = static_cast<HWND>(parent);
-        if (parentHwnd || raylibHwnd)
+        HWND adoptedHwnd = raylibHwnd;
+        for (int attempt = 0; attempt < 5 && !adoptedHwnd; ++attempt)
         {
-            detail::adopt_raylib_window(st, ctx, parentHwnd, raylibHwnd);
+            almondnamespace::raylib_api::begin_drawing();
+            almondnamespace::raylib_api::end_drawing();
+            std::this_thread::sleep_for(std::chrono::milliseconds(10));
+            adoptedHwnd = static_cast<HWND>(almondnamespace::raylib_api::get_window_handle());
+        }
+        if (adoptedHwnd)
+        {
+            detail::adopt_raylib_window(st, ctx, parentHwnd, adoptedHwnd);
+        }
+        else if (parentHwnd)
+        {
+            std::cerr << "[Raylib] WARNING: Failed to acquire Raylib window handle for docking.\n";
         }
 #endif
 
