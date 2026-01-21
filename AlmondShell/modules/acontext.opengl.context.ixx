@@ -245,112 +245,133 @@ export namespace almondnamespace::openglcontext
         HWND parentHwnd = static_cast<HWND>(parentWindowOpaque);
         if (ctx->windowData && ctx->windowData->hwnd)
             parentHwnd = ctx->windowData->hwnd;
+        if (!parentHwnd && ctx->hwnd)
+            parentHwnd = ctx->hwnd;
 
         if (!parentHwnd)
             throw std::runtime_error("[OpenGL] No parent HWND available");
 
-        // Avoid custom window class registration: use a stock class.
-        if (!glState.hwnd)
+        bool usingExternalContext = false;
+        if (ctx->windowData && ctx->windowData->hwnd && ctx->windowData->hdc && ctx->windowData->glrc)
         {
-            glState.parent = parentHwnd;
-            glState.hwnd = ::CreateWindowExW(
-                0,
-                L"STATIC",
-                L"",
-                WS_CHILD | WS_VISIBLE | WS_CLIPSIBLINGS | WS_CLIPCHILDREN,
-                0, 0, static_cast<int>(w), static_cast<int>(h),
-                glState.parent,
-                nullptr,
-                ::GetModuleHandleW(nullptr),
-                nullptr);
+            glState.hwnd = ctx->windowData->hwnd;
+            glState.hdc = ctx->windowData->hdc;
+            glState.hglrc = ctx->windowData->glrc;
+            usingExternalContext = true;
+        }
+        else if (ctx->hwnd && ctx->hdc && ctx->hglrc)
+        {
+            glState.hwnd = ctx->hwnd;
+            glState.hdc = ctx->hdc;
+            glState.hglrc = ctx->hglrc;
+            usingExternalContext = true;
+        }
 
+        if (!usingExternalContext)
+        {
+            // Avoid custom window class registration: use a stock class.
             if (!glState.hwnd)
-                throw std::runtime_error("[OpenGL] CreateWindowExW failed for child GL window");
-        }
-
-        glState.hdc = ::GetDC(glState.hwnd);
-        if (!glState.hdc)
-            throw std::runtime_error("[OpenGL] GetDC failed");
-
-        // SetPixelFormat is one-time per HDC.
-        if (::GetPixelFormat(glState.hdc) == 0)
-        {
-            PIXELFORMATDESCRIPTOR pfd{
-                sizeof(PIXELFORMATDESCRIPTOR), 1,
-                PFD_DRAW_TO_WINDOW | PFD_SUPPORT_OPENGL | PFD_DOUBLEBUFFER,
-                PFD_TYPE_RGBA, 32,
-                0,0,0,0,0,0,0,0,0,
-                24, 0, 0, 0, 0, 0, 0, 0
-            };
-
-            int pf = ::ChoosePixelFormat(glState.hdc, &pfd);
-            if (!pf) throw std::runtime_error("[OpenGL] ChoosePixelFormat failed");
-            if (!::SetPixelFormat(glState.hdc, pf, &pfd))
-                throw std::runtime_error("[OpenGL] SetPixelFormat failed");
-        }
-
-        // ---- WGL bootstrap (correctly): temp context stays current while loading + creating ----
-        HGLRC tmp = ::wglCreateContext(glState.hdc);
-        if (!tmp) throw std::runtime_error("[OpenGL] wglCreateContext(temp) failed");
-        if (::wglMakeCurrent(glState.hdc, tmp) != TRUE)
-        {
-            ::wglDeleteContext(tmp);
-            throw std::runtime_error("[OpenGL] wglMakeCurrent(temp) failed");
-        }
-
-        // Load wglCreateContextAttribsARB safely (filter WGL sentinel pointers).
-        PFNWGLCREATECONTEXTATTRIBSARBPROC wglCreateContextAttribsARB = nullptr;
-        {
-            void* raw = reinterpret_cast<void*>(::wglGetProcAddress("wglCreateContextAttribsARB"));
-            if (!detail::is_bad_wgl_ptr(raw))
-                wglCreateContextAttribsARB = reinterpret_cast<PFNWGLCREATECONTEXTATTRIBSARBPROC>(raw);
-        }
-
-        // Try modern core context; if it fails or extension missing, keep the temp legacy context as final.
-        glState.hglrc = nullptr;
-
-        if (wglCreateContextAttribsARB)
-        {
-            int attribs46[] = {
-                WGL_CONTEXT_MAJOR_VERSION_ARB, 4,
-                WGL_CONTEXT_MINOR_VERSION_ARB, 6,
-                WGL_CONTEXT_PROFILE_MASK_ARB,  WGL_CONTEXT_CORE_PROFILE_BIT_ARB,
-                0
-            };
-
-            glState.hglrc = wglCreateContextAttribsARB(glState.hdc, nullptr, attribs46);
-
-            if (!glState.hglrc)
             {
-                int attribs41[] = {
+                glState.parent = parentHwnd;
+                glState.hwnd = ::CreateWindowExW(
+                    0,
+                    L"STATIC",
+                    L"",
+                    WS_CHILD | WS_VISIBLE | WS_CLIPSIBLINGS | WS_CLIPCHILDREN,
+                    0, 0, static_cast<int>(w), static_cast<int>(h),
+                    glState.parent,
+                    nullptr,
+                    ::GetModuleHandleW(nullptr),
+                    nullptr);
+
+                if (!glState.hwnd)
+                    throw std::runtime_error("[OpenGL] CreateWindowExW failed for child GL window");
+            }
+
+            glState.hdc = ::GetDC(glState.hwnd);
+            if (!glState.hdc)
+                throw std::runtime_error("[OpenGL] GetDC failed");
+
+            // SetPixelFormat is one-time per HDC.
+            if (::GetPixelFormat(glState.hdc) == 0)
+            {
+                PIXELFORMATDESCRIPTOR pfd{
+                    sizeof(PIXELFORMATDESCRIPTOR), 1,
+                    PFD_DRAW_TO_WINDOW | PFD_SUPPORT_OPENGL | PFD_DOUBLEBUFFER,
+                    PFD_TYPE_RGBA, 32,
+                    0,0,0,0,0,0,0,0,0,
+                    24, 0, 0, 0, 0, 0, 0, 0
+                };
+
+                int pf = ::ChoosePixelFormat(glState.hdc, &pfd);
+                if (!pf) throw std::runtime_error("[OpenGL] ChoosePixelFormat failed");
+                if (!::SetPixelFormat(glState.hdc, pf, &pfd))
+                    throw std::runtime_error("[OpenGL] SetPixelFormat failed");
+            }
+
+            // ---- WGL bootstrap (correctly): temp context stays current while loading + creating ----
+            HGLRC tmp = ::wglCreateContext(glState.hdc);
+            if (!tmp) throw std::runtime_error("[OpenGL] wglCreateContext(temp) failed");
+            if (::wglMakeCurrent(glState.hdc, tmp) != TRUE)
+            {
+                ::wglDeleteContext(tmp);
+                throw std::runtime_error("[OpenGL] wglMakeCurrent(temp) failed");
+            }
+
+            // Load wglCreateContextAttribsARB safely (filter WGL sentinel pointers).
+            PFNWGLCREATECONTEXTATTRIBSARBPROC wglCreateContextAttribsARB = nullptr;
+            {
+                void* raw = reinterpret_cast<void*>(::wglGetProcAddress("wglCreateContextAttribsARB"));
+                if (!detail::is_bad_wgl_ptr(raw))
+                    wglCreateContextAttribsARB = reinterpret_cast<PFNWGLCREATECONTEXTATTRIBSARBPROC>(raw);
+            }
+
+            // Try modern core context; if it fails or extension missing, keep the temp legacy context as final.
+            glState.hglrc = nullptr;
+
+            if (wglCreateContextAttribsARB)
+            {
+                int attribs46[] = {
                     WGL_CONTEXT_MAJOR_VERSION_ARB, 4,
-                    WGL_CONTEXT_MINOR_VERSION_ARB, 1,
+                    WGL_CONTEXT_MINOR_VERSION_ARB, 6,
                     WGL_CONTEXT_PROFILE_MASK_ARB,  WGL_CONTEXT_CORE_PROFILE_BIT_ARB,
                     0
                 };
-                glState.hglrc = wglCreateContextAttribsARB(glState.hdc, nullptr, attribs41);
+
+                glState.hglrc = wglCreateContextAttribsARB(glState.hdc, nullptr, attribs46);
+
+                if (!glState.hglrc)
+                {
+                    int attribs41[] = {
+                        WGL_CONTEXT_MAJOR_VERSION_ARB, 4,
+                        WGL_CONTEXT_MINOR_VERSION_ARB, 1,
+                        WGL_CONTEXT_PROFILE_MASK_ARB,  WGL_CONTEXT_CORE_PROFILE_BIT_ARB,
+                        0
+                    };
+                    glState.hglrc = wglCreateContextAttribsARB(glState.hdc, nullptr, attribs41);
+                }
             }
-        }
 
-        if (glState.hglrc)
-        {
-            // Switch to final and destroy temp.
-            (void)::wglMakeCurrent(nullptr, nullptr);
-            ::wglDeleteContext(tmp);
-            tmp = nullptr;
-
-            if (::wglMakeCurrent(glState.hdc, glState.hglrc) != TRUE)
+            if (glState.hglrc)
             {
-                ::wglDeleteContext(glState.hglrc);
-                glState.hglrc = nullptr;
-                throw std::runtime_error("[OpenGL] wglMakeCurrent(final) failed");
+                // Switch to final and destroy temp.
+                (void)::wglMakeCurrent(nullptr, nullptr);
+                ::wglDeleteContext(tmp);
+                tmp = nullptr;
+
+                if (::wglMakeCurrent(glState.hdc, glState.hglrc) != TRUE)
+                {
+                    ::wglDeleteContext(glState.hglrc);
+                    glState.hglrc = nullptr;
+                    throw std::runtime_error("[OpenGL] wglMakeCurrent(final) failed");
+                }
             }
-        }
-        else
-        {
-            // No modern context: the temp legacy context becomes the final context.
-            glState.hglrc = tmp;
-            tmp = nullptr;
+            else
+            {
+                // No modern context: the temp legacy context becomes the final context.
+                glState.hglrc = tmp;
+                tmp = nullptr;
+            }
         }
 
         // Publish through PlatformGL (so the rest of the engine uses the same path).
