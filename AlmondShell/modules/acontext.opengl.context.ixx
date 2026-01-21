@@ -487,6 +487,11 @@ export namespace almondnamespace::openglcontext
         atlasmanager::register_backend_uploader(core::ContextType::OpenGL,
             [](const TextureAtlas& atlas) { opengltextures::ensure_uploaded(atlas); });
 
+        ctx->is_key_held = [](almondnamespace::input::Key k) { return almondnamespace::input::is_key_held(k); };
+        ctx->is_key_down = [](almondnamespace::input::Key k) { return almondnamespace::input::is_key_down(k); };
+        ctx->is_mouse_button_held = [](almondnamespace::input::MouseButton b) { return almondnamespace::input::is_mouse_button_held(b); };
+        ctx->is_mouse_button_down = [](almondnamespace::input::MouseButton b) { return almondnamespace::input::is_mouse_button_down(b); };
+
         contextGuard.release();
         return true;
     }
@@ -546,11 +551,6 @@ export namespace almondnamespace::openglcontext
             PlatformGL::swap_buffers(guard.target());
             return true;
         }
-
-        ctx->is_key_held = [](almondnamespace::input::Key k) { return almondnamespace::input::is_key_held(k); };
-        ctx->is_key_down = [](almondnamespace::input::Key k) { return almondnamespace::input::is_key_down(k); };
-        ctx->is_mouse_button_held = [](almondnamespace::input::MouseButton b) { return almondnamespace::input::is_mouse_button_held(b); };
-        ctx->is_mouse_button_down = [](almondnamespace::input::MouseButton b) { return almondnamespace::input::is_mouse_button_down(b); };
 
         const int fbW = (std::max)(1, opengl_get_width());
         const int fbH = (std::max)(1, opengl_get_height());
