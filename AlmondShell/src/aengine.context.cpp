@@ -316,7 +316,11 @@ namespace
 
         almondnamespace::atlasmanager::process_pending_uploads(almondnamespace::core::ContextType::RayLib);
 
-        queue.drain();
+        const bool ran_commands = queue.drain();
+        if (!ran_commands)
+        {
+            almondnamespace::raylibcontext::raylib_idle_frame();
+        }
 
         return almondnamespace::raylibstate::s_raylibstate.running;
     }
