@@ -237,6 +237,16 @@ namespace almondnamespace::raylibcontext
         // Raylib creates its own OpenGL context. Capture it now so we bind the right dc/rc later.
         st.hdc = detail::current_dc();
         st.hglrc = detail::current_context();
+        if (ctx && ctx->windowData)
+        {
+            ctx->windowData->hdc = st.hdc;
+            ctx->windowData->glContext = st.hglrc;
+            ctx->windowData->usesSharedContext = false;
+        }
+#if defined(_DEBUG)
+        std::cerr << "[Raylib] Updated raylib GL context dc=" << st.hdc
+            << " rc=" << st.hglrc << "\n";
+#endif
 
         const HWND raylibHwnd = static_cast<HWND>(almondnamespace::raylib_api::get_window_handle());
         const HWND parentHwnd = static_cast<HWND>(parent);
