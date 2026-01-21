@@ -1359,4 +1359,69 @@ namespace almondnamespace::core
 
 } // namespace almondnamespace::core
 
+namespace almondnamespace::platform
+{
+    bool pump_events()
+    {
+        Display* display = global_display;
+        if (!display)
+        {
+            return true;
+        }
+
+        bool keepRunning = true;
+        while (XPending(display) > 0)
+        {
+            XEvent event{};
+            XNextEvent(display, &event);
+
+            switch (event.type)
+            {
+            case ConfigureNotify:
+                almondnamespace::core::HandleX11Configure(
+                    event.xconfigure.window,
+                    event.xconfigure.width,
+                    event.xconfigure.height);
+                break;
+            case ClientMessage:
+            {
+                const Atom wmDelete = XInternAtom(display, "WM_DELETE_WINDOW", False);
+                if (static_cast<Atom>(event.xclient.data.l[0]) == wmDelete)
+                {
+                    auto* mgr = almondnamespace::core::GetActiveMultiContextManager();
+                    if (mgr)
+                    {
+                        HWND hwnd = reinterpret_cast<HWND>(static_cast<std::uintptr_t>(event.xclient.window));
+                        mgr->RemoveWindow(hwnd);
+                        if (mgr->GetWindows().empty())
+                            keepRunning = false;
+                    }
+                    else
+                    {
+                        keepRunning = false;
+                    }
+                }
+                break;
+            }
+            case DestroyNotify:
+            {
+                auto* mgr = almondnamespace::core::GetActiveMultiContextManager();
+                if (mgr)
+                {
+                    HWND hwnd = reinterpret_cast<HWND>(static_cast<std::uintptr_t>(event.xdestroywindow.window));
+                    mgr->RemoveWindow(hwnd);
+                    if (mgr->GetWindows().empty())
+                        keepRunning = false;
+                }
+                break;
+            }
+            default:
+                break;
+            }
+        }
+
+        return keepRunning;
+    }
+} // namespace almondnamespace::platform
+
 #endif // __linux__
