@@ -129,7 +129,7 @@ export namespace almondnamespace::sandsim
                     }
                 }
 
-                auto img = a_loadImage("assets/asandsim/" + name + ".ppm", false);
+                auto img = a_loadImage("assets/games/asandsim/" + name + ".ppm", false);
                 if (img.pixels.empty())
                     return; // optional assets
 

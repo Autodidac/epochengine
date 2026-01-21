@@ -122,7 +122,7 @@ export namespace almondnamespace::a2048like
                     }
                 }
 
-                auto img = a_loadImage("assets/a2048like/" + name + ".ppm", false);
+                auto img = a_loadImage("assets/games/a2048like/" + name + ".ppm", false);
                 if (img.pixels.empty())
                     return; // optional assets
 

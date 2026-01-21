@@ -200,7 +200,7 @@ export namespace almondnamespace::tetrislike
 
         // === Helpers ===
         inline bool setup_sprites() {
-            const auto blockImg = a_loadImage("assets/atestimage.ppm", true);
+            const auto blockImg = a_loadImage("assets/games/tetrino.ppm", true);
             if (blockImg.pixels.empty()) return false;
 
             Texture blockTex{

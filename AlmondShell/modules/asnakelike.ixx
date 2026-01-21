@@ -105,7 +105,7 @@ export namespace almondnamespace::snakelike
                     }
                 }
 
-                auto img = a_loadImage("assets/asnakelike/" + name + ".ppm", false);
+                auto img = a_loadImage("assets/games/asnakelike/" + name + ".ppm", false);
                 if (img.pixels.empty())
                     return; // optional assets
 

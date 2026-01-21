@@ -123,7 +123,7 @@ export namespace almondnamespace::cellularsim
                     }
                 }
 
-                auto img = a_loadImage("assets/acellularsim/" + name + ".ppm", false);
+                auto img = a_loadImage("assets/games/acellularsim/" + name + ".ppm", false);
                 if (img.pixels.empty())
                     return; // optional assets
 

@@ -131,7 +131,7 @@ export namespace almondnamespace::match3like
                     }
                 }
 
-                auto img = a_loadImage("assets/amatch3like/" + name + ".ppm", false);
+                auto img = a_loadImage("assets/games/amatch3like/" + name + ".ppm", false);
                 if (img.pixels.empty())
                     return; // optional assets
 

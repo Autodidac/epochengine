@@ -134,7 +134,7 @@ export namespace almondnamespace::sokobanlike
                     }
                 }
 
-                auto img = a_loadImage("assets/asokobanlike/" + name + ".ppm", false);
+                auto img = a_loadImage("assets/games/asokobanlike/" + name + ".ppm", false);
                 if (img.pixels.empty())
                     return; // optional assets
 

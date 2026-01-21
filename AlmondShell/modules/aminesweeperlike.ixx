@@ -221,7 +221,7 @@ export namespace almondnamespace::minesweeperlike
                     }
                 }
 
-                auto img = a_loadImage("assets/minesweeperlike/" + name + ".ppm", false);
+                auto img = a_loadImage("assets/games/minesweeperlike/" + name + ".ppm", false);
                 if (img.pixels.empty())
                     throw std::runtime_error("[Minesweeper] Missing image " + name);
 

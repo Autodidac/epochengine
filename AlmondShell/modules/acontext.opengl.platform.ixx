@@ -49,6 +49,7 @@ import <bit>;
 import <cstdint>;
 import <ranges>;
 import <utility>;
+import <algorithm>;
 
 #if defined(ALMOND_USING_OPENGL)
 

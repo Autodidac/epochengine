@@ -131,7 +131,7 @@ export namespace almondnamespace::froggerlike
                     }
                 }
 
-                auto img = a_loadImage("assets/afroggerlike/" + name + ".ppm", false);
+                auto img = a_loadImage("assets/games/afroggerlike/" + name + ".ppm", false);
                 if (img.pixels.empty())
                     return; // optional assets
 

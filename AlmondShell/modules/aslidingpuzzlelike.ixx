@@ -125,7 +125,7 @@ export namespace almondnamespace::slidinglike
                     }
                 }
 
-                auto img = a_loadImage("assets/aslidingpuzzlelike/" + name + ".ppm", false);
+                auto img = a_loadImage("assets/games/aslidingpuzzlelike/" + name + ".ppm", false);
                 if (img.pixels.empty())
                     return; // optional assets
 
