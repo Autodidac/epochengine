@@ -362,10 +362,6 @@ namespace almondnamespace::raylibcontext
         {
             std::cerr << "[Raylib] WARNING: failed to make raylib context current during process; shutting down.\n";
             st.running = false;
-            if (auto cur = almondnamespace::core::get_current_render_context(); cur && cur->windowData)
-                cur->windowData->running = false;
-            else if (st.owner_ctx && st.owner_ctx->windowData)
-                st.owner_ctx->windowData->running = false;
             return;
         }
 #endif
@@ -373,10 +369,6 @@ namespace almondnamespace::raylibcontext
         if (almondnamespace::raylib_api::window_should_close())
         {
             st.running = false;
-            if (auto cur = almondnamespace::core::get_current_render_context(); cur && cur->windowData)
-                cur->windowData->running = false;
-            else if (st.owner_ctx && st.owner_ctx->windowData)
-                st.owner_ctx->windowData->running = false;
             return;
         }
 
