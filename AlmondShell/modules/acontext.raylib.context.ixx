@@ -358,7 +358,16 @@ namespace almondnamespace::raylibcontext
             return;
 
 #if defined(_WIN32)
-        (void)raylib_make_current();
+        if (!raylib_make_current())
+        {
+            std::cerr << "[Raylib] WARNING: failed to make raylib context current during process; shutting down.\n";
+            st.running = false;
+            if (auto cur = almondnamespace::core::get_current_render_context(); cur && cur->windowData)
+                cur->windowData->running = false;
+            else if (st.owner_ctx && st.owner_ctx->windowData)
+                st.owner_ctx->windowData->running = false;
+            return;
+        }
 #endif
 
         if (almondnamespace::raylib_api::window_should_close())
@@ -384,7 +393,8 @@ namespace almondnamespace::raylibcontext
             return;
 
 #if defined(_WIN32)
-        (void)raylib_make_current();
+        if (!raylib_make_current())
+            return;
 #endif
 
         if (!st.frameActive)
@@ -410,7 +420,8 @@ namespace almondnamespace::raylibcontext
             return;
 
 #if defined(_WIN32)
-        (void)raylib_make_current();
+        if (!raylib_make_current())
+            return;
 #endif
 
         detail::ensure_frame_started(st);
@@ -429,7 +440,8 @@ namespace almondnamespace::raylibcontext
         if (!st.running)
             return;
 
-        (void)raylib_make_current();
+        if (!raylib_make_current())
+            return;
         if (st.frameActive)
         {
             if (st.frameInTextureMode)
@@ -462,7 +474,7 @@ namespace almondnamespace::raylibcontext
             almondnamespace::core::ContextType::RayLib);
 
 #if defined(_WIN32)
-        (void)raylib_make_current();
+        const bool madeCurrent = raylib_make_current();
 #endif
 
         almondnamespace::raylibtextures::shutdown_current_context_backend();
@@ -493,8 +505,15 @@ namespace almondnamespace::raylibcontext
 #endif
         }
 
-       // if (almondnamespace::raylib_api::is_window_ready())
-            //almondnamespace::raylib_api::close_window();
+        if (almondnamespace::raylib_api::is_window_ready())
+        {
+#if defined(_WIN32)
+            if (madeCurrent)
+                almondnamespace::raylib_api::close_window();
+#else
+            almondnamespace::raylib_api::close_window();
+#endif
+        }
 
 #if defined(_WIN32)
         if (st.ownsDC && st.hdc && st.hwnd)
