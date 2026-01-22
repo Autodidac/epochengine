@@ -29,6 +29,7 @@ export namespace almondnamespace::core::cli
     struct ParseResult {
         bool update_requested = false;
         bool force_update = false;
+        bool editor_requested = false;
     };
 
     inline void print_engine_info() {
@@ -61,6 +62,7 @@ export namespace almondnamespace::core::cli
                     "  --menu-columns <n>    Cap the menu grid at n columns (default 4)\n"
                     "  --trace-menu-button0  Log GUI bounds for menu button index 0\n"
                     "  --trace-raylib-design Log framebuffer vs design canvas dimensions\n"
+                    "  --editor              Start the editor interface\n"
                     "  --update, -u          Check for a newer AlmondShell build\n"
                     "  --force               Apply the available update immediately\n";
             }
@@ -86,6 +88,9 @@ export namespace almondnamespace::core::cli
             }
             else if (arg == "--update"sv || arg == "-u"sv) {
                 result.update_requested = true;
+            }
+            else if (arg == "--editor"sv) {
+                result.editor_requested = true;
             }
             else if (arg == "--force"sv) {
                 result.force_update = true;
