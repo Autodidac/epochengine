@@ -61,6 +61,7 @@ namespace almondnamespace::raylibrenderer
         {
             almondnamespace::raylib_api::begin_texture_mode(st.offscreen);
             st.frameActive = true;
+            st.frameInTextureMode = true;
         }
 
         // Upload (this will no-op if cached + correct version).

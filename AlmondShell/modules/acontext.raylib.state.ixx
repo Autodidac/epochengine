@@ -75,6 +75,7 @@ export namespace almondnamespace::raylibstate
         almondnamespace::raylib_api::RenderTexture2D offscreen{};
 
         bool frameActive = false;
+        bool frameInTextureMode = false;
 
         // Lifecycle
         bool running = false;
