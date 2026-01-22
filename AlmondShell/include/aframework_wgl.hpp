@@ -27,8 +27,21 @@
 #ifndef _WINSOCKAPI_
 #  define _WINSOCKAPI_
 #endif
+#pragma once
 
+// Windows API defines a global function named CloseWindow(HWND).
+// raylib also defines CloseWindow() (no args) with C linkage.
+// C++ forbids overloading extern "C" functions, so including both headers
+// in the same translation unit produces C2733.
+//
+// Strategy: rename the Win32 API CloseWindow declaration while including Windows.
+// If you ever need the Win32 API CloseWindow, call ::CloseWindowWin32.
+
+// Rename Win32 CloseWindow during include.
+#define CloseWindow CloseWindowWin32
 #include <windows.h>
+#undef CloseWindow
+
 #include <wingdi.h>
 
 // -----------------------------------------------------------------------------

@@ -103,6 +103,9 @@
     <Filter Include="Module Files\ixx\events">
       <UniqueIdentifier>{dd08c2f6-e80e-42ca-8942-208aafb5e109}</UniqueIdentifier>
     </Filter>
+    <Filter Include="Source Files\platform">
+      <UniqueIdentifier>{abd1a9ae-a148-461f-ad21-d38e55c494d7}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="$(MSBuildThisFileDirectory)src\pch.h">
@@ -292,9 +295,6 @@
     </ClCompile>
     <ClCompile Include="$(MSBuildThisFileDirectory)modules\acontext.raylib.context.ixx">
       <Filter>Module Files\ixx\core\context\backends\raylib</Filter>
-    </ClCompile>
-    <ClCompile Include="$(MSBuildThisFileDirectory)modules\aengine.context.sdl.ixx">
-      <Filter>Module Files\ixx\core\context\backends\sdl</Filter>
     </ClCompile>
     <ClCompile Include="$(MSBuildThisFileDirectory)modules\aopenglfreetype.ixx">
       <Filter>Module Files\ixx\core\context\backends\opengl</Filter>
@@ -538,6 +538,9 @@
     </ClCompile>
     <ClCompile Include="$(MSBuildThisFileDirectory)modules\aengine.eventsystem.ixx">
       <Filter>Module Files\ixx\events</Filter>
+    </ClCompile>
+    <ClCompile Include="$(MSBuildThisFileDirectory)src\acontext.raylib.bridge.cpp">
+      <Filter>Source Files\platform</Filter>
     </ClCompile>
   </ItemGroup>
 </Project>

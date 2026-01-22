@@ -14,146 +14,178 @@
 
 module;
 
-#include <include/aengine.config.hpp>
+// NOTE:
+// This is the *interface* module. It must not include <windows.h> or <raylib.h>.
+// The implementation lives in a normal TU: src/acontext.raylib.bridge.cpp.
 
-#if defined(ALMOND_USING_RAYLIB)
-
-// If this trips, something dragged Win32 headers into this TU.
-// Fix the include graph: do NOT include windows.h (directly or indirectly)
-// in anything reachable from this module.
-#   if defined(_WIN32) && (defined(_WINDOWS_) || defined(_INC_WINDOWS) || defined(_WINUSER_))
-#       error "acontext.raylib.api.cppm must not see <windows.h> before <raylib.h>. Move Win32 includes out of aengine.config.hpp / central headers."
-#   endif
-
-// Do NOT define RAYLIB_STATIC unless you are actually linking a static raylib build.
-// For vcpkg shared builds, leave it undefined.
-#   include <raylib.h>
-
-#endif // ALMOND_USING_RAYLIB
+#include <cstdint>
 
 export module acontext.raylib.api;
 
-#if defined(ALMOND_USING_RAYLIB)
-
 export namespace almondnamespace::raylib_api
 {
-    export using ::Color;
-    export using ::Vector2;
-    export using ::Texture2D;
-    export using ::Image;
-    export using ::Rectangle;
-    export using ::RenderTexture2D;
-
-    export inline constexpr ::Color raywhite = ::RAYWHITE;
-    export inline constexpr ::Color white = ::WHITE;
-
-    export inline constexpr unsigned int flag_msaa_4x_hint = ::FLAG_MSAA_4X_HINT;
-    export inline constexpr unsigned int flag_vsync_hint = ::FLAG_VSYNC_HINT;
-
-    export inline constexpr int key_a = ::KEY_A;
-    export inline constexpr int key_b = ::KEY_B;
-    export inline constexpr int key_c = ::KEY_C;
-    export inline constexpr int key_d = ::KEY_D;
-    export inline constexpr int key_e = ::KEY_E;
-    export inline constexpr int key_f = ::KEY_F;
-    export inline constexpr int key_g = ::KEY_G;
-    export inline constexpr int key_h = ::KEY_H;
-    export inline constexpr int key_i = ::KEY_I;
-    export inline constexpr int key_j = ::KEY_J;
-    export inline constexpr int key_k = ::KEY_K;
-    export inline constexpr int key_l = ::KEY_L;
-    export inline constexpr int key_m = ::KEY_M;
-    export inline constexpr int key_n = ::KEY_N;
-    export inline constexpr int key_o = ::KEY_O;
-    export inline constexpr int key_p = ::KEY_P;
-    export inline constexpr int key_q = ::KEY_Q;
-    export inline constexpr int key_r = ::KEY_R;
-    export inline constexpr int key_s = ::KEY_S;
-    export inline constexpr int key_t = ::KEY_T;
-    export inline constexpr int key_u = ::KEY_U;
-    export inline constexpr int key_v = ::KEY_V;
-    export inline constexpr int key_w = ::KEY_W;
-    export inline constexpr int key_x = ::KEY_X;
-    export inline constexpr int key_y = ::KEY_Y;
-    export inline constexpr int key_z = ::KEY_Z;
-
-    export inline constexpr int key_zero = ::KEY_ZERO;
-    export inline constexpr int key_one = ::KEY_ONE;
-    export inline constexpr int key_two = ::KEY_TWO;
-    export inline constexpr int key_three = ::KEY_THREE;
-    export inline constexpr int key_four = ::KEY_FOUR;
-    export inline constexpr int key_five = ::KEY_FIVE;
-    export inline constexpr int key_six = ::KEY_SIX;
-    export inline constexpr int key_seven = ::KEY_SEVEN;
-    export inline constexpr int key_eight = ::KEY_EIGHT;
-    export inline constexpr int key_nine = ::KEY_NINE;
-
-    export inline constexpr int key_space = ::KEY_SPACE;
-    export inline constexpr int key_enter = ::KEY_ENTER;
-    export inline constexpr int key_escape = ::KEY_ESCAPE;
-    export inline constexpr int key_tab = ::KEY_TAB;
-    export inline constexpr int key_backspace = ::KEY_BACKSPACE;
-
-    export inline constexpr int key_left = ::KEY_LEFT;
-    export inline constexpr int key_right = ::KEY_RIGHT;
-    export inline constexpr int key_up = ::KEY_UP;
-    export inline constexpr int key_down = ::KEY_DOWN;
-
-    export inline constexpr int mouse_button_left = ::MOUSE_BUTTON_LEFT;
-    export inline constexpr int mouse_button_right = ::MOUSE_BUTTON_RIGHT;
-    export inline constexpr int mouse_button_middle = ::MOUSE_BUTTON_MIDDLE;
-    export inline constexpr int mouse_button_side = ::MOUSE_BUTTON_SIDE;
-    export inline constexpr int mouse_button_extra = ::MOUSE_BUTTON_EXTRA;
-
-    export inline constexpr int pixelformat_rgba8 = ::PIXELFORMAT_UNCOMPRESSED_R8G8B8A8;
-
-    export inline void set_config_flags(unsigned int flags) { ::SetConfigFlags(flags); }
-    export inline void init_window(int w, int h, const char* title) { ::InitWindow(w, h, title); }
-    export inline void close_window() { ::CloseWindow(); }
-    export inline void set_window_size(int w, int h) { ::SetWindowSize(w, h); }
-
-    export inline bool window_should_close() { return ::WindowShouldClose(); }
-    export inline bool is_window_ready() { return ::IsWindowReady(); }
-    export inline void* get_window_handle() { return ::GetWindowHandle(); }
-
-    export inline int get_render_width() { return ::GetRenderWidth(); }
-    export inline int get_render_height() { return ::GetRenderHeight(); }
-    export inline int get_screen_width() { return ::GetScreenWidth(); }
-    export inline int get_screen_height() { return ::GetScreenHeight(); }
-
-    export inline void begin_drawing() { ::BeginDrawing(); }
-    export inline void end_drawing() { ::EndDrawing(); }
-    export inline void clear_background(::Color c) { ::ClearBackground(c); }
-    export inline void begin_texture_mode(const ::RenderTexture2D& target) { ::BeginTextureMode(target); }
-    export inline void end_texture_mode() { ::EndTextureMode(); }
-
-    export inline void set_target_fps(int fps) { ::SetTargetFPS(fps); }
-    export inline void set_window_title(const char* t) { ::SetWindowTitle(t); }
-
-    export inline bool  is_key_down(int k) { return ::IsKeyDown(k); }
-    export inline bool  is_mouse_button_down(int b) { return ::IsMouseButtonDown(b); }
-    export inline int   get_mouse_x() { return ::GetMouseX(); }
-    export inline int   get_mouse_y() { return ::GetMouseY(); }
-    export inline float get_mouse_wheel_move() { return ::GetMouseWheelMove(); }
-    export inline ::Vector2 get_mouse_position() { return ::GetMousePosition(); }
-    export inline void set_mouse_offset(int ox, int oy) { ::SetMouseOffset(ox, oy); }
-    export inline void set_mouse_scale(float sx, float sy) { ::SetMouseScale(sx, sy); }
-
-    export inline ::Texture2D load_texture_from_image(const ::Image& img) { return ::LoadTextureFromImage(img); }
-    export inline void unload_texture(const ::Texture2D& tex) { ::UnloadTexture(tex); }
-    export inline ::RenderTexture2D load_render_texture(int w, int h) { return ::LoadRenderTexture(w, h); }
-    export inline void unload_render_texture(const ::RenderTexture2D& tex) { ::UnloadRenderTexture(tex); }
-
-    export inline void draw_texture_pro(
-        const ::Texture2D& tex,
-        const ::Rectangle& src,
-        const ::Rectangle& dst,
-        ::Vector2 origin,
-        float rotation,
-        ::Color tint)
+    // ------------------------------------------------------------
+    // ABI-stable mirror types (match raylib's public structs)
+    // ------------------------------------------------------------
+    struct Color
     {
-        ::DrawTexturePro(tex, src, dst, origin, rotation, tint);
-    }
-}
+        std::uint8_t r{};
+        std::uint8_t g{};
+        std::uint8_t b{};
+        std::uint8_t a{};
+    };
 
-#endif // ALMOND_USING_RAYLIB
+    struct Vector2
+    {
+        float x{};
+        float y{};
+    };
+
+    struct Rectangle
+    {
+        float x{};
+        float y{};
+        float width{};
+        float height{};
+    };
+
+    struct Texture2D
+    {
+        std::uint32_t id{};
+        int width{};
+        int height{};
+        int mipmaps{};
+        int format{};
+    };
+
+    struct RenderTexture2D
+    {
+        std::uint32_t id{};
+        Texture2D texture{};
+        Texture2D depth{};
+    };
+
+    struct Image
+    {
+        void* data{};
+        int width{};
+        int height{};
+        int mipmaps{};
+        int format{};
+    };
+
+    // ------------------------------------------------------------
+    // Constants (subset; extend as needed)
+    // ------------------------------------------------------------
+    extern const Color raywhite;
+    extern const Color white;
+
+    extern const unsigned int flag_msaa_4x_hint;
+    extern const unsigned int flag_vsync_hint;
+
+    extern const int key_a;
+    extern const int key_b;
+    extern const int key_c;
+    extern const int key_d;
+    extern const int key_e;
+    extern const int key_f;
+    extern const int key_g;
+    extern const int key_h;
+    extern const int key_i;
+    extern const int key_j;
+    extern const int key_k;
+    extern const int key_l;
+    extern const int key_m;
+    extern const int key_n;
+    extern const int key_o;
+    extern const int key_p;
+    extern const int key_q;
+    extern const int key_r;
+    extern const int key_s;
+    extern const int key_t;
+    extern const int key_u;
+    extern const int key_v;
+    extern const int key_w;
+    extern const int key_x;
+    extern const int key_y;
+    extern const int key_z;
+
+    extern const int key_zero;
+    extern const int key_one;
+    extern const int key_two;
+    extern const int key_three;
+    extern const int key_four;
+    extern const int key_five;
+    extern const int key_six;
+    extern const int key_seven;
+    extern const int key_eight;
+    extern const int key_nine;
+
+    extern const int key_space;
+    extern const int key_enter;
+    extern const int key_escape;
+    extern const int key_tab;
+    extern const int key_backspace;
+
+    extern const int key_left;
+    extern const int key_right;
+    extern const int key_up;
+    extern const int key_down;
+
+    extern const int mouse_button_left;
+    extern const int mouse_button_right;
+    extern const int mouse_button_middle;
+    extern const int mouse_button_side;
+    extern const int mouse_button_extra;
+
+    extern const int pixelformat_rgba8;
+
+    // ------------------------------------------------------------
+    // Functions (implemented in acontext.raylib.bridge.cpp)
+    // ------------------------------------------------------------
+    void set_config_flags(unsigned int flags);
+    void init_window(int w, int h, const char* title);
+    void close_window();
+    void set_window_size(int w, int h);
+
+    bool window_should_close();
+    bool is_window_ready();
+    void* get_window_handle();
+
+    int get_render_width();
+    int get_render_height();
+    int get_screen_width();
+    int get_screen_height();
+
+    void begin_drawing();
+    void end_drawing();
+    void clear_background(Color c);
+    void begin_texture_mode(const RenderTexture2D& target);
+    void end_texture_mode();
+
+    void set_target_fps(int fps);
+    void set_window_title(const char* title);
+
+    bool  is_key_down(int k);
+    bool  is_mouse_button_down(int b);
+    int   get_mouse_x();
+    int   get_mouse_y();
+    float get_mouse_wheel_move();
+    Vector2 get_mouse_position();
+    void set_mouse_offset(int ox, int oy);
+    void set_mouse_scale(float sx, float sy);
+
+    Texture2D load_texture_from_image(const Image& img);
+    void unload_texture(const Texture2D& tex);
+
+    RenderTexture2D load_render_texture(int w, int h);
+    void unload_render_texture(const RenderTexture2D& rt);
+
+    void draw_texture_pro(
+        const Texture2D& tex,
+        const Rectangle& src,
+        const Rectangle& dst,
+        Vector2 origin,
+        float rotation,
+        Color tint);
+} // namespace almondnamespace::raylib_api

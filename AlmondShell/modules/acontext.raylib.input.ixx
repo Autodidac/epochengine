@@ -1,9 +1,17 @@
-﻿module;
+﻿/**************************************************************
+ *   AlmondShell - Modular C++ Framework
+ *   Raylib Input Bridge
+ *
+ *   SPDX-License-Identifier: LicenseRef-MIT-NoSell
+ **************************************************************/
 
-#include <include/aengine.config.hpp> // for ALMOND_USING Macros
+module;
+
+#include <include/aengine.config.hpp> // for ALMOND_USING_RAYLIB
 
 export module acontext.raylib.input;
 
+import <atomic>;
 import <shared_mutex>;
 
 import acontext.raylib.api;
@@ -19,11 +27,17 @@ namespace almondnamespace::raylibcontext
 
         std::unique_lock<std::shared_mutex> lock(g_inputMutex);
 
-        keyPressed.reset();
-        mousePressed.reset();
+        // ---- Clear "pressed this frame" + wheel ----
+        // Do NOT rely on .reset() existing (types differ across your backends).
+        for (int k = 0; k < Key::Count; ++k)
+            keyPressed[k] = false;
+
+        for (int b = 0; b < MouseButton::MouseCount; ++b)
+            mousePressed[b] = false;
+
         mouseWheel.store(0, std::memory_order_relaxed);
 
-        // --- Keyboard ---
+        // ---- Keyboard ----
         for (int k = 0; k < Key::Count; ++k)
         {
             int ray = 0;
@@ -84,11 +98,13 @@ namespace almondnamespace::raylibcontext
             if (ray == 0) continue;
 
             const bool down = almondnamespace::raylib_api::is_key_down(ray);
-            keyPressed[k] = down && !keyDown[k];
+
+            // "pressed" = down this frame, was up last frame
+            keyPressed[k] = down && !static_cast<bool>(keyDown[k]);
             keyDown[k] = down;
         }
 
-        // --- Mouse ---
+        // ---- Mouse ----
         for (int b = 0; b < MouseButton::MouseCount; ++b)
         {
             int ray = 0;
@@ -105,7 +121,7 @@ namespace almondnamespace::raylibcontext
             if (ray == 0) continue;
 
             const bool down = almondnamespace::raylib_api::is_mouse_button_down(ray);
-            mousePressed[b] = down && !mouseDown[b];
+            mousePressed[b] = down && !static_cast<bool>(mouseDown[b]);
             mouseDown[b] = down;
         }
 
@@ -113,7 +129,9 @@ namespace almondnamespace::raylibcontext
         mouseY.store(almondnamespace::raylib_api::get_mouse_y(), std::memory_order_relaxed);
         set_mouse_coords_are_global(false);
 
-        mouseWheel.store(static_cast<int>(almondnamespace::raylib_api::get_mouse_wheel_move()), std::memory_order_relaxed);
+        mouseWheel.store(
+            static_cast<int>(almondnamespace::raylib_api::get_mouse_wheel_move()),
+            std::memory_order_relaxed);
     }
 }
 

@@ -46,13 +46,13 @@ export namespace almondnamespace::sdlcontext
             throw std::runtime_error("SDL_Renderer is null");
         }
         sdl_renderer.renderer = renderer;
-        SDL_SetRenderDrawColor(sdl_renderer.renderer, 0, 0, 0, 255);
+        SDL_SetRenderDrawColor(sdl_renderer.renderer, 0, 100, 0, 255);
         check_sdl_error("init_renderer");
     }
 
     inline void begin_frame()
     {
-        SDL_SetRenderDrawColor(sdl_renderer.renderer, 0, 0, 0, 255);
+        SDL_SetRenderDrawColor(sdl_renderer.renderer, 0, 100, 0, 255);
         SDL_RenderClear(sdl_renderer.renderer);
     }
 

@@ -24,7 +24,7 @@ module;
 // Win32 has BOOL CloseWindow(HWND). Raylib has void CloseWindow(void).
 // Prevent the collision in this TU by temporarily renaming Win32's symbol name during header include.
 //#   define CloseWindow CloseWindow_Win32
-#   include <Windows.h>
+#   include <include/aframework.hpp>
 //#   undef CloseWindow
 
 #   include <wingdi.h> // HGLRC + wgl*
@@ -33,6 +33,17 @@ module;
 #include <iostream>
 
 export module acontext.raylib.context;
+
+import aengine.core.context;
+import aengine.core.commandline;
+import aengine.context.multiplexer;
+import aatlas.manager;
+
+import acontext.raylib.state;
+import acontext.raylib.textures;
+import acontext.raylib.renderer;
+import acontext.raylib.input;
+import acontext.raylib.api;
 
 import <algorithm>;
 import <cmath>;
@@ -45,16 +56,6 @@ import <string_view>;
 import <thread>;
 import <utility>;
 
-import aengine.core.context;
-import aengine.core.commandline;
-import aengine.context.multiplexer;
-import aatlas.manager;
-
-import acontext.raylib.state;
-import acontext.raylib.textures;
-import acontext.raylib.renderer;
-import acontext.raylib.input;
-import acontext.raylib.api;
 
 #if defined(ALMOND_USING_RAYLIB)
 
@@ -492,8 +493,8 @@ namespace almondnamespace::raylibcontext
 #endif
         }
 
-        if (almondnamespace::raylib_api::is_window_ready())
-            almondnamespace::raylib_api::close_window();
+       // if (almondnamespace::raylib_api::is_window_ready())
+            //almondnamespace::raylib_api::close_window();
 
 #if defined(_WIN32)
         if (st.ownsDC && st.hdc && st.hwnd)
