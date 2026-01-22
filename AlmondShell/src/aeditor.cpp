@@ -32,13 +32,17 @@ module;
 
 module aeditor;
 
+import aengine.gui;
 import autility.filewatch;
 
 namespace almondnamespace
 {
     void editor_run()
     {
-        //ui::begin_window("epoch editor", { 20, 20 }, { 400, 300 });
+        gui::begin_window("Epoch Editor", { 20.0f, 20.0f }, { 480.0f, 320.0f });
+        gui::label("Editor UI is active.");
+        gui::label("Select Run Game to launch a scene.");
+        gui::end_window();
 
         //static auto files = get_file_states("epoch_gui_editor/src/scripts");
         //scan_and_mark_changes(files);

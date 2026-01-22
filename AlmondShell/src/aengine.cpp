@@ -86,6 +86,7 @@ import aengine.core.context;
 
 import aengine.gui;
 import aengine.gui.menu;
+import aeditor;
 
 import ascene;
 
@@ -328,16 +329,22 @@ namespace almondnamespace::core
 
                                 ctx->clear_safe();
                                 gui::begin_frame(ctx, dt, mouse_pos, mouse_left_down);
+                                almondnamespace::editor_run();
 
-                                const bool menu_has_focus = !show_games_popup;
-                                auto command_choice = editor_menu.update_and_draw(
-                                    ctx,
-                                    win,
-                                    dt,
-                                    menu_has_focus ? up_pressed : false,
-                                    menu_has_focus ? down_pressed : false,
-                                    menu_has_focus ? enter_pressed : false,
-                                    menu_has_focus);
+                                const bool draw_editor_overlay = !show_games_popup;
+                                const bool menu_has_focus = draw_editor_overlay;
+                                std::optional<almondnamespace::menu::EditorCommandChoice> command_choice{};
+                                if (draw_editor_overlay)
+                                {
+                                    command_choice = editor_menu.update_and_draw(
+                                        ctx,
+                                        win,
+                                        dt,
+                                        menu_has_focus ? up_pressed : false,
+                                        menu_has_focus ? down_pressed : false,
+                                        menu_has_focus ? enter_pressed : false,
+                                        menu_has_focus);
+                                }
 
                                 if (command_choice)
                                 {
