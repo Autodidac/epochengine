@@ -2,7 +2,7 @@
  *   █████╗ ██╗     ███╗   ███╗   ███╗   ██╗    ██╗██████╗    *
  *  ██╔══██╗██║     ████╗ ████║ ██╔═══██╗████╗  ██║██╔══██╗   *
  *  ███████║██║     ██╔████╔██║ ██║   ██║██╔██╗ ██║██║  ██║   *
- *  ██╔══██║██║     ██║╚██╔╝██║ ██║   ██║██║╚██╗██║██║  ██║   *
+ *  ██╔══██╗██║     ██║╚██╔╝██║ ██║   ██║██║╚██╗██║██║  ██║   *
  *  ██║  ██║███████╗██║ ╚═╝ ██║ ╚██████╔╝██║ ╚████║██████╔╝   *
  *  ╚═╝  ╚═╝╚══════╝╚═╝     ╚═╝  ╚═════╝ ╚═╝  ╚═══╝╚═════╝    *
  *                                                            *
@@ -21,12 +21,12 @@
  *   See LICENSE file for full terms.                         *
  *                                                            *
  **************************************************************/
- // acontext.opengl.quad.ixx  (was aopenglquad.hpp)
+ // acontext.opengl.quad.ixx  (Quad + shader pipeline)
+ // QUAD_V3: prints GL/GLSL versions + produces single-line shader errors.
 
 module;
 
-// Global module fragment: platform macros + GL loader.
-#include "..\include\aengine.config.hpp"  // brings in <glad/glad.h> when ALMOND_USING_OPENGL
+#include "..\include\aengine.config.hpp"
 
 #if defined(ALMOND_USING_OPENGL)
 #   include <glad/glad.h>
@@ -37,76 +37,55 @@ export module acontext.opengl.quad;
 import acontext.opengl.state;
 import acontext.opengl.platform;
 
+import <algorithm>;
+import <cstdint>;
 import <iostream>;
+import <string>;
+import <string_view>;
 import <utility>;
 
 #if defined(ALMOND_USING_OPENGL)
 
 export namespace almondnamespace::openglquad
 {
-    class Quad
+    // ---------------------------------------------------------------------
+    // Quad VAO wrapper (renderer depends on this type existing)
+    // ---------------------------------------------------------------------
+    export class Quad
     {
         GLuint vao_ = 0;
         GLuint vbo_ = 0;
         GLuint ebo_ = 0;
 
-        // Interleaved: pos.xy, uv.xy
         static constexpr float defaultVertices[16] = {
-            // x,   y,   u,   v
-             0.f, 0.f, 0.f, 0.f,
-             1.f, 0.f, 1.f, 0.f,
-             1.f, 1.f, 1.f, 1.f,
-             0.f, 1.f, 0.f, 1.f
+            0.f, 0.f, 0.f, 0.f,
+            1.f, 0.f, 1.f, 0.f,
+            1.f, 1.f, 1.f, 1.f,
+            0.f, 1.f, 0.f, 1.f
         };
 
-        static constexpr unsigned int defaultIndices[6] = {
-            0, 1, 2,
-            2, 3, 0
-        };
+        static constexpr unsigned int defaultIndices[6] = { 0,1,2, 2,3,0 };
 
     public:
         Quad()
         {
-            // VAO
             glGenVertexArrays(1, &vao_);
             glBindVertexArray(vao_);
 
-            // VBO
             glGenBuffers(1, &vbo_);
             glBindBuffer(GL_ARRAY_BUFFER, vbo_);
-            glBufferData(
-                GL_ARRAY_BUFFER,
-                sizeof(defaultVertices),
-                defaultVertices,
-                GL_STATIC_DRAW
-            );
+            glBufferData(GL_ARRAY_BUFFER, sizeof(defaultVertices), defaultVertices, GL_STATIC_DRAW);
 
-            // Attributes
-            glEnableVertexAttribArray(0); // position
-            glVertexAttribPointer(
-                0, 2, GL_FLOAT, GL_FALSE,
-                4 * sizeof(float),
-                reinterpret_cast<void*>(0)
-            );
+            glEnableVertexAttribArray(0);
+            glVertexAttribPointer(0, 2, GL_FLOAT, GL_FALSE, 4 * (GLsizei)sizeof(float), (void*)0);
 
-            glEnableVertexAttribArray(1); // uv
-            glVertexAttribPointer(
-                1, 2, GL_FLOAT, GL_FALSE,
-                4 * sizeof(float),
-                reinterpret_cast<void*>(2 * sizeof(float))
-            );
+            glEnableVertexAttribArray(1);
+            glVertexAttribPointer(1, 2, GL_FLOAT, GL_FALSE, 4 * (GLsizei)sizeof(float), (void*)(2 * sizeof(float)));
 
-            // EBO
             glGenBuffers(1, &ebo_);
             glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, ebo_);
-            glBufferData(
-                GL_ELEMENT_ARRAY_BUFFER,
-                sizeof(defaultIndices),
-                defaultIndices,
-                GL_STATIC_DRAW
-            );
+            glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(defaultIndices), defaultIndices, GL_STATIC_DRAW);
 
-            // Unbind VAO (EBO stays associated with VAO)
             glBindVertexArray(0);
             glBindBuffer(GL_ARRAY_BUFFER, 0);
         }
@@ -118,35 +97,18 @@ export namespace almondnamespace::openglquad
             if (vao_) glDeleteVertexArrays(1, &vao_);
         }
 
-        // Non-copyable
         Quad(const Quad&) = delete;
         Quad& operator=(const Quad&) = delete;
 
-        // Movable
-        Quad(Quad&& other) noexcept
-            : vao_(other.vao_), vbo_(other.vbo_), ebo_(other.ebo_)
+        Quad(Quad&& o) noexcept : vao_(o.vao_), vbo_(o.vbo_), ebo_(o.ebo_) { o.vao_ = o.vbo_ = o.ebo_ = 0; }
+        Quad& operator=(Quad&& o) noexcept
         {
-            other.vao_ = 0;
-            other.vbo_ = 0;
-            other.ebo_ = 0;
-        }
-
-        Quad& operator=(Quad&& other) noexcept
-        {
-            if (this != &other)
-            {
-                if (ebo_) glDeleteBuffers(1, &ebo_);
-                if (vbo_) glDeleteBuffers(1, &vbo_);
-                if (vao_) glDeleteVertexArrays(1, &vao_);
-
-                vao_ = other.vao_;
-                vbo_ = other.vbo_;
-                ebo_ = other.ebo_;
-
-                other.vao_ = 0;
-                other.vbo_ = 0;
-                other.ebo_ = 0;
-            }
+            if (this == &o) return *this;
+            if (ebo_) glDeleteBuffers(1, &ebo_);
+            if (vbo_) glDeleteBuffers(1, &vbo_);
+            if (vao_) glDeleteVertexArrays(1, &vao_);
+            vao_ = o.vao_; vbo_ = o.vbo_; ebo_ = o.ebo_;
+            o.vao_ = o.vbo_ = o.ebo_ = 0;
             return *this;
         }
 
@@ -154,208 +116,236 @@ export namespace almondnamespace::openglquad
         [[nodiscard]] GLsizei index_count() const noexcept { return 6; }
     };
 
-    inline void* LoadGLFunc(const char* name)
+    // ---------------------------------------------------------------------
+    // Helpers
+    // ---------------------------------------------------------------------
+    inline std::pair<int, int> parse_ver(const char* s) noexcept
     {
-        return almondnamespace::openglcontext::PlatformGL::get_proc_address(name);
-    }
+        if (!s) return { 0,0 };
+        std::string_view v{ s };
+        auto p = v.find_first_of("0123456789");
+        if (p == std::string_view::npos) return { 0,0 };
+        v.remove_prefix(p);
+        auto dot = v.find('.');
+        if (dot == std::string_view::npos) return { 0,0 };
+        auto maj = v.substr(0, dot);
+        v.remove_prefix(dot + 1);
+        auto end = v.find_first_not_of("0123456789");
+        auto min = v.substr(0, end);
 
-    inline GLuint compileShader(GLenum type, const char* src)
-    {
-        GLuint shader = glCreateShader(type);
-        glShaderSource(shader, 1, &src, nullptr);
-        glCompileShader(shader);
-
-        GLint compiled = 0;
-        glGetShaderiv(shader, GL_COMPILE_STATUS, &compiled);
-        if (!compiled)
-        {
-            char log[512]{};
-            glGetShaderInfoLog(shader, static_cast<GLsizei>(sizeof(log)), nullptr, log);
-            throw std::runtime_error(std::format("Shader compile error: {}\nSource:\n{}", log, src));
-        }
-        return shader;
-    }
-
-    inline GLuint linkProgram(const char* vsSrc, const char* fsSrc)
-    {
-        GLuint vertexShader = compileShader(GL_VERTEX_SHADER, vsSrc);
-        GLuint fragmentShader = compileShader(GL_FRAGMENT_SHADER, fsSrc);
-
-        GLuint program = glCreateProgram();
-        glAttachShader(program, vertexShader);
-        glAttachShader(program, fragmentShader);
-        glLinkProgram(program);
-
-        GLint linked = 0;
-        glGetProgramiv(program, GL_LINK_STATUS, &linked);
-        if (!linked)
-        {
-            char log[512]{};
-            glGetProgramInfoLog(program, static_cast<GLsizei>(sizeof(log)), nullptr, log);
-            throw std::runtime_error(std::format("Program link error: {}", log));
-        }
-
-        glDeleteShader(vertexShader);
-        glDeleteShader(fragmentShader);
-        return program;
-    }
-
-    inline const char* select_glsl_version(GLint major, GLint minor)
-    {
-        struct V { GLint major; GLint minor; const char* sv; };
-        static constexpr V versions[] = {
-            {4, 6, "#version 460 core"},
-            {4, 5, "#version 450 core"},
-            {4, 4, "#version 440 core"},
-            {4, 3, "#version 430 core"},
-            {4, 2, "#version 420 core"},
-            {4, 1, "#version 410 core"},
-            {4, 0, "#version 400 core"},
-            {3, 3, "#version 330 core"},
-        };
-
-        for (const auto& c : versions)
-            if (major > c.major || (major == c.major && minor >= c.minor))
-                return c.sv;
-
-        return "#version 330 core";
-    }
-
-    inline std::pair<GLint, GLint> parse_gl_version_string(const char* versionStr) noexcept
-    {
-        if (!versionStr) return { 0, 0 };
-
-        std::string_view sv{ versionStr };
-        auto p = sv.find_first_of("0123456789");
-        if (p == std::string_view::npos) return { 0, 0 };
-        sv.remove_prefix(p);
-
-        auto dot = sv.find('.');
-        if (dot == std::string_view::npos) return { 0, 0 };
-
-        auto major_part = sv.substr(0, dot);
-        sv.remove_prefix(dot + 1);
-
-        auto minor_end = sv.find_first_not_of("0123456789");
-        auto minor_part = sv.substr(0, minor_end);
-
-        auto parse = [](std::string_view s) noexcept -> GLint {
-            GLint v = 0;
-            for (unsigned char ch : s)
-            {
-                if (ch < '0' || ch > '9') return 0;
-                v = static_cast<GLint>(v * 10 + (ch - '0'));
-            }
-            return v;
+        auto to_i = [](std::string_view x) noexcept {
+            int r = 0;
+            for (unsigned char c : x) { if (c < '0' || c>'9') return 0; r = r * 10 + (c - '0'); }
+            return r;
             };
-
-        return { parse(major_part), parse(minor_part) };
+        return { to_i(maj), to_i(min) };
     }
 
-    inline void destroy_quad_pipeline(almondnamespace::openglstate::OpenGL4State& glState) noexcept
+    inline std::string squash(std::string s)
     {
-        if (glState.shader && glIsProgram(glState.shader))
-            glDeleteProgram(glState.shader);
-
-        glState.shader = 0;
-        glState.uUVRegionLoc = -1;
-        glState.uTransformLoc = -1;
-        glState.uSamplerLoc = -1;
-
-        if (glState.vao && glIsVertexArray(glState.vao))
-            glDeleteVertexArrays(1, &glState.vao);
-        if (glState.vbo && glIsBuffer(glState.vbo))
-            glDeleteBuffers(1, &glState.vbo);
-        if (glState.ebo && glIsBuffer(glState.ebo))
-            glDeleteBuffers(1, &glState.ebo);
-
-        glState.vao = 0;
-        glState.vbo = 0;
-        glState.ebo = 0;
+        for (auto& ch : s) if (ch == '\n' || ch == '\r' || ch == '\t') ch = ' ';
+        s.erase(std::unique(s.begin(), s.end(), [](char a, char b) { return a == ' ' && b == ' '; }), s.end());
+        return s;
     }
 
-    inline bool build_quad_pipeline(almondnamespace::openglstate::OpenGL4State& glState)
+    inline std::string get_info_log(GLuint obj, bool shader)
     {
-        destroy_quad_pipeline(glState);
+        std::string log;
+        log.resize(8192);
+        GLsizei out = 0;
+        if (shader) glGetShaderInfoLog(obj, (GLsizei)log.size(), &out, log.data());
+        else        glGetProgramInfoLog(obj, (GLsizei)log.size(), &out, log.data());
+        if (out > 0 && (std::size_t)out < log.size()) log.resize((std::size_t)out);
+        return squash(log);
+    }
 
-        GLint major = 0, minor = 0;
-        glGetIntegerv(GL_MAJOR_VERSION, &major);
-        glGetIntegerv(GL_MINOR_VERSION, &minor);
+    inline GLuint compile(GLenum type, const std::string& src)
+    {
+        if (!glCreateShader)
+            throw std::runtime_error("QUAD_V3 glCreateShader=null (context too old or glad not loaded)");
 
-        if (major == 0 && minor == 0)
+        GLuint sh = glCreateShader(type);
+        const char* c = src.c_str();
+        glShaderSource(sh, 1, &c, nullptr);
+        glCompileShader(sh);
+
+        GLint ok = 0;
+        glGetShaderiv(sh, GL_COMPILE_STATUS, &ok);
+        if (!ok)
         {
-            const auto* vs = reinterpret_cast<const char*>(glGetString(GL_VERSION));
-            auto [pm, pn] = parse_gl_version_string(vs);
-            major = pm; minor = pn;
+            const std::string log = get_info_log(sh, true);
+            glDeleteShader(sh);
+
+            std::string msg = "QUAD_V3 Shader compile failed. log=[" + log + "] src=[" + squash(src) + "]";
+            throw std::runtime_error(msg);
         }
-        if (major == 0 && minor == 0) { major = 3; minor = 3; }
+        return sh;
+    }
 
-        const char* directive = select_glsl_version(major, minor);
+    inline GLuint link(GLuint vs, GLuint fs, bool bindFragOut)
+    {
+        GLuint p = glCreateProgram();
+        glAttachShader(p, vs);
+        glAttachShader(p, fs);
 
-        std::string vs_source = std::string(directive) + R"(
+        glBindAttribLocation(p, 0, "aPos");
+        glBindAttribLocation(p, 1, "aTexCoord");
 
-layout(location = 0) in vec2 aPos;
-layout(location = 1) in vec2 aTexCoord;
+        if (bindFragOut && glBindFragDataLocation)
+            glBindFragDataLocation(p, 0, "outColor");
 
-uniform vec4 uTransform; // xy=center in NDC, zw=size in NDC
-uniform vec4 uUVRegion;  // xy=uv offset, zw=uv size
+        glLinkProgram(p);
 
-out vec2 vUV;
+        GLint ok = 0;
+        glGetProgramiv(p, GL_LINK_STATUS, &ok);
+        if (!ok)
+        {
+            const std::string log = get_info_log(p, false);
+            glDeleteProgram(p);
+            std::string msg = "QUAD_V3 Program link failed. log=[" + log + "]";
+            throw std::runtime_error(msg);
+        }
+        return p;
+    }
 
+    inline void destroy_quad_pipeline(almondnamespace::openglstate::OpenGL4State& s) noexcept
+    {
+        if (s.shader && glIsProgram(s.shader)) glDeleteProgram(s.shader);
+        s.shader = 0;
+        s.uUVRegionLoc = -1;
+        s.uTransformLoc = -1;
+        s.uSamplerLoc = -1;
+
+        if (s.vao && glIsVertexArray(s.vao)) glDeleteVertexArrays(1, &s.vao);
+        if (s.vbo && glIsBuffer(s.vbo)) glDeleteBuffers(1, &s.vbo);
+        if (s.ebo && glIsBuffer(s.ebo)) glDeleteBuffers(1, &s.ebo);
+        s.vao = s.vbo = s.ebo = 0;
+    }
+
+    inline bool build_quad_pipeline(almondnamespace::openglstate::OpenGL4State& s)
+    {
+        destroy_quad_pipeline(s);
+
+        // Print versions in one line (so your logger doesn't eat it).
+        const char* glv = (const char*)glGetString(GL_VERSION);
+        const char* glsl = (const char*)glGetString(GL_SHADING_LANGUAGE_VERSION);
+        const char* ven = (const char*)glGetString(GL_VENDOR);
+        const char* ren = (const char*)glGetString(GL_RENDERER);
+        std::cerr << "QUAD_V3 GL_VERSION=[" << (glv ? glv : "null")
+            << "] GLSL=[" << (glsl ? glsl : "null")
+            << "] VENDOR=[" << (ven ? ven : "null")
+            << "] RENDERER=[" << (ren ? ren : "null") << "]\n";
+
+        GLint maj = 0, min = 0;
+        glGetIntegerv(GL_MAJOR_VERSION, &maj);
+        glGetIntegerv(GL_MINOR_VERSION, &min);
+        if (maj == 0 && min == 0)
+        {
+            auto [pm, pn] = parse_ver(glv);
+            maj = pm; min = pn;
+        }
+        if (maj == 0 && min == 0) { maj = 2; min = 1; }
+
+        const bool gl30plus = (maj > 3) || (maj == 3 && min >= 0);
+        const bool gl33plus = (maj > 3) || (maj == 3 && min >= 3);
+
+        std::string vs, fs;
+
+        if (!gl30plus)
+        {
+            vs = R"(#version 120
+attribute vec2 aPos;
+attribute vec2 aTexCoord;
+uniform vec4 uTransform;
+uniform vec4 uUVRegion;
+varying vec2 vUV;
 void main() {
     vec2 pos = aPos * uTransform.zw + uTransform.xy;
     gl_Position = vec4(pos, 0.0, 1.0);
     vUV = uUVRegion.xy + aTexCoord * uUVRegion.zw;
-}
-)";
-
-        std::string fs_source = std::string(directive) + R"(
-
+})";
+            fs = R"(#version 120
+varying vec2 vUV;
+uniform sampler2D uTexture;
+void main() {
+    gl_FragColor = texture2D(uTexture, vUV);
+})";
+        }
+        else if (gl33plus)
+        {
+            vs = R"(#version 330 core
+in vec2 aPos;
+in vec2 aTexCoord;
+uniform vec4 uTransform;
+uniform vec4 uUVRegion;
+out vec2 vUV;
+void main() {
+    vec2 pos = aPos * uTransform.zw + uTransform.xy;
+    gl_Position = vec4(pos, 0.0, 1.0);
+    vUV = uUVRegion.xy + aTexCoord * uUVRegion.zw;
+})";
+            fs = R"(#version 330 core
 in vec2 vUV;
 out vec4 outColor;
-
 uniform sampler2D uTexture;
-
 void main() {
     outColor = texture(uTexture, vUV);
-}
-)";
+})";
+        }
+        else
+        {
+            vs = R"(#version 130
+in vec2 aPos;
+in vec2 aTexCoord;
+uniform vec4 uTransform;
+uniform vec4 uUVRegion;
+out vec2 vUV;
+void main() {
+    vec2 pos = aPos * uTransform.zw + uTransform.xy;
+    gl_Position = vec4(pos, 0.0, 1.0);
+    vUV = uUVRegion.xy + aTexCoord * uUVRegion.zw;
+})";
+            fs = R"(#version 130
+in vec2 vUV;
+out vec4 outColor;
+uniform sampler2D uTexture;
+void main() {
+    outColor = texture(uTexture, vUV);
+})";
+        }
 
         try
         {
-            glState.shader = linkProgram(vs_source.c_str(), fs_source.c_str());
+            GLuint vsh = compile(GL_VERTEX_SHADER, vs);
+            GLuint fsh = compile(GL_FRAGMENT_SHADER, fs);
+            s.shader = link(vsh, fsh, gl30plus);
+            glDeleteShader(vsh);
+            glDeleteShader(fsh);
         }
-        catch (const std::exception& ex)
+        catch (const std::exception& e)
         {
-            std::cerr << "[OpenGL] Pipeline build failed: " << ex.what() << "\n";
-            destroy_quad_pipeline(glState);
+            std::cerr << "[OpenGL] Pipeline build failed: " << e.what() << "\n";
+            destroy_quad_pipeline(s);
             return false;
         }
 
-        glState.uUVRegionLoc = glGetUniformLocation(glState.shader, "uUVRegion");
-        glState.uTransformLoc = glGetUniformLocation(glState.shader, "uTransform");
-        glState.uSamplerLoc = glGetUniformLocation(glState.shader, "uTexture");
+        s.uUVRegionLoc = glGetUniformLocation(s.shader, "uUVRegion");
+        s.uTransformLoc = glGetUniformLocation(s.shader, "uTransform");
+        s.uSamplerLoc = glGetUniformLocation(s.shader, "uTexture");
 
-        if (glState.uSamplerLoc >= 0)
+        if (s.uSamplerLoc >= 0)
         {
-            glUseProgram(glState.shader);
-            glUniform1i(glState.uSamplerLoc, 0);
+            glUseProgram(s.shader);
+            glUniform1i(s.uSamplerLoc, 0);
             glUseProgram(0);
         }
 
-        glGenVertexArrays(1, &glState.vao);
-        glGenBuffers(1, &glState.vbo);
-        glGenBuffers(1, &glState.ebo);
+        glGenVertexArrays(1, &s.vao);
+        glGenBuffers(1, &s.vbo);
+        glGenBuffers(1, &s.ebo);
 
-        if (!glState.vao || !glState.vbo || !glState.ebo)
-        {
-            std::cerr << "[OpenGL] Failed to allocate quad buffers\n";
-            destroy_quad_pipeline(glState);
-            return false;
-        }
-
-        glBindVertexArray(glState.vao);
-        glBindBuffer(GL_ARRAY_BUFFER, glState.vbo);
+        glBindVertexArray(s.vao);
+        glBindBuffer(GL_ARRAY_BUFFER, s.vbo);
 
         constexpr float quadVerts[] = {
             -0.5f, -0.5f, 0.0f, 0.0f,
@@ -363,18 +353,17 @@ void main() {
              0.5f,  0.5f, 1.0f, 1.0f,
             -0.5f,  0.5f, 0.0f, 1.0f
         };
-        glBufferData(GL_ARRAY_BUFFER, static_cast<GLsizeiptr>(sizeof(quadVerts)), quadVerts, GL_STATIC_DRAW);
+        glBufferData(GL_ARRAY_BUFFER, (GLsizeiptr)sizeof(quadVerts), quadVerts, GL_STATIC_DRAW);
 
         glEnableVertexAttribArray(0);
-        glVertexAttribPointer(0, 2, GL_FLOAT, GL_FALSE, 4 * static_cast<GLsizei>(sizeof(float)), (void*)0);
+        glVertexAttribPointer(0, 2, GL_FLOAT, GL_FALSE, 4 * (GLsizei)sizeof(float), (void*)0);
 
         glEnableVertexAttribArray(1);
-        glVertexAttribPointer(1, 2, GL_FLOAT, GL_FALSE, 4 * static_cast<GLsizei>(sizeof(float)),
-            (void*)(2 * sizeof(float)));
+        glVertexAttribPointer(1, 2, GL_FLOAT, GL_FALSE, 4 * (GLsizei)sizeof(float), (void*)(2 * sizeof(float)));
 
-        glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, glState.ebo);
-        constexpr unsigned int quadIdx[] = { 0, 1, 2, 2, 3, 0 };
-        glBufferData(GL_ELEMENT_ARRAY_BUFFER, static_cast<GLsizeiptr>(sizeof(quadIdx)), quadIdx, GL_STATIC_DRAW);
+        glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, s.ebo);
+        constexpr unsigned int quadIdx[] = { 0,1,2, 2,3,0 };
+        glBufferData(GL_ELEMENT_ARRAY_BUFFER, (GLsizeiptr)sizeof(quadIdx), quadIdx, GL_STATIC_DRAW);
 
         glBindVertexArray(0);
         glBindBuffer(GL_ARRAY_BUFFER, 0);
@@ -383,19 +372,27 @@ void main() {
         return true;
     }
 
-    export bool ensure_quad_pipeline(almondnamespace::openglstate::OpenGL4State& glState)
+    export bool ensure_quad_pipeline(almondnamespace::openglstate::OpenGL4State& s)
     {
-        const bool shaderValid = glState.shader != 0 && glIsProgram(glState.shader) == GL_TRUE;
-        const bool vaoValid = glState.vao != 0 && glIsVertexArray(glState.vao) == GL_TRUE;
-        const bool vboValid = glState.vbo != 0 && glIsBuffer(glState.vbo) == GL_TRUE;
-        const bool eboValid = glState.ebo != 0 && glIsBuffer(glState.ebo) == GL_TRUE;
+        // If no GL context is current on this thread, glGetString returns null.
+        // In that situation, *do not* try to rebuild (it will fail and may nuke a valid pipeline).
+        // Also avoid glIs*() calls because they are undefined without a current context.
+        if (::glGetString(GL_VERSION) == nullptr)
+        {
+            // Best-effort: if handles are non-zero, assume pipeline exists.
+            return (s.shader != 0) && (s.vao != 0) && (s.vbo != 0) && (s.ebo != 0);
+        }
 
-        if (shaderValid && vaoValid && vboValid && eboValid)
+        const bool shaderOk = s.shader != 0 && glIsProgram(s.shader) == GL_TRUE;
+        const bool vaoOk = s.vao != 0 && glIsVertexArray(s.vao) == GL_TRUE;
+        const bool vboOk = s.vbo != 0 && glIsBuffer(s.vbo) == GL_TRUE;
+        const bool eboOk = s.ebo != 0 && glIsBuffer(s.ebo) == GL_TRUE;
+
+        if (shaderOk && vaoOk && vboOk && eboOk)
             return true;
 
-        return build_quad_pipeline(glState);
+        return build_quad_pipeline(s);
     }
-
-} // namespace almondnamespace::openglcontext
+} // namespace almondnamespace::openglquad
 
 #endif // ALMOND_USING_OPENGL
