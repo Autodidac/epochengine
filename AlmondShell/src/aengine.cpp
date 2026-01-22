@@ -296,7 +296,8 @@ namespace almondnamespace::core
 
                                     active_scene = make_scene();
                                     active_scene->load();
-                                    state = EditorSceneState::Game;
+                                   // state = EditorSceneState::Game;
+                                    state = EditorSceneState::Editor;
                                     show_games_popup = false;
                                     std::cout << "[Editor] Launching " << label << " scene.\n";
                                 };
@@ -362,8 +363,8 @@ namespace almondnamespace::core
 
                                 if (show_games_popup)
                                 {
-                                    const float popup_width = std::max(600.0f, ctx->get_width_safe() * 0.7f);
-                                    const float popup_height = std::max(360.0f, ctx->get_height_safe() * 0.6f);
+                                    const float popup_width = (std::max)(600.0f, ctx->get_width_safe() * 0.7f);
+                                    const float popup_height = (std::max)(360.0f, ctx->get_height_safe() * 0.6f);
 
                                     const gui::Vec2 popup_size{ popup_width, popup_height };
                                     const gui::Vec2 popup_pos{
@@ -723,6 +724,7 @@ namespace almondnamespace::core
                                 break;
                             }
 
+							// cascading case to reset to menu after game exit 
                             case SceneID::Snake:
                             case SceneID::Tetris:
                             case SceneID::Pacman:
