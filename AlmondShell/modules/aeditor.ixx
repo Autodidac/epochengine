@@ -1,12 +1,13 @@
-module;
-
 /**************************************************************
- *   Almond Project – Editor Root                              *
+ *   AlmondShell - Modular C++ Framework
+ *   Editor API
+ *
+ *   SPDX-License-Identifier: LicenseRef-MIT-NoSell
  **************************************************************/
-
 export module aeditor;
 
 export namespace almondnamespace
 {
-    void editor_run();
+    // Returns true when the user clicks "Run Game" in the editor UI.
+    bool editor_run();
 }

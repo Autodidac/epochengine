@@ -334,7 +334,8 @@ namespace almondnamespace::core
 
                                 ctx->clear_safe();
                                 gui::begin_frame(ctx, dt, mouse_pos, mouse_left_down);
-                                almondnamespace::editor_run();
+                                if (almondnamespace::editor_run())
+                                    show_games_popup = !show_games_popup;
 
                                 const bool draw_editor_overlay = !show_games_popup;
                                 const bool menu_has_focus = draw_editor_overlay;

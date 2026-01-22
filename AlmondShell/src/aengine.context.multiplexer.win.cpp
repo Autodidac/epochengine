@@ -117,8 +117,22 @@ namespace
             return DefSubclassProc(hwnd, msg, wp, lp);
 
         case WM_CLOSE:
+        {
+            // Raylib/GLFW windows are owned by the render thread that created them.
+            // Forcing DestroyWindow() here can race with raylib's own WM_CLOSE handling and
+            // trigger re-entrant shutdown (raylib CloseWindow + our DestroyWindow) which can
+            // deadlock during undock/close.
+            // Heuristic: GLFW windows use a GLFW* window class name (e.g. "GLFW30").
+            // If this is a GLFW window, do NOT DestroyWindow here—let raylib/GLFW handle WM_CLOSE
+            // and let our render loop call raylib CloseWindow during cleanup.
+            wchar_t cls[64]{};
+            ::GetClassNameW(hwnd, cls, 64);
+            if (cls[0] == L'G' && cls[1] == L'L' && cls[2] == L'F' && cls[3] == L'W')
+                return DefSubclassProc(hwnd, msg, wp, lp);
+
             ::DestroyWindow(hwnd);
             return 0;
+        }
 
         case WM_LBUTTONDOWN:
         case WM_MOUSEMOVE:
@@ -137,8 +151,14 @@ namespace
 #if defined(ALMOND_USING_OPENGL)
         if (window && window->glContext)
         {
-            ::wglMakeCurrent(nullptr, nullptr);
-            ::wglDeleteContext(window->glContext);
+#if defined(ALMOND_USING_RAYLIB)
+            // Raylib/GLFW owns its WGL context; deleting it here can deadlock or double-destroy.
+            if (window->type != almondnamespace::core::ContextType::RayLib)
+#endif
+            {
+                ::wglMakeCurrent(nullptr, nullptr);
+                ::wglDeleteContext(window->glContext);
+            }
         }
 #endif
         if (window && window->hdc && window->hwnd)
@@ -166,6 +186,8 @@ namespace almondnamespace::core
     // ------------------------------------------------------------
     std::unordered_map<HWND, std::thread>& Threads() noexcept { return g_threads; }
     DragState& Drag() noexcept { return g_drag; }
+    std::unique_ptr<WindowData> removed;
+	std::vector<PendingWindowCleanup>& PendingCleanups() noexcept { return g_pendingCleanups; }
 
     void MakeDockable(HWND hwnd, HWND parent)
     {
@@ -499,11 +521,7 @@ namespace almondnamespace::core
                     HGLRC glrc = nullptr;
 
 #if defined(ALMOND_USING_OPENGL)
-                    if (type == ContextType::OpenGL
-#if defined(ALMOND_USING_RAYLIB)
-                        || type == ContextType::RayLib
-#endif
-                        )
+                    if (type == ContextType::OpenGL)
                     {
                         glrc = CreateSharedGLContext(hdc);
                     }
@@ -686,7 +704,7 @@ namespace almondnamespace::core
 #if defined(ALMOND_USING_SOFTWARE_RENDERER)
         make_backend_windows(ContextType::Software, SoftwareWinCount);
 #endif
-       // (void)SFMLWinCount; // place holder
+        // (void)SFMLWinCount; // place holder
 #if defined(ALMOND_USING_SFML)
         make_backend_windows(ContextType::SFML, SFMLWinCount);
 #endif
@@ -781,6 +799,12 @@ namespace almondnamespace::core
         ctx->hdc = hdc;
         ctx->hglrc = glContext;
 
+        // Keep the cross-backend fields in sync.
+        // Many render helpers (e.g. OpenGL texture uploads / sprite draws) use native_*.
+        ctx->native_window = hwnd;
+        ctx->native_drawable = hdc;
+        ctx->native_gl_context = glContext;
+
         auto winPtr = std::make_unique<WindowData>(hwnd, hdc, glContext, usesSharedContext, type);
         winPtr->running = true;
         winPtr->onResize = std::move(onResize);
@@ -801,6 +825,13 @@ namespace almondnamespace::core
         {
             std::scoped_lock lock(windowsMutex);
             windows.emplace_back(std::move(winPtr));
+            // Ask the render thread to stop itself; don't race a plain bool from the message thread.
+            if (removed)
+            {
+                WindowData* raw = removed.get();
+                removed->EnqueueCommand([raw]() { raw->running = false; });
+            }
+
         }
 
         auto& threads = Threads();
@@ -912,7 +943,6 @@ namespace almondnamespace::core
 
     void MultiContextManager::RemoveWindow(HWND hwnd)
     {
-        std::unique_ptr<WindowData> removed;
         bool should_quit = false;
 
         {
@@ -921,7 +951,6 @@ namespace almondnamespace::core
                 [hwnd](const std::unique_ptr<WindowData>& w) { return w && w->hwnd == hwnd; });
             if (it == windows.end()) return;
 
-            (*it)->running = false;
 
             if ((*it)->context)
             {
@@ -1093,13 +1122,13 @@ namespace almondnamespace::core
         {
             std::cerr << "[RenderThread] SFML init. host=" << win.hwnd << "\n";
             const bool ok = almondnamespace::sfmlcontext::sfml_initialize(
-                ctx, 
+                ctx,
                 win.hwnd,
                 static_cast<unsigned>(ctx->width),
                 static_cast<unsigned>(ctx->height),
                 win.onResize ? win.onResize : ctx->onResize,
                 win.titleNarrow
-                );
+            );
 
             if (!ok) { win.running = false; return; }
         }
@@ -1107,7 +1136,7 @@ namespace almondnamespace::core
 
         const bool skipGenericInit =
 #if defined(ALMOND_USING_SFML)
-			(ctx->type == ContextType::SFML) ||
+            (ctx->type == ContextType::SFML) ||
 #endif
 #if defined(ALMOND_USING_RAYLIB)
             (ctx->type == ContextType::RayLib) ||

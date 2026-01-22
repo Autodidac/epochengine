@@ -455,9 +455,6 @@
     <ClCompile Include="$(MSBuildThisFileDirectory)modules\aengine.bindings.ixx">
       <Filter>Module Files\ixx\utilities</Filter>
     </ClCompile>
-    <ClCompile Include="$(MSBuildThisFileDirectory)modules\aengine.core.context.ixx">
-      <Filter>Module Files\ixx\core\context</Filter>
-    </ClCompile>
     <ClCompile Include="$(MSBuildThisFileDirectory)modules\aengine.context.window.ixx">
       <Filter>Module Files\ixx\core\context</Filter>
     </ClCompile>
@@ -541,6 +538,9 @@
     </ClCompile>
     <ClCompile Include="$(MSBuildThisFileDirectory)src\acontext.raylib.bridge.cpp">
       <Filter>Source Files\platform</Filter>
+    </ClCompile>
+    <ClCompile Include="$(MSBuildThisFileDirectory)modules\aengine.core.context.ixx">
+      <Filter>Module Files\ixx\core\context</Filter>
     </ClCompile>
   </ItemGroup>
 </Project>

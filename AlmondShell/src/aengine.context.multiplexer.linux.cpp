@@ -1,4 +1,5 @@
-﻿/**************************************************************
+﻿/*
+/**************************************************************
  *   █████╗ ██╗     ███╗   ███╗   ███╗   ██╗    ██╗██████╗    *
  *  ██╔══██╗██║     ████╗ ████║ ██╔═══██╗████╗  ██║██╔══██╗   *
  *  ███████║██║     ██╔████╔██║ ██║   ██║██╔██╗ ██║██║  ██║   *
@@ -15,9 +16,9 @@
  *   Use permitted for Non-Commercial Purposes ONLY,          *
  *   without prior commercial licensing agreement.            *
  **************************************************************/
- //
- // aengine.context.multiplexer.linux.cpp  (TU implementation; NOT a module interface)
- //
+//
+// aengine.context.multiplexer.linux.cpp  (TU implementation; NOT a module interface)
+//
 
 #if defined(__linux__)
 
@@ -1011,9 +1012,20 @@ namespace almondnamespace::core
 
             if (it == windows.end()) return;
 
-            (*it)->running = false;
+            // IMPORTANT: do NOT write (*it)->running=false here from this thread.
+            // It's a plain bool and would race the render thread -> possible infinite join.
             removed = std::move(*it);
             windows.erase(it);
+        }
+
+        // Ask the render thread to stop itself (no cross-thread data race).
+        if (removed)
+        {
+            WindowData* raw = removed.get();
+            raw->EnqueueCommand([raw]()
+                {
+                    raw->running = false;
+                });
         }
 
         ::Window xwin = to_xwindow(hwnd);
@@ -1045,6 +1057,7 @@ namespace almondnamespace::core
             }
         }
     }
+
 
     void MultiContextManager::ArrangeDockedWindowsGrid()
     {
@@ -1258,7 +1271,7 @@ namespace almondnamespace::core
                 finalCtx.drawable = xwin;
                 finalCtx.context = glxCtx;
 
-                almondnamespace::openglcontext::PlatformGL::ScopedContext contextGuard{finalCtx};
+                almondnamespace::openglcontext::PlatformGL::ScopedContext contextGuard{ finalCtx };
                 if (!contextGuard.ok())
                 {
                     std::cerr << "[Init] PlatformGL::make_current(final) failed on Linux\n";

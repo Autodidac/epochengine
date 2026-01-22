@@ -372,27 +372,53 @@ void main() {
         return true;
     }
 
-    export bool ensure_quad_pipeline(almondnamespace::openglstate::OpenGL4State& s)
+    // ------------------------------------------------------------------
+// Per-thread (per-window render thread) pipeline
+//
+// IMPORTANT:
+// VAOs are NOT shared across WGL share-groups. Your multiplexer runs
+// multiple OpenGL contexts on multiple threads. Storing VAO/VBO/EBO in a
+// single shared OpenGL4State causes "last window wins" handle stomping.
+//
+// The least-invasive fix is to make the quad pipeline thread_local,
+// because each render thread keeps one current context.
+// ------------------------------------------------------------------
+
+inline thread_local almondnamespace::openglstate::OpenGL4State s_tls_pipeline{};
+
+export almondnamespace::openglstate::OpenGL4State& quad_pipeline_state() noexcept
+{
+    return s_tls_pipeline;
+}
+
+export bool ensure_quad_pipeline()
+{
+    auto& s = s_tls_pipeline;
+
+    // If no GL context is current on this thread, glGetString returns null.
+    // Do not try to rebuild in that situation.
+    if (::glGetString(GL_VERSION) == nullptr)
     {
-        // If no GL context is current on this thread, glGetString returns null.
-        // In that situation, *do not* try to rebuild (it will fail and may nuke a valid pipeline).
-        // Also avoid glIs*() calls because they are undefined without a current context.
-        if (::glGetString(GL_VERSION) == nullptr)
-        {
-            // Best-effort: if handles are non-zero, assume pipeline exists.
-            return (s.shader != 0) && (s.vao != 0) && (s.vbo != 0) && (s.ebo != 0);
-        }
-
-        const bool shaderOk = s.shader != 0 && glIsProgram(s.shader) == GL_TRUE;
-        const bool vaoOk = s.vao != 0 && glIsVertexArray(s.vao) == GL_TRUE;
-        const bool vboOk = s.vbo != 0 && glIsBuffer(s.vbo) == GL_TRUE;
-        const bool eboOk = s.ebo != 0 && glIsBuffer(s.ebo) == GL_TRUE;
-
-        if (shaderOk && vaoOk && vboOk && eboOk)
-            return true;
-
-        return build_quad_pipeline(s);
+        return (s.shader != 0) && (s.vao != 0) && (s.vbo != 0) && (s.ebo != 0);
     }
+
+    const bool shaderOk = s.shader != 0 && glIsProgram(s.shader) == GL_TRUE;
+    const bool vaoOk    = s.vao    != 0 && glIsVertexArray(s.vao) == GL_TRUE;
+    const bool vboOk    = s.vbo    != 0 && glIsBuffer(s.vbo) == GL_TRUE;
+    const bool eboOk    = s.ebo    != 0 && glIsBuffer(s.ebo) == GL_TRUE;
+
+    if (shaderOk && vaoOk && vboOk && eboOk)
+        return true;
+
+    return build_quad_pipeline(s);
+}
+
+// Back-compat wrapper: existing code may still call ensure_quad_pipeline(state).
+// We deliberately ignore the passed-in state to avoid cross-context handle stomping.
+export bool ensure_quad_pipeline(almondnamespace::openglstate::OpenGL4State& /*unused*/)
+{
+    return ensure_quad_pipeline();
+}
 } // namespace almondnamespace::openglquad
 
 #endif // ALMOND_USING_OPENGL

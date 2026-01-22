@@ -106,6 +106,42 @@ namespace almondnamespace::raylibcontext
 #endif
         }
 
+
+        // If the raylib window is docked as a WS_CHILD, promote it to a top-level window
+        // before letting raylib destroy it. This avoids edge cases where the dock host or
+        // its thread is already tearing down, which can deadlock inside DestroyWindow.
+        inline void promote_raylib_to_top_level(HWND hwnd) noexcept
+        {
+            if (!hwnd || ::IsWindow(hwnd) == FALSE)
+                return;
+
+            const LONG_PTR style = ::GetWindowLongPtrW(hwnd, GWL_STYLE);
+            const bool isChild = (style & WS_CHILD) != 0;
+            const HWND parent = ::GetParent(hwnd);
+
+            if (!isChild && !parent)
+                return;
+
+            RECT rc{};
+            ::GetWindowRect(hwnd, &rc);
+
+            // Detach from any parent and restore overlapped style.
+            ::SetParent(hwnd, nullptr);
+
+            LONG_PTR newStyle = style;
+            newStyle &= ~static_cast<LONG_PTR>(WS_CHILD);
+            newStyle |= static_cast<LONG_PTR>(WS_OVERLAPPEDWINDOW | WS_VISIBLE);
+
+            ::SetWindowLongPtrW(hwnd, GWL_STYLE, newStyle);
+            ::SetWindowPos(hwnd,
+                HWND_TOP,
+                rc.left,
+                rc.top,
+                (std::max)(1, static_cast<int>(rc.right - rc.left)),
+                (std::max)(1, static_cast<int>(rc.bottom - rc.top)),
+                SWP_NOACTIVATE | SWP_FRAMECHANGED | SWP_SHOWWINDOW);
+        }
+
         inline void adopt_raylib_window(
             almondnamespace::raylibstate::RaylibState& st,
             std::shared_ptr<core::Context> ctx,
@@ -298,21 +334,21 @@ namespace almondnamespace::raylibcontext
         almondnamespace::raylib_api::set_target_fps(0);
 
         st.onResize = [](int w, int h)
-        {
-            auto& state = almondnamespace::raylibstate::s_raylibstate;
-            const int clampedW = (std::max)(1, w);
-            const int clampedH = (std::max)(1, h);
-            state.width = static_cast<unsigned>(clampedW);
-            state.height = static_cast<unsigned>(clampedH);
+            {
+                auto& state = almondnamespace::raylibstate::s_raylibstate;
+                const int clampedW = (std::max)(1, w);
+                const int clampedH = (std::max)(1, h);
+                state.width = static_cast<unsigned>(clampedW);
+                state.height = static_cast<unsigned>(clampedH);
 
-         //   (void)raylib_make_current();
+                //   (void)raylib_make_current();
 #if defined(_WIN32)
-            detail::debug_expect_raylib_current(state, "raylib_resize");
+                detail::debug_expect_raylib_current(state, "raylib_resize");
 #endif
 
-            if (state.userResize)
-                state.userResize(clampedW, clampedH);
-        };
+                if (state.userResize)
+                    state.userResize(clampedW, clampedH);
+            };
 
 #if defined(_WIN32)
         // Restore previous GL binding for the dock/multiplexer host.
@@ -504,7 +540,11 @@ namespace almondnamespace::raylibcontext
         {
 #if defined(_WIN32)
             if (madeCurrent && on_owner_thread && window_alive)
+            {
+                // If docked as child, detach to top-level before closing to avoid teardown deadlocks.
+                detail::promote_raylib_to_top_level(st.hwnd);
                 almondnamespace::raylib_api::close_window();
+            }
 #else
             almondnamespace::raylib_api::close_window();
 #endif

@@ -50,7 +50,7 @@ import <utility>;
 import <functional>;
 import <memory>;
 
-import aframework;                    // if this imports SFML headers, NOMINMAX is already set
+//import aframework;                    // if this imports SFML headers, NOMINMAX is already set
 import aengine.context.type;
 import aengine.context.commandqueue;
 

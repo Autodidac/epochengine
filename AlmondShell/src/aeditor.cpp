@@ -37,12 +37,19 @@ import autility.filewatch;
 
 namespace almondnamespace
 {
-    void editor_run()
+    bool editor_run()
     {
-        gui::begin_window("Epoch Editor", { 20.0f, 20.0f }, { 480.0f, 320.0f });
+        gui::begin_window("Epoch Editor", { 20.0f, 20.0f }, { 520.0f, 360.0f });
+
         gui::label("Editor UI is active.");
-        gui::label("Select Run Game to launch a scene.");
+        //gui::spacer(8.0f);
+
+        const bool run_clicked = gui::button("Run Game", { 180.0f, 0.0f });
+        gui::label(run_clicked ? "Launching menu..." : "Click Run Game to choose a scene.");
+
         gui::end_window();
+
+        return run_clicked;
 
         //static auto files = get_file_states("epoch_gui_editor/src/scripts");
         //scan_and_mark_changes(files);
