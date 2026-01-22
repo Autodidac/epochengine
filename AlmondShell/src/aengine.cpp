@@ -175,7 +175,7 @@ namespace almondnamespace::core
     namespace engine
     {
         template <typename PumpFunc>
-        int RunEngineMainLoopCommon(MultiContextManager& mgr, PumpFunc&& pump_events)
+        int RunMenuAndGamesLoop(MultiContextManager& mgr, PumpFunc&& pump_events)
         {
             enum class SceneID
             {
@@ -241,10 +241,11 @@ namespace almondnamespace::core
 
             std::unordered_map<Context*, std::chrono::steady_clock::time_point> last_frame_times;
             bool running = true;
+            auto pump = std::forward<PumpFunc>(pump_events);
 
             while (running)
             {
-                if (!pump_events())
+                if (!pump())
                 {
                     running = false;
                     break;
@@ -486,6 +487,12 @@ namespace almondnamespace::core
             }
 
             return 0;
+        }
+
+        template <typename PumpFunc>
+        int RunEngineMainLoopCommon(MultiContextManager& mgr, PumpFunc&& pump_events)
+        {
+            return RunMenuAndGamesLoop(mgr, std::forward<PumpFunc>(pump_events));
         }
 
 #if defined(_WIN32)
