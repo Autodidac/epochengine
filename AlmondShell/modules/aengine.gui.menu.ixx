@@ -48,10 +48,23 @@ export namespace almondnamespace::menu
         Sandsim, Cellular, Settings, Exit
     };
 
+    enum class EditorCommandChoice {
+        OpenProject,
+        Settings,
+        RunGame,
+        Exit
+    };
+
     struct ChoiceDescriptor {
         Choice      choice;
         std::string label;
         gui::Vec2   size;
+    };
+
+    struct EditorCommandDescriptor {
+        EditorCommandChoice choice;
+        std::string label;
+        gui::Vec2 size;
     };
 
     struct MenuOverlay
@@ -80,6 +93,35 @@ export namespace almondnamespace::menu
         float layoutOriginY = 0.0f;
         float layoutWidth = 0.0f;
         float layoutHeight = 0.0f;
+
+        void initialize_game_choices()
+        {
+            if (initialized) return;
+
+            set_max_columns(core::cli::menu_columns);
+
+            selection = 0;
+            prevUp = prevDown = prevLeft = prevRight = prevEnter = false;
+
+            constexpr gui::Vec2 DefaultButtonSize{ 256.0f, 96.0f };
+
+            descriptors = {
+                { Choice::Snake,      "Snake",      DefaultButtonSize },
+                { Choice::Tetris,    "Tetris",     DefaultButtonSize },
+                { Choice::Pacman,    "Pacman",     DefaultButtonSize },
+                { Choice::Frogger,   "Frogger",    DefaultButtonSize },
+                { Choice::Sokoban,   "Sokoban",    DefaultButtonSize },
+                { Choice::Minesweep, "Minesweep",  DefaultButtonSize },
+                { Choice::Puzzle,    "Puzzle",     DefaultButtonSize },
+                { Choice::Bejeweled, "Bejeweled",  DefaultButtonSize },
+                { Choice::Fourty,    "2048",       DefaultButtonSize },
+                { Choice::Sandsim,   "Sand Sim",   DefaultButtonSize },
+                { Choice::Cellular,  "Cellular",   DefaultButtonSize }
+            };
+
+            initialized = true;
+            std::cout << "[Menu] Initialized " << descriptors.size() << " game entries\n";
+        }
 
         // ----------------------------------------------------
         void set_max_columns(int desiredMax)
@@ -227,13 +269,42 @@ export namespace almondnamespace::menu
             bool rightPressed,
             bool enterPressed)
         {
+            return update_and_draw_in_window(
+                ctx,
+                win,
+                dt,
+                upPressed,
+                downPressed,
+                leftPressed,
+                rightPressed,
+                enterPressed,
+                "Main Menu",
+                { 0.f, 0.f },
+                { 0.f, 0.f },
+                false);
+        }
+
+        std::optional<Choice> update_and_draw_in_window(
+            std::shared_ptr<core::Context> ctx,
+            core::WindowData* win,
+            float dt,
+            bool upPressed,
+            bool downPressed,
+            bool leftPressed,
+            bool rightPressed,
+            bool enterPressed,
+            std::string_view title,
+            gui::Vec2 windowPosition,
+            gui::Vec2 windowSize,
+            bool clampToWindow)
+        {
             if (!initialized) return std::nullopt;
 
             std::ignore = win;
             std::ignore = dt;
 
-            int currentWidth = ctx ? ctx->get_width_safe() : cachedWidth;
-            int currentHeight = ctx ? ctx->get_height_safe() : cachedHeight;
+            int currentWidth = windowSize.x > 0 ? static_cast<int>(windowSize.x) : (ctx ? ctx->get_width_safe() : cachedWidth);
+            int currentHeight = windowSize.y > 0 ? static_cast<int>(windowSize.y) : (ctx ? ctx->get_height_safe() : cachedHeight);
             if (currentWidth <= 0) currentWidth = cachedWidth;
             if (currentHeight <= 0) currentHeight = cachedHeight;
             if (currentWidth <= 0) currentWidth = 1;
@@ -255,7 +326,11 @@ export namespace almondnamespace::menu
            // const bool flipVertical = ctx && ctx ->type == core::ContextType::OpenGL;
 
             auto position_for_index = [&](int idx) {
-                return cachedPositions[idx];
+                auto base = cachedPositions[idx];
+                return std::pair<int, int>{
+                    base.first + static_cast<int>(std::round(windowPosition.x)),
+                    base.second + static_cast<int>(std::round(windowPosition.y))
+                };
                 };
 
             int hover = -1;
@@ -283,11 +358,31 @@ export namespace almondnamespace::menu
             prevLeft = leftPressed; prevRight = rightPressed;
 
             const float pad = LayoutSpacing * 0.5f;
-            gui::begin_window(
-                "Main Menu",
-                { layoutOriginX - pad, layoutOriginY - pad },
-                { layoutWidth + pad * 2, layoutHeight + pad * 2 }
-            );
+            const gui::Vec2 chromePosition{
+                windowPosition.x + layoutOriginX - pad,
+                windowPosition.y + layoutOriginY - pad
+            };
+            const gui::Vec2 chromeSize{
+                layoutWidth + pad * 2,
+                layoutHeight + pad * 2
+            };
+
+            if (clampToWindow && windowSize.x > 0.f && windowSize.y > 0.f)
+            {
+                gui::begin_window(
+                    title,
+                    windowPosition,
+                    windowSize
+                );
+            }
+            else
+            {
+                gui::begin_window(
+                    title,
+                    chromePosition,
+                    chromeSize
+                );
+            }
 
             std::optional<Choice> chosen{};
             for (int i = 0; i < totalItems; ++i) {
@@ -327,6 +422,141 @@ export namespace almondnamespace::menu
             selection = 0;
             prevUp = prevDown = prevLeft = prevRight = prevEnter = false;
             initialized = false;
+        }
+    };
+
+    struct EditorCommandOverlay
+    {
+        std::vector<EditorCommandDescriptor> descriptors;
+        std::size_t selection = 0;
+
+        bool prevUp = false;
+        bool prevDown = false;
+        bool prevEnter = false;
+        bool initialized = false;
+
+        gui::Vec2 windowPosition{ 24.0f, 24.0f };
+        float windowPadding = 16.0f;
+        float itemSpacing = 12.0f;
+
+        void initialize()
+        {
+            if (initialized) return;
+
+            constexpr gui::Vec2 DefaultButtonSize{ 220.0f, 48.0f };
+
+            descriptors = {
+                { EditorCommandChoice::OpenProject, "Open Project", DefaultButtonSize },
+                { EditorCommandChoice::Settings,    "Settings",     DefaultButtonSize },
+                { EditorCommandChoice::RunGame,     "Run Game",     DefaultButtonSize },
+                { EditorCommandChoice::Exit,        "Exit",         DefaultButtonSize }
+            };
+
+            selection = 0;
+            prevUp = prevDown = prevEnter = false;
+            initialized = true;
+        }
+
+        std::optional<EditorCommandChoice> update_and_draw(
+            std::shared_ptr<core::Context> ctx,
+            core::WindowData* win,
+            float dt,
+            bool upPressed,
+            bool downPressed,
+            bool enterPressed,
+            bool allowMouse = true)
+        {
+            if (!initialized) return std::nullopt;
+
+            std::ignore = ctx;
+            std::ignore = win;
+            std::ignore = dt;
+
+            const int totalItems = static_cast<int>(descriptors.size());
+            if (totalItems == 0) return std::nullopt;
+
+            if (selection >= static_cast<std::size_t>(totalItems))
+                selection = static_cast<std::size_t>(totalItems - 1);
+
+            if (upPressed && !prevUp)
+                selection = (selection == 0) ? totalItems - 1 : selection - 1;
+            if (downPressed && !prevDown)
+                selection = (selection + 1) % totalItems;
+
+            prevUp = upPressed;
+            prevDown = downPressed;
+
+            float maxWidth = 0.f;
+            float totalHeight = 0.f;
+            for (const auto& d : descriptors)
+            {
+                maxWidth = (std::max)(maxWidth, d.size.x);
+                totalHeight += d.size.y;
+            }
+            totalHeight += itemSpacing * (totalItems - 1);
+
+            const gui::Vec2 windowSize{
+                maxWidth + windowPadding * 2,
+                totalHeight + windowPadding * 2
+            };
+
+            gui::begin_window(
+                "Editor Commands",
+                windowPosition,
+                windowSize
+            );
+
+            int mx = 0;
+            int my = 0;
+            if (ctx)
+                ctx->get_mouse_position_safe(mx, my);
+
+            std::optional<EditorCommandChoice> chosen{};
+            float y = windowPosition.y + windowPadding;
+            for (int i = 0; i < totalItems; ++i)
+            {
+                const auto& d = descriptors[i];
+                const gui::Vec2 pos{ windowPosition.x + windowPadding, y };
+                gui::set_cursor(pos);
+
+                if (allowMouse)
+                {
+                    const bool hovering =
+                        mx >= static_cast<int>(pos.x) &&
+                        mx <= static_cast<int>(pos.x + d.size.x) &&
+                        my >= static_cast<int>(pos.y) &&
+                        my <= static_cast<int>(pos.y + d.size.y);
+                    if (hovering)
+                        selection = static_cast<std::size_t>(i);
+                }
+
+                std::string label = d.label;
+                if (static_cast<int>(selection) == i)
+                    label = "> " + label + " <";
+
+                if (gui::button(label, d.size))
+                {
+                    selection = static_cast<std::size_t>(i);
+                    chosen = d.choice;
+                }
+
+                y += d.size.y + itemSpacing;
+            }
+
+            gui::end_window();
+
+            if (chosen) return chosen;
+            if (enterPressed && !prevEnter)
+                return descriptors[selection].choice;
+
+            prevEnter = enterPressed;
+            return std::nullopt;
+        }
+
+        void reset_selection()
+        {
+            selection = 0;
+            prevUp = prevDown = prevEnter = false;
         }
     };
 }

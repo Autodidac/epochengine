@@ -49,6 +49,7 @@
 // -----------------------------
 // Standard library imports
 // -----------------------------
+import <algorithm>;
 import <chrono>;
 //import <exception>;
 import <format>;
@@ -126,6 +127,7 @@ namespace almondnamespace::core
 {
     void RunEngine();
     void StartEngine();
+    void RunEditorInterface();
 
     struct TextureUploadTask
     {
@@ -174,6 +176,360 @@ namespace almondnamespace::core
 
     namespace engine
     {
+        template <typename PumpFunc>
+        int RunEditorInterfaceLoop(MultiContextManager& mgr, PumpFunc&& pump_events)
+        {
+            enum class EditorSceneState
+            {
+                Editor,
+                Game,
+                Exit
+            };
+
+            EditorSceneState state = EditorSceneState::Editor;
+            std::unique_ptr<almondnamespace::scene::Scene> active_scene{};
+
+            using MenuOverlay = almondnamespace::menu::MenuOverlay;
+            using EditorCommandOverlay = almondnamespace::menu::EditorCommandOverlay;
+            MenuOverlay games_menu{};
+            EditorCommandOverlay editor_menu{};
+
+            games_menu.set_max_columns(almondnamespace::core::cli::menu_columns);
+            editor_menu.initialize();
+
+            auto collect_backend_contexts = []()
+                {
+                    using ContextGroup = std::pair<
+                        almondnamespace::core::ContextType,
+                        std::vector<std::shared_ptr<almondnamespace::core::Context>>
+                    >;
+
+                    std::vector<ContextGroup> snapshot;
+
+                    {
+                        std::shared_lock lock(almondnamespace::core::g_backendsMutex);
+                        snapshot.reserve(almondnamespace::core::g_backends.size());
+
+                        for (auto& [type, state] : almondnamespace::core::g_backends)
+                        {
+                            std::vector<std::shared_ptr<almondnamespace::core::Context>> contexts;
+                            contexts.reserve(1 + state.duplicates.size());
+
+                            if (state.master) contexts.push_back(state.master);
+                            for (auto& dup : state.duplicates) contexts.push_back(dup);
+
+                            snapshot.emplace_back(type, std::move(contexts));
+                        }
+                    }
+
+                    return snapshot;
+                };
+
+            auto init_menus = [&]()
+                {
+                    auto snapshot = collect_backend_contexts();
+                    for (auto& [_, contexts] : snapshot)
+                        for (auto& ctx : contexts)
+                        {
+                            if (ctx)
+                            {
+                                games_menu.initialize_game_choices();
+                                games_menu.recompute_layout(ctx, ctx->get_width_safe(), ctx->get_height_safe());
+                            }
+                        }
+                };
+
+            init_menus();
+
+            std::unordered_map<Context*, std::chrono::steady_clock::time_point> last_frame_times;
+            bool running = true;
+            bool show_games_popup = false;
+            auto pump = std::forward<PumpFunc>(pump_events);
+
+            while (running)
+            {
+                if (!pump())
+                {
+                    running = false;
+                    break;
+                }
+
+                auto snapshot = collect_backend_contexts();
+                for (auto& [type, contexts] : snapshot)
+                {
+                    auto update_on_ctx = [&](std::shared_ptr<Context> ctx) -> bool
+                        {
+                            if (!ctx) return true;
+
+                            auto* win = mgr.findWindowByContext(ctx);
+                            if (!win) return true;
+
+                            bool ctx_running = win->running;
+
+                            const auto now = std::chrono::steady_clock::now();
+                            const auto raw = ctx.get();
+
+                            float dt = 0.0f;
+                            auto [it, inserted] = last_frame_times.emplace(raw, now);
+                            if (!inserted)
+                            {
+                                dt = std::chrono::duration<float>(now - it->second).count();
+                                it->second = now;
+                            }
+
+                            auto begin_scene = [&](auto make_scene, const char* label)
+                                {
+                                    auto clear_commands = [](const std::shared_ptr<Context>& c)
+                                        {
+                                            if (c && c->windowData) c->windowData->commandQueue.clear();
+                                        };
+
+                                    auto snap2 = collect_backend_contexts();
+                                    for (auto& [__, group] : snap2)
+                                        for (auto& c : group)
+                                            clear_commands(c);
+
+                                    games_menu.cleanup();
+
+                                    if (active_scene)
+                                        active_scene->unload();
+
+                                    active_scene = make_scene();
+                                    active_scene->load();
+                                    state = EditorSceneState::Game;
+                                    show_games_popup = false;
+                                    std::cout << "[Editor] Launching " << label << " scene.\n";
+                                };
+
+                            if (state == EditorSceneState::Editor)
+                            {
+                                int mx = 0, my = 0;
+                                ctx->get_mouse_position_safe(mx, my);
+
+                                const gui::Vec2 mouse_pos{
+                                    static_cast<float>(mx),
+                                    static_cast<float>(my)
+                                };
+
+                                const bool mouse_left_down =
+                                    almondnamespace::input::mouseDown.test(almondnamespace::input::MouseButton::MouseLeft);
+
+                                const bool up_pressed =
+                                    almondnamespace::input::keyPressed.test(almondnamespace::input::Key::Up);
+                                const bool down_pressed =
+                                    almondnamespace::input::keyPressed.test(almondnamespace::input::Key::Down);
+                                const bool left_pressed =
+                                    almondnamespace::input::keyPressed.test(almondnamespace::input::Key::Left);
+                                const bool right_pressed =
+                                    almondnamespace::input::keyPressed.test(almondnamespace::input::Key::Right);
+                                const bool enter_pressed =
+                                    almondnamespace::input::keyPressed.test(almondnamespace::input::Key::Enter);
+
+                                ctx->clear_safe();
+                                gui::begin_frame(ctx, dt, mouse_pos, mouse_left_down);
+
+                                const bool menu_has_focus = !show_games_popup;
+                                auto command_choice = editor_menu.update_and_draw(
+                                    ctx,
+                                    win,
+                                    dt,
+                                    menu_has_focus ? up_pressed : false,
+                                    menu_has_focus ? down_pressed : false,
+                                    menu_has_focus ? enter_pressed : false,
+                                    menu_has_focus);
+
+                                if (command_choice)
+                                {
+                                    using almondnamespace::menu::EditorCommandChoice;
+
+                                    switch (*command_choice)
+                                    {
+                                    case EditorCommandChoice::OpenProject:
+                                        std::cout << "[Editor] Open Project selected.\n";
+                                        break;
+                                    case EditorCommandChoice::Settings:
+                                        std::cout << "[Editor] Settings selected.\n";
+                                        break;
+                                    case EditorCommandChoice::RunGame:
+                                        show_games_popup = !show_games_popup;
+                                        break;
+                                    case EditorCommandChoice::Exit:
+                                        state = EditorSceneState::Exit;
+                                        running = false;
+                                        break;
+                                    }
+                                }
+
+                                if (show_games_popup)
+                                {
+                                    const float popup_width = std::max(600.0f, ctx->get_width_safe() * 0.7f);
+                                    const float popup_height = std::max(360.0f, ctx->get_height_safe() * 0.6f);
+
+                                    const gui::Vec2 popup_size{ popup_width, popup_height };
+                                    const gui::Vec2 popup_pos{
+                                        (ctx->get_width_safe() - popup_size.x) * 0.5f,
+                                        (ctx->get_height_safe() - popup_size.y) * 0.5f
+                                    };
+
+                                    auto game_choice = games_menu.update_and_draw_in_window(
+                                        ctx,
+                                        win,
+                                        dt,
+                                        up_pressed,
+                                        down_pressed,
+                                        left_pressed,
+                                        right_pressed,
+                                        enter_pressed,
+                                        "Games",
+                                        popup_pos,
+                                        popup_size,
+                                        true);
+
+                                    if (game_choice)
+                                    {
+                                        using almondnamespace::menu::Choice;
+
+                                        if (*game_choice == Choice::Snake)
+                                            begin_scene([] { return std::make_unique<almondnamespace::snakelike::SnakeLikeScene>(); }, "Snake");
+                                        else if (*game_choice == Choice::Tetris)
+                                            begin_scene([] { return std::make_unique<almondnamespace::tetrislike::TetrisLikeScene>(); }, "Tetris");
+                                        else if (*game_choice == Choice::Frogger)
+                                            begin_scene([] { return std::make_unique<almondnamespace::froggerlike::FroggerLikeScene>(); }, "Frogger");
+                                        else if (*game_choice == Choice::Pacman)
+                                            begin_scene([] { return std::make_unique<almondnamespace::pacmanlike::PacmanLikeScene>(); }, "Pacman");
+                                        else if (*game_choice == Choice::Sokoban)
+                                            begin_scene([] { return std::make_unique<almondnamespace::sokobanlike::SokobanLikeScene>(); }, "Sokoban");
+                                        else if (*game_choice == Choice::Bejeweled)
+                                            begin_scene([] { return std::make_unique<almondnamespace::match3like::Match3LikeScene>(); }, "Match-3");
+                                        else if (*game_choice == Choice::Puzzle)
+                                            begin_scene([] { return std::make_unique<almondnamespace::slidinglike::SlidingPuzzleLikeScene>(); }, "Sliding Puzzle");
+                                        else if (*game_choice == Choice::Minesweep)
+                                            begin_scene([] { return std::make_unique<almondnamespace::minesweeperlike::MinesweeperLikeScene>(); }, "Minesweeper");
+                                        else if (*game_choice == Choice::Fourty)
+                                            begin_scene([] { return std::make_unique<almondnamespace::a2048like::A2048LikeScene>(); }, "2048");
+                                        else if (*game_choice == Choice::Sandsim)
+                                            begin_scene([] { return std::make_unique<almondnamespace::sandsim::SandSimScene>(); }, "Sand Sim");
+                                        else if (*game_choice == Choice::Cellular)
+                                            begin_scene([] { return std::make_unique<almondnamespace::cellularsim::CellularSimScene>(); }, "Cellular");
+                                    }
+                                }
+
+                                gui::end_frame();
+                                ctx->present_safe();
+                            }
+                            else if (state == EditorSceneState::Game)
+                            {
+                                if (active_scene)
+                                {
+                                    ctx_running = active_scene->frame(ctx, win);
+                                    if (!ctx_running)
+                                    {
+                                        active_scene->unload();
+                                        active_scene.reset();
+                                        state = EditorSceneState::Editor;
+                                        games_menu.cleanup();
+                                        games_menu.initialize_game_choices();
+                                        editor_menu.reset_selection();
+                                    }
+                                }
+                                else
+                                {
+                                    state = EditorSceneState::Editor;
+                                }
+                            }
+                            else if (state == EditorSceneState::Exit)
+                            {
+                                running = false;
+                            }
+
+                            if (!ctx_running)
+                                last_frame_times.erase(raw);
+
+                            return ctx_running;
+                        };
+
+#if defined(ALMOND_SINGLE_PARENT)
+                    if (!contexts.empty())
+                    {
+                        auto master = contexts.front();
+                        if (master && !update_on_ctx(master)) { running = false; break; }
+
+                        for (std::size_t i = 1; i < contexts.size(); ++i)
+                            if (!update_on_ctx(contexts[i])) running = false;
+                    }
+#else
+                    bool any_alive = false;
+                    for (std::size_t i = 0; i < contexts.size(); ++i)
+                    {
+                        auto& ctx = contexts[i];
+                        if (!ctx) continue;
+
+                        const bool alive = update_on_ctx(ctx);
+                        if (alive) any_alive = true;
+                    }
+#endif
+                    if (!running) break;
+                }
+
+                std::this_thread::sleep_for(std::chrono::milliseconds(16));
+            }
+
+            if (active_scene)
+            {
+                active_scene->unload();
+                active_scene.reset();
+            }
+
+            games_menu.cleanup();
+            mgr.StopAll();
+
+            auto snapshot2 = collect_backend_contexts();
+            for (auto& [type, contexts] : snapshot2)
+            {
+                auto cleanup_backend = [&](std::shared_ptr<almondnamespace::core::Context> ctx)
+                    {
+                        if (!ctx) return;
+
+                        switch (type)
+                        {
+#if defined(ALMOND_USING_OPENGL)
+                        case almondnamespace::core::ContextType::OpenGL:
+                            almondnamespace::openglcontext::opengl_cleanup(ctx);
+                            break;
+#endif
+#if defined(ALMOND_USING_SOFTWARE_RENDERER)
+                        case almondnamespace::core::ContextType::Software:
+                            // almondnamespace::anativecontext::softrenderer_cleanup(ctx);
+                            break;
+#endif
+#if defined(ALMOND_USING_SDL)
+                        case almondnamespace::core::ContextType::SDL:
+                            //  almondnamespace::sdlcontext::sdl_cleanup(ctx);
+                            break;
+#endif
+#if defined(ALMOND_USING_SFML)
+                        case almondnamespace::core::ContextType::SFML:
+                            almondnamespace::sfmlcontext::sfml_cleanup(ctx);
+                            break;
+#endif
+#if defined(ALMOND_USING_RAYLIB)
+                        case almondnamespace::core::ContextType::RayLib:
+                            almondnamespace::raylibcontext::raylib_cleanup(ctx);
+                            break;
+#endif
+                        case almondnamespace::core::ContextType::Noop:
+                            break;
+                        default:
+                            break;
+                        }
+                    };
+
+                for (auto& ctx : contexts) cleanup_backend(ctx);
+            }
+
+            return 0;
+        }
+
         template <typename PumpFunc>
         int RunMenuAndGamesLoop(MultiContextManager& mgr, PumpFunc&& pump_events)
         {
@@ -621,6 +977,109 @@ namespace almondnamespace::core
         std::cout << "AlmondShell Engine v" << almondnamespace::GetEngineVersion() << '\n';
         RunEngine();
     }
+
+    void RunEditorInterface()
+    {
+#if defined(_WIN32)
+        try
+        {
+            almondnamespace::core::MultiContextManager mgr;
+
+            const HINSTANCE hi = GetModuleHandleW(nullptr);
+
+            const bool ok = mgr.Initialize(
+                hi,
+                /*RayLib*/   1,
+                /*SDL*/      1,
+                /*SFML*/     1,
+                /*OpenGL*/   1,
+                /*Software*/ 1,
+                ALMOND_SINGLE_PARENT == 1
+            );
+
+            if (!ok)
+            {
+                std::cerr << "[Editor] Failed to initialize contexts!\n";
+                return;
+            }
+
+            input::designate_polling_thread_to_current();
+
+            mgr.StartRenderThreads();
+            mgr.ArrangeDockedWindowsGrid();
+
+            auto pump = []() -> bool
+                {
+                    MSG msg{};
+                    bool keep = true;
+
+                    while (PeekMessageW(&msg, nullptr, 0, 0, PM_REMOVE))
+                    {
+                        if (msg.message == WM_QUIT) keep = false;
+                        else
+                        {
+                            TranslateMessage(&msg);
+                            DispatchMessageW(&msg);
+                        }
+                    }
+
+                    if (!keep) return false;
+
+                    input::poll_input();
+                    return true;
+                };
+
+            const int result = engine::RunEditorInterfaceLoop(mgr, pump);
+            if (result != 0)
+                std::cerr << "[Editor] RunEditorInterface terminated with code " << result << "\n";
+        }
+        catch (const std::exception& ex)
+        {
+            MessageBoxA(nullptr, ex.what(), "Error", MB_ICONERROR | MB_OK);
+        }
+#elif defined(__linux__)
+        try
+        {
+            almondnamespace::core::MultiContextManager mgr;
+
+            const bool ok = mgr.Initialize(
+                nullptr,
+                /*RayLib*/   1,
+                /*SDL*/      1,
+                /*SFML*/     1,
+                /*OpenGL*/   1,
+                /*Software*/ 1,
+                ALMOND_SINGLE_PARENT == 1
+            );
+
+            if (!ok)
+            {
+                std::cerr << "[Editor] Failed to initialize contexts!\n";
+                return;
+            }
+
+            input::designate_polling_thread_to_current();
+
+            mgr.StartRenderThreads();
+            mgr.ArrangeDockedWindowsGrid();
+
+            auto pump = []() -> bool
+                {
+                    return almondnamespace::platform::pump_events();
+                };
+
+            const int result = engine::RunEditorInterfaceLoop(mgr, pump);
+            if (result != 0)
+                std::cerr << "[Editor] RunEditorInterface terminated with code " << result << "\n";
+        }
+        catch (const std::exception& ex)
+        {
+            std::cerr << "[Editor] " << ex.what() << '\n';
+        }
+#else
+        std::cerr << "[Editor] RunEditorInterface is not implemented for this platform yet.\n";
+#endif
+    }
 } // namespace almondnamespace::core
 
 namespace urls
@@ -674,6 +1133,12 @@ int WINAPI wWinMain(
             return 0;
         }
 
+        if (cli_result.editor_requested)
+        {
+            almondnamespace::core::RunEditorInterface();
+            return 0;
+        }
+
         return almondnamespace::core::engine::RunEngineMainLoopInternal(hInstance, SW_SHOWNORMAL);
     }
     catch (const std::exception& ex)
@@ -706,6 +1171,12 @@ int main(int argc, char** argv)
             if (update_result.force_required && !cli_result.force_update)
                 return 2;
 
+            return 0;
+        }
+
+        if (cli_result.editor_requested)
+        {
+            almondnamespace::core::RunEditorInterface();
             return 0;
         }
 
