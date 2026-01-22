@@ -256,6 +256,9 @@ namespace almondnamespace::core
                 }
 
                 auto snapshot = collect_backend_contexts();
+#if !defined(ALMOND_SINGLE_PARENT)
+                bool any_context_alive = false;
+#endif
                 for (auto& [type, contexts] : snapshot)
                 {
                     auto update_on_ctx = [&](std::shared_ptr<Context> ctx) -> bool
@@ -475,9 +478,13 @@ namespace almondnamespace::core
                         const bool alive = update_on_ctx(ctx);
                         if (alive) any_alive = true;
                     }
+                    if (any_alive) any_context_alive = true;
 #endif
                     if (!running) break;
                 }
+#if !defined(ALMOND_SINGLE_PARENT)
+                if (!any_context_alive) running = false;
+#endif
 
                 std::this_thread::sleep_for(std::chrono::milliseconds(16));
             }
@@ -616,6 +623,9 @@ namespace almondnamespace::core
                 }
 
                 auto snapshot = collect_backend_contexts();
+#if !defined(ALMOND_SINGLE_PARENT)
+                bool any_context_alive = false;
+#endif
                 for (auto& [type, contexts] : snapshot)
                 {
                     auto update_on_ctx = [&](std::shared_ptr<Context> ctx) -> bool
@@ -788,9 +798,13 @@ namespace almondnamespace::core
                         const bool alive = update_on_ctx(ctx);
                         if (alive) any_alive = true;
                     }
+                    if (any_alive) any_context_alive = true;
 #endif
                     if (!running) break;
                 }
+#if !defined(ALMOND_SINGLE_PARENT)
+                if (!any_context_alive) running = false;
+#endif
 
                 std::this_thread::sleep_for(std::chrono::milliseconds(16));
             }

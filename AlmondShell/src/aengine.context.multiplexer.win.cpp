@@ -885,6 +885,7 @@ namespace almondnamespace::core
     void MultiContextManager::RemoveWindow(HWND hwnd)
     {
         std::unique_ptr<WindowData> removed;
+        bool should_quit = false;
 
         {
             std::scoped_lock lock(windowsMutex);
@@ -908,6 +909,7 @@ namespace almondnamespace::core
 
             removed = std::move(*it);
             windows.erase(it);
+            should_quit = windows.empty();
         }
 
         auto& threads = Threads();
@@ -926,6 +928,9 @@ namespace almondnamespace::core
 #endif
         if (removed && removed->hdc && removed->hwnd)
             ::ReleaseDC(removed->hwnd, removed->hdc);
+
+        if (should_quit)
+            ::PostQuitMessage(0);
     }
 
     void MultiContextManager::ArrangeDockedWindowsGrid()
