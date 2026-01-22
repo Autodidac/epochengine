@@ -1020,17 +1020,7 @@ namespace almondnamespace::core
         auto threadIt = threads.find(xwin);
         if (threadIt != threads.end())
         {
-            if (threadIt->second.joinable())
-            {
-                if (threadIt->second.get_id() == std::this_thread::get_id())
-                {
-                    threadIt->second.detach();
-                }
-                else
-                {
-                    threadIt->second.join();
-                }
-            }
+            if (threadIt->second.joinable()) threadIt->second.join();
             threads.erase(threadIt);
         }
 

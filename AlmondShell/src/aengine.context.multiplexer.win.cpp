@@ -915,18 +915,7 @@ namespace almondnamespace::core
         auto& threads = Threads();
         if (threads.contains(hwnd))
         {
-            auto& thread = threads[hwnd];
-            if (thread.joinable())
-            {
-                if (thread.get_id() == std::this_thread::get_id())
-                {
-                    thread.detach();
-                }
-                else
-                {
-                    thread.join();
-                }
-            }
+            if (threads[hwnd].joinable()) threads[hwnd].join();
             threads.erase(hwnd);
         }
 
