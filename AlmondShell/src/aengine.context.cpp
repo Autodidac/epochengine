@@ -79,6 +79,9 @@ import acontext.raylib.state;
 #if defined(ALMOND_USING_SOFTWARE_RENDERER)
 import acontext.softrenderer.context;
 #endif
+#if defined(ALMOND_USING_NOOP_HEADLESS)
+import acontext.noop.context;
+#endif
 
 namespace
 {
@@ -589,6 +592,28 @@ namespace almondnamespace::core
             ctx->add_atlas = +[](const TextureAtlas& a) { return add_atlas_default(a, ContextType::Software); };
 
             AddContextForBackend(ContextType::Software, std::move(ctx));
+        }
+#endif
+
+#if defined(ALMOND_USING_NOOP_HEADLESS)
+        {
+            auto ctx = std::make_shared<Context>();
+            ctx->type = ContextType::Noop;
+            ctx->backendName = "Noop";
+
+            ctx->initialize = almondnamespace::noopcontext::noop_initialize;
+            ctx->cleanup = almondnamespace::noopcontext::noop_cleanup;
+            ctx->process = almondnamespace::noopcontext::noop_process;
+            ctx->clear = almondnamespace::noopcontext::noop_clear;
+            ctx->present = almondnamespace::noopcontext::noop_present;
+            ctx->get_width = almondnamespace::noopcontext::noop_get_width;
+            ctx->get_height = almondnamespace::noopcontext::noop_get_height;
+
+            ctx->draw_sprite = nullptr;
+            ctx->add_texture = &add_texture_default;
+            ctx->add_atlas = +[](const TextureAtlas& a) { return add_atlas_default(a, ContextType::Noop); };
+
+            AddContextForBackend(ContextType::Noop, std::move(ctx));
         }
 #endif
     }
