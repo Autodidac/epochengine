@@ -103,6 +103,7 @@ export namespace almondnamespace::core
             ContextType type);
 
         void RemoveWindow(HWND hwnd);
+        void CleanupFinishedWindows();
         void ArrangeDockedWindowsGrid();
         void HandleResize(HWND hwnd, int width, int height);
         void StartRenderThreads();
@@ -175,6 +176,7 @@ export namespace almondnamespace::core
             ContextType type);
 
         void RemoveWindow(HWND hwnd);
+        void CleanupFinishedWindows() {}
         void ArrangeDockedWindowsGrid();
         void HandleResize(HWND hwnd, int width, int height);
         void StartRenderThreads();
@@ -235,6 +237,7 @@ export namespace almondnamespace::core
 
         void AddWindow(HWND, HWND, HDC, HGLRC, bool, ResizeCallback, ContextType) {}
         void RemoveWindow(HWND) {}
+        void CleanupFinishedWindows() {}
         void ArrangeDockedWindowsGrid() {}
         void StartRenderThreads() {}
         void HandleResize(HWND, int, int) {}

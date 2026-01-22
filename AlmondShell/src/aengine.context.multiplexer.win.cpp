@@ -95,6 +95,13 @@ namespace
     // TU-owned globals.
     std::unordered_map<HWND, std::thread> g_threads;
     almondnamespace::core::DragState       g_drag;
+    struct PendingWindowCleanup
+    {
+        HWND hwnd{};
+        std::thread thread{};
+        std::unique_ptr<almondnamespace::core::WindowData> window{};
+    };
+    std::vector<PendingWindowCleanup> g_pendingCleanups;
 
 #if ALMOND_SINGLE_PARENT
     struct SubCtx { HWND originalParent{}; };
@@ -124,6 +131,27 @@ namespace
 #endif
 
     [[nodiscard]] inline int clamp_positive(int v) noexcept { return (v < 1) ? 1 : v; }
+
+    inline void cleanup_window_resources(std::unique_ptr<almondnamespace::core::WindowData>& window) noexcept
+    {
+#if defined(ALMOND_USING_OPENGL)
+        if (window && window->glContext)
+        {
+            ::wglMakeCurrent(nullptr, nullptr);
+            ::wglDeleteContext(window->glContext);
+        }
+#endif
+        if (window && window->hdc && window->hwnd)
+            ::ReleaseDC(window->hwnd, window->hdc);
+    }
+
+    [[nodiscard]] inline bool thread_finished(std::thread& thread) noexcept
+    {
+        if (!thread.joinable()) return true;
+        HANDLE handle = static_cast<HANDLE>(thread.native_handle());
+        if (!handle) return false;
+        return ::WaitForSingleObject(handle, 0) == WAIT_OBJECT_0;
+    }
 }
 
 namespace almondnamespace::core
@@ -915,22 +943,45 @@ namespace almondnamespace::core
         auto& threads = Threads();
         if (threads.contains(hwnd))
         {
-            if (threads[hwnd].joinable()) threads[hwnd].join();
+            PendingWindowCleanup pending{};
+            pending.hwnd = hwnd;
+            pending.thread = std::move(threads[hwnd]);
+            pending.window = std::move(removed);
             threads.erase(hwnd);
+            g_pendingCleanups.emplace_back(std::move(pending));
+        }
+        else
+        {
+            cleanup_window_resources(removed);
         }
 
-#if defined(ALMOND_USING_OPENGL)
-        if (removed && removed->glContext)
-        {
-            ::wglMakeCurrent(nullptr, nullptr);
-            ::wglDeleteContext(removed->glContext);
-        }
-#endif
-        if (removed && removed->hdc && removed->hwnd)
-            ::ReleaseDC(removed->hwnd, removed->hdc);
+        CleanupFinishedWindows();
 
         if (should_quit)
             ::PostQuitMessage(0);
+    }
+
+    void MultiContextManager::CleanupFinishedWindows()
+    {
+        if (g_pendingCleanups.empty())
+            return;
+
+        auto it = g_pendingCleanups.begin();
+        while (it != g_pendingCleanups.end())
+        {
+            if (!thread_finished(it->thread))
+            {
+                ++it;
+                continue;
+            }
+
+            if (it->thread.joinable())
+                it->thread.join();
+
+            cleanup_window_resources(it->window);
+
+            it = g_pendingCleanups.erase(it);
+        }
     }
 
     void MultiContextManager::ArrangeDockedWindowsGrid()
@@ -978,6 +1029,14 @@ namespace almondnamespace::core
         for (auto& [hwnd, th] : g_threads)
             if (th.joinable()) th.join();
         g_threads.clear();
+
+        for (auto& pending : g_pendingCleanups)
+        {
+            if (pending.thread.joinable())
+                pending.thread.join();
+            cleanup_window_resources(pending.window);
+        }
+        g_pendingCleanups.clear();
 
         if (s_activeInstance == this) s_activeInstance = nullptr;
     }

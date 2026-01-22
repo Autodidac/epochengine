@@ -456,10 +456,13 @@ namespace almondnamespace::raylibcontext
             return;
 
         st.cleanupIssued = true;
+        st.running = false;
 
 #if defined(_WIN32)
         const HDC   previousDC = detail::current_dc();
         const HGLRC previousContext = detail::current_context();
+        const bool on_owner_thread = (st.owner_thread == std::this_thread::get_id());
+        const bool window_alive = (st.hwnd != nullptr) && (::IsWindow(st.hwnd) != FALSE);
 #endif
 
         almondnamespace::atlasmanager::unregister_backend_uploader(
@@ -500,7 +503,7 @@ namespace almondnamespace::raylibcontext
         if (almondnamespace::raylib_api::is_window_ready())
         {
 #if defined(_WIN32)
-            if (madeCurrent)
+            if (madeCurrent && on_owner_thread && window_alive)
                 almondnamespace::raylib_api::close_window();
 #else
             almondnamespace::raylib_api::close_window();
