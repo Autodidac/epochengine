@@ -1153,19 +1153,24 @@ namespace almondnamespace::core
 
             for (HWND child : children)
             {
+                const LONG_PTR style = ::GetWindowLongPtrW(child, GWL_STYLE);
+                if (style & WS_CHILD)
+                {
+                    ::SendMessageW(child, WM_CLOSE, 0, 0);
+                    continue;
+                }
+
                 RECT clientRect{};
                 ::GetClientRect(child, &clientRect);
                 const int clientW = clamp_positive(static_cast<int>(clientRect.right - clientRect.left));
                 const int clientH = clamp_positive(static_cast<int>(clientRect.bottom - clientRect.top));
 
                 RECT adjusted{ 0, 0, clientW, clientH };
-                LONG_PTR style = ::GetWindowLongPtrW(child, GWL_STYLE);
-                style &= ~WS_CHILD;
-                style |= WS_OVERLAPPEDWINDOW | WS_VISIBLE;
-                ::SetWindowLongPtrW(child, GWL_STYLE, style);
+                LONG_PTR updatedStyle = style | WS_OVERLAPPEDWINDOW | WS_VISIBLE;
+                ::SetWindowLongPtrW(child, GWL_STYLE, updatedStyle);
 
                 const DWORD exStyle = static_cast<DWORD>(::GetWindowLongPtrW(child, GWL_EXSTYLE));
-                if (::AdjustWindowRectEx(&adjusted, static_cast<DWORD>(style), FALSE, exStyle))
+                if (::AdjustWindowRectEx(&adjusted, static_cast<DWORD>(updatedStyle), FALSE, exStyle))
                 {
                     const int wndW = clamp_positive(adjusted.right - adjusted.left);
                     const int wndH = clamp_positive(adjusted.bottom - adjusted.top);
