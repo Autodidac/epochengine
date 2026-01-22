@@ -183,6 +183,7 @@ namespace almondnamespace::raylibcontext
 
             almondnamespace::raylib_api::begin_drawing();
             st.frameActive = true;
+            st.frameInTextureMode = false;
         }
     }
 
@@ -389,10 +390,12 @@ namespace almondnamespace::raylibcontext
         {
             almondnamespace::raylib_api::begin_drawing();
             st.frameActive = true;
+            st.frameInTextureMode = false;
         }
 
         almondnamespace::raylib_api::end_drawing();
         st.frameActive = false;
+        st.frameInTextureMode = false;
 
 #if defined(_WIN32)
         detail::clear_current();
@@ -428,8 +431,12 @@ namespace almondnamespace::raylibcontext
         (void)raylib_make_current();
         if (st.frameActive)
         {
-            almondnamespace::raylib_api::end_drawing();
+            if (st.frameInTextureMode)
+                almondnamespace::raylib_api::end_texture_mode();
+            else
+                almondnamespace::raylib_api::end_drawing();
             st.frameActive = false;
+            st.frameInTextureMode = false;
         }
 
 #if defined(_WIN32)
@@ -437,33 +444,68 @@ namespace almondnamespace::raylibcontext
 #endif
     }
 
-    export inline void raylib_cleanup(std::shared_ptr<core::Context>)
+    export inline void raylib_cleanup(std::shared_ptr<core::Context> ctx)
     {
         auto& st = almondnamespace::raylibstate::s_raylibstate;
-        if (!st.running || st.cleanupIssued)
+        if (st.cleanupIssued)
             return;
 
         st.cleanupIssued = true;
+
+#if defined(_WIN32)
+        const HDC   previousDC = detail::current_dc();
+        const HGLRC previousContext = detail::current_context();
+#endif
 
         almondnamespace::atlasmanager::unregister_backend_uploader(
             almondnamespace::core::ContextType::RayLib);
 
 #if defined(_WIN32)
-        // Cleanup should be called when raylib backend is active; don't steal context here.
-        detail::debug_expect_raylib_current(st, "raylib_cleanup");
+        (void)raylib_make_current();
 #endif
 
         almondnamespace::raylibtextures::shutdown_current_context_backend();
         if (st.frameActive)
         {
-            almondnamespace::raylib_api::end_drawing();
+            if (st.frameInTextureMode)
+                almondnamespace::raylib_api::end_texture_mode();
+            else
+                almondnamespace::raylib_api::end_drawing();
             st.frameActive = false;
+            st.frameInTextureMode = false;
         }
-     //   almondnamespace::raylib_api::close_window();
+
+        if (st.offscreen.id != 0)
+        {
+            almondnamespace::raylib_api::unload_render_texture(st.offscreen);
+            st.offscreen = {};
+            st.offscreenWidth = 0;
+            st.offscreenHeight = 0;
+        }
+
+        if (ctx && ctx->windowData)
+        {
+#if defined(_WIN32)
+            ctx->windowData->hdc = nullptr;
+            ctx->windowData->glContext = nullptr;
+            ctx->windowData->usesSharedContext = false;
+#endif
+        }
+
+        if (almondnamespace::raylib_api::is_window_ready())
+            almondnamespace::raylib_api::close_window();
 
 #if defined(_WIN32)
         if (st.ownsDC && st.hdc && st.hwnd)
             ::ReleaseDC(st.hwnd, st.hdc);
+
+        if (!detail::contexts_match(previousDC, previousContext, st.hdc, st.hglrc))
+        {
+            if (previousDC && previousContext)
+                (void)detail::make_current(previousDC, previousContext);
+            else
+                detail::clear_current();
+        }
 #endif
 
         st = {};
