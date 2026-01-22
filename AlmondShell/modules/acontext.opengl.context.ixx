@@ -693,58 +693,6 @@ export namespace almondnamespace::openglcontext
             telemetry::RendererTelemetryTags{ core::ContextType::OpenGL, windowId, "height" });
 
         opengl_clear();
-
-
-        // -----------------------------------------------------------------
-        // TEMP/BRIDGE: If nothing is submitting GUI draw commands yet,
-        // render the GUI atlas directly so OpenGL path matches Software's
-        // "central distribution" visibility. This is the missing bridge.
-        // This draws atlas 0 fullscreen using the shared quad pipeline.
-        // -----------------------------------------------------------------
-        if (!atlasmanager::atlas_vector.empty())
-        {
-            const TextureAtlas* atlas = atlasmanager::atlas_vector.front();
-            if (atlas)
-            {
-                if (auto it = backend.gpu_atlases.find(atlas); it != backend.gpu_atlases.end())
-                {
-                    const GLuint tex = it->second.textureHandle;
-                    if (tex != 0 && glState.shader != 0 && glState.vao != 0)
-                    {
-                        glUseProgram(glState.shader);
-
-                        if (glState.uTransformLoc >= 0)
-                        {
-                            // Fullscreen quad: center at (0,0), size = (2,2) in NDC.
-                            glUniform4f(glState.uTransformLoc, 0.0f, 0.0f, 2.0f, 2.0f);
-                        }
-                        if (glState.uUVRegionLoc >= 0)
-                        {
-                            // Entire atlas.
-                            glUniform4f(glState.uUVRegionLoc, 0.0f, 0.0f, 1.0f, 1.0f);
-                        }
-
-                        glActiveTexture(GL_TEXTURE0);
-                        glBindTexture(GL_TEXTURE_2D, tex);
-                        glBindVertexArray(glState.vao);
-
-                        glDisable(GL_DEPTH_TEST);
-                        glDisable(GL_CULL_FACE);
-                        glEnable(GL_BLEND);
-                        glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
-
-                        glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, nullptr);
-
-                        glBindVertexArray(0);
-                        glBindTexture(GL_TEXTURE_2D, 0);
-                        glDisable(GL_BLEND);
-                        glUseProgram(0);
-                    }
-                }
-            }
-        }
-
-
         const std::size_t depth = queue.depth();
         telemetry::emit_gauge(
             "renderer.command_queue.depth",
