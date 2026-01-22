@@ -255,6 +255,8 @@ namespace almondnamespace::core
                     break;
                 }
 
+                mgr.CleanupFinishedWindows();
+
                 auto snapshot = collect_backend_contexts();
 #if !defined(ALMOND_SINGLE_PARENT)
                 bool any_context_alive = false;
@@ -621,6 +623,8 @@ namespace almondnamespace::core
                     running = false;
                     break;
                 }
+
+                mgr.CleanupFinishedWindows();
 
                 auto snapshot = collect_backend_contexts();
 #if !defined(ALMOND_SINGLE_PARENT)
