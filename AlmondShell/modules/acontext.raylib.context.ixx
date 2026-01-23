@@ -387,9 +387,19 @@ namespace almondnamespace::raylibcontext
 #endif
     }
 
+    namespace detail
+    {
+        void raylib_cleanup_owner_thread(almondnamespace::core::Context* ctx);
+    }
+
     export inline void raylib_process()
     {
         auto& st = almondnamespace::raylibstate::s_raylibstate;
+        if (st.cleanupRequested)
+        {
+            detail::raylib_cleanup_owner_thread(st.owner_ctx);
+            return;
+        }
         if (!st.running)
             return;
 
@@ -487,7 +497,7 @@ namespace almondnamespace::raylibcontext
 
     namespace detail
     {
-        inline void raylib_cleanup_owner_thread(std::shared_ptr<core::Context> ctx)
+        inline void raylib_cleanup_owner_thread(almondnamespace::core::Context* ctx)
         {
             auto& st = almondnamespace::raylibstate::s_raylibstate;
 
@@ -580,17 +590,11 @@ namespace almondnamespace::raylibcontext
 
         if (!on_owner_thread)
         {
-            if (ctx && ctx->windowData)
-            {
-                ctx->windowData->commandQueue.enqueue([ctx]()
-                    {
-                        detail::raylib_cleanup_owner_thread(ctx);
-                    });
-                return;
-            }
+            st.cleanupRequested = true;
+            return;
         }
 
-        detail::raylib_cleanup_owner_thread(ctx);
+        detail::raylib_cleanup_owner_thread(ctx.get());
     }
 
     export inline void raylib_set_window_title(std::string_view title)

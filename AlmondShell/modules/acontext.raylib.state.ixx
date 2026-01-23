@@ -81,6 +81,7 @@ export namespace almondnamespace::raylibstate
         // Lifecycle
         bool running = false;
         bool cleanupIssued = false;
+        bool cleanupRequested = false;
 
         // Timers (unchanged, preserved)
         timing::Timer pollTimer = timing::createTimer(1.0);
