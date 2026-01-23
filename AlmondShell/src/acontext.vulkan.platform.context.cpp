@@ -36,6 +36,8 @@ import acontext.vulkan.memory;
 import acontext.vulkan.texture;
 import acontext.vulkan.descriptors;
 import acontext.vulkan.commands;
+import aatlas.manager;
+import aatlas.texture;
 import aengine.context.commandqueue;
 import aengine.core.context;
 import aengine.input;
@@ -577,6 +579,13 @@ namespace almondnamespace::vulkancontext
 
         s_app.initWindow();
         s_app.initVulkan();
+
+        almondnamespace::atlasmanager::register_backend_uploader(
+            almondnamespace::core::ContextType::Vulkan,
+            [](const almondnamespace::TextureAtlas& atlas)
+            {
+                almondnamespace::vulkantextures::ensure_uploaded(atlas);
+            });
         return true;
     }
 
@@ -592,6 +601,9 @@ namespace almondnamespace::vulkancontext
     void vulkan_cleanup(std::shared_ptr<core::Context> ctx)
     {
         (void)ctx;
+        almondnamespace::atlasmanager::unregister_backend_uploader(
+            almondnamespace::core::ContextType::Vulkan);
+        almondnamespace::vulkantextures::clear_gpu_atlases();
         s_app.cleanup();
     }
 
