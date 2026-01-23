@@ -97,6 +97,7 @@ endif()
 option(ALMOND_ENABLE_RAYLIB "Enable the Raylib backend" ON)
 option(ALMOND_ENABLE_SDL "Enable the SDL backend" ON)
 option(ALMOND_ENABLE_SFML "Enable the SFML backend" ON)
+option(ALMOND_ENABLE_VULKAN "Enable the Vulkan backend" ON)
 option(ALMOND_ENABLE_OPENGL "Enable the OpenGL backend" ON)
 option(ALMOND_ENABLE_SOFTWARE_RENDERER "Enable the software renderer backend" ON)
 option(ALMOND_REQUIRE_OPTIONAL_DEPENDENCIES "Treat missing optional backend dependencies as a configuration error" OFF)
@@ -104,6 +105,7 @@ option(ALMOND_REQUIRE_OPTIONAL_DEPENDENCIES "Treat missing optional backend depe
 set(ALMOND_RAYLIB_ACTIVE ${ALMOND_ENABLE_RAYLIB})
 set(ALMOND_SDL_ACTIVE ${ALMOND_ENABLE_SDL})
 set(ALMOND_SFML_ACTIVE ${ALMOND_ENABLE_SFML})
+set(ALMOND_VULKAN_ACTIVE ${ALMOND_ENABLE_VULKAN})
 set(ALMOND_OPENGL_ACTIVE ${ALMOND_ENABLE_OPENGL})
 set(ALMOND_SOFTWARE_RENDERER_ACTIVE ${ALMOND_ENABLE_SOFTWARE_RENDERER})
 
@@ -227,6 +229,68 @@ if(ALMOND_SFML_ACTIVE)
     endif()
 endif()
 
+if(ALMOND_VULKAN_ACTIVE)
+    find_package(Vulkan QUIET)
+    if(Vulkan_FOUND)
+        target_link_libraries(almondshell PRIVATE Vulkan::Vulkan)
+    else()
+        find_library(VULKAN_LIBRARY NAMES vulkan vulkan-1)
+        find_path(VULKAN_INCLUDE_DIR vulkan/vulkan.h)
+        if(VULKAN_LIBRARY AND VULKAN_INCLUDE_DIR)
+            target_include_directories(almondshell PRIVATE ${VULKAN_INCLUDE_DIR})
+            target_link_libraries(almondshell PRIVATE ${VULKAN_LIBRARY})
+        else()
+            if(ALMOND_REQUIRE_OPTIONAL_DEPENDENCIES)
+                message(FATAL_ERROR "Vulkan was not found. Install it or rerun with -DALMOND_ENABLE_VULKAN=OFF.")
+            else()
+                message(WARNING "Vulkan was not found; the Vulkan backend will be disabled. Configure with -DALMOND_ENABLE_VULKAN=OFF to silence this warning or enable ALMOND_REQUIRE_OPTIONAL_DEPENDENCIES to treat it as an error.")
+                set(ALMOND_VULKAN_ACTIVE OFF)
+                set(ALMOND_ENABLE_VULKAN OFF CACHE BOOL "Enable the Vulkan backend" FORCE)
+            endif()
+        endif()
+    endif()
+
+    if(ALMOND_VULKAN_ACTIVE)
+        find_package(glfw3 CONFIG QUIET)
+        if(glfw3_FOUND)
+            target_link_libraries(almondshell PRIVATE glfw)
+        elseif(PkgConfig_FOUND)
+            pkg_check_modules(GLFW3 QUIET glfw3)
+            if(GLFW3_FOUND)
+                target_include_directories(almondshell PRIVATE ${GLFW3_INCLUDE_DIRS})
+                target_link_libraries(almondshell PRIVATE ${GLFW3_LIBRARIES})
+            else()
+                if(ALMOND_REQUIRE_OPTIONAL_DEPENDENCIES)
+                    message(FATAL_ERROR "glfw3 was not found. Install it or disable the Vulkan backend with -DALMOND_ENABLE_VULKAN=OFF.")
+                else()
+                    message(WARNING "glfw3 was not found; the Vulkan backend will be disabled. Configure with -DALMOND_ENABLE_VULKAN=OFF to silence this warning or enable ALMOND_REQUIRE_OPTIONAL_DEPENDENCIES to treat it as an error.")
+                    set(ALMOND_VULKAN_ACTIVE OFF)
+                    set(ALMOND_ENABLE_VULKAN OFF CACHE BOOL "Enable the Vulkan backend" FORCE)
+                endif()
+            endif()
+        else()
+            if(ALMOND_REQUIRE_OPTIONAL_DEPENDENCIES)
+                message(FATAL_ERROR "glfw3 was not found. Install it or disable the Vulkan backend with -DALMOND_ENABLE_VULKAN=OFF.")
+            else()
+                message(WARNING "glfw3 was not found; the Vulkan backend will be disabled. Configure with -DALMOND_ENABLE_VULKAN=OFF to silence this warning or enable ALMOND_REQUIRE_OPTIONAL_DEPENDENCIES to treat it as an error.")
+                set(ALMOND_VULKAN_ACTIVE OFF)
+                set(ALMOND_ENABLE_VULKAN OFF CACHE BOOL "Enable the Vulkan backend" FORCE)
+            endif()
+        endif()
+    endif()
+
+    if(ALMOND_VULKAN_ACTIVE)
+        list(APPEND ALMONDSHELL_SOURCES
+            src/acontext.vulkan.platform.context.cpp
+            src/acontext.vulkan.platform.descriptors.cpp
+        )
+        target_sources(almondshell PRIVATE
+            src/acontext.vulkan.platform.context.cpp
+            src/acontext.vulkan.platform.descriptors.cpp
+        )
+    endif()
+endif()
+
 find_package(OpenGL COMPONENTS OpenGL QUIET)
 if(OpenGL_FOUND)
     target_link_libraries(almondshell PRIVATE OpenGL::GL)
@@ -304,6 +368,11 @@ target_compile_definitions(almondshell PRIVATE
     $<$<NOT:$<BOOL:${ALMOND_SDL_ACTIVE}>>:ALMOND_FORCE_DISABLE_SDL>
     $<$<BOOL:${ALMOND_SFML_ACTIVE}>:ALMOND_FORCE_ENABLE_SFML>
     $<$<NOT:$<BOOL:${ALMOND_SFML_ACTIVE}>>:ALMOND_FORCE_DISABLE_SFML>
+    $<$<BOOL:${ALMOND_VULKAN_ACTIVE}>:ALMOND_USING_VULKAN>
+    $<$<BOOL:${ALMOND_VULKAN_ACTIVE}>:VULKAN_HPP_DISPATCH_LOADER_DYNAMIC=1>
+    $<$<BOOL:${ALMOND_VULKAN_ACTIVE}>:VULKAN_HPP_NO_EXCEPTIONS>
+    $<$<BOOL:${ALMOND_VULKAN_ACTIVE}>:GLM_FORCE_DEPTH_ZERO_TO_ONE>
+    $<$<BOOL:${ALMOND_VULKAN_ACTIVE}>:GLM_FORCE_RADIANS>
     $<$<BOOL:${ALMOND_OPENGL_ACTIVE}>:ALMOND_FORCE_ENABLE_OPENGL>
     $<$<NOT:$<BOOL:${ALMOND_OPENGL_ACTIVE}>>:ALMOND_FORCE_DISABLE_OPENGL>
     $<$<BOOL:${ALMOND_SOFTWARE_RENDERER_ACTIVE}>:ALMOND_FORCE_ENABLE_SOFTWARE_RENDERER>
