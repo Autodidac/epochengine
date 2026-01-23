@@ -1,7 +1,18 @@
 module;
 
-
+#if defined(ALMOND_VULKAN_STANDALONE)
 #include <GLFW/glfw3.h>
+#endif
+
+#if defined(_WIN32)
+#ifndef WIN32_LEAN_AND_MEAN
+#define WIN32_LEAN_AND_MEAN
+#endif
+#ifndef NOMINMAX
+#define NOMINMAX
+#endif
+#include <windows.h>
+#endif
 
 export module acontext.vulkan.instance;
 
@@ -27,12 +38,25 @@ namespace VulkanCube {
     }
 
     inline std::vector<const char*> Application::getRequiredExtensions() {
+#if defined(ALMOND_VULKAN_STANDALONE)
         uint32_t glfwExtensionCount = 0;
         const char** glfwExtensions = glfwGetRequiredInstanceExtensions(&glfwExtensionCount);
         if (!glfwExtensions) {
             throw std::runtime_error("glfwGetRequiredInstanceExtensions returned null!");
         }
         std::vector<const char*> extensions(glfwExtensions, glfwExtensions + glfwExtensionCount);
+#else
+        std::vector<const char*> extensions = {
+            VK_KHR_SURFACE_EXTENSION_NAME
+        };
+#if defined(_WIN32)
+        extensions.push_back(VK_KHR_WIN32_SURFACE_EXTENSION_NAME);
+#elif defined(__linux__)
+        extensions.push_back(VK_KHR_XLIB_SURFACE_EXTENSION_NAME);
+#elif defined(__APPLE__)
+        extensions.push_back(VK_EXT_METAL_SURFACE_EXTENSION_NAME);
+#endif
+#endif
         if (enableValidationLayers) {
             extensions.push_back(VK_EXT_DEBUG_UTILS_EXTENSION_NAME);
         }
@@ -81,12 +105,28 @@ namespace VulkanCube {
     }
 
     inline void Application::createSurface() {
-        // Create a raw surface from GLFW
+#if defined(ALMOND_VULKAN_STANDALONE)
         VkSurfaceKHR rawSurface;
         if (glfwCreateWindowSurface(instance.get(), window, nullptr, &rawSurface) != VK_SUCCESS) {
             throw std::runtime_error("Failed to create window surface!");
         }
-        // Wrap it in a UniqueSurfaceKHR
         surface = vk::UniqueSurfaceKHR(rawSurface, instance.get());
+#elif defined(_WIN32)
+        if (!nativeWindowHandle) {
+            throw std::runtime_error("No native window handle available for Vulkan surface.");
+        }
+        vk::Win32SurfaceCreateInfoKHR createInfo(
+            {},
+            ::GetModuleHandleW(nullptr),
+            static_cast<HWND>(nativeWindowHandle)
+        );
+        auto result = instance->createWin32SurfaceKHRUnique(createInfo);
+        if (result.result != vk::Result::eSuccess) {
+            throw std::runtime_error("Failed to create Win32 Vulkan surface!");
+        }
+        surface = std::move(result.value);
+#else
+        throw std::runtime_error("Vulkan surface creation is not implemented for this platform.");
+#endif
     }
 } // namespace VulkanCube

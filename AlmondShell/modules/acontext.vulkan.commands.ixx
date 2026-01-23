@@ -143,11 +143,10 @@ namespace VulkanCube {
     }
 
     inline void Application::recreateSwapChain() {
-        int width = 0, height = 0;
-        glfwGetFramebufferSize(window, &width, &height);
-        while (width == 0 || height == 0) {
-            glfwGetFramebufferSize(window, &width, &height);
-            glfwWaitEvents();
+        int width = get_framebuffer_width();
+        int height = get_framebuffer_height();
+        if (width <= 0 || height <= 0) {
+            return;
         }
 
         (void)device->waitIdle();

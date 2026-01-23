@@ -61,8 +61,8 @@ namespace VulkanCube {
             return capabilities.currentExtent;
         }
         else {
-            int width, height;
-            glfwGetFramebufferSize(window, &width, &height);
+            int width = get_framebuffer_width();
+            int height = get_framebuffer_height();
             return vk::Extent2D{
                 std::clamp(static_cast<uint32_t>(width),
                 capabilities.minImageExtent.width,

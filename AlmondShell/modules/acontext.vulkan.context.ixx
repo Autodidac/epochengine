@@ -7,7 +7,9 @@ module;
 #include <chrono>
 #include <cstring>
 #include <fstream>
+#include <functional>
 #include <iostream>
+#include <memory>
 #include <optional>
 #include <set>
 #include <stdexcept>
@@ -19,8 +21,16 @@ module;
 #define APIENTRY
 #endif
 
+#if defined(_WIN32)
+#define VK_USE_PLATFORM_WIN32_KHR
+#endif
+
+#if defined(ALMOND_VULKAN_STANDALONE)
 #define GLFW_INCLUDE_VULKAN
 #include <GLFW/glfw3.h>
+#else
+struct GLFWwindow;
+#endif
 
 #define VULKAN_HPP_DISPATCH_LOADER_DYNAMIC 1
 #define VULKAN_HPP_NO_EXCEPTIONS
@@ -41,6 +51,9 @@ module;
 
 export module acontext.vulkan.context;
 
+import aengine.context.commandqueue;
+import aengine.core.context;
+import aengine.input;
 import acontext.vulkan.camera;
 
 namespace VulkanCube {
@@ -96,24 +109,13 @@ namespace VulkanCube {
     class Application {
 
     public:
-        void run() {
-            initWindow();
-            initVulkan();
-
-            std::cout << "Vertex struct size: " << sizeof(Vertex) << std::endl;
-            std::cout << "Position offset: " << offsetof(Vertex, pos) << std::endl;
-            std::cout << "Normal offset: " << offsetof(Vertex, normal) << std::endl;
-            std::cout << "TexCoord offset: " << offsetof(Vertex, texCoord) << std::endl;
-
-
-            mainLoop();
-            cleanup();
-        }
+        void run();
 
         // Public Function declarations
         void initWindow();
         void initVulkan();
-        void mainLoop();
+        bool process(std::shared_ptr<almondnamespace::core::Context> ctx,
+            almondnamespace::core::CommandQueue& queue);
         void cleanup();
         void createVertexBuffer();
         void createIndexBuffer();
@@ -123,6 +125,10 @@ namespace VulkanCube {
         vk::UniqueDevice device;
         vk::PhysicalDevice physicalDevice;
         void drawFrame();
+        void set_framebuffer_size(int width, int height);
+        int get_framebuffer_width() const;
+        int get_framebuffer_height() const;
+        void set_context(std::shared_ptr<almondnamespace::core::Context> ctx, void* nativeWindow);
 
         // fft ocean stuff
         vk::CommandBuffer getCurrentCommandBuffer() const {
@@ -134,6 +140,11 @@ namespace VulkanCube {
     private:
 
         std::vector<vk::UniqueCommandBuffer> commandBuffers;
+        std::weak_ptr<almondnamespace::core::Context> context;
+        void* nativeWindowHandle = nullptr;
+        int framebufferWidth = 800;
+        int framebufferHeight = 600;
+        bool isStandalone = false;
         // Vulkan core objects
         vk::UniqueInstance instance;
         // raw debug messenger to fix C2679
@@ -333,3 +344,18 @@ namespace VulkanCube {
 
 } // namespace VulkanCube
 
+export namespace almondnamespace::vulkancontext
+{
+    bool vulkan_initialize(
+        std::shared_ptr<core::Context> ctx,
+        void* parentWindowOpaque = nullptr,
+        unsigned int w = 800,
+        unsigned int h = 600,
+        std::function<void(int, int)> onResize = nullptr);
+
+    bool vulkan_process(std::shared_ptr<core::Context> ctx, core::CommandQueue& queue);
+    void vulkan_present();
+    void vulkan_cleanup(std::shared_ptr<core::Context> ctx);
+    int vulkan_get_width();
+    int vulkan_get_height();
+}
