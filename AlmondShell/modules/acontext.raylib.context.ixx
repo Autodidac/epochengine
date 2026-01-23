@@ -545,6 +545,18 @@ namespace almondnamespace::raylibcontext
                 detail::promote_raylib_to_top_level(st.hwnd);
                 almondnamespace::raylib_api::close_window();
             }
+            else if (ctx && ctx->windowData && window_alive)
+            {
+                const HWND hwndToClose = st.hwnd;
+                ctx->windowData->commandQueue.enqueue([hwndToClose]()
+                    {
+                        if (!almondnamespace::raylib_api::is_window_ready())
+                            return;
+                        if (hwndToClose && ::IsWindow(hwndToClose) != FALSE)
+                            detail::promote_raylib_to_top_level(hwndToClose);
+                        almondnamespace::raylib_api::close_window();
+                    });
+            }
 #else
             almondnamespace::raylib_api::close_window();
 #endif

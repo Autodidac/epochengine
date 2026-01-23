@@ -821,7 +821,6 @@ namespace almondnamespace::core
             }
 
             menu.cleanup();
-            mgr.StopAll();
 
             // Backend cleanup
             auto snapshot2 = collect_backend_contexts();
@@ -869,6 +868,8 @@ namespace almondnamespace::core
 
                 for (auto& ctx : contexts) cleanup_backend(ctx);
             }
+
+            mgr.StopAll();
 
             return 0;
         }
