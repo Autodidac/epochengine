@@ -298,6 +298,39 @@
     <ClCompile Update="C:\Users\iammi\source\repos\epochengine\AlmondShell\modules\acontext.type.ixx">
       <FileType>Document</FileType>
     </ClCompile>
+    <ClCompile Update="C:\Users\iammi\source\repos\epochengine\AlmondShell\modules\acontext.vulkan.platform.device.ixx">
+      <FileType>Document</FileType>
+    </ClCompile>
+    <ClCompile Update="C:\Users\iammi\source\repos\epochengine\AlmondShell\modules\acontext.vulkan.platform.dispatcher.ixx">
+      <FileType>Document</FileType>
+    </ClCompile>
+    <ClCompile Update="C:\Users\iammi\source\repos\epochengine\AlmondShell\modules\acontext.vulkan.platform.instance.ixx">
+      <FileType>Document</FileType>
+    </ClCompile>
+    <ClCompile Update="C:\Users\iammi\source\repos\epochengine\AlmondShell\modules\acontext.vulkan.platform.loader.ixx">
+      <FileType>Document</FileType>
+    </ClCompile>
+    <ClCompile Update="C:\Users\iammi\source\repos\epochengine\AlmondShell\modules\acontext.vulkan.quad.ixx">
+      <FileType>Document</FileType>
+    </ClCompile>
+    <ClCompile Update="C:\Users\iammi\source\repos\epochengine\AlmondShell\modules\acontext.vulkan.renderer.ixx">
+      <FileType>Document</FileType>
+    </ClCompile>
+    <ClCompile Update="C:\Users\iammi\source\repos\epochengine\AlmondShell\modules\acontext.vulkan.shader.pipeline.ixx">
+      <FileType>Document</FileType>
+    </ClCompile>
+    <ClCompile Update="C:\Users\iammi\source\repos\epochengine\AlmondShell\modules\acontext.vulkan.shaderpipeline.ixx">
+      <FileType>Document</FileType>
+    </ClCompile>
+    <ClCompile Update="C:\Users\iammi\source\repos\epochengine\AlmondShell\modules\acontext.vulkan.swapchain.ixx">
+      <FileType>Document</FileType>
+    </ClCompile>
+    <ClCompile Update="C:\Users\iammi\source\repos\epochengine\AlmondShell\modules\acontext.vulkan.texture.ixx">
+      <FileType>Document</FileType>
+    </ClCompile>
+    <ClCompile Update="C:\Users\iammi\source\repos\epochengine\AlmondShell\modules\acontext.vulkan.triangle.ixx">
+      <FileType>Document</FileType>
+    </ClCompile>
     <ClCompile Update="C:\Users\iammi\source\repos\epochengine\AlmondShell\modules\acontext.window.ixx">
       <FileType>Document</FileType>
     </ClCompile>

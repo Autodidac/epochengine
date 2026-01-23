@@ -1,3 +1,6 @@
+// no graphics operations context for testing and driverless engine usage.
+// a test framework can be launched from here to automate build testing.
+
 module;
 
 #include <include/aengine.config.hpp>

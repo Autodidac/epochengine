@@ -588,7 +588,7 @@ export namespace almondnamespace::openglcontext
         throw std::runtime_error("[OpenGL] Unsupported platform");
 #endif
 
-        if (!almondnamespace::openglquad::ensure_quad_pipeline(glState))
+        if (!almondnamespace::openglquad::ensure_quad_pipeline())
             throw std::runtime_error("[OpenGL] Failed to build/ensure quad pipeline");
 
         atlasmanager::register_backend_uploader(core::ContextType::OpenGL,
@@ -676,7 +676,7 @@ export namespace almondnamespace::openglcontext
 
         glViewport(0, 0, fbW, fbH);
 
-        if (!almondnamespace::openglquad::ensure_quad_pipeline(glState))
+        if (!almondnamespace::openglquad::ensure_quad_pipeline())
         {
             queue.drain();
             PlatformGL::swap_buffers(guard.target());

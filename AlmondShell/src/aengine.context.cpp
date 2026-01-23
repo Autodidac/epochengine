@@ -462,10 +462,10 @@ namespace almondnamespace::core
             ctx->initialize = sfml_initialize_adapter;
             ctx->cleanup = sfml_cleanup_adapter;
             ctx->process = sfml_process_adapter;
-            ctx->clear = almondnamespace::sfmlcontext::sfml_clear;
-            ctx->present = almondnamespace::sfmlcontext::sfml_present;
-            ctx->get_width = almondnamespace::sfmlcontext::sfml_get_width;
-            ctx->get_height = almondnamespace::sfmlcontext::sfml_get_height;
+            //ctx->clear = almondnamespace::sfmlcontext::sfml_clear;
+            //ctx->present = almondnamespace::sfmlcontext::sfml_present;
+            //ctx->get_width = almondnamespace::sfmlcontext::sfml_get_width;
+            //ctx->get_height = almondnamespace::sfmlcontext::sfml_get_height;
 
             ctx->is_key_held = [](input::Key k) { return input::is_key_held(k); };
             ctx->is_key_down = [](input::Key k) { return input::is_key_down(k); };

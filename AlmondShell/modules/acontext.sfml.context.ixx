@@ -284,22 +284,6 @@ export namespace almondnamespace::sfmlcontext
         return true;
     }
 
-    inline void sfml_begin_frame()
-    {
-        if (!sfmlcontext.window)
-            throw std::runtime_error("[SFML] Window not initialized.");
-    }
-
-    inline void sfml_end_frame()
-    {
-        if (!sfmlcontext.window)
-            throw std::runtime_error("[SFML] Window not initialized.");
-        sfmlcontext.window->display();
-    }
-
-    inline void sfml_clear() { sfml_begin_frame(); }
-    inline void sfml_present() { sfml_end_frame(); }
-
     inline bool sfml_should_close()
     {
         return !sfmlcontext.window || !sfmlcontext.window->isOpen();
@@ -312,6 +296,16 @@ export namespace almondnamespace::sfmlcontext
         if (!sfmlcontext.running || !sfmlcontext.window || !sfmlcontext.window->isOpen())
             return false;
 
+        // If the HWND is already dead (e.g., external teardown), bail before any GL calls.
+#if defined(_WIN32)
+        if (sfmlcontext.hwnd && ::IsWindow(sfmlcontext.hwnd) == FALSE)
+        {
+            sfmlcontext.running = false;
+            state::s_sfmlstate.running = false;
+            return false;
+        }
+#endif
+
         // Let SFML own activation. Do NOT call wglMakeCurrent manually.
         if (!sfmlcontext.window->setActive(true))
         {
@@ -321,7 +315,6 @@ export namespace almondnamespace::sfmlcontext
             return false;
         }
 
-        // SFML can get confused if someone else touched GL state (or if uploads use GL).
         // Reset before doing any SFML draw calls.
         sfmlcontext.window->resetGLStates();
 
@@ -348,7 +341,7 @@ export namespace almondnamespace::sfmlcontext
             }
         }
 
-        if (!sfmlcontext.running)
+        if (!sfmlcontext.running || !sfmlcontext.window->isOpen())
         {
             (void)sfmlcontext.window->setActive(false);
             return false;
@@ -359,6 +352,8 @@ export namespace almondnamespace::sfmlcontext
             bgTimer = &almondnamespace::timing::createNamedTimer("menu", "bg_color");
 
         const double t = almondnamespace::timing::elapsed(*bgTimer);
+        (void)t;
+
         const unsigned char r = static_cast<unsigned char>((0.5 + 0.5 * std::sin(1.0)) * 255);
         const unsigned char g = static_cast<unsigned char>((0.5 + 0.5 * std::sin(0.7 + 2.0)) * 255);
         const unsigned char b = static_cast<unsigned char>((0.5 + 0.5 * std::sin(1.3 + 4.0)) * 255);
@@ -373,73 +368,43 @@ export namespace almondnamespace::sfmlcontext
         return sfmlcontext.running;
     }
 
-    inline std::pair<int, int> get_window_size_wh() noexcept
-    {
-        if (!sfmlcontext.window) return { 0, 0 };
-        const auto size = sfmlcontext.window->getSize();
-        return { static_cast<int>(size.x), static_cast<int>(size.y) };
-    }
-
-    inline std::pair<int, int> get_window_position_xy() noexcept
-    {
-        if (!sfmlcontext.window) return { 0, 0 };
-        const auto pos = sfmlcontext.window->getPosition();
-        return { pos.x, pos.y };
-    }
-
-    inline void set_window_position(int x, int y) noexcept
-    {
-        if (sfmlcontext.window)
-            sfmlcontext.window->setPosition(sf::Vector2i(x, y));
-    }
-
-    inline void set_window_size(int width, int height) noexcept
-    {
-        if (sfmlcontext.window)
-            sfmlcontext.window->setSize(sf::Vector2u(width, height));
-    }
-
-    inline void set_window_icon(const std::string& iconPath) noexcept
-    {
-        (void)iconPath;
-        if (!sfmlcontext.window) return;
-        // implement with sf::Image if desired
-    }
-
-    inline int sfml_get_width() noexcept
-    {
-        return sfmlcontext.window ? static_cast<int>(sfmlcontext.window->getSize().x) : 0;
-    }
-
-    inline int sfml_get_height() noexcept
-    {
-        return sfmlcontext.window ? static_cast<int>(sfmlcontext.window->getSize().y) : 0;
-    }
-
-    inline void sfml_set_window_title(const std::string& title) noexcept
-    {
-        if (sfmlcontext.window)
-            sfmlcontext.window->setTitle(title);
-    }
-
     inline void sfml_cleanup(std::shared_ptr<almondnamespace::core::Context>& ctx)
     {
+        // Stop new uploads immediately.
+        atlasmanager::unregister_backend_uploader(core::ContextType::SFML);
+
         if (ctx && ctx->windowData)
             ctx->windowData->sfml_window = nullptr;
 
         state::s_sfmlstate.window.sfml_window = nullptr;
         state::s_sfmlstate.running = false;
+        sfmlcontext.running = false;
 
-        clear_gpu_atlases();
-
-        if (sfmlcontext.window)
+        // CRITICAL:
+        // clear_gpu_atlases() calls glDeleteTextures. That MUST only happen with an active,
+        // valid SFML context. If the window is already closed/destroyed, skip deletion.
+        if (sfmlcontext.window && sfmlcontext.window->isOpen())
         {
+            if (sfmlcontext.window->setActive(true))
+            {
+                clear_gpu_atlases();
+                sfmlcontext.window->setActive(false);
+            }
+            else
+            {
+                std::cerr << "[SFML] WARNING: could not activate context during cleanup; skipping GPU atlas delete\n";
+            }
+
+            // Close after deleting textures (while context is still valid).
             sfmlcontext.window->setActive(true);
             sfmlcontext.window->close();
             sfmlcontext.window.reset();
         }
-
-        sfmlcontext.running = false;
+        else
+        {
+            // Window already gone -> don't touch GL.
+            sfmlcontext.window.reset();
+        }
 
 #if defined(_WIN32)
         if (sfmlcontext.hdc && sfmlcontext.hwnd)

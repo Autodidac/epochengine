@@ -425,16 +425,6 @@ export namespace almondnamespace::opengltextures
         }
 
         auto& backend = get_opengl_backend();
-
-        // Use per-thread quad pipeline state.
-        // MultiContext renders multiple OpenGL contexts on different threads; VAOs are not shared.
-        if (!almondnamespace::openglquad::ensure_quad_pipeline())
-        {
-            std::cerr << "[DrawSprite] OpenGL quad pipeline unavailable (thread_local)";
-            return;
-        }
-        auto& glState = almondnamespace::openglquad::quad_pipeline_state();
-
         almondnamespace::openglcontext::PlatformGL::ScopedContext contextGuard;
         auto desired = detail::context_to_platform_context(core::MultiContextManager::GetCurrent().get());
         if (!desired.valid()) {
@@ -456,8 +446,8 @@ export namespace almondnamespace::opengltextures
         int h = viewport[3];
 
         if (w <= 0 || h <= 0) {
-            w = static_cast<int>(glState.width);
-            h = static_cast<int>(glState.height);
+            w = static_cast<int>(backend.glState.width);
+            h = static_cast<int>(backend.glState.height);
         }
         if (w <= 0 || h <= 0) {
             if (auto ctx = core::MultiContextManager::GetCurrent()) {
@@ -474,8 +464,8 @@ export namespace almondnamespace::opengltextures
             return;
         }
 
-        glState.width = static_cast<unsigned int>(w);
-        glState.height = static_cast<unsigned int>(h);
+        backend.glState.width = static_cast<unsigned int>(w);
+        backend.glState.height = static_cast<unsigned int>(h);
 
         const int atlasIdx = int(handle.atlasIndex);
         const int localIdx = int(handle.localIndex);
@@ -516,8 +506,9 @@ export namespace almondnamespace::opengltextures
             return;
         }
 
-        glUseProgram(glState.shader);
-        glBindVertexArray(glState.vao);
+        auto& pipe = almondnamespace::openglquad::quad_pipeline_state();
+        glUseProgram(pipe.shader);
+        glBindVertexArray(pipe.vao);
 
         glDisable(GL_DEPTH_TEST);
         glDisable(GL_CULL_FACE);
@@ -546,8 +537,8 @@ export namespace almondnamespace::opengltextures
         const float v0 = region.v2;
         const float dv = region.v1 - region.v2;
 
-        if (glState.uUVRegionLoc >= 0)
-            glUniform4f(glState.uUVRegionLoc, u0, v0, du, dv);
+        if (pipe.uUVRegionLoc >= 0)
+            glUniform4f(pipe.uUVRegionLoc, u0, v0, du, dv);
 
         float flippedY = h - (drawY + drawHeight * 0.5f);
 
@@ -556,8 +547,8 @@ export namespace almondnamespace::opengltextures
         float ndc_w = (drawWidth / float(w)) * 2.f;
         float ndc_h = (drawHeight / float(h)) * 2.f;
 
-        if (glState.uTransformLoc >= 0)
-            glUniform4f(glState.uTransformLoc, ndc_x, ndc_y, ndc_w, ndc_h);
+        if (pipe.uTransformLoc >= 0)
+            glUniform4f(pipe.uTransformLoc, ndc_x, ndc_y, ndc_w, ndc_h);
 
         glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, nullptr);
 

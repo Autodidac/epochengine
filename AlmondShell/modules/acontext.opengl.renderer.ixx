@@ -41,18 +41,22 @@ export namespace almondnamespace::openglrenderer
     // --------------------------------------------------------
 
     inline openglstate::OpenGL4State& renderer_gl_state() noexcept
-{
-    // Per-thread pipeline state (see acontext.opengl.quad.ixx).
-    return almondnamespace::openglquad::quad_pipeline_state();
-}
-              inline openglstate::OpenGL4State& renderer_gl_state_with_pipeline() noexcept
-              {
-                  auto& glState = renderer_gl_state();
-                  if (!almondnamespace::openglquad::ensure_quad_pipeline())
-                      std::cerr << "[OpenGL] Failed to rebuild quad pipeline (thread_local)";
-                  return glState;
-              }
-// --------------------------------------------------------
+    {
+        static openglstate::OpenGL4State* cached = nullptr;
+        if (!cached)
+            cached = &opengltextures::get_opengl_backend().glState;
+        return *cached;
+    }
+
+    inline openglstate::OpenGL4State& renderer_gl_state_with_pipeline() noexcept
+    {
+        auto& glState = renderer_gl_state();
+        if (!almondnamespace::openglquad::ensure_quad_pipeline())
+            std::cerr << "[OpenGL] Failed to rebuild quad pipeline\n";
+        return glState;
+    }
+
+    // --------------------------------------------------------
     // TYPES
     // --------------------------------------------------------
 
@@ -127,11 +131,12 @@ export namespace almondnamespace::openglrenderer
     inline void draw_quad(const openglquad::Quad& quad, GLuint texture)
     {
         auto& glState = renderer_gl_state_with_pipeline();
+        auto& pipe = almondnamespace::openglquad::quad_pipeline_state();
 
-        glUseProgram(glState.shader);
+        glUseProgram(pipe.shader);
 
-        if (glState.uUVRegionLoc >= 0)
-            glUniform4f(glState.uUVRegionLoc, 0.f, 0.f, 1.f, 1.f);
+        if (pipe.uUVRegionLoc >= 0)
+            glUniform4f(pipe.uUVRegionLoc, 0.f, 0.f, 1.f, 1.f);
 
         glActiveTexture(GL_TEXTURE0);
         glBindTexture(GL_TEXTURE_2D, texture);
