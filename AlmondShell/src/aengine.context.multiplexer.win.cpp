@@ -1215,6 +1215,8 @@ namespace almondnamespace::core
             std::this_thread::sleep_for(std::chrono::milliseconds(16));
         }
 
+        win.commandQueue.drain();
+
         if (ctx->cleanup) ctx->cleanup_safe();
     }
 
