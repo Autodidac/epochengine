@@ -6,6 +6,7 @@
 #include <iostream>
 #include <stdexcept>
 #include <chrono>
+#include <algorithm>
 //#include "../include/vulkan_engine.hpp"
 
 // Define the dispatch loader storage only here.
@@ -35,9 +36,26 @@ import acontext.vulkan.memory;
 import acontext.vulkan.texture;
 import acontext.vulkan.descriptors;
 import acontext.vulkan.commands;
+import aengine.context.commandqueue;
+import aengine.core.context;
+import aengine.input;
 
 
 namespace VulkanCube {
+
+    void Application::run() {
+        almondnamespace::core::CommandQueue queue;
+        initWindow();
+        initVulkan();
+
+        std::cout << "Vertex struct size: " << sizeof(Vertex) << std::endl;
+        std::cout << "Position offset: " << offsetof(Vertex, pos) << std::endl;
+        std::cout << "Normal offset: " << offsetof(Vertex, normal) << std::endl;
+        std::cout << "TexCoord offset: " << offsetof(Vertex, texCoord) << std::endl;
+
+        while (process(nullptr, queue)) {}
+        cleanup();
+    }
 
     // --------------------------------------------------------------------------
     // initVulkan() calls all necessary initialization functions.
@@ -83,15 +101,16 @@ namespace VulkanCube {
     }
 
     // --------------------------------------------------------------------------
-    // initWindow() creates a GLFW window.
+    // initWindow() wires up the native window handle (engine) or GLFW (standalone).
     // --------------------------------------------------------------------------
     void Application::initWindow() {
+#if defined(ALMOND_VULKAN_STANDALONE)
         if (!glfwInit()) {
             throw std::runtime_error("Failed to initialize GLFW");
         }
         glfwWindowHint(GLFW_CLIENT_API, GLFW_NO_API);
         glfwWindowHint(GLFW_RESIZABLE, GLFW_TRUE);
-        window = glfwCreateWindow(800, 600, "Vulkan Cube", nullptr, nullptr);
+        window = glfwCreateWindow(framebufferWidth, framebufferHeight, "Vulkan Cube", nullptr, nullptr);
         if (!window) {
             throw std::runtime_error("Failed to create GLFW window");
         }
@@ -101,38 +120,95 @@ namespace VulkanCube {
 
         // Lock the mouse for camera control
         glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_DISABLED);
+        isStandalone = true;
+#else
+        window = nullptr;
+        if (!nativeWindowHandle) {
+            throw std::runtime_error("Vulkan requires a native window handle.");
+        }
+        isStandalone = false;
+#endif
 
         // Initialize global Vulkan function pointers.
         VULKAN_HPP_DEFAULT_DISPATCHER.init();
-        std::cout << "Window created" << std::endl;
+        std::cout << "Window configured" << std::endl;
     }
 
     // --------------------------------------------------------------------------
     // Callback: marks framebufferResized true when the window is resized.
     // --------------------------------------------------------------------------
-    void Application::framebufferResizeCallback(GLFWwindow* window, int /*width*/, int /*height*/) {
+    void Application::framebufferResizeCallback(GLFWwindow* window, int width, int height) {
+#if defined(ALMOND_VULKAN_STANDALONE)
         auto* app = reinterpret_cast<Application*>(glfwGetWindowUserPointer(window));
         if (app) {
-            app->framebufferResized = true;
+            int fbWidth = width;
+            int fbHeight = height;
+            if (fbWidth == 0 || fbHeight == 0) {
+                glfwGetFramebufferSize(window, &fbWidth, &fbHeight);
+            }
+            app->set_framebuffer_size(fbWidth, fbHeight);
         }
+#else
+        (void)window;
+        (void)width;
+        (void)height;
+#endif
     }
 
     // --------------------------------------------------------------------------
-    // mainLoop() processes window events, updates the camera, and draws frames.
+    // process() renders a single frame when the engine calls it.
     // --------------------------------------------------------------------------
-    void Application::mainLoop() {
-        auto lastTime = std::chrono::high_resolution_clock::now();
-        while (!glfwWindowShouldClose(window)) {
-            glfwPollEvents();
-
-            auto currentTime = std::chrono::high_resolution_clock::now();
-            float deltaTime = std::chrono::duration<float>(currentTime - lastTime).count();
-            lastTime = currentTime;
-
-            updateCamera(deltaTime);
-            drawFrame();
+    bool Application::process(std::shared_ptr<almondnamespace::core::Context> ctx,
+        almondnamespace::core::CommandQueue& queue) {
+        if (!device) {
+            return false;
         }
-        (void)device->waitIdle();
+
+        static auto lastTime = std::chrono::high_resolution_clock::now();
+        auto currentTime = std::chrono::high_resolution_clock::now();
+        float deltaTime = std::chrono::duration<float>(currentTime - lastTime).count();
+        lastTime = currentTime;
+
+#if defined(ALMOND_VULKAN_STANDALONE)
+        if (window) {
+            glfwPollEvents();
+            if (glfwWindowShouldClose(window)) {
+                return false;
+            }
+        }
+#else
+        if (ctx && ctx->get_mouse_position) {
+            int mouseX = 0;
+            int mouseY = 0;
+            ctx->get_mouse_position(mouseX, mouseY);
+            processMouseInput(mouseX, mouseY);
+        }
+#endif
+
+        updateCamera(deltaTime);
+
+        queue.drain();
+        drawFrame();
+        return true;
+    }
+
+    void Application::set_context(std::shared_ptr<almondnamespace::core::Context> ctx, void* nativeWindow) {
+        context = std::move(ctx);
+        nativeWindowHandle = nativeWindow;
+    }
+
+    void Application::set_framebuffer_size(int width, int height) {
+        framebufferWidth = (std::max)(1, width);
+        framebufferHeight = (std::max)(1, height);
+        framebufferResized = true;
+    }
+
+    int Application::get_framebuffer_width() const {
+        return (std::max)(1, framebufferWidth);
+    }
+
+    int Application::get_framebuffer_height() const {
+        return (std::max)(1, framebufferHeight);
     }
 
     // --------------------------------------------------------------------------
@@ -230,7 +306,8 @@ namespace VulkanCube {
             instance.reset();
         }
 
-        /*** 🔴 STEP 11: CLEANUP GLFW 🔴 ***/
+        /*** 🔴 STEP 11: CLEANUP GLFW (standalone only) 🔴 ***/
+#if defined(ALMOND_VULKAN_STANDALONE)
         std::cout << "Destroying GLFW window..." << std::endl;
         if (window) {
             glfwDestroyWindow(window);
@@ -239,6 +316,7 @@ namespace VulkanCube {
 
         std::cout << "Terminating GLFW..." << std::endl;
         glfwTerminate();
+#endif
 
         std::cout << "Cleanup complete! Vulkan shutdown successful." << std::endl;
     }
@@ -454,16 +532,87 @@ namespace VulkanCube {
 
 } // namespace VulkanCube
 
-//#define VULKAN_CUBE_MAIN
-#ifdef VULKAN_CUBE_MAIN
+namespace almondnamespace::vulkancontext
+{
+    namespace
+    {
+        VulkanCube::Application s_app{};
+    }
 
+    bool vulkan_initialize(
+        std::shared_ptr<core::Context> ctx,
+        void* parentWindowOpaque,
+        unsigned int w,
+        unsigned int h,
+        std::function<void(int, int)> onResize)
+    {
+        if (!ctx) {
+            throw std::runtime_error("[Vulkan] vulkan_initialize requires non-null Context");
+        }
+
+        void* nativeWindow = parentWindowOpaque;
+#if defined(_WIN32) && !defined(ALMOND_MAIN_HEADLESS)
+        if (ctx->windowData && ctx->windowData->hwnd)
+            nativeWindow = ctx->windowData->hwnd;
+        else if (ctx->get_hwnd())
+            nativeWindow = ctx->get_hwnd();
+#endif
+
+        s_app.set_framebuffer_size(static_cast<int>(w), static_cast<int>(h));
+        s_app.set_context(ctx, nativeWindow);
+
+        ctx->get_width = vulkan_get_width;
+        ctx->get_height = vulkan_get_height;
+        ctx->is_key_held = [](almondnamespace::input::Key key) { return almondnamespace::input::is_key_held(key); };
+        ctx->is_key_down = [](almondnamespace::input::Key key) { return almondnamespace::input::is_key_down(key); };
+        ctx->is_mouse_button_held = [](almondnamespace::input::MouseButton button) { return almondnamespace::input::is_mouse_button_held(button); };
+        ctx->is_mouse_button_down = [](almondnamespace::input::MouseButton button) { return almondnamespace::input::is_mouse_button_down(button); };
+
+        ctx->onResize = [resize = std::move(onResize)](int newWidth, int newHeight) mutable
+            {
+                s_app.set_framebuffer_size(newWidth, newHeight);
+                if (resize)
+                    resize(newWidth, newHeight);
+            };
+
+        s_app.initWindow();
+        s_app.initVulkan();
+        return true;
+    }
+
+    bool vulkan_process(std::shared_ptr<core::Context> ctx, core::CommandQueue& queue)
+    {
+        return s_app.process(ctx, queue);
+    }
+
+    void vulkan_present()
+    {
+    }
+
+    void vulkan_cleanup(std::shared_ptr<core::Context> ctx)
+    {
+        (void)ctx;
+        s_app.cleanup();
+    }
+
+    int vulkan_get_width()
+    {
+        return s_app.get_framebuffer_width();
+    }
+
+    int vulkan_get_height()
+    {
+        return s_app.get_framebuffer_height();
+    }
+}
+
+//#define VULKAN_CUBE_MAIN
+#if defined(VULKAN_CUBE_MAIN)
 int main() {
     VulkanCube::Application app;
     try {
-        app.initWindow();
-        app.initVulkan(); // Fully initializes Vulkan and creates all resources.
-        app.mainLoop();
-        app.cleanup();
+        app.set_framebuffer_size(800, 600);
+        app.run();
     }
     catch (const std::exception& e) {
         std::cerr << "Exception: " << e.what() << std::endl;

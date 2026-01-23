@@ -1,6 +1,6 @@
 module;
 
-
+import aengine.input;
 
 export module acontext.vulkan.window;
 
@@ -8,12 +8,14 @@ import acontext.vulkan.context;
 
 namespace VulkanCube {
 
+#if defined(ALMOND_VULKAN_STANDALONE)
     inline void Application::mouseCallback(GLFWwindow* window, double xpos, double ypos) {
         auto* app = reinterpret_cast<Application*>(glfwGetWindowUserPointer(window));
         if (app) {
             app->processMouseInput(xpos, ypos);
         }
     }
+#endif
 
     inline void Application::processMouseInput(double xpos, double ypos) {
         if (firstMouse) {
@@ -35,14 +37,14 @@ namespace VulkanCube {
     }
 
     inline void Application::updateCamera(float deltaTime) {
-        // Process WASD keyboard input for camera movement
-        if (glfwGetKey(window, GLFW_KEY_W) == GLFW_PRESS)
+        // Process WASD keyboard input for camera movement (engine input)
+        if (almondnamespace::input::is_key_held(almondnamespace::input::Key::W))
             Camera::processKeyboard(cam, Camera::Direction::Forward, deltaTime);
-        if (glfwGetKey(window, GLFW_KEY_S) == GLFW_PRESS)
+        if (almondnamespace::input::is_key_held(almondnamespace::input::Key::S))
             Camera::processKeyboard(cam, Camera::Direction::Backward, deltaTime);
-        if (glfwGetKey(window, GLFW_KEY_A) == GLFW_PRESS)
+        if (almondnamespace::input::is_key_held(almondnamespace::input::Key::A))
             Camera::processKeyboard(cam, Camera::Direction::Left, deltaTime);
-        if (glfwGetKey(window, GLFW_KEY_D) == GLFW_PRESS)
+        if (almondnamespace::input::is_key_held(almondnamespace::input::Key::D))
             Camera::processKeyboard(cam, Camera::Direction::Right, deltaTime);
     }
 
