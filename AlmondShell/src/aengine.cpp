@@ -499,7 +499,6 @@ namespace almondnamespace::core
             }
 
             games_menu.cleanup();
-            mgr.StopAll();
 
             auto snapshot2 = collect_backend_contexts();
             for (auto& [type, contexts] : snapshot2)
@@ -544,6 +543,8 @@ namespace almondnamespace::core
 
                 for (auto& ctx : contexts) cleanup_backend(ctx);
             }
+
+            mgr.StopAll();
 
             return 0;
         }
@@ -821,7 +822,6 @@ namespace almondnamespace::core
             }
 
             menu.cleanup();
-            mgr.StopAll();
 
             // Backend cleanup
             auto snapshot2 = collect_backend_contexts();
@@ -869,6 +869,8 @@ namespace almondnamespace::core
 
                 for (auto& ctx : contexts) cleanup_backend(ctx);
             }
+
+            mgr.StopAll();
 
             return 0;
         }
