@@ -10,7 +10,7 @@ module;
 #include <dlfcn.h>
 #endif
 
-export module acontext.vulkan.paltform.loader;
+export module acontext.vulkan.platform.loader;
 
 namespace epoch::vulkan {
 

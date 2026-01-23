@@ -2,7 +2,7 @@ module;
 
 #include <vulkan/vulkan.h>
 
-export module acontext.vulkan.device;
+export module acontext.vulkan.platform.device;
 
 import acontext.vulkan.platform.dispatcher;
 
