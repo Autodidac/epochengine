@@ -602,9 +602,9 @@ namespace almondnamespace::core
             ctx->is_mouse_button_held = [](input::MouseButton b) { return input::is_mouse_button_held(b); };
             ctx->is_mouse_button_down = [](input::MouseButton b) { return input::is_mouse_button_down(b); };
 
-            ctx->draw_sprite = almondnamespace::vulkanrenderer::draw_sprite;
-            ctx->add_texture = &add_texture_default;
-            ctx->add_atlas = +[](const TextureAtlas& a) { return add_atlas_default(a, ContextType::Vulkan); };
+            ctx->draw_sprite = almondnamespace::vulkantextures::draw_sprite;
+            ctx->add_texture = almondnamespace::vulkantextures::add_texture;
+            ctx->add_atlas = almondnamespace::vulkantextures::add_atlas;
 
             AddContextForBackend(ContextType::Vulkan, std::move(ctx));
         }
