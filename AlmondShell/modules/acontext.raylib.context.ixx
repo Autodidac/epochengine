@@ -387,9 +387,19 @@ namespace almondnamespace::raylibcontext
 #endif
     }
 
+    namespace detail
+    {
+        void raylib_cleanup_owner_thread(almondnamespace::core::Context* ctx);
+    }
+
     export inline void raylib_process()
     {
         auto& st = almondnamespace::raylibstate::s_raylibstate;
+        if (st.cleanupRequested)
+        {
+            detail::raylib_cleanup_owner_thread(st.owner_ctx);
+            return;
+        }
         if (!st.running)
             return;
 
@@ -485,85 +495,106 @@ namespace almondnamespace::raylibcontext
 #endif
     }
 
+    namespace detail
+    {
+        inline void raylib_cleanup_owner_thread(almondnamespace::core::Context* ctx)
+        {
+            auto& st = almondnamespace::raylibstate::s_raylibstate;
+
+#if defined(_WIN32)
+            const HDC   previousDC = detail::current_dc();
+            const HGLRC previousContext = detail::current_context();
+            const bool window_alive = (st.hwnd != nullptr) && (::IsWindow(st.hwnd) != FALSE);
+#endif
+
+            almondnamespace::atlasmanager::unregister_backend_uploader(
+                almondnamespace::core::ContextType::RayLib);
+
+#if defined(_WIN32)
+            (void)raylib_make_current();
+#endif
+
+            almondnamespace::raylibtextures::shutdown_current_context_backend();
+            if (st.frameActive)
+            {
+                if (st.frameInTextureMode)
+                    almondnamespace::raylib_api::end_texture_mode();
+                else
+                    almondnamespace::raylib_api::end_drawing();
+                st.frameActive = false;
+                st.frameInTextureMode = false;
+            }
+
+            if (st.offscreen.id != 0)
+            {
+                almondnamespace::raylib_api::unload_render_texture(st.offscreen);
+                st.offscreen = {};
+                st.offscreenWidth = 0;
+                st.offscreenHeight = 0;
+            }
+
+            if (ctx && ctx->windowData)
+            {
+#if defined(_WIN32)
+                ctx->windowData->hdc = nullptr;
+                ctx->windowData->glContext = nullptr;
+                ctx->windowData->usesSharedContext = false;
+#endif
+            }
+
+            if (almondnamespace::raylib_api::is_window_ready())
+            {
+#if defined(_WIN32)
+                if (window_alive)
+                {
+                    // If docked as child, detach to top-level before closing to avoid teardown deadlocks.
+                    detail::promote_raylib_to_top_level(st.hwnd);
+                    almondnamespace::raylib_api::close_window();
+                }
+#else
+                almondnamespace::raylib_api::close_window();
+#endif
+            }
+
+#if defined(_WIN32)
+            if (st.ownsDC && st.hdc && st.hwnd)
+                ::ReleaseDC(st.hwnd, st.hdc);
+
+            if (!detail::contexts_match(previousDC, previousContext, st.hdc, st.hglrc))
+            {
+                if (previousDC && previousContext)
+                    (void)detail::make_current(previousDC, previousContext);
+                else
+                    detail::clear_current();
+            }
+#endif
+
+            st = {};
+        }
+    }
+
     export inline void raylib_cleanup(std::shared_ptr<core::Context> ctx)
     {
         auto& st = almondnamespace::raylibstate::s_raylibstate;
         if (st.cleanupIssued)
             return;
 
+#if defined(_WIN32)
+        const bool on_owner_thread = (st.owner_thread == std::this_thread::get_id());
+#else
+        const bool on_owner_thread = true;
+#endif
+
         st.cleanupIssued = true;
         st.running = false;
 
-#if defined(_WIN32)
-        const HDC   previousDC = detail::current_dc();
-        const HGLRC previousContext = detail::current_context();
-        const bool on_owner_thread = (st.owner_thread == std::this_thread::get_id());
-        const bool window_alive = (st.hwnd != nullptr) && (::IsWindow(st.hwnd) != FALSE);
-#endif
-
-        almondnamespace::atlasmanager::unregister_backend_uploader(
-            almondnamespace::core::ContextType::RayLib);
-
-#if defined(_WIN32)
-        const bool madeCurrent = raylib_make_current();
-#endif
-
-        almondnamespace::raylibtextures::shutdown_current_context_backend();
-        if (st.frameActive)
+        if (!on_owner_thread)
         {
-            if (st.frameInTextureMode)
-                almondnamespace::raylib_api::end_texture_mode();
-            else
-                almondnamespace::raylib_api::end_drawing();
-            st.frameActive = false;
-            st.frameInTextureMode = false;
+            st.cleanupRequested = true;
+            return;
         }
 
-        if (st.offscreen.id != 0)
-        {
-            almondnamespace::raylib_api::unload_render_texture(st.offscreen);
-            st.offscreen = {};
-            st.offscreenWidth = 0;
-            st.offscreenHeight = 0;
-        }
-
-        if (ctx && ctx->windowData)
-        {
-#if defined(_WIN32)
-            ctx->windowData->hdc = nullptr;
-            ctx->windowData->glContext = nullptr;
-            ctx->windowData->usesSharedContext = false;
-#endif
-        }
-
-        if (almondnamespace::raylib_api::is_window_ready())
-        {
-#if defined(_WIN32)
-            if (madeCurrent && on_owner_thread && window_alive)
-            {
-                // If docked as child, detach to top-level before closing to avoid teardown deadlocks.
-                detail::promote_raylib_to_top_level(st.hwnd);
-                almondnamespace::raylib_api::close_window();
-            }
-#else
-            almondnamespace::raylib_api::close_window();
-#endif
-        }
-
-#if defined(_WIN32)
-        if (st.ownsDC && st.hdc && st.hwnd)
-            ::ReleaseDC(st.hwnd, st.hdc);
-
-        if (!detail::contexts_match(previousDC, previousContext, st.hdc, st.hglrc))
-        {
-            if (previousDC && previousContext)
-                (void)detail::make_current(previousDC, previousContext);
-            else
-                detail::clear_current();
-        }
-#endif
-
-        st = {};
+        detail::raylib_cleanup_owner_thread(ctx.get());
     }
 
     export inline void raylib_set_window_title(std::string_view title)
