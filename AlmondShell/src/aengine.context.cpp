@@ -44,9 +44,9 @@ import aatlas.texture;
 import aimage.loader;
 
 #ifdef ALMOND_USING_VULKAN
-import "avulkancontext.hpp";
-import "avulkanrenderer.hpp";
-import "avulkantextures.hpp";
+import acontext.vulkan.context;
+import acontext.vulkan.renderer;
+import acontext.vulkan.texture;
 #endif
 #ifdef ALMOND_USING_DIRECTX
 import "adirectxcontext.hpp";
@@ -157,6 +157,46 @@ namespace
     {
         if (!ctx) return false;
         return almondnamespace::openglcontext::opengl_process(ctx, queue);
+    }
+#endif
+
+#if defined(ALMOND_USING_VULKAN)
+    void vulkan_initialize_adapter()
+    {
+        auto ctx = almondnamespace::core::MultiContextManager::GetCurrent();
+        if (!ctx) return;
+
+        void* native = ctx_native_window_handle(ctx);
+
+        const unsigned w = static_cast<unsigned>((std::max)(1, ctx->width));
+        const unsigned h = static_cast<unsigned>((std::max)(1, ctx->height));
+
+        try {
+            (void)almondnamespace::vulkancontext::vulkan_initialize(ctx, native, w, h, ctx->onResize);
+        }
+        catch (const std::exception& e) {
+            std::cerr << "[Vulkan] init exception: " << e.what() << "\n";
+        }
+        catch (...) {
+            std::cerr << "[Vulkan] init unknown exception\n";
+        }
+    }
+
+    void vulkan_cleanup_adapter()
+    {
+        auto ctx = almondnamespace::core::MultiContextManager::GetCurrent();
+        if (!ctx) return;
+
+        try { almondnamespace::vulkancontext::vulkan_cleanup(ctx); }
+        catch (const std::exception& e) { std::cerr << "[Vulkan] cleanup exception: " << e.what() << "\n"; }
+        catch (...) { std::cerr << "[Vulkan] cleanup unknown exception\n"; }
+    }
+
+    bool vulkan_process_adapter(std::shared_ptr<almondnamespace::core::Context> ctx,
+        almondnamespace::core::CommandQueue& queue)
+    {
+        if (!ctx) return false;
+        return almondnamespace::vulkancontext::vulkan_process(ctx, queue);
     }
 #endif
 
@@ -540,6 +580,33 @@ namespace almondnamespace::core
             ctx->add_atlas = +[](const TextureAtlas& a) { return add_atlas_default(a, ContextType::RayLib); };
 
             AddContextForBackend(ContextType::RayLib, std::move(ctx));
+        }
+#endif
+
+#if defined(ALMOND_USING_VULKAN)
+        {
+            auto ctx = std::make_shared<Context>();
+            ctx->type = ContextType::Vulkan;
+            ctx->backendName = "Vulkan";
+
+            ctx->initialize = vulkan_initialize_adapter;
+            ctx->cleanup = vulkan_cleanup_adapter;
+            ctx->process = vulkan_process_adapter;
+            ctx->present = almondnamespace::vulkancontext::vulkan_present;
+            ctx->get_width = almondnamespace::vulkancontext::vulkan_get_width;
+            ctx->get_height = almondnamespace::vulkancontext::vulkan_get_height;
+
+            ctx->is_key_held = [](input::Key k) { return input::is_key_held(k); };
+            ctx->is_key_down = [](input::Key k) { return input::is_key_down(k); };
+            ctx->get_mouse_position = [](int& x, int& y) { x = input::mouseX.load(std::memory_order_relaxed); y = input::mouseY.load(std::memory_order_relaxed); };
+            ctx->is_mouse_button_held = [](input::MouseButton b) { return input::is_mouse_button_held(b); };
+            ctx->is_mouse_button_down = [](input::MouseButton b) { return input::is_mouse_button_down(b); };
+
+            ctx->draw_sprite = almondnamespace::vulkanrenderer::draw_sprite;
+            ctx->add_texture = &add_texture_default;
+            ctx->add_atlas = +[](const TextureAtlas& a) { return add_atlas_default(a, ContextType::Vulkan); };
+
+            AddContextForBackend(ContextType::Vulkan, std::move(ctx));
         }
 #endif
 
