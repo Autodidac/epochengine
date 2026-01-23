@@ -103,8 +103,21 @@ namespace
     };
     std::vector<PendingWindowCleanup> g_pendingCleanups;
 
+   // [[nodiscard]] inline int clamp_positive(int v) noexcept { return (v < 1) ? 1 : v; }
+
 #if ALMOND_SINGLE_PARENT
     struct SubCtx { HWND originalParent{}; };
+
+    // Dock/undock requests must be processed on the window's owning thread.
+    // GLFW/raylib windows are owned by the thread that created them (typically the render thread).
+    // Cross-thread SetParent/SetWindowLongPtr/SetWindowPos can deadlock.
+    constexpr UINT WM_ALMOND_DOCKCMD = WM_APP + 0x4A11;
+    enum class DockCmd : WPARAM
+    {
+        Undock = 1,
+    };
+
+    [[nodiscard]] inline int clamp_positive(int v) noexcept { return (v < 1) ? 1 : v; }
 
     LRESULT CALLBACK DockableProc(HWND hwnd, UINT msg, WPARAM wp, LPARAM lp, UINT_PTR, DWORD_PTR dw)
     {
@@ -116,18 +129,49 @@ namespace
             delete ctx;
             return DefSubclassProc(hwnd, msg, wp, lp);
 
+        case WM_ALMOND_DOCKCMD:
+        {
+            if (static_cast<DockCmd>(wp) == DockCmd::Undock)
+            {
+                // Convert to a top-level window, preserving client size.
+                RECT clientRect{};
+                ::GetClientRect(hwnd, &clientRect);
+                const int clientW = clamp_positive(static_cast<int>(clientRect.right - clientRect.left));
+                const int clientH = clamp_positive(static_cast<int>(clientRect.bottom - clientRect.top));
+
+                LONG_PTR style = ::GetWindowLongPtrW(hwnd, GWL_STYLE);
+                style &= ~WS_CHILD;
+                style |= WS_OVERLAPPEDWINDOW | WS_VISIBLE;
+                ::SetWindowLongPtrW(hwnd, GWL_STYLE, style);
+
+                const DWORD exStyle = static_cast<DWORD>(::GetWindowLongPtrW(hwnd, GWL_EXSTYLE));
+                RECT adjusted{ 0, 0, clientW, clientH };
+                if (::AdjustWindowRectEx(&adjusted, static_cast<DWORD>(style), FALSE, exStyle))
+                {
+                    const int wndW = clamp_positive(adjusted.right - adjusted.left);
+                    const int wndH = clamp_positive(adjusted.bottom - adjusted.top);
+                    ::SetParent(hwnd, nullptr);
+                    ::SetWindowPos(hwnd, nullptr, 0, 0, wndW, wndH,
+                        SWP_NOMOVE | SWP_NOZORDER | SWP_FRAMECHANGED | SWP_SHOWWINDOW);
+                }
+                else
+                {
+                    ::SetParent(hwnd, nullptr);
+                    ::SetWindowPos(hwnd, nullptr, 0, 0, 0, 0,
+                        SWP_NOMOVE | SWP_NOSIZE | SWP_NOZORDER | SWP_FRAMECHANGED | SWP_SHOWWINDOW);
+                }
+                return 0;
+            }
+            break;
+        }
+
         case WM_CLOSE:
         {
-            // Raylib/GLFW windows are owned by the render thread that created them.
-            // Forcing DestroyWindow() here can race with raylib's own WM_CLOSE handling and
-            // trigger re-entrant shutdown (raylib CloseWindow + our DestroyWindow) which can
-            // deadlock during undock/close.
-            // Heuristic: GLFW windows use a GLFW* window class name (e.g. "GLFW30").
-            // If this is a GLFW window, do NOT DestroyWindow here—let raylib/GLFW handle WM_CLOSE
-            // and let our render loop call raylib CloseWindow during cleanup.
+            // If this is a GLFW-owned HWND (raylib), do NOT DestroyWindow here.
+            // Let GLFW/raylib handle the close.
             wchar_t cls[64]{};
-            ::GetClassNameW(hwnd, cls, 64);
-            if (cls[0] == L'G' && cls[1] == L'L' && cls[2] == L'F' && cls[3] == L'W')
+            ::GetClassNameW(hwnd, cls, static_cast<int>(std::size(cls)));
+            if (wcsncmp(cls, L"GLFW", 4) == 0)
                 return DefSubclassProc(hwnd, msg, wp, lp);
 
             ::DestroyWindow(hwnd);
@@ -144,21 +188,13 @@ namespace
     }
 #endif
 
-    [[nodiscard]] inline int clamp_positive(int v) noexcept { return (v < 1) ? 1 : v; }
-
     inline void cleanup_window_resources(std::unique_ptr<almondnamespace::core::WindowData>& window) noexcept
     {
 #if defined(ALMOND_USING_OPENGL)
         if (window && window->glContext)
         {
-#if defined(ALMOND_USING_RAYLIB)
-            // Raylib/GLFW owns its WGL context; deleting it here can deadlock or double-destroy.
-            if (window->type != almondnamespace::core::ContextType::RayLib)
-#endif
-            {
-                ::wglMakeCurrent(nullptr, nullptr);
-                ::wglDeleteContext(window->glContext);
-            }
+            ::wglMakeCurrent(nullptr, nullptr);
+            ::wglDeleteContext(window->glContext);
         }
 #endif
         if (window && window->hdc && window->hwnd)
@@ -186,8 +222,6 @@ namespace almondnamespace::core
     // ------------------------------------------------------------
     std::unordered_map<HWND, std::thread>& Threads() noexcept { return g_threads; }
     DragState& Drag() noexcept { return g_drag; }
-    std::unique_ptr<WindowData> removed;
-	std::vector<PendingWindowCleanup>& PendingCleanups() noexcept { return g_pendingCleanups; }
 
     void MakeDockable(HWND hwnd, HWND parent)
     {
@@ -521,7 +555,11 @@ namespace almondnamespace::core
                     HGLRC glrc = nullptr;
 
 #if defined(ALMOND_USING_OPENGL)
-                    if (type == ContextType::OpenGL)
+                    if (type == ContextType::OpenGL
+#if defined(ALMOND_USING_RAYLIB)
+                        || type == ContextType::RayLib
+#endif
+                        )
                     {
                         glrc = CreateSharedGLContext(hdc);
                     }
@@ -800,7 +838,7 @@ namespace almondnamespace::core
         ctx->hglrc = glContext;
 
         // Keep the cross-backend fields in sync.
-        // Many render helpers (e.g. OpenGL texture uploads / sprite draws) use native_*.
+        // Many render helpers use native_*.
         ctx->native_window = hwnd;
         ctx->native_drawable = hdc;
         ctx->native_gl_context = glContext;
@@ -825,13 +863,6 @@ namespace almondnamespace::core
         {
             std::scoped_lock lock(windowsMutex);
             windows.emplace_back(std::move(winPtr));
-            // Ask the render thread to stop itself; don't race a plain bool from the message thread.
-            if (removed)
-            {
-                WindowData* raw = removed.get();
-                removed->EnqueueCommand([raw]() { raw->running = false; });
-            }
-
         }
 
         auto& threads = Threads();
@@ -943,6 +974,7 @@ namespace almondnamespace::core
 
     void MultiContextManager::RemoveWindow(HWND hwnd)
     {
+        std::unique_ptr<WindowData> removed;
         bool should_quit = false;
 
         {
@@ -951,6 +983,7 @@ namespace almondnamespace::core
                 [hwnd](const std::unique_ptr<WindowData>& w) { return w && w->hwnd == hwnd; });
             if (it == windows.end()) return;
 
+            (*it)->running = false;
 
             if ((*it)->context)
             {
@@ -1085,25 +1118,7 @@ namespace almondnamespace::core
         struct ResetGuard { ~ResetGuard() { MultiContextManager::SetCurrent(nullptr); } } resetGuard;
 
         // Raylib/SDL must be created+initialized on the SAME thread that will render them.
-#if defined(ALMOND_USING_RAYLIB)
-        if (ctx->type == ContextType::RayLib)
-        {
-            std::cerr << "[RenderThread] Raylib init. host=" << win.hwnd << "\n";
-            const bool initialized = almondnamespace::raylibcontext::raylib_initialize(
-                ctx,
-                win.hwnd,
-                static_cast<unsigned>(ctx->width),
-                static_cast<unsigned>(ctx->height),
-                win.onResize ? win.onResize : ctx->onResize,
-                win.titleNarrow);
-
-            if (!initialized)
-            {
-                win.running = false;
-                return;
-            }
-        }
-#endif
+		// they are passed the HWND from outside, but they create their own internal windowing context.
 #if defined(ALMOND_USING_SDL)
         if (ctx->type == ContextType::SDL)
         {
@@ -1133,7 +1148,27 @@ namespace almondnamespace::core
             if (!ok) { win.running = false; return; }
         }
 #endif
+#if defined(ALMOND_USING_RAYLIB)
+        if (ctx->type == ContextType::RayLib)
+        {
+            std::cerr << "[RenderThread] Raylib init. host=" << win.hwnd << "\n";
+            const bool initialized = almondnamespace::raylibcontext::raylib_initialize(
+                ctx,
+                win.hwnd,
+                static_cast<unsigned>(ctx->width),
+                static_cast<unsigned>(ctx->height),
+                win.onResize ? win.onResize : ctx->onResize,
+                win.titleNarrow);
 
+            if (!initialized)
+            {
+                win.running = false;
+                return;
+            }
+        }
+#endif
+
+		// skipGenericInit for backends that do their own init above
         const bool skipGenericInit =
 #if defined(ALMOND_USING_SFML)
             (ctx->type == ContextType::SFML) ||
@@ -1244,37 +1279,15 @@ namespace almondnamespace::core
                 }
             }
 
+            // DO NOT undock/reparent children from this parent thread.
+            // Some children (GLFW/raylib) are owned by other threads; cross-thread SetParent/SetWindowPos can deadlock.
+            // Instead, post a request to each child so it can undock itself on its owning thread.
             for (HWND child : children)
             {
-                const LONG_PTR style = ::GetWindowLongPtrW(child, GWL_STYLE);
-                if (style & WS_CHILD)
-                {
-                    ::SendMessageW(child, WM_CLOSE, 0, 0);
-                    continue;
-                }
-
-                RECT clientRect{};
-                ::GetClientRect(child, &clientRect);
-                const int clientW = clamp_positive(static_cast<int>(clientRect.right - clientRect.left));
-                const int clientH = clamp_positive(static_cast<int>(clientRect.bottom - clientRect.top));
-
-                RECT adjusted{ 0, 0, clientW, clientH };
-                LONG_PTR updatedStyle = style | WS_OVERLAPPEDWINDOW | WS_VISIBLE;
-                ::SetWindowLongPtrW(child, GWL_STYLE, updatedStyle);
-
-                const DWORD exStyle = static_cast<DWORD>(::GetWindowLongPtrW(child, GWL_EXSTYLE));
-                if (::AdjustWindowRectEx(&adjusted, static_cast<DWORD>(updatedStyle), FALSE, exStyle))
-                {
-                    const int wndW = clamp_positive(adjusted.right - adjusted.left);
-                    const int wndH = clamp_positive(adjusted.bottom - adjusted.top);
-                    ::SetParent(child, nullptr);
-                    ::SetWindowPos(child, nullptr, 0, 0, wndW, wndH,
-                        SWP_NOMOVE | SWP_NOZORDER | SWP_FRAMECHANGED | SWP_SHOWWINDOW);
-                }
-                else
-                {
-                    ::SetParent(child, nullptr);
-                }
+#if ALMOND_SINGLE_PARENT
+                ::PostMessageW(child, WM_ALMOND_DOCKCMD, static_cast<WPARAM>(DockCmd::Undock), 0);
+#endif
+                ::PostMessageW(child, WM_CLOSE, 0, 0);
             }
 
             mgr->parent = nullptr;

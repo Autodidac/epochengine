@@ -1,4 +1,4 @@
-﻿/*
+﻿
 /**************************************************************
  *   █████╗ ██╗     ███╗   ███╗   ███╗   ██╗    ██╗██████╗    *
  *  ██╔══██╗██║     ████╗ ████║ ██╔═══██╗████╗  ██║██╔══██╗   *
@@ -16,6 +16,7 @@
  *   Use permitted for Non-Commercial Purposes ONLY,          *
  *   without prior commercial licensing agreement.            *
  **************************************************************/
+
 //
 // aengine.context.multiplexer.linux.cpp  (TU implementation; NOT a module interface)
 //
