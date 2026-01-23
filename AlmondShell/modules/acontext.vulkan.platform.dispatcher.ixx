@@ -2,7 +2,7 @@ module;
 
 #include <vulkan/vulkan.h>
 
-export module acontext.vulkan.dispatcher;
+export module acontext.vulkan.platform.dispatcher;
 
 import acontext.vulkan.platform.loader;     //import the loader
 
