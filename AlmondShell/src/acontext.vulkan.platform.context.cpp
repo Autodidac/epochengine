@@ -29,11 +29,11 @@ import acontext.vulkan.window;
 import acontext.vulkan.instance;
 import acontext.vulkan.device;
 import acontext.vulkan.swapchain;
-import acontext.vulkan.pipeline;
+import acontext.vulkan.shader.pipeline;
 import acontext.vulkan.depth;
 import acontext.vulkan.memory;
 import acontext.vulkan.texture;
-import acontext.vulkan.descriptor;
+import acontext.vulkan.descriptors;
 import acontext.vulkan.commands;
 
 
