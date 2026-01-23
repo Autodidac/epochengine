@@ -1,5 +1,7 @@
 module;
 
+#include <include/aengine.config.hpp>
+
 #define _CRT_SECURE_NO_WARNINGS
 
 #include <algorithm>
@@ -17,9 +19,9 @@ module;
 #include <vector>
 #include <cstdlib>
 
-#ifndef APIENTRY
-#define APIENTRY
-#endif
+//#ifndef APIENTRY
+//#define APIENTRY
+//#endif
 
 #if defined(_WIN32)
 #define VK_USE_PLATFORM_WIN32_KHR
@@ -28,13 +30,10 @@ module;
 #if defined(ALMOND_VULKAN_STANDALONE)
 #define GLFW_INCLUDE_VULKAN
 #include <GLFW/glfw3.h>
-#else
-struct GLFWwindow;
 #endif
 
 #define VULKAN_HPP_DISPATCH_LOADER_DYNAMIC 1
 #define VULKAN_HPP_NO_EXCEPTIONS
-#define ENABLE_VALIDATION_LAYERS 
 #include <vulkan/vulkan.hpp>
 
 // GLM mathematics
@@ -44,7 +43,7 @@ struct GLFWwindow;
 #include <glm/gtx/string_cast.hpp>
 
 // stb image loader
-#include "stb/stb_image.h"
+#include "../src/stb/stb_image.h"
 
 // Camera controls
 //#include "vulkan_camera.hpp"
@@ -56,7 +55,12 @@ import aengine.core.context;
 import aengine.input;
 import acontext.vulkan.camera;
 
-namespace VulkanCube {
+#if !defined(ALMOND_VULKAN_STANDALONE)
+struct GLFWwindow;
+#endif
+
+namespace almondnamespace::vulkancontext::detail 
+{
 
     // Debug callback for validation layers
     static VKAPI_ATTR VkBool32 VKAPI_CALL debugCallback(
@@ -206,7 +210,7 @@ namespace VulkanCube {
         vk::UniqueImageView depthImageView;
 
         // Camera
-        inline static Camera::State cam = Camera::create(
+        inline static almondnamespace::vulkancamera::State cam = almondnamespace::vulkancamera::create(
             glm::vec3(0.0f, 0.0f, 5.0f),
             glm::vec3(0.0f, 1.0f, 0.0f),
             -90.0f, 0.0f
@@ -247,6 +251,7 @@ namespace VulkanCube {
         void createGraphicsPipeline();
 
         void createDepthResources();
+        bool hasStencilComponent(vk::Format format) noexcept;
         vk::Format findDepthFormat();
         vk::Format findSupportedFormat(const std::vector<vk::Format>& candidates, vk::ImageTiling tiling, vk::FormatFeatureFlags features);
         void createFramebuffers();
@@ -259,7 +264,7 @@ namespace VulkanCube {
         void copyBuffer(vk::Buffer srcBuffer, vk::Buffer dstBuffer, vk::DeviceSize size);
 
         void createUniformBuffers();
-        void updateUniformBuffer(uint32_t currentImage, const Camera::State& camera);
+        void updateUniformBuffer(uint32_t currentImage, const almondnamespace::vulkancamera::State& camera);
 
         void createDescriptorPool();
         void createDescriptorSets();
@@ -342,7 +347,7 @@ namespace VulkanCube {
 
     };
 
-} // namespace VulkanCube
+} // namespace almondnamespace::vulkancontext::detail
 
 export namespace almondnamespace::vulkancontext
 {
