@@ -878,7 +878,10 @@ namespace almondnamespace::core
         template <typename PumpFunc>
         int RunEngineMainLoopCommon(MultiContextManager& mgr, PumpFunc&& pump_events)
         {
-            return RunMenuAndGamesLoop(mgr, std::forward<PumpFunc>(pump_events));
+            if (almondnamespace::core::cli::run_menu_loop)
+                return RunMenuAndGamesLoop(mgr, std::forward<PumpFunc>(pump_events));
+
+            return RunEditorInterfaceLoop(mgr, std::forward<PumpFunc>(pump_events));
         }
 
 #if defined(_WIN32)

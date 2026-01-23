@@ -24,6 +24,7 @@ export namespace almondnamespace::core::cli
     inline int  menu_columns = 4;
     inline bool trace_menu_button0_rect = true;
     inline bool trace_raylib_design_metrics = false;
+    inline bool run_menu_loop = false;
     inline std::filesystem::path exe_path;
 
     struct ParseResult {
@@ -41,6 +42,7 @@ export namespace almondnamespace::core::cli
         ParseResult result{};
         trace_menu_button0_rect = false;
         trace_raylib_design_metrics = false;
+        run_menu_loop = false;
         window_width_overridden = false;
         window_height_overridden = false;
         if (argc < 1) {
@@ -63,6 +65,7 @@ export namespace almondnamespace::core::cli
                     "  --trace-menu-button0  Log GUI bounds for menu button index 0\n"
                     "  --trace-raylib-design Log framebuffer vs design canvas dimensions\n"
                     "  --editor              Start the editor interface\n"
+                    "  --menu                Start the menu + games loop\n"
                     "  --update, -u          Check for a newer AlmondShell build\n"
                     "  --force               Apply the available update immediately\n";
             }
@@ -91,6 +94,9 @@ export namespace almondnamespace::core::cli
             }
             else if (arg == "--editor"sv) {
                 result.editor_requested = true;
+            }
+            else if (arg == "--menu"sv) {
+                run_menu_loop = true;
             }
             else if (arg == "--force"sv) {
                 result.force_update = true;
