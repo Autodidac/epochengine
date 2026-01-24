@@ -428,10 +428,11 @@ namespace almondnamespace::core
         int SDLWinCount,
         int SFMLWinCount,
         int OpenGLWinCount,
+        int VulkanWinCount,
         int SoftwareWinCount,
         bool parented)
     {
-        const int totalRequested = RayLibWinCount + SDLWinCount + SFMLWinCount + OpenGLWinCount + SoftwareWinCount;
+        const int totalRequested = RayLibWinCount + SDLWinCount + SFMLWinCount + OpenGLWinCount + VulkanWinCount + SoftwareWinCount;
         if (totalRequested <= 0) return false;
 
         running.store(true, std::memory_order_release);
@@ -472,8 +473,8 @@ namespace almondnamespace::core
                 hInst,
                 this);
 
-            if (!parent) return false;
-            ::DragAcceptFiles(parent, TRUE);
+            if (!GetParentWindow()) return false;
+            ::DragAcceptFiles(GetParentWindow(), TRUE);
         }
         else
         {
@@ -735,6 +736,9 @@ namespace almondnamespace::core
 #endif
 #if defined(ALMOND_USING_SDL)
         make_backend_windows(ContextType::SDL, SDLWinCount);
+#endif
+#if defined(ALMOND_USING_VULKAN)
+        make_backend_windows(ContextType::Vulkan, VulkanWinCount);
 #endif
 #if defined(ALMOND_USING_OPENGL)
         make_backend_windows(ContextType::OpenGL, OpenGLWinCount);

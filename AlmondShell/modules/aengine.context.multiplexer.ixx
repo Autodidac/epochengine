@@ -83,6 +83,7 @@ export namespace almondnamespace::core
             int RayLibWinCount = 0,
             int SDLWinCount = 0,
             int SFMLWinCount = 0,
+            int VulkanWinCount = 0,
             int OpenGLWinCount = 0,
             int SoftwareWinCount = 0,
             bool parented = true);
@@ -162,6 +163,7 @@ export namespace almondnamespace::core
             int RayLibWinCount = 0,
             int SDLWinCount = 0,
             int SFMLWinCount = 0,
+            int VulkanWinCount = 0,
             int OpenGLWinCount = 0,
             int SoftwareWinCount = 0,
             bool parented = false);

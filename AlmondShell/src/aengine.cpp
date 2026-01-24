@@ -900,6 +900,7 @@ namespace almondnamespace::core
                     /*RayLib*/   1,
                     /*SDL*/      1,
                     /*SFML*/     1,
+                    /*Vulkan*/   1,
                     /*OpenGL*/   1,
                     /*Software*/ 1,
                     ALMOND_SINGLE_PARENT == 1
@@ -957,6 +958,7 @@ namespace almondnamespace::core
                     /*RayLib*/   1,
                     /*SDL*/      1,
                     /*SFML*/     1,
+                    /*Vulkan*/   1,
                     /*OpenGL*/   1,
                     /*Software*/ 1,
                     ALMOND_SINGLE_PARENT == 1
@@ -1025,6 +1027,7 @@ namespace almondnamespace::core
                 /*RayLib*/   1,
                 /*SDL*/      1,
                 /*SFML*/     1,
+                    /*Vulkan*/   1,
                 /*OpenGL*/   1,
                 /*Software*/ 1,
                 ALMOND_SINGLE_PARENT == 1
@@ -1080,6 +1083,7 @@ namespace almondnamespace::core
                 /*RayLib*/   1,
                 /*SDL*/      1,
                 /*SFML*/     1,
+                    /*Vulkan*/   1,
                 /*OpenGL*/   1,
                 /*Software*/ 1,
                 ALMOND_SINGLE_PARENT == 1
