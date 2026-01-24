@@ -11,6 +11,7 @@ module;
 export module acontext.vulkan.context:commands;
 
 import :shared_context;
+import aengine.core.context;
 
 import <array>;
 import <cstdint>;
@@ -34,7 +35,10 @@ namespace almondnamespace::vulkancontext
         commandBuffers = std::move(bufs);
 
         std::array<vk::ClearValue, 2> clearValues{};
-        clearValues[0].setColor(vk::ClearColorValue{ std::array<float, 4>{ 0.0f, 0.5f, 0.5f, 1.0f } });
+        const auto clearColor = almondnamespace::core::clear_color_for_context(
+            almondnamespace::core::ContextType::Vulkan);
+        clearValues[0].setColor(
+            vk::ClearColorValue{ std::array<float, 4>{ clearColor[0], clearColor[1], clearColor[2], clearColor[3] } });
         clearValues[1].setDepthStencil(vk::ClearDepthStencilValue{ 1.0f, 0 });
 
         // You MUST have this set when you create/fill the index buffer.

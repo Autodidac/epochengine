@@ -435,7 +435,13 @@ export namespace almondnamespace::sdlcontext
 
     inline void sdl_clear()
     {
-        SDL_SetRenderDrawColor(sdl_renderer.renderer, 0, 0, 0, 255);
+        const auto color = core::clear_color_for_context(core::ContextType::SDL);
+        SDL_SetRenderDrawColor(
+            sdl_renderer.renderer,
+            static_cast<std::uint8_t>(color[0] * 255.0f),
+            static_cast<std::uint8_t>(color[1] * 255.0f),
+            static_cast<std::uint8_t>(color[2] * 255.0f),
+            static_cast<std::uint8_t>(color[3] * 255.0f));
         SDL_RenderClear(sdl_renderer.renderer);
     }
 
