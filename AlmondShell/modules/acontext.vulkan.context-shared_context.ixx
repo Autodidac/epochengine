@@ -1,21 +1,10 @@
 // ============================================================================
-// modules/acontext.vulkan.context-context.ixx
-// Partition: acontext.vulkan.context:context
+// modules/acontext.vulkan.context-shared_context.ixx
+// Partition: acontext.vulkan.context:shared_context
 // Shared types + Application declaration (Vulkan/GLM live here).
 // ============================================================================
 
 module;
-
-// Keep this in the global module fragment so it doesn't leak macros into importers.
-//#ifndef _CRT_SECURE_NO_WARNINGS
-//#   define _CRT_SECURE_NO_WARNINGS
-//#endif
-//
-//#if defined(_WIN32)
-//#   ifndef VK_USE_PLATFORM_WIN32_KHR
-//#       define VK_USE_PLATFORM_WIN32_KHR
-//#   endif
-//#endif
 
 #include <include/acontext.vulkan.hpp>
 
@@ -25,7 +14,6 @@ module;
 #   endif
 #   include <GLFW/glfw3.h>
 #endif
-
 
 #ifndef GLM_ENABLE_EXPERIMENTAL
 #   define GLM_ENABLE_EXPERIMENTAL
@@ -160,7 +148,6 @@ namespace almondnamespace::vulkancontext
 
         std::uint32_t indexCount = 0; // set when you create/fill the index buffer
 
-
     private:
         std::weak_ptr<almondnamespace::core::Context> context;
 
@@ -282,14 +269,16 @@ namespace almondnamespace::vulkancontext
 
         void createFramebuffers();
 
-        
         // Texture upload helpers
         void createTextureImage();
-        void transitionImageLayout(vk::Image image, vk::Format format, vk::ImageLayout oldLayout, vk::ImageLayout newLayout);
-        void copyBufferToImage(vk::Buffer buffer, vk::Image image, std::uint32_t width, std::uint32_t height);
+        void transitionImageLayout(vk::Image image, vk::Format format,
+            vk::ImageLayout oldLayout, vk::ImageLayout newLayout);
+        void copyBufferToImage(vk::Buffer buffer, vk::Image image,
+            std::uint32_t width, std::uint32_t height);
         void createTextureImageView();
         void createTextureSampler();
-// Buffer helpers
+
+        // Buffer helpers
         std::uint32_t findMemoryType(std::uint32_t typeFilter, vk::MemoryPropertyFlags properties);
 
         vk::UniqueCommandBuffer beginSingleTimeCommands();
@@ -299,7 +288,8 @@ namespace almondnamespace::vulkancontext
 
         // Uniforms
         void createUniformBuffers();
-        void updateUniformBuffer(std::uint32_t currentImage, const almondnamespace::vulkancamera::State& camera);
+        void updateUniformBuffer(std::uint32_t currentImage,
+            const almondnamespace::vulkancamera::State& camera);
 
         // Descriptors
         void createDescriptorPool();
@@ -344,18 +334,7 @@ namespace almondnamespace::vulkancontext
     export std::span<const Application::Vertex> cube_vertices() noexcept;
     export std::span<const std::uint16_t>       cube_indices()  noexcept;
 
-    // Exported accessor used by :api to obtain the singleton app without defining it there.
+    // Exported accessor used by :api to obtain the singleton app.
+    // DECLARATION ONLY. Definition must live in exactly one TU/partition (use :runtime).
     export Application& vulkan_app();
-}
-
-// -----------------------------------------------------------------------------
-// Definitions that are safe to live here (no big data tables).
-// -----------------------------------------------------------------------------
-namespace almondnamespace::vulkancontext
-{
-    export Application& vulkan_app()
-    {
-        static Application app{};
-        return app;
-    }
 }

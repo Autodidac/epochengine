@@ -16,13 +16,15 @@ import :shared_context;
 
 namespace almondnamespace::vulkancontext
 {
-    export Application& vulkan_app()
+    // SINGLE definition lives here.
+    // (Declaration is exported from :shared_context.)
+    Application& vulkan_app()
     {
         static Application app{};
         return app;
     }
 
-    // ---- DEFINITIONS for what the linker complained about ----
+    // ---- Application method definitions ----
 
     void Application::initWindow()
     {
@@ -39,6 +41,8 @@ namespace almondnamespace::vulkancontext
     {
         // move your existing process body here
         // return running state
+        (void)ctx;
+        (void)queue;
         return true;
     }
 

@@ -118,6 +118,12 @@
     <Filter Include="Module Files\ixx\core\context\backends\vulkan\camera">
       <UniqueIdentifier>{8faac34e-1fd3-4b9e-bb4c-a6317542b492}</UniqueIdentifier>
     </Filter>
+    <Filter Include="Module Files\ixx\core\context\backends\vulkan\contextcore">
+      <UniqueIdentifier>{ba939402-dcdc-4b19-9edc-f96cd1573700}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Module Files\ixx\core\context\backends\vulkan\contextcore\partitions">
+      <UniqueIdentifier>{e35079dd-c82f-4d0b-a6bf-054d3aeeb548}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="$(MSBuildThisFileDirectory)src\pch.h">
@@ -164,9 +170,6 @@
     </ResourceCompile>
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="$(MSBuildThisFileDirectory)modules\aengine.diagnostics.ixx">
-      <Filter>Module Files\ixx\core</Filter>
-    </ClCompile>
     <ClCompile Include="$(MSBuildThisFileDirectory)modules\aengine.engine_components.ixx">
       <Filter>Module Files\ixx\core</Filter>
     </ClCompile>
@@ -314,15 +317,6 @@
     <ClCompile Include="$(MSBuildThisFileDirectory)modules\acontext.opengl.quad.ixx">
       <Filter>Module Files\ixx\core\context\backends\opengl</Filter>
     </ClCompile>
-    <ClCompile Include="$(MSBuildThisFileDirectory)modules\acontext.vulkan.context-swapchain.ixx">
-      <Filter>Module Files\ixx\core\context\backends\vulkan</Filter>
-    </ClCompile>
-    <ClCompile Include="$(MSBuildThisFileDirectory)modules\acontext.vulkan.context-shader_pipeline.ixx">
-      <Filter>Module Files\ixx\core\context\backends\vulkan</Filter>
-    </ClCompile>
-    <ClCompile Include="$(MSBuildThisFileDirectory)modules\acontext.vulkan.context-renderer.ixx">
-      <Filter>Module Files\ixx\core\context\backends\vulkan</Filter>
-    </ClCompile>
     <ClCompile Include="$(MSBuildThisFileDirectory)modules\aengine.input.ixx">
       <Filter>Module Files\ixx\core\input</Filter>
     </ClCompile>
@@ -413,9 +407,6 @@
     <ClCompile Include="$(MSBuildThisFileDirectory)modules\aframework.ixx">
       <Filter>Module Files\ixx\core\platform</Filter>
     </ClCompile>
-    <ClCompile Include="$(MSBuildThisFileDirectory)modules\almondshell.ixx">
-      <Filter>Module Files\ixx</Filter>
-    </ClCompile>
     <ClCompile Include="$(MSBuildThisFileDirectory)modules\aengine.platform.ixx">
       <Filter>Module Files\ixx\core\platform</Filter>
     </ClCompile>
@@ -503,27 +494,6 @@
     <ClCompile Include="$(MSBuildThisFileDirectory)modules\aengine.core.context.ixx">
       <Filter>Module Files\ixx\core\context</Filter>
     </ClCompile>
-    <ClCompile Include="$(MSBuildThisFileDirectory)modules\acontext.vulkan.context-descriptor.ixx">
-      <Filter>Module Files\ixx\core\context\backends\vulkan</Filter>
-    </ClCompile>
-    <ClCompile Include="$(MSBuildThisFileDirectory)modules\acontext.vulkan.context-window.ixx">
-      <Filter>Module Files\ixx\core\context\backends\vulkan</Filter>
-    </ClCompile>
-    <ClCompile Include="$(MSBuildThisFileDirectory)modules\acontext.vulkan.context-memory.ixx">
-      <Filter>Module Files\ixx\core\context\backends\vulkan</Filter>
-    </ClCompile>
-    <ClCompile Include="$(MSBuildThisFileDirectory)modules\acontext.vulkan.context-instance.ixx">
-      <Filter>Module Files\ixx\core\context\backends\vulkan</Filter>
-    </ClCompile>
-    <ClCompile Include="$(MSBuildThisFileDirectory)modules\acontext.vulkan.context-device.ixx">
-      <Filter>Module Files\ixx\core\context\backends\vulkan</Filter>
-    </ClCompile>
-    <ClCompile Include="$(MSBuildThisFileDirectory)modules\acontext.vulkan.context-depth.ixx">
-      <Filter>Module Files\ixx\core\context\backends\vulkan</Filter>
-    </ClCompile>
-    <ClCompile Include="$(MSBuildThisFileDirectory)modules\acontext.vulkan.context-commands.ixx">
-      <Filter>Module Files\ixx\core\context\backends\vulkan</Filter>
-    </ClCompile>
     <ClCompile Include="$(MSBuildThisFileDirectory)modules\acontext.vulkan.platform.device.ixx">
       <Filter>Module Files\ixx\core\context\backends\vulkan\crossplatform</Filter>
     </ClCompile>
@@ -584,23 +554,11 @@
     <ClCompile Include="$(MSBuildThisFileDirectory)modules\aeditor.ixx">
       <Filter>Module Files\ixx\gui</Filter>
     </ClCompile>
-    <ClCompile Include="$(MSBuildThisFileDirectory)modules\acontext.vulkan.context.ixx">
-      <Filter>Module Files\ixx\core\context\backends\vulkan</Filter>
-    </ClCompile>
     <ClCompile Include="$(MSBuildThisFileDirectory)modules\acontext.vulkan.quad.ixx">
       <Filter>Module Files\ixx\core\context\backends\vulkan\geometry</Filter>
     </ClCompile>
     <ClCompile Include="$(MSBuildThisFileDirectory)modules\acontext.vulkan.triangle.ixx">
       <Filter>Module Files\ixx\core\context\backends\vulkan\geometry</Filter>
-    </ClCompile>
-    <ClCompile Include="$(MSBuildThisFileDirectory)modules\acontext.vulkan.context-texture.ixx">
-      <Filter>Module Files\ixx\core\context\backends\vulkan</Filter>
-    </ClCompile>
-    <ClCompile Include="$(MSBuildThisFileDirectory)modules\acontext.vulkan.context-api.ixx">
-      <Filter>Module Files\ixx\core\context\backends\vulkan</Filter>
-    </ClCompile>
-    <ClCompile Include="$(MSBuildThisFileDirectory)modules\acontext.vulkan.context-shared_context.ixx">
-      <Filter>Module Files\ixx\core\context\backends\vulkan</Filter>
     </ClCompile>
     <ClCompile Include="$(MSBuildThisFileDirectory)modules\acontext.vulkan.meshcube.ixx">
       <Filter>Module Files\ixx\core\context\backends\vulkan\geometry</Filter>
@@ -608,11 +566,59 @@
     <ClCompile Include="$(MSBuildThisFileDirectory)modules\acontext.vulkan.camera.ixx">
       <Filter>Module Files\ixx\core\context\backends\vulkan\camera</Filter>
     </ClCompile>
+    <ClCompile Include="$(MSBuildThisFileDirectory)modules\acontext.vulkan.context.ixx">
+      <Filter>Module Files\ixx\core\context\backends\vulkan\contextcore</Filter>
+    </ClCompile>
     <ClCompile Include="$(MSBuildThisFileDirectory)modules\acontext.vulkan.context-api_unit.ixx">
-      <Filter>Module Files\ixx\core\context\backends\vulkan</Filter>
+      <Filter>Module Files\ixx\core\context\backends\vulkan\contextcore</Filter>
+    </ClCompile>
+    <ClCompile Include="$(MSBuildThisFileDirectory)modules\acontext.vulkan.context-api.ixx">
+      <Filter>Module Files\ixx\core\context\backends\vulkan\contextcore</Filter>
     </ClCompile>
     <ClCompile Include="$(MSBuildThisFileDirectory)modules\acontext.vulkan.context-runtime.ixx">
-      <Filter>Module Files\ixx\core\context\backends\vulkan</Filter>
+      <Filter>Module Files\ixx\core\context\backends\vulkan\contextcore</Filter>
+    </ClCompile>
+    <ClCompile Include="$(MSBuildThisFileDirectory)modules\acontext.vulkan.context-shared_context.ixx">
+      <Filter>Module Files\ixx\core\context\backends\vulkan\contextcore</Filter>
+    </ClCompile>
+    <ClCompile Include="$(MSBuildThisFileDirectory)modules\acontext.vulkan.context-commands.ixx">
+      <Filter>Module Files\ixx\core\context\backends\vulkan\contextcore\partitions</Filter>
+    </ClCompile>
+    <ClCompile Include="$(MSBuildThisFileDirectory)modules\acontext.vulkan.context-depth.ixx">
+      <Filter>Module Files\ixx\core\context\backends\vulkan\contextcore\partitions</Filter>
+    </ClCompile>
+    <ClCompile Include="$(MSBuildThisFileDirectory)modules\acontext.vulkan.context-descriptor.ixx">
+      <Filter>Module Files\ixx\core\context\backends\vulkan\contextcore\partitions</Filter>
+    </ClCompile>
+    <ClCompile Include="$(MSBuildThisFileDirectory)modules\acontext.vulkan.context-device.ixx">
+      <Filter>Module Files\ixx\core\context\backends\vulkan\contextcore\partitions</Filter>
+    </ClCompile>
+    <ClCompile Include="$(MSBuildThisFileDirectory)modules\acontext.vulkan.context-instance.ixx">
+      <Filter>Module Files\ixx\core\context\backends\vulkan\contextcore\partitions</Filter>
+    </ClCompile>
+    <ClCompile Include="$(MSBuildThisFileDirectory)modules\acontext.vulkan.context-memory.ixx">
+      <Filter>Module Files\ixx\core\context\backends\vulkan\contextcore\partitions</Filter>
+    </ClCompile>
+    <ClCompile Include="$(MSBuildThisFileDirectory)modules\acontext.vulkan.context-renderer.ixx">
+      <Filter>Module Files\ixx\core\context\backends\vulkan\contextcore\partitions</Filter>
+    </ClCompile>
+    <ClCompile Include="$(MSBuildThisFileDirectory)modules\acontext.vulkan.context-shader_pipeline.ixx">
+      <Filter>Module Files\ixx\core\context\backends\vulkan\contextcore\partitions</Filter>
+    </ClCompile>
+    <ClCompile Include="$(MSBuildThisFileDirectory)modules\acontext.vulkan.context-swapchain.ixx">
+      <Filter>Module Files\ixx\core\context\backends\vulkan\contextcore\partitions</Filter>
+    </ClCompile>
+    <ClCompile Include="$(MSBuildThisFileDirectory)modules\acontext.vulkan.context-texture.ixx">
+      <Filter>Module Files\ixx\core\context\backends\vulkan\contextcore\partitions</Filter>
+    </ClCompile>
+    <ClCompile Include="$(MSBuildThisFileDirectory)modules\acontext.vulkan.context-window.ixx">
+      <Filter>Module Files\ixx\core\context\backends\vulkan\contextcore\partitions</Filter>
+    </ClCompile>
+    <ClCompile Include="$(MSBuildThisFileDirectory)modules\aengine.diagnostics.ixx">
+      <Filter>Module Files\ixx\core</Filter>
+    </ClCompile>
+    <ClCompile Include="$(MSBuildThisFileDirectory)modules\almondshell.ixx">
+      <Filter>Module Files\ixx\core</Filter>
     </ClCompile>
   </ItemGroup>
 </Project>
