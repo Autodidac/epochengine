@@ -2,77 +2,88 @@ module;
 
 #include <glm/glm.hpp>
 #include <glm/gtc/matrix_transform.hpp>
-#include <algorithm>
+#include <cmath>
 
 export module acontext.vulkan.camera;
 
-
-
-namespace Camera {
+// Export what importers must see.
+// Match what acontext.vulkan.context.ixx is referencing: almondnamespace::vulkancamera::...
+export namespace almondnamespace::vulkancamera {
 
     enum class Direction { Forward, Backward, Left, Right };
 
-    struct State {
-        glm::vec3 Position;
-        glm::vec3 Front;
-        glm::vec3 Up;
-        glm::vec3 Right;
-        glm::vec3 WorldUp;
-        float Yaw;
-        float Pitch;
-        float MovementSpeed;
-        float MouseSensitivity;
+    export struct State
+    {
+        glm::vec3 Position{};
+        glm::vec3 Front{ 0.0f, 0.0f, -1.0f };
+        glm::vec3 Up{ 0.0f, 1.0f, 0.0f };
+        glm::vec3 Right{ 1.0f, 0.0f, 0.0f };
+        glm::vec3 WorldUp{ 0.0f, 1.0f, 0.0f };
+        float Yaw{ -90.0f };
+        float Pitch{ 0.0f };
+        float MovementSpeed{ 2.5f };
+        float MouseSensitivity{ 0.1f };
     };
 
-    inline State create(const glm::vec3& position, const glm::vec3& up, float yaw, float pitch) {
-        State state{};
-        state.Position = position;
-        state.WorldUp = up;
-        state.Yaw = yaw;
-        state.Pitch = pitch;
-        state.MovementSpeed = 2.5f;
-        state.MouseSensitivity = 0.1f;
-        // Calculate initial Front vector
+    export State create(const glm::vec3& position, const glm::vec3& up, float yaw, float pitch)
+    {
+        State s{};
+        s.Position = position;
+        s.WorldUp = up;
+        s.Yaw = yaw;
+        s.Pitch = pitch;
+
         glm::vec3 front;
-        front.x = cos(glm::radians(yaw)) * cos(glm::radians(pitch));
-        front.y = sin(glm::radians(pitch));
-        front.z = sin(glm::radians(yaw)) * cos(glm::radians(pitch));
-        state.Front = glm::normalize(front);
-        // Calculate Right and Up vectors
-        state.Right = glm::normalize(glm::cross(state.Front, state.WorldUp));
-        state.Up = glm::normalize(glm::cross(state.Right, state.Front));
-        return state;
+        front.x = std::cos(glm::radians(s.Yaw)) * std::cos(glm::radians(s.Pitch));
+        front.y = std::sin(glm::radians(s.Pitch));
+        front.z = std::sin(glm::radians(s.Yaw)) * std::cos(glm::radians(s.Pitch));
+
+        s.Front = glm::normalize(front);
+        s.Right = glm::normalize(glm::cross(s.Front, s.WorldUp));
+        s.Up = glm::normalize(glm::cross(s.Right, s.Front));
+        return s;
     }
 
-    inline void processKeyboard(State& state, Direction direction, float deltaTime) {
-        float velocity = state.MovementSpeed * deltaTime;
-        if (direction == Direction::Forward)  state.Position += state.Front * velocity;
-        if (direction == Direction::Backward) state.Position -= state.Front * velocity;
-        if (direction == Direction::Left)     state.Position -= state.Right * velocity;
-        if (direction == Direction::Right)    state.Position += state.Right * velocity;
-    }
+    export void processKeyboard(State& s, Direction direction, float deltaTime)
+    {
+        const float velocity = s.MovementSpeed * deltaTime;
 
-    inline void processMouse(State& state, float xoffset, float yoffset, bool constrainPitch = true) {
-        xoffset *= state.MouseSensitivity;
-        yoffset *= state.MouseSensitivity;
-        state.Yaw += xoffset;
-        state.Pitch += yoffset;
-        if (constrainPitch) {
-            if (state.Pitch > 89.0f)  state.Pitch = 89.0f;
-            if (state.Pitch < -89.0f) state.Pitch = -89.0f;
+        switch (direction)
+        {
+        case Direction::Forward:  s.Position += s.Front * velocity; break;
+        case Direction::Backward: s.Position -= s.Front * velocity; break;
+        case Direction::Left:     s.Position -= s.Right * velocity; break;
+        case Direction::Right:    s.Position += s.Right * velocity; break;
         }
-        // Update Front, Right and Up vectors using the updated Euler angles
+    }
+
+    export void processMouse(State& s, float xoffset, float yoffset, bool constrainPitch = true)
+    {
+        xoffset *= s.MouseSensitivity;
+        yoffset *= s.MouseSensitivity;
+
+        s.Yaw += xoffset;
+        s.Pitch += yoffset;
+
+        if (constrainPitch)
+        {
+            if (s.Pitch > 89.0f) s.Pitch = 89.0f;
+            if (s.Pitch < -89.0f) s.Pitch = -89.0f;
+        }
+
         glm::vec3 front;
-        front.x = cos(glm::radians(state.Yaw)) * cos(glm::radians(state.Pitch));
-        front.y = sin(glm::radians(state.Pitch));
-        front.z = sin(glm::radians(state.Yaw)) * cos(glm::radians(state.Pitch));
-        state.Front = glm::normalize(front);
-        state.Right = glm::normalize(glm::cross(state.Front, state.WorldUp));
-        state.Up = glm::normalize(glm::cross(state.Right, state.Front));
+        front.x = std::cos(glm::radians(s.Yaw)) * std::cos(glm::radians(s.Pitch));
+        front.y = std::sin(glm::radians(s.Pitch));
+        front.z = std::sin(glm::radians(s.Yaw)) * std::cos(glm::radians(s.Pitch));
+
+        s.Front = glm::normalize(front);
+        s.Right = glm::normalize(glm::cross(s.Front, s.WorldUp));
+        s.Up = glm::normalize(glm::cross(s.Right, s.Front));
     }
 
-    inline glm::mat4 getViewMatrix(const State& state) {
-        return glm::lookAt(state.Position, state.Position + state.Front, state.Up);
+    export glm::mat4 getViewMatrix(const State& s)
+    {
+        return glm::lookAt(s.Position, s.Position + s.Front, s.Up);
     }
 
-} // namespace Camera
+} // namespace almondnamespace::vulkancamera

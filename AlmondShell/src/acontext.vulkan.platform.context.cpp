@@ -1,635 +1,488 @@
-﻿// acontext.vulkan.platform.context.cpp
-
-// Define STB_IMAGE_IMPLEMENTATION in only one translation unit. Static STB implementation
-#define STB_IMAGE_IMPLEMENTATION
-
-#include <iostream>
-#include <stdexcept>
-#include <chrono>
-#include <algorithm>
-//#include "../include/vulkan_engine.hpp"
-
-// Define the dispatch loader storage only here.
-#define VULKAN_HPP_DEFAULT_DISPATCH_LOADER_DYNAMIC_STORAGE
-
-//// Include subsystem implementations.
-//#include "../include/vulkan_window.hpp"
-//#include "../include/vulkan_instance.hpp"
-//#include "../include/vulkan_device.hpp"
-//#include "../include/vulkan_swapchain.hpp"
-//#include "../include/vulkan_pipeline.hpp"
-//#include "../include/vulkan_depth.hpp"
-//#include "../include/vulkan_memory.hpp"
-//#include "../include/vulkan_texture.hpp"
-//#include "../include/vulkan_descriptor.hpp"
-//#include "../include/vulkan_commands.hpp"
-
-import acontext.vulkan.context;
-
-import acontext.vulkan.window;
-import acontext.vulkan.instance;
-import acontext.vulkan.device;
-import acontext.vulkan.swapchain;
-import acontext.vulkan.shader.pipeline;
-import acontext.vulkan.depth;
-import acontext.vulkan.memory;
-import acontext.vulkan.texture;
-import acontext.vulkan.descriptors;
-import acontext.vulkan.commands;
-import aatlas.manager;
-import aatlas.texture;
-import aengine.context.commandqueue;
-import aengine.core.context;
-import aengine.input;
-
-
-namespace VulkanCube {
-
-    void Application::run() {
-        almondnamespace::core::CommandQueue queue;
-        initWindow();
-        initVulkan();
-
-        std::cout << "Vertex struct size: " << sizeof(Vertex) << std::endl;
-        std::cout << "Position offset: " << offsetof(Vertex, pos) << std::endl;
-        std::cout << "Normal offset: " << offsetof(Vertex, normal) << std::endl;
-        std::cout << "TexCoord offset: " << offsetof(Vertex, texCoord) << std::endl;
-
-        while (process(nullptr, queue)) {}
-        cleanup();
-    }
-
-    // --------------------------------------------------------------------------
-    // initVulkan() calls all necessary initialization functions.
-    // --------------------------------------------------------------------------
-    void Application::initVulkan() {
-        std::cout << "initVulkan() called" << std::endl;
-        createInstance();         // Defined in engine.cpp (see below)
-        createSurface();
-
-        if (enableValidationLayers) {
-            // Optionally set up the debug messenger here.
-            // setupDebugMessenger();
-        }
-
-        physicalDevice = pickPhysicalDevice();
-        if (!physicalDevice) {
-            throw std::runtime_error("Failed to pick a physical device!");
-        }
-
-        queueFamilyIndices = findQueueFamilies(physicalDevice);
-        createLogicalDevice();
-        createSwapChain();
-        createImageViews();
-        createRenderPass();
-        createDescriptorSetLayout();
-        createGraphicsPipeline();
-        createCommandPool();
-        createDepthResources();
-        createFramebuffers();
-        createTextureImage();
-        createTextureImageView();
-        createTextureSampler();
-        createVertexBuffer();
-
-        //  std::cout << "Indices count: " << indices.size() << std::endl;
-
-        createIndexBuffer();
-        createUniformBuffers();
-        createDescriptorPool();
-        createDescriptorSets();
-        createCommandBuffers();
-        createSyncObjects(); // Now sync objects (semaphores, fences) are created.
-    }
-
-    // --------------------------------------------------------------------------
-    // initWindow() wires up the native window handle (engine) or GLFW (standalone).
-    // --------------------------------------------------------------------------
-    void Application::initWindow() {
-#if defined(ALMOND_VULKAN_STANDALONE)
-        if (!glfwInit()) {
-            throw std::runtime_error("Failed to initialize GLFW");
-        }
-        glfwWindowHint(GLFW_CLIENT_API, GLFW_NO_API);
-        glfwWindowHint(GLFW_RESIZABLE, GLFW_TRUE);
-        window = glfwCreateWindow(framebufferWidth, framebufferHeight, "Vulkan Cube", nullptr, nullptr);
-        if (!window) {
-            throw std::runtime_error("Failed to create GLFW window");
-        }
-        glfwSetWindowUserPointer(window, this);
-        glfwSetFramebufferSizeCallback(window, framebufferResizeCallback);
-        glfwSetCursorPosCallback(window, mouseCallback);
-
-        // Lock the mouse for camera control
-        glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_DISABLED);
-        isStandalone = true;
-#else
-        window = nullptr;
-        if (!nativeWindowHandle) {
-            throw std::runtime_error("Vulkan requires a native window handle.");
-        }
-        isStandalone = false;
-#endif
-
-        // Initialize global Vulkan function pointers.
-        VULKAN_HPP_DEFAULT_DISPATCHER.init();
-        std::cout << "Window configured" << std::endl;
-    }
-
-    // --------------------------------------------------------------------------
-    // Callback: marks framebufferResized true when the window is resized.
-    // --------------------------------------------------------------------------
-    void Application::framebufferResizeCallback(GLFWwindow* window, int width, int height) {
-#if defined(ALMOND_VULKAN_STANDALONE)
-        auto* app = reinterpret_cast<Application*>(glfwGetWindowUserPointer(window));
-        if (app) {
-            int fbWidth = width;
-            int fbHeight = height;
-            if (fbWidth == 0 || fbHeight == 0) {
-                glfwGetFramebufferSize(window, &fbWidth, &fbHeight);
-            }
-            app->set_framebuffer_size(fbWidth, fbHeight);
-        }
-#else
-        (void)window;
-        (void)width;
-        (void)height;
-#endif
-    }
-
-    // --------------------------------------------------------------------------
-    // process() renders a single frame when the engine calls it.
-    // --------------------------------------------------------------------------
-    bool Application::process(std::shared_ptr<almondnamespace::core::Context> ctx,
-        almondnamespace::core::CommandQueue& queue) {
-        if (!device) {
-            return false;
-        }
-
-        static auto lastTime = std::chrono::high_resolution_clock::now();
-        auto currentTime = std::chrono::high_resolution_clock::now();
-        float deltaTime = std::chrono::duration<float>(currentTime - lastTime).count();
-        lastTime = currentTime;
-
-#if defined(ALMOND_VULKAN_STANDALONE)
-        if (window) {
-            glfwPollEvents();
-            if (glfwWindowShouldClose(window)) {
-                return false;
-            }
-        }
-#else
-        if (ctx && ctx->get_mouse_position) {
-            int mouseX = 0;
-            int mouseY = 0;
-            ctx->get_mouse_position(mouseX, mouseY);
-            processMouseInput(mouseX, mouseY);
-        }
-#endif
-
-        updateCamera(deltaTime);
-
-        queue.drain();
-        drawFrame();
-        return true;
-    }
-
-    void Application::set_context(std::shared_ptr<almondnamespace::core::Context> ctx, void* nativeWindow) {
-        context = std::move(ctx);
-        nativeWindowHandle = nativeWindow;
-    }
-
-    void Application::set_framebuffer_size(int width, int height) {
-        framebufferWidth = (std::max)(1, width);
-        framebufferHeight = (std::max)(1, height);
-        framebufferResized = true;
-    }
-
-    int Application::get_framebuffer_width() const {
-        return (std::max)(1, framebufferWidth);
-    }
-
-    int Application::get_framebuffer_height() const {
-        return (std::max)(1, framebufferHeight);
-    }
-
-    // --------------------------------------------------------------------------
-    // cleanup() releases all Vulkan and GLFW resources.
-    // --------------------------------------------------------------------------
-    void Application::cleanup() {
-        if (device) {
-            std::cout << "Waiting for device to finish all GPU work..." << std::endl;
-            (void)device->waitIdle();
-        }
-
-        /*** 🔴 STEP 1: CLEANUP FRAME RESOURCES FIRST 🔴 ***/
-        std::cout << "Destroying frame synchronization objects..." << std::endl;
-        imageAvailableSemaphores.clear();
-        renderFinishedSemaphores.clear();
-        inFlightFences.clear();
-
-        /*** 🔴 STEP 2: FREE COMMAND BUFFERS BEFORE DESTROYING COMMAND POOL 🔴 ***/
-        std::cout << "Freeing command buffers..." << std::endl;
-        if (!commandBuffers.empty() && commandPool) {
-            device->resetCommandPool(*commandPool);
-            commandBuffers.clear();
-        }
-
-        /*** 🔴 STEP 3: DESTROY SWAP CHAIN BEFORE DEVICE RESOURCES 🔴 ***/
-        std::cout << "Destroying swap chain..." << std::endl;
-        cleanupSwapChain();  // ✅ Swap chain must be destroyed BEFORE the device
-
-        /*** 🔴 STEP 4: CLEANUP DEVICE RESOURCES 🔴 ***/
-        std::cout << "Destroying framebuffers..." << std::endl;
-        framebuffers.clear();
-
-        std::cout << "Destroying descriptor pool..." << std::endl;
-        descriptorPool.reset();
-
-        std::cout << "Destroying uniform buffers..." << std::endl;
-        uniformBuffers.clear();
-        uniformBuffersMemory.clear();
-        uniformBuffersMapped.clear();
-
-        std::cout << "Destroying index and vertex buffers..." << std::endl;
-        indexBuffer.reset();
-        indexBufferMemory.reset();
-        vertexBuffer.reset();
-        vertexBufferMemory.reset();
-
-        std::cout << "Destroying textures..." << std::endl;
-        textureSampler.reset();
-        textureImageView.reset();
-        textureImage.reset();
-        textureImageMemory.reset();
-
-        /*** 🔴 STEP 5: CLEANUP PIPELINE & DEPTH BUFFER 🔴 ***/
-        std::cout << "Destroying pipeline and render pass..." << std::endl;
-        pipelineLayout.reset();
-        graphicsPipeline.reset();
-        descriptorSetLayout.reset();
-        renderPass.reset();
-
-        std::cout << "Destroying depth buffer..." << std::endl;
-        depthImage.reset();
-        depthImageMemory.reset();
-        depthImageView.reset();
-
-        /*** 🔴 STEP 6: DESTROY COMMAND POOL LAST 🔴 ***/
-        std::cout << "Destroying command pool..." << std::endl;
-        commandPool.reset();
-
-        /*** 🔴 STEP 7: DESTROY VULKAN DEVICE 🔴 ***/
-        std::cout << "Destroying logical device..." << std::endl;
-        if (device) {
-            device.reset();
-        }
-        else {
-            std::cerr << "Error: Device is already NULL before reset!" << std::endl;
-        }
-
-        /*** 🔴 STEP 8: DESTROY SURFACE BEFORE INSTANCE 🔴 ***/
-        std::cout << "Destroying Vulkan surface..." << std::endl;
-        if (instance && surface) {
-            instance->destroySurfaceKHR(*surface);
-            surface.reset();
-        }
-
-        /*** 🔴 STEP 9: DESTROY DEBUG MESSENGER BEFORE INSTANCE 🔴 ***/
-        if (enableValidationLayers && debugMessenger) {
-            std::cout << "Destroying Vulkan Debug Messenger..." << std::endl;
-            instance->destroyDebugUtilsMessengerEXT(debugMessenger, nullptr);
-            debugMessenger = nullptr;
-        }
-
-        /*** 🔴 STEP 10: DESTROY VULKAN INSTANCE LAST 🔴 ***/
-        std::cout << "Destroying Vulkan instance..." << std::endl;
-        if (instance) {
-            instance.reset();
-        }
-
-        /*** 🔴 STEP 11: CLEANUP GLFW (standalone only) 🔴 ***/
-#if defined(ALMOND_VULKAN_STANDALONE)
-        std::cout << "Destroying GLFW window..." << std::endl;
-        if (window) {
-            glfwDestroyWindow(window);
-            window = nullptr;
-        }
-
-        std::cout << "Terminating GLFW..." << std::endl;
-        glfwTerminate();
-#endif
-
-        std::cout << "Cleanup complete! Vulkan shutdown successful." << std::endl;
-    }
-
-
-    // --------------------------------------------------------------------------
-    // createVertexBuffer() creates the vertex buffer, allocates memory, maps and
-    // copies the vertex data.
-    // --------------------------------------------------------------------------
-    void Application::createVertexBuffer() {
-        vk::DeviceSize bufferSize = sizeof(vertices[0]) * vertices.size();
-
-        // ✅ 1️⃣ Create a staging buffer in host-visible memory
-        auto stagingBuffer = createBuffer(
-            bufferSize,
-            vk::BufferUsageFlagBits::eTransferSrc,  // Staging buffer is used as transfer source
-            vk::MemoryPropertyFlagBits::eHostVisible | vk::MemoryPropertyFlagBits::eHostCoherent
-        );
-
-        // ✅ 2️⃣ Map memory, copy data, then unmap
-        void* mappedMemory;
-        (void)device->mapMemory(*stagingBuffer.second, 0, bufferSize, {}, &mappedMemory);
-        memcpy(mappedMemory, vertices.data(), static_cast<size_t>(bufferSize));
-        device->unmapMemory(*stagingBuffer.second);
-
-        // ✅ 3️⃣ Create vertex buffer in fast `DEVICE_LOCAL` memory
-        auto vertexBufferPair = createBuffer(
-            bufferSize,
-            vk::BufferUsageFlagBits::eTransferDst | vk::BufferUsageFlagBits::eVertexBuffer,
-            vk::MemoryPropertyFlagBits::eDeviceLocal
-        );
-
-        // ✅ 4️⃣ Copy from staging buffer to device-local buffer
-        copyBuffer(*stagingBuffer.first, *vertexBufferPair.first, bufferSize);
-
-        // ✅ 5️⃣ Cleanup staging buffer
-        stagingBuffer.first.reset();
-        stagingBuffer.second.reset();
-
-        // ✅ 6️⃣ Assign vertex buffer
-        vertexBuffer = std::move(vertexBufferPair.first);
-        vertexBufferMemory = std::move(vertexBufferPair.second);
-
-        std::cout << "Vertex buffer successfully uploaded: " << vertices.size() << " vertices." << std::endl;
-    }
-
-
-    // --------------------------------------------------------------------------
-    // createIndexBuffer() creates an index buffer (similar to vertex buffer).
-    // --------------------------------------------------------------------------
-    inline void Application::createIndexBuffer() {
-
-#ifdef _DEBUG
-        std::cout << "===== Index Buffer Data =====" << std::endl;
-        for (size_t i = 0; i < indices.size(); i += 3) {
-            std::cout << "Triangle " << (i / 3) << ": "
-                << indices[i] << ", "
-                << indices[i + 1] << ", "
-                << indices[i + 2] << std::endl;
-        }
-        std::cout << "=============================" << std::endl;
-#endif
-
-        if (indices.empty()) {
-            throw std::runtime_error("Error: No index data available!");
-        }
-
-        vk::DeviceSize bufferSize = sizeof(indices[0]) * indices.size();
-
-        // 1️⃣ Create staging buffer (HOST_VISIBLE, HOST_COHERENT)
-        auto stagingBuffer = createBuffer(
-            bufferSize,
-            vk::BufferUsageFlagBits::eTransferSrc,
-            vk::MemoryPropertyFlagBits::eHostVisible | vk::MemoryPropertyFlagBits::eHostCoherent
-        );
-
-        // 2️⃣ Map memory, copy data, and unmap
-        auto mapResult = device->mapMemory(*stagingBuffer.second, 0, bufferSize);
-        if (mapResult.result != vk::Result::eSuccess) {
-            throw std::runtime_error("Failed to map staging buffer memory!");
-        }
-
-        memcpy(mapResult.value, indices.data(), static_cast<size_t>(bufferSize));
-        device->unmapMemory(*stagingBuffer.second);
-
-        // 3️⃣ Create index buffer (DEVICE_LOCAL)
-        auto idxBuffer = createBuffer(
-            bufferSize,
-            vk::BufferUsageFlagBits::eTransferDst | vk::BufferUsageFlagBits::eIndexBuffer,
-            vk::MemoryPropertyFlagBits::eDeviceLocal
-        );
-
-        if (!idxBuffer.first || !idxBuffer.second) {
-            throw std::runtime_error("Failed to create index buffer!");
-        }
-
-        // 4️⃣ Copy staging buffer → index buffer
-        copyBuffer(*stagingBuffer.first, *idxBuffer.first, bufferSize);
-
-        // 5️⃣ Cleanup staging buffer
-        stagingBuffer.first.reset();
-        stagingBuffer.second.reset();
-
-        // 6️⃣ Assign index buffer
-        indexBuffer = std::move(idxBuffer.first);
-        indexBufferMemory = std::move(idxBuffer.second);
-    }
-
-
-    // --------------------------------------------------------------------------
-    // updateUniformBuffer() updates the uniform buffer for the given swapchain image.
-    // Make sure its signature matches everywhere it's used.
-    // --------------------------------------------------------------------------
-    //void Application::updateUniformBuffer(uint32_t currentImage, const Camera::State& camera) {
-    //    static auto startTime = std::chrono::high_resolution_clock::now();
-    //    auto currentTime = std::chrono::high_resolution_clock::now();
-    //    float time = std::chrono::duration<float>(currentTime - startTime).count();
-
-    //    UniformBufferObject ubo{};
-    //    // Rotate model around the Z axis; note we pass an axis vector as third argument.
-    //    ubo.model = glm::rotate(glm::mat4(1.0f), cubeRotation * time, glm::vec3(0.0f, 0.0f, 1.0f));
-    //    ubo.view = Camera::getViewMatrix(camera);
-    //    // Set up perspective projection: fov, aspect, near, far.
-    //    ubo.proj = glm::perspective(glm::radians(45.0f),
-    //        swapChainExtent.width / static_cast<float>(swapChainExtent.height),
-    //        0.1f, 10.0f);
-    //    ubo.proj[1][1] *= -1; // Flip Y coordinate for Vulkan
-
-    //    memcpy(uniformBuffersMapped[currentImage], &ubo, sizeof(ubo));
-    //}
-
-    // --------------------------------------------------------------------------
-    // createBuffer() helper: creates a buffer and allocates memory for it.
-    // --------------------------------------------------------------------------
-    //std::pair<vk::UniqueBuffer, vk::UniqueDeviceMemory> Application::createBuffer(
-    //    vk::DeviceSize size,
-    //    vk::BufferUsageFlags usage,
-    //    vk::MemoryPropertyFlags properties)
-    //{
-    //    if (!device) {
-    //        throw std::runtime_error("Device not initialized!");
-    //    }
-    //    vk::BufferCreateInfo bufferInfo({}, size, usage, vk::SharingMode::eExclusive);
-    //    auto bufferResult = device->createBufferUnique(bufferInfo);
-    //    if (bufferResult.result != vk::Result::eSuccess) {
-    //        throw std::runtime_error("Failed to create buffer!");
-    //    }
-    //    vk::UniqueBuffer buffer = std::move(bufferResult.value);
-
-    //    vk::MemoryRequirements memRequirements = device->getBufferMemoryRequirements(*buffer);
-    //    uint32_t memoryTypeIndex = findMemoryType(memRequirements.memoryTypeBits, properties);
-    //    vk::MemoryAllocateInfo allocInfo(memRequirements.size, memoryTypeIndex);
-
-    //    auto memoryResult = device->allocateMemoryUnique(allocInfo);
-    //    if (memoryResult.result != vk::Result::eSuccess) {
-    //        throw std::runtime_error("Failed to allocate buffer memory!");
-    //    }
-    //    vk::UniqueDeviceMemory bufferMemory = std::move(memoryResult.value);
-    //    (void)device->bindBufferMemory(*buffer, *bufferMemory, 0);
-    //    return { std::move(buffer), std::move(bufferMemory) };
-    //}
-
-    //// --------------------------------------------------------------------------
-    //// findMemoryType() helper: returns a suitable memory type index.
-    //// --------------------------------------------------------------------------
-    //uint32_t Application::findMemoryType(uint32_t typeFilter, vk::MemoryPropertyFlags properties) {
-    //    vk::PhysicalDeviceMemoryProperties memProperties = physicalDevice.getMemoryProperties();
-    //    for (uint32_t i = 0; i < memProperties.memoryTypeCount; i++) {
-    //        if ((typeFilter & (1 << i)) &&
-    //            (memProperties.memoryTypes[i].propertyFlags & properties) == properties) {
-    //            return i;
-    //        }
-    //    }
-    //    throw std::runtime_error("Failed to find suitable memory type!");
-    //}
-
-    //// --------------------------------------------------------------------------
-    //// beginSingleTimeCommands() and endSingleTimeCommands() for short-lived command buffers.
-    //// --------------------------------------------------------------------------
-    //vk::UniqueCommandBuffer Application::beginSingleTimeCommands() {
-    //    vk::CommandBufferAllocateInfo allocInfo(*commandPool, vk::CommandBufferLevel::ePrimary, 1);
-    //    auto result = device->allocateCommandBuffersUnique(allocInfo);
-    //    if (result.value.empty()) {
-    //        throw std::runtime_error("Failed to allocate command buffer!");
-    //    }
-    //    vk::UniqueCommandBuffer commandBuffer = std::move(result.value[0]);
-    //    vk::CommandBufferBeginInfo beginInfo(vk::CommandBufferUsageFlagBits::eOneTimeSubmit);
-    //    (void)commandBuffer->begin(beginInfo);
-    //    return commandBuffer;
-    //}
-
-    //void Application::endSingleTimeCommands(vk::UniqueCommandBuffer& commandBuffer) {
-    //    (void)commandBuffer->end();
-    //    vk::SubmitInfo submitInfo(0, nullptr, nullptr, 1, &*commandBuffer);
-    //    (void)graphicsQueue.submit(submitInfo, nullptr);
-    //    (void)graphicsQueue.waitIdle();
-    //}
-
-    //// --------------------------------------------------------------------------
-    //// copyBuffer() copies data from srcBuffer to dstBuffer.
-    //// --------------------------------------------------------------------------
-    //void Application::copyBuffer(vk::Buffer srcBuffer, vk::Buffer dstBuffer, vk::DeviceSize size) {
-    //    vk::UniqueCommandBuffer commandBuffer = beginSingleTimeCommands();
-    //    vk::BufferCopy copyRegion(0, 0, size);
-    //    commandBuffer->copyBuffer(srcBuffer, dstBuffer, 1, &copyRegion);
-    //    endSingleTimeCommands(commandBuffer);
-    //}
-
-    // --------------------------------------------------------------------------
-    // Other functions such as createSurface(), createDepthResources(), createSwapChain(), etc.
-    // (They remain similar to your original implementation, with any minor fixes as needed.)
-    // --------------------------------------------------------------------------
-
-} // namespace VulkanCube
-
-namespace almondnamespace::vulkancontext
-{
-    namespace
-    {
-        VulkanCube::Application s_app{};
-    }
-
-    bool vulkan_initialize(
-        std::shared_ptr<core::Context> ctx,
-        void* parentWindowOpaque,
-        unsigned int w,
-        unsigned int h,
-        std::function<void(int, int)> onResize)
-    {
-        if (!ctx) {
-            throw std::runtime_error("[Vulkan] vulkan_initialize requires non-null Context");
-        }
-
-        void* nativeWindow = parentWindowOpaque;
-#if defined(_WIN32) && !defined(ALMOND_MAIN_HEADLESS)
-        if (ctx->windowData && ctx->windowData->hwnd)
-            nativeWindow = ctx->windowData->hwnd;
-        else if (ctx->get_hwnd())
-            nativeWindow = ctx->get_hwnd();
-#endif
-
-        s_app.set_framebuffer_size(static_cast<int>(w), static_cast<int>(h));
-        s_app.set_context(ctx, nativeWindow);
-
-        ctx->get_width = vulkan_get_width;
-        ctx->get_height = vulkan_get_height;
-        ctx->is_key_held = [](almondnamespace::input::Key key) { return almondnamespace::input::is_key_held(key); };
-        ctx->is_key_down = [](almondnamespace::input::Key key) { return almondnamespace::input::is_key_down(key); };
-        ctx->is_mouse_button_held = [](almondnamespace::input::MouseButton button) { return almondnamespace::input::is_mouse_button_held(button); };
-        ctx->is_mouse_button_down = [](almondnamespace::input::MouseButton button) { return almondnamespace::input::is_mouse_button_down(button); };
-
-        ctx->onResize = [resize = std::move(onResize)](int newWidth, int newHeight) mutable
-            {
-                s_app.set_framebuffer_size(newWidth, newHeight);
-                if (resize)
-                    resize(newWidth, newHeight);
-            };
-
-        s_app.initWindow();
-        s_app.initVulkan();
-
-        almondnamespace::atlasmanager::register_backend_uploader(
-            almondnamespace::core::ContextType::Vulkan,
-            [](const almondnamespace::TextureAtlas& atlas)
-            {
-                almondnamespace::vulkantextures::ensure_uploaded(atlas);
-            });
-        return true;
-    }
-
-    bool vulkan_process(std::shared_ptr<core::Context> ctx, core::CommandQueue& queue)
-    {
-        return s_app.process(ctx, queue);
-    }
-
-    void vulkan_present()
-    {
-    }
-
-    void vulkan_cleanup(std::shared_ptr<core::Context> ctx)
-    {
-        (void)ctx;
-        almondnamespace::atlasmanager::unregister_backend_uploader(
-            almondnamespace::core::ContextType::Vulkan);
-        almondnamespace::vulkantextures::clear_gpu_atlases();
-        s_app.cleanup();
-    }
-
-    int vulkan_get_width()
-    {
-        return s_app.get_framebuffer_width();
-    }
-
-    int vulkan_get_height()
-    {
-        return s_app.get_framebuffer_height();
-    }
-}
-
-//#define VULKAN_CUBE_MAIN
-#if defined(VULKAN_CUBE_MAIN)
-int main() {
-    VulkanCube::Application app;
-    try {
-        app.set_framebuffer_size(800, 600);
-        app.run();
-    }
-    catch (const std::exception& e) {
-        std::cerr << "Exception: " << e.what() << std::endl;
-        return EXIT_FAILURE;
-    }
-    return EXIT_SUCCESS;
-}
-#endif
+﻿//// acontext.vulkan.platform.context.cpp
+////
+//// This file MUST be a module implementation unit for `acontext.vulkan.context`
+//// because it defines `almondnamespace::vulkancontext::Application` methods.
+////
+//// It also MUST be the single TU that provides:
+////  - STB_IMAGE_IMPLEMENTATION
+////  - VULKAN_HPP_DEFAULT_DISPATCH_LOADER_DYNAMIC_STORAGE
+////
+//// If you keep vulkan.hpp in the module interface BMI, the safest way to guarantee
+//// the dispatch storage exists is to include vulkan.hpp textually here (with the
+//// same config macros) before `module acontext.vulkan.context;`.
+////
+//// -----------------------------------------------------------------------------
+////
+//// NOTE: No `import acontext.vulkan.context;` here. This file *is* that module.
+////
+//
+//module;
+//
+//// ---- One-TU-only implementations / storage ---------------------------------
+//#ifndef STB_IMAGE_IMPLEMENTATION
+//#   define STB_IMAGE_IMPLEMENTATION
+//#endif
+//
+//#ifndef VULKAN_HPP_DISPATCH_LOADER_DYNAMIC
+//#   define VULKAN_HPP_DISPATCH_LOADER_DYNAMIC 1
+//#endif
+//#ifndef VULKAN_HPP_NO_EXCEPTIONS
+//#   define VULKAN_HPP_NO_EXCEPTIONS
+//#endif
+//
+//// Define the dynamic dispatcher storage exactly once in the whole program:
+//#define VULKAN_HPP_DEFAULT_DISPATCH_LOADER_DYNAMIC_STORAGE
+//
+//#include <include/aengine.config.hpp>
+//
+//#if defined(_WIN32)
+//#   ifndef VK_USE_PLATFORM_WIN32_KHR
+//#       define VK_USE_PLATFORM_WIN32_KHR
+//#   endif
+//#endif
+//
+//#if defined(ALMOND_VULKAN_STANDALONE)
+//#   ifndef GLFW_INCLUDE_VULKAN
+//#       define GLFW_INCLUDE_VULKAN
+//#   endif
+//#   include <GLFW/glfw3.h>
+//#else
+//struct GLFWwindow;
+//#endif
+//
+//#include <vulkan/vulkan.hpp>
+//
+//// STB must be included after its implementation define:
+//#include "../src/stb/stb_image.h"
+//
+//#include <algorithm>
+//#include <chrono>
+//#include <cstddef>
+//#include <cstdint>
+//#include <cstring>
+//#include <functional>
+//#include <iostream>
+//#include <memory>
+//#include <optional>
+//#include <stdexcept>
+//#include <utility>
+//#include <vector>
+//
+//// -----------------------------------------------------------------------------
+//// Now enter the named module (implementation unit)
+//// -----------------------------------------------------------------------------
+//module acontext.vulkan.context;
+//
+//import acontext.vulkan.window;
+//import acontext.vulkan.instance;
+//import acontext.vulkan.device;
+//import acontext.vulkan.swapchain;
+//import acontext.vulkan.shader.pipeline;
+//import acontext.vulkan.depth;
+//import acontext.vulkan.memory;
+//import acontext.vulkan.texture;
+//import acontext.vulkan.descriptors;
+//import acontext.vulkan.commands;
+//
+//import aatlas.manager;
+//import aatlas.texture;
+//
+//import aengine.context.commandqueue;
+//import aengine.core.context;
+//import aengine.input;
+//
+//// -----------------------------------------------------------------------------
+//// Correct namespace for the exported type declared in the interface:
+//// export namespace almondnamespace::vulkancontext { export class Application ... }
+//// -----------------------------------------------------------------------------
+//namespace almondnamespace::vulkancontext
+//{
+//    void Application::run()
+//    {
+//        almondnamespace::core::CommandQueue queue;
+//        initWindow();
+//        initVulkan();
+//
+//#ifdef _DEBUG
+//        std::cout << "Vertex struct size: " << sizeof(Vertex) << "\n";
+//        std::cout << "Position offset: " << offsetof(Vertex, pos) << "\n";
+//        std::cout << "Normal offset: " << offsetof(Vertex, normal) << "\n";
+//        std::cout << "TexCoord offset: " << offsetof(Vertex, texCoord) << "\n";
+//#endif
+//
+//        while (process(nullptr, queue)) {}
+//        cleanup();
+//    }
+//
+//    void Application::initVulkan()
+//    {
+//#ifdef _DEBUG
+//        std::cout << "initVulkan() called\n";
+//#endif
+//        createInstance();
+//        createSurface();
+//
+//        if (enableValidationLayers)
+//        {
+//            // setupDebugMessenger(); // if you implement it
+//        }
+//
+//        physicalDevice = pickPhysicalDevice();
+//        if (!physicalDevice)
+//            throw std::runtime_error("Failed to pick a physical device!");
+//
+//        queueFamilyIndices = findQueueFamilies(physicalDevice);
+//
+//        createLogicalDevice();
+//        createSwapChain();
+//        createImageViews();
+//        createRenderPass();
+//        createDescriptorSetLayout();
+//        createGraphicsPipeline();
+//        createCommandPool();
+//        createDepthResources();
+//        createFramebuffers();
+//        createTextureImage();
+//        createTextureImageView();
+//        createTextureSampler();
+//        createVertexBuffer();
+//        createIndexBuffer();
+//        createUniformBuffers();
+//        createDescriptorPool();
+//        createDescriptorSets();
+//        createCommandBuffers();
+//        createSyncObjects();
+//    }
+//
+//    void Application::initWindow()
+//    {
+//#if defined(ALMOND_VULKAN_STANDALONE)
+//        if (!glfwInit())
+//            throw std::runtime_error("Failed to initialize GLFW");
+//
+//        glfwWindowHint(GLFW_CLIENT_API, GLFW_NO_API);
+//        glfwWindowHint(GLFW_RESIZABLE, GLFW_TRUE);
+//
+//        window = glfwCreateWindow(framebufferWidth, framebufferHeight, "Vulkan Cube", nullptr, nullptr);
+//        if (!window)
+//            throw std::runtime_error("Failed to create GLFW window");
+//
+//        glfwSetWindowUserPointer(window, this);
+//        glfwSetFramebufferSizeCallback(window, framebufferResizeCallback);
+//        glfwSetCursorPosCallback(window, mouseCallback);
+//
+//        glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_DISABLED);
+//#else
+//        window = nullptr;
+//        if (!nativeWindowHandle)
+//            throw std::runtime_error("Vulkan requires a native window handle.");
+//#endif
+//
+//        // IMPORTANT: with VULKAN_HPP_DEFAULT_DISPATCH_LOADER_DYNAMIC_STORAGE defined
+//        // in THIS TU, this init call is valid and links cleanly.
+//        VULKAN_HPP_DEFAULT_DISPATCHER.init();
+//
+//#ifdef _DEBUG
+//        std::cout << "Window configured\n";
+//#endif
+//    }
+//
+//    void Application::framebufferResizeCallback(GLFWwindow* window_, int width, int height)
+//    {
+//#if defined(ALMOND_VULKAN_STANDALONE)
+//        auto* app = reinterpret_cast<Application*>(glfwGetWindowUserPointer(window_));
+//        if (!app)
+//            return;
+//
+//        int fbWidth = width;
+//        int fbHeight = height;
+//        if (fbWidth == 0 || fbHeight == 0)
+//            glfwGetFramebufferSize(window_, &fbWidth, &fbHeight);
+//
+//        app->set_framebuffer_size(fbWidth, fbHeight);
+//#else
+//        (void)window_;
+//        (void)width;
+//        (void)height;
+//#endif
+//    }
+//
+//    bool Application::process(std::shared_ptr<almondnamespace::core::Context> ctx,
+//        almondnamespace::core::CommandQueue& queue)
+//    {
+//        if (!device)
+//            return false;
+//
+//        static auto lastTime = std::chrono::high_resolution_clock::now();
+//        const auto currentTime = std::chrono::high_resolution_clock::now();
+//        const float deltaTime = std::chrono::duration<float>(currentTime - lastTime).count();
+//        lastTime = currentTime;
+//
+//#if defined(ALMOND_VULKAN_STANDALONE)
+//        if (window)
+//        {
+//            glfwPollEvents();
+//            if (glfwWindowShouldClose(window))
+//                return false;
+//        }
+//#else
+//        if (ctx && ctx->get_mouse_position)
+//        {
+//            int mouseX = 0;
+//            int mouseY = 0;
+//            ctx->get_mouse_position(mouseX, mouseY);
+//            processMouseInput(static_cast<double>(mouseX), static_cast<double>(mouseY));
+//        }
+//#endif
+//
+//        updateCamera(deltaTime);
+//
+//        queue.drain();
+//        drawFrame();
+//        return true;
+//    }
+//
+//    void Application::set_context(std::shared_ptr<almondnamespace::core::Context> ctx, void* nativeWindow)
+//    {
+//        context = std::move(ctx);
+//        nativeWindowHandle = nativeWindow;
+//    }
+//
+//    void Application::set_framebuffer_size(int width, int height)
+//    {
+//        framebufferWidth = (std::max)(1, width);
+//        framebufferHeight = (std::max)(1, height);
+//        framebufferResized = true;
+//    }
+//
+//    int Application::get_framebuffer_width() const noexcept
+//    {
+//        return (std::max)(1, framebufferWidth);
+//    }
+//
+//    int Application::get_framebuffer_height() const noexcept
+//    {
+//        return (std::max)(1, framebufferHeight);
+//    }
+//
+//    void Application::cleanup()
+//    {
+//        if (device)
+//            (void)device->waitIdle();
+//
+//        imageAvailableSemaphores.clear();
+//        renderFinishedSemaphores.clear();
+//        inFlightFences.clear();
+//
+//        if (!commandBuffers.empty() && commandPool && device)
+//        {
+//            device->resetCommandPool(*commandPool);
+//            commandBuffers.clear();
+//        }
+//
+//        cleanupSwapChain();
+//
+//        framebuffers.clear();
+//
+//        descriptorPool.reset();
+//
+//        uniformBuffers.clear();
+//        uniformBuffersMemory.clear();
+//        uniformBuffersMapped.clear();
+//
+//        indexBuffer.reset();
+//        indexBufferMemory.reset();
+//        vertexBuffer.reset();
+//        vertexBufferMemory.reset();
+//
+//        textureSampler.reset();
+//        textureImageView.reset();
+//        textureImage.reset();
+//        textureImageMemory.reset();
+//
+//        pipelineLayout.reset();
+//        graphicsPipeline.reset();
+//        descriptorSetLayout.reset();
+//        renderPass.reset();
+//
+//        depthImage.reset();
+//        depthImageMemory.reset();
+//        depthImageView.reset();
+//
+//        commandPool.reset();
+//
+//        device.reset();
+//
+//        // surface is a UniqueSurfaceKHR; do not manually destroy it.
+//        surface.reset();
+//
+//        if (enableValidationLayers && debugMessenger && instance)
+//        {
+//            instance->destroyDebugUtilsMessengerEXT(debugMessenger, nullptr);
+//            debugMessenger = VK_NULL_HANDLE;
+//        }
+//
+//        instance.reset();
+//
+//#if defined(ALMOND_VULKAN_STANDALONE)
+//        if (window)
+//        {
+//            glfwDestroyWindow(window);
+//            window = nullptr;
+//        }
+//        glfwTerminate();
+//#endif
+//    }
+//
+//    void Application::createVertexBuffer()
+//    {
+//        const vk::DeviceSize bufferSize = sizeof(vertices[0]) * vertices.size();
+//
+//        auto staging = createBuffer(
+//            bufferSize,
+//            vk::BufferUsageFlagBits::eTransferSrc,
+//            vk::MemoryPropertyFlagBits::eHostVisible | vk::MemoryPropertyFlagBits::eHostCoherent);
+//
+//        void* mapped = nullptr;
+//        (void)device->mapMemory(*staging.second, 0, bufferSize, {}, &mapped);
+//        std::memcpy(mapped, vertices.data(), static_cast<std::size_t>(bufferSize));
+//        device->unmapMemory(*staging.second);
+//
+//        auto vb = createBuffer(
+//            bufferSize,
+//            vk::BufferUsageFlagBits::eTransferDst | vk::BufferUsageFlagBits::eVertexBuffer,
+//            vk::MemoryPropertyFlagBits::eDeviceLocal);
+//
+//        copyBuffer(*staging.first, *vb.first, bufferSize);
+//
+//        staging.first.reset();
+//        staging.second.reset();
+//
+//        vertexBuffer = std::move(vb.first);
+//        vertexBufferMemory = std::move(vb.second);
+//    }
+//
+//    void Application::createIndexBuffer()
+//    {
+//        if (indices.empty())
+//            throw std::runtime_error("Error: No index data available!");
+//
+//        const vk::DeviceSize bufferSize = sizeof(indices[0]) * indices.size();
+//
+//        auto staging = createBuffer(
+//            bufferSize,
+//            vk::BufferUsageFlagBits::eTransferSrc,
+//            vk::MemoryPropertyFlagBits::eHostVisible | vk::MemoryPropertyFlagBits::eHostCoherent);
+//
+//        // Prefer the void** overload to avoid ResultValue plumbing under VULKAN_HPP_NO_EXCEPTIONS.
+//        void* mapped = nullptr;
+//        (void)device->mapMemory(*staging.second, 0, bufferSize, {}, &mapped);
+//        std::memcpy(mapped, indices.data(), static_cast<std::size_t>(bufferSize));
+//        device->unmapMemory(*staging.second);
+//
+//        auto ib = createBuffer(
+//            bufferSize,
+//            vk::BufferUsageFlagBits::eTransferDst | vk::BufferUsageFlagBits::eIndexBuffer,
+//            vk::MemoryPropertyFlagBits::eDeviceLocal);
+//
+//        copyBuffer(*staging.first, *ib.first, bufferSize);
+//
+//        staging.first.reset();
+//        staging.second.reset();
+//
+//        indexBuffer = std::move(ib.first);
+//        indexBufferMemory = std::move(ib.second);
+//    }
+//} // namespace almondnamespace::vulkancontext
+//
+//// -----------------------------------------------------------------------------
+//// Engine-facing wrapper API (matches your exported declarations)
+//// -----------------------------------------------------------------------------
+//namespace almondnamespace::vulkancontext
+//{
+//    namespace
+//    {
+//        detail::Application s_app{};
+//    }
+//
+//    bool vulkan_initialize(std::shared_ptr<core::Context> ctx,
+//        void* parentWindowOpaque,
+//        unsigned int w,
+//        unsigned int h,
+//        std::function<void(int, int)> onResize)
+//    {
+//        if (!ctx)
+//            throw std::runtime_error("[Vulkan] vulkan_initialize requires non-null Context");
+//
+//        void* nativeWindow = parentWindowOpaque;
+//
+//#if defined(_WIN32) && !defined(ALMOND_MAIN_HEADLESS)
+//        if (ctx->windowData && ctx->windowData->hwnd)
+//            nativeWindow = ctx->windowData->hwnd;
+//        else if (ctx->get_hwnd())
+//            nativeWindow = ctx->get_hwnd();
+//#endif
+//
+//        s_app.set_framebuffer_size(static_cast<int>(w), static_cast<int>(h));
+//        s_app.set_context(ctx, nativeWindow);
+//
+//        ctx->get_width = vulkan_get_width;
+//        ctx->get_height = vulkan_get_height;
+//
+//        ctx->is_key_held = [](almondnamespace::input::Key key) { return almondnamespace::input::is_key_held(key); };
+//        ctx->is_key_down = [](almondnamespace::input::Key key) { return almondnamespace::input::is_key_down(key); };
+//        ctx->is_mouse_button_held = [](almondnamespace::input::MouseButton b) { return almondnamespace::input::is_mouse_button_held(b); };
+//        ctx->is_mouse_button_down = [](almondnamespace::input::MouseButton b) { return almondnamespace::input::is_mouse_button_down(b); };
+//
+//        ctx->onResize = [resize = std::move(onResize)](int newWidth, int newHeight) mutable
+//            {
+//                s_app.set_framebuffer_size(newWidth, newHeight);
+//                if (resize)
+//                    resize(newWidth, newHeight);
+//            };
+//
+//        s_app.initWindow();
+//        s_app.initVulkan();
+//
+//        almondnamespace::atlasmanager::register_backend_uploader(
+//            almondnamespace::core::ContextType::Vulkan,
+//            [](const almondnamespace::TextureAtlas& atlas)
+//            {
+//                almondnamespace::vulkantextures::ensure_uploaded(atlas);
+//            });
+//
+//        return true;
+//    }
+//
+//    bool vulkan_process(std::shared_ptr<core::Context> ctx, core::CommandQueue& queue)
+//    {
+//        return s_app.process(ctx, queue);
+//    }
+//
+//    void vulkan_present()
+//    {
+//        // Present is handled by drawFrame() currently.
+//    }
+//
+//    void vulkan_cleanup(std::shared_ptr<core::Context> ctx)
+//    {
+//        (void)ctx;
+//
+//        almondnamespace::atlasmanager::unregister_backend_uploader(
+//            almondnamespace::core::ContextType::Vulkan);
+//
+//        almondnamespace::vulkantextures::clear_gpu_atlases();
+//
+//        s_app.cleanup();
+//    }
+//
+//    int vulkan_get_width()
+//    {
+//        return s_app.get_framebuffer_width();
+//    }
+//
+//    int vulkan_get_height()
+//    {
+//        return s_app.get_framebuffer_height();
+//    }
+//}

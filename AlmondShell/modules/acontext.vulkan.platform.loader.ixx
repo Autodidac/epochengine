@@ -1,41 +1,63 @@
 module;
 
-// VulkanLoader.hpp - Cross-platform Vulkan Loader
-#pragma once
-#include <vulkan/vulkan.h>
+
+#include <include/acontext.vulkan.hpp>
+
 #include <cstdlib>
+
 #ifdef _WIN32
-#include <windows.h>
+    // Preprocessor hygiene before windows.h
+#ifndef WIN32_LEAN_AND_MEAN
+#define WIN32_LEAN_AND_MEAN
+#endif
+#ifndef NOMINMAX
+#define NOMINMAX
+#endif
+#ifndef _WINSOCKAPI_
+#define _WINSOCKAPI_
+#endif
+
+#include <include/aframework.hpp>  // include Windows headers
 #else
 #include <dlfcn.h>
 #endif
 
 export module acontext.vulkan.platform.loader;
 
-namespace epoch::vulkan {
+export namespace almondnamespace::vulkan {
 
-    constexpr auto LoadLibrary() noexcept -> void* {
+    // OS/dynamic-loader calls are runtime by definition: NOT constexpr.
+    inline auto LoadLibrary() noexcept -> void*
+    {
 #ifdef _WIN32
-        return LoadLibraryA("vulkan-1.dll");
+        return static_cast<void*>(::LoadLibraryA("vulkan-1.dll"));
 #else
-        return dlopen("libvulkan.so.1", RTLD_NOW | RTLD_LOCAL);
+        return ::dlopen("libvulkan.so.1", RTLD_NOW | RTLD_LOCAL);
 #endif
     }
 
-    constexpr auto FreeLibrary(void* lib) noexcept -> void {
+    inline auto FreeLibrary(void* lib) noexcept -> void
+    {
+        if (!lib) return;
+
 #ifdef _WIN32
-        FreeLibrary(static_cast<HMODULE>(lib));
+        ::FreeLibrary(static_cast<HMODULE>(lib));
 #else
-        dlclose(lib);
+        ::dlclose(lib);
 #endif
     }
 
-    constexpr auto LoadFunction(void* lib, const char* name) noexcept -> void* {
+    inline auto LoadFunction(void* lib, const char* name) noexcept -> void*
+    {
+        if (!lib || !name) return nullptr;
+
 #ifdef _WIN32
-        return reinterpret_cast<void*>(GetProcAddress(static_cast<HMODULE>(lib), name));
+        return reinterpret_cast<void*>(
+            ::GetProcAddress(static_cast<HMODULE>(lib), name)
+            );
 #else
-        return dlsym(lib, name);
+        return ::dlsym(lib, name);
 #endif
     }
 
-}
+} // namespace almondnamespace::vulkan

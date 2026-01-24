@@ -2,7 +2,7 @@ module;
 
 #include <include/aengine.config.hpp>
 
-export module acontext.vulkan.renderer;
+export module acontext.vulkan.context:renderer;
 
 #if defined(ALMOND_USING_VULKAN)
 

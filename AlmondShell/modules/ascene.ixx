@@ -8,7 +8,7 @@ import aengine.platform;
 // Engine modules (must already be modules)
 import aecs;                  // ecs::reg_ex, create_entity, etc.
 import aecs.components;     // Position, etc.
-import amovementevent;        // MovementEvent
+import aengine.event.movement;        // MovementEvent
 
 import aengine.core.time;    // time::Timer
 import aengine.core.context;              // core::Context

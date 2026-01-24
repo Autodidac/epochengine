@@ -1,32 +1,47 @@
 module;
 
-// VulkanInstance.hpp - Header-only Vulkan Instance creation and management
+#include <include/aengine.config.hpp>
+
+#if defined(_WIN32)
+#   ifndef VK_USE_PLATFORM_WIN32_KHR
+#       define VK_USE_PLATFORM_WIN32_KHR
+#   endif
+#endif
+
+// We are using Vk* / PFN_* types.
 #include <vulkan/vulkan.h>
+
+#include <include/acontext.vulkan.hpp>
 
 export module acontext.vulkan.platform.instance;
 
 import acontext.vulkan.platform.dispatcher;
 
-namespace epoch::vulkan {
-
-    // Creates a Vulkan instance using loader-based dispatch (global function retrieval)
-    inline auto createInstance(const VkInstanceCreateInfo& createInfo) -> VkInstance {
+export namespace almondnamespace::vulkancontext::platform
+{
+    inline VkInstance createInstance(const VkInstanceCreateInfo& createInfo) noexcept
+    {
         VkInstance instance = VK_NULL_HANDLE;
-        auto fp = getInstanceProcAddr();
-        if (!fp) return VK_NULL_HANDLE;
-        // Retrieve vkCreateInstance using the global loader (with a null instance)
-        auto vkCreateInstance = reinterpret_cast<PFN_vkCreateInstance>(fp(nullptr, "vkCreateInstance"));
-        if (vkCreateInstance && vkCreateInstance(&createInfo, nullptr, &instance) == VK_SUCCESS) {
-            return instance;
-        }
-        return VK_NULL_HANDLE;
+
+        auto fp = getInstanceProcAddr(); // same namespace now
+        if (!fp)
+            return VK_NULL_HANDLE;
+
+        auto vkCreateInstance =
+            reinterpret_cast<PFN_vkCreateInstance>(fp(VK_NULL_HANDLE, "vkCreateInstance"));
+
+        if (!vkCreateInstance)
+            return VK_NULL_HANDLE;
+
+        if (vkCreateInstance(&createInfo, nullptr, &instance) != VK_SUCCESS)
+            return VK_NULL_HANDLE;
+
+        return instance;
     }
 
-    // Destroy a Vulkan instance using the dispatch table.
-    inline void destroyInstance(VkInstance instance, const InstanceDispatchTable& table) {
-        if (table.vkDestroyInstance && instance) {
+    inline void destroyInstance(VkInstance instance, const InstanceDispatchTable& table) noexcept
+    {
+        if (table.vkDestroyInstance && instance)
             table.vkDestroyInstance(instance, nullptr);
-        }
     }
-
-}
+} // namespace almondnamespace::vulkancontext::platform

@@ -157,6 +157,7 @@
       <LanguageStandard_C>stdc17</LanguageStandard_C>
       <AdditionalModuleDependencies>
       </AdditionalModuleDependencies>
+      <ExternalWarningLevel>TurnOffAllWarnings</ExternalWarningLevel>
     </ClCompile>
     <Link>
       <SubSystem>
@@ -298,6 +299,60 @@
     <ClCompile Update="C:\Users\iammi\source\repos\epochengine\AlmondShell\modules\acontext.type.ixx">
       <FileType>Document</FileType>
     </ClCompile>
+    <ClCompile Update="C:\Users\iammi\source\repos\epochengine\AlmondShell\modules\acontext.vulkan.camera.ixx">
+      <FileType>Document</FileType>
+    </ClCompile>
+    <ClCompile Update="C:\Users\iammi\source\repos\epochengine\AlmondShell\modules\acontext.vulkan.context-api.ixx">
+      <FileType>Document</FileType>
+    </ClCompile>
+    <ClCompile Update="C:\Users\iammi\source\repos\epochengine\AlmondShell\modules\acontext.vulkan.context-camera.ixx">
+      <FileType>Document</FileType>
+    </ClCompile>
+    <ClCompile Update="C:\Users\iammi\source\repos\epochengine\AlmondShell\modules\acontext.vulkan.context-commands.ixx">
+      <FileType>Document</FileType>
+    </ClCompile>
+    <ClCompile Update="C:\Users\iammi\source\repos\epochengine\AlmondShell\modules\acontext.vulkan.context-depth.ixx">
+      <FileType>Document</FileType>
+    </ClCompile>
+    <ClCompile Update="C:\Users\iammi\source\repos\epochengine\AlmondShell\modules\acontext.vulkan.context-descriptor.ixx">
+      <FileType>Document</FileType>
+    </ClCompile>
+    <ClCompile Update="C:\Users\iammi\source\repos\epochengine\AlmondShell\modules\acontext.vulkan.context-device.ixx">
+      <FileType>Document</FileType>
+    </ClCompile>
+    <ClCompile Update="C:\Users\iammi\source\repos\epochengine\AlmondShell\modules\acontext.vulkan.context-instance.ixx">
+      <FileType>Document</FileType>
+    </ClCompile>
+    <ClCompile Update="C:\Users\iammi\source\repos\epochengine\AlmondShell\modules\acontext.vulkan.context-memory.ixx">
+      <FileType>Document</FileType>
+    </ClCompile>
+    <ClCompile Update="C:\Users\iammi\source\repos\epochengine\AlmondShell\modules\acontext.vulkan.context-renderer.ixx">
+      <FileType>Document</FileType>
+    </ClCompile>
+    <ClCompile Update="C:\Users\iammi\source\repos\epochengine\AlmondShell\modules\acontext.vulkan.context-shader_pipeline.ixx">
+      <FileType>Document</FileType>
+    </ClCompile>
+    <ClCompile Update="C:\Users\iammi\source\repos\epochengine\AlmondShell\modules\acontext.vulkan.context-shared_context.ixx">
+      <FileType>Document</FileType>
+    </ClCompile>
+    <ClCompile Update="C:\Users\iammi\source\repos\epochengine\AlmondShell\modules\acontext.vulkan.context-swapchain.ixx">
+      <FileType>Document</FileType>
+    </ClCompile>
+    <ClCompile Update="C:\Users\iammi\source\repos\epochengine\AlmondShell\modules\acontext.vulkan.context-texture.ixx">
+      <FileType>Document</FileType>
+    </ClCompile>
+    <ClCompile Update="C:\Users\iammi\source\repos\epochengine\AlmondShell\modules\acontext.vulkan.context-window.ixx">
+      <FileType>Document</FileType>
+    </ClCompile>
+    <ClCompile Update="C:\Users\iammi\source\repos\epochengine\AlmondShell\modules\acontext.vulkan.descriptor.ixx">
+      <FileType>Document</FileType>
+    </ClCompile>
+    <ClCompile Update="C:\Users\iammi\source\repos\epochengine\AlmondShell\modules\acontext.vulkan.device.ixx">
+      <FileType>Document</FileType>
+    </ClCompile>
+    <ClCompile Update="C:\Users\iammi\source\repos\epochengine\AlmondShell\modules\acontext.vulkan.meshcube.ixx">
+      <FileType>Document</FileType>
+    </ClCompile>
     <ClCompile Update="C:\Users\iammi\source\repos\epochengine\AlmondShell\modules\acontext.vulkan.platform.device.ixx">
       <FileType>Document</FileType>
     </ClCompile>
@@ -376,6 +431,9 @@
     <ClCompile Update="C:\Users\iammi\source\repos\epochengine\AlmondShell\modules\aengine.diagnostics.ixx">
       <FileType>Document</FileType>
     </ClCompile>
+    <ClCompile Update="C:\Users\iammi\source\repos\epochengine\AlmondShell\modules\aengine.event.movement.ixx">
+      <FileType>Document</FileType>
+    </ClCompile>
     <ClCompile Update="C:\Users\iammi\source\repos\epochengine\AlmondShell\modules\aengine.eventsystem.ixx">
       <FileType>Document</FileType>
     </ClCompile>
@@ -386,6 +444,9 @@
       <FileType>Document</FileType>
     </ClCompile>
     <ClCompile Update="C:\Users\iammi\source\repos\epochengine\AlmondShell\modules\aengine.handles.ixx">
+      <FileType>Document</FileType>
+    </ClCompile>
+    <ClCompile Update="C:\Users\iammi\source\repos\epochengine\AlmondShell\modules\aengine.saveload.system.ixx">
       <FileType>Document</FileType>
     </ClCompile>
     <ClCompile Update="C:\Users\iammi\source\repos\epochengine\AlmondShell\modules\aengine.scripting.compiler.ixx">

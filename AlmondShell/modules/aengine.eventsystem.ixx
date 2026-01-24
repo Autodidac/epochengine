@@ -1,3 +1,4 @@
+module;
 /**************************************************************
  *   This file is part of the Almond Project.                 *
  *   AlmondShell - Modular C++ Framework                      *

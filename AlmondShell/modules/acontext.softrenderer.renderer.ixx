@@ -50,7 +50,7 @@ export namespace almondnamespace::anativecontext
     struct Vec3 { float x = 0.0f, y = 0.0f, z = 0.0f; };
     struct Vec2 { float u = 0.0f, v = 0.0f; };
     struct Mat4 { float m[4][4] = {}; };
-    struct Vertex { Vec3 pos; Vec2 uv; };
+    export struct Vertex { Vec3 pos; Vec2 uv; };
 
     struct Triangle
     {
@@ -61,7 +61,7 @@ export namespace almondnamespace::anativecontext
         std::uint32_t color = 0xFFFFFFFFu;
     };
 
-    struct Camera
+    export struct Camera
     {
         Vec3 pos{ 0.0f, 0.0f, -3.0f };
         float pitch = 0.0f;

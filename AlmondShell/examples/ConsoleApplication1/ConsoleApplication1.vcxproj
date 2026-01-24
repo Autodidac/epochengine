@@ -171,6 +171,7 @@
       <AdditionalModuleDependencies>%(AdditionalModuleDependencies)</AdditionalModuleDependencies>
       <MultiProcessorCompilation>true</MultiProcessorCompilation>
       <CallingConvention>StdCall</CallingConvention>
+      <ExternalWarningLevel>TurnOffAllWarnings</ExternalWarningLevel>
     </ClCompile>
     <Link>
       <SubSystem>Windows</SubSystem>

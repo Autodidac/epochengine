@@ -45,9 +45,10 @@ import aimage.loader;
 
 #ifdef ALMOND_USING_VULKAN
 import acontext.vulkan.context;
-import acontext.vulkan.renderer;
-import acontext.vulkan.texture;
+//import acontext.vulkan.context:renderer;
+//import acontext.vulkan.context:texture;
 #endif
+
 #ifdef ALMOND_USING_DIRECTX
 import "adirectxcontext.hpp";
 import "adirectxrenderer.hpp";
@@ -602,9 +603,9 @@ namespace almondnamespace::core
             ctx->is_mouse_button_held = [](input::MouseButton b) { return input::is_mouse_button_held(b); };
             ctx->is_mouse_button_down = [](input::MouseButton b) { return input::is_mouse_button_down(b); };
 
-            ctx->draw_sprite = almondnamespace::vulkantextures::draw_sprite;
-            ctx->add_texture = almondnamespace::vulkantextures::add_texture;
-            ctx->add_atlas = almondnamespace::vulkantextures::add_atlas;
+           // ctx->draw_sprite = almondnamespace::vulkancontext::draw_sprite;
+            //ctx->add_texture = almondnamespace::vulkantextures::add_texture;
+            //ctx->add_atlas = almondnamespace::vulkantextures::add_atlas;
 
             AddContextForBackend(ContextType::Vulkan, std::move(ctx));
         }

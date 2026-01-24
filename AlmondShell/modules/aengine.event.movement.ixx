@@ -23,7 +23,7 @@
  **************************************************************/
 module;
 
-export module amovementevent;
+export module aengine.event.movement;
 
 import <iostream>;
 

@@ -22,6 +22,7 @@
     <ProjectCapability Include="SourceItemsFromImports" />
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="$(MSBuildThisFileDirectory)include\acontext.vulkan.hpp" />
     <ClInclude Include="$(MSBuildThisFileDirectory)include\aengine.config.hpp" />
     <ClInclude Include="$(MSBuildThisFileDirectory)include\aengine.hpp" />
     <ClInclude Include="$(MSBuildThisFileDirectory)include\aframework.hpp" />
@@ -60,24 +61,29 @@
     <ClCompile Include="$(MSBuildThisFileDirectory)modules\acontext.raylib.api.ixx" />
     <ClCompile Include="$(MSBuildThisFileDirectory)modules\acontext.raylib.context.win.ixx" />
     <ClCompile Include="$(MSBuildThisFileDirectory)modules\acontext.raylib.input.ixx" />
+    <ClCompile Include="$(MSBuildThisFileDirectory)modules\acontext.vulkan.context-api.ixx" />
     <ClCompile Include="$(MSBuildThisFileDirectory)modules\acontext.vulkan.camera.ixx" />
-    <ClCompile Include="$(MSBuildThisFileDirectory)modules\acontext.vulkan.commands.ixx" />
+    <ClCompile Include="$(MSBuildThisFileDirectory)modules\acontext.vulkan.context-api_unit.ixx" />
+    <ClCompile Include="$(MSBuildThisFileDirectory)modules\acontext.vulkan.context-commands.ixx" />
+    <ClCompile Include="$(MSBuildThisFileDirectory)modules\acontext.vulkan.context-runtime.ixx" />
+    <ClCompile Include="$(MSBuildThisFileDirectory)modules\acontext.vulkan.context-shared_context.ixx" />
     <ClCompile Include="$(MSBuildThisFileDirectory)modules\acontext.vulkan.context.ixx" />
+    <ClCompile Include="$(MSBuildThisFileDirectory)modules\acontext.vulkan.meshcube.ixx" />
     <ClCompile Include="$(MSBuildThisFileDirectory)modules\acontext.vulkan.platform.device.ixx" />
     <ClCompile Include="$(MSBuildThisFileDirectory)modules\acontext.vulkan.platform.dispatcher.ixx" />
     <ClCompile Include="$(MSBuildThisFileDirectory)modules\acontext.vulkan.platform.instance.ixx" />
     <ClCompile Include="$(MSBuildThisFileDirectory)modules\acontext.vulkan.platform.loader.ixx" />
-    <ClCompile Include="$(MSBuildThisFileDirectory)modules\acontext.vulkan.depth.ixx" />
-    <ClCompile Include="$(MSBuildThisFileDirectory)modules\acontext.vulkan.descriptors.ixx" />
-    <ClCompile Include="$(MSBuildThisFileDirectory)modules\acontext.vulkan.device.ixx" />
-    <ClCompile Include="$(MSBuildThisFileDirectory)modules\acontext.vulkan.instance.ixx" />
-    <ClCompile Include="$(MSBuildThisFileDirectory)modules\acontext.vulkan.memory.ixx" />
-    <ClCompile Include="$(MSBuildThisFileDirectory)modules\acontext.vulkan.window.ixx" />
+    <ClCompile Include="$(MSBuildThisFileDirectory)modules\acontext.vulkan.context-depth.ixx" />
+    <ClCompile Include="$(MSBuildThisFileDirectory)modules\acontext.vulkan.context-descriptor.ixx" />
+    <ClCompile Include="$(MSBuildThisFileDirectory)modules\acontext.vulkan.context-device.ixx" />
+    <ClCompile Include="$(MSBuildThisFileDirectory)modules\acontext.vulkan.context-instance.ixx" />
+    <ClCompile Include="$(MSBuildThisFileDirectory)modules\acontext.vulkan.context-memory.ixx" />
+    <ClCompile Include="$(MSBuildThisFileDirectory)modules\acontext.vulkan.context-window.ixx" />
     <ClCompile Include="$(MSBuildThisFileDirectory)modules\aecs.entitycomponentmanager.ixx" />
     <ClCompile Include="$(MSBuildThisFileDirectory)modules\aecs.entityhistory.ixx" />
     <ClCompile Include="$(MSBuildThisFileDirectory)modules\aengine.context.platform.utils.ixx" />
     <ClCompile Include="$(MSBuildThisFileDirectory)modules\aengine.gui.menu.ixx" />
-    <ClCompile Include="$(MSBuildThisFileDirectory)modules\aengine.saveloadsystem.ixx" />
+    <ClCompile Include="$(MSBuildThisFileDirectory)modules\aengine.saveload.system.ixx" />
     <ClCompile Include="$(MSBuildThisFileDirectory)modules\aengine.telemetry.ixx" />
     <ClCompile Include="$(MSBuildThisFileDirectory)modules\ascripting.system.ixx" />
     <ClCompile Include="$(MSBuildThisFileDirectory)modules\autility.allocator.ixx" />
@@ -128,7 +134,7 @@
     <ClCompile Include="$(MSBuildThisFileDirectory)modules\amatch3like.ixx" />
     <ClCompile Include="$(MSBuildThisFileDirectory)modules\aminesweeperlike.ixx" />
     <ClCompile Include="$(MSBuildThisFileDirectory)modules\amipmapatlas.ixx" />
-    <ClCompile Include="$(MSBuildThisFileDirectory)modules\amovementevent.ixx" />
+    <ClCompile Include="$(MSBuildThisFileDirectory)modules\aengine.event.movement.ixx" />
     <ClCompile Include="$(MSBuildThisFileDirectory)modules\anet.ixx" />
     <ClCompile Include="$(MSBuildThisFileDirectory)modules\acontext.noop.context.ixx" />
     <ClCompile Include="$(MSBuildThisFileDirectory)modules\aopenglfreetype.ixx" />
@@ -187,14 +193,24 @@
     <ClCompile Include="$(MSBuildThisFileDirectory)modules\ampmcboundedqueue.ixx" />
     <ClCompile Include="$(MSBuildThisFileDirectory)modules\autility.string.converter.ixx" />
     <ClCompile Include="$(MSBuildThisFileDirectory)modules\acontext.vulkan.quad.ixx" />
-    <ClCompile Include="$(MSBuildThisFileDirectory)modules\acontext.vulkan.renderer.ixx" />
-    <ClCompile Include="$(MSBuildThisFileDirectory)modules\acontext.vulkan.shader.pipeline.ixx" />
-    <ClCompile Include="$(MSBuildThisFileDirectory)modules\acontext.vulkan.swapchain.ixx" />
-    <ClCompile Include="$(MSBuildThisFileDirectory)modules\acontext.vulkan.texture.ixx" />
+    <ClCompile Include="$(MSBuildThisFileDirectory)modules\acontext.vulkan.context-renderer.ixx" />
+    <ClCompile Include="$(MSBuildThisFileDirectory)modules\acontext.vulkan.context-shader_pipeline.ixx" />
+    <ClCompile Include="$(MSBuildThisFileDirectory)modules\acontext.vulkan.context-swapchain.ixx" />
+    <ClCompile Include="$(MSBuildThisFileDirectory)modules\acontext.vulkan.context-texture.ixx" />
     <ClCompile Include="$(MSBuildThisFileDirectory)modules\acontext.vulkan.triangle.ixx" />
     <ClCompile Include="$(MSBuildThisFileDirectory)src\acontext.raylib.bridge.cpp" />
-    <ClCompile Include="$(MSBuildThisFileDirectory)src\acontext.vulkan.platform.context.cpp" />
-    <ClCompile Include="$(MSBuildThisFileDirectory)src\acontext.vulkan.platform.descriptors.cpp" />
+    <ClCompile Include="$(MSBuildThisFileDirectory)src\acontext.vulkan.platform.context.cpp">
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|x64'">true</ExcludedFromBuild>
+    </ClCompile>
+    <ClCompile Include="$(MSBuildThisFileDirectory)src\acontext.vulkan.platform.descriptors.cpp">
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|x64'">true</ExcludedFromBuild>
+    </ClCompile>
     <ClCompile Include="$(MSBuildThisFileDirectory)src\aeditor.cpp">
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">false</ExcludedFromBuild>
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">false</ExcludedFromBuild>
