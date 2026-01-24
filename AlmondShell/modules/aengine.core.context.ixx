@@ -23,6 +23,7 @@ export module aengine.core.context;
 
 // Std
 import <algorithm>;
+import <array>;
 import <atomic>;
 import <cstdint>;
 import <functional>;
@@ -75,6 +76,29 @@ export namespace almondnamespace::core
     inline std::shared_ptr<Context> get_current_render_context() noexcept
     {
         return detail::t_current_render_context;
+    }
+
+    export using ClearColor = std::array<float, 4>;
+
+    export [[nodiscard]] constexpr ClearColor clear_color_for_context(ContextType type) noexcept
+    {
+        switch (type)
+        {
+        case ContextType::Vulkan:
+            return { 0.0f, 1.0f, 1.0f, 1.0f };
+        case ContextType::OpenGL:
+            return { 0.0f, 0.0f, 1.0f, 1.0f };
+        case ContextType::RayLib:
+            return { 0.6f, 0.0f, 0.0f, 1.0f };
+        case ContextType::SDL:
+            return { 1.0f, 0.75f, 0.0f, 1.0f };
+        case ContextType::SFML:
+            return { 0.0f, 0.0f, 1.0f, 1.0f };
+        case ContextType::Software:
+            return { 0.235f, 0.235f, 0.235f, 1.0f };
+        default:
+            return { 0.0f, 0.0f, 0.0f, 1.0f };
+        }
     }
 
     // ---------------------------------------------------------------------

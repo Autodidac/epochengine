@@ -24,6 +24,7 @@ import <iostream>;
 
 import aengine.platform;
 import aengine.cli;
+import aengine.core.context;
 
 import acontext.opengl.context;
 import acontext.opengl.state;
@@ -160,7 +161,8 @@ export namespace almondnamespace::openglrenderer
 
     inline void begin_frame()
     {
-        glClearColor(0.f, 0.f, 1.f, 1.f);
+        const auto color = core::clear_color_for_context(core::ContextType::OpenGL);
+        glClearColor(color[0], color[1], color[2], color[3]);
         glViewport(0, 0, core::cli::window_width, core::cli::window_height);
         glClear(GL_COLOR_BUFFER_BIT);
     }
