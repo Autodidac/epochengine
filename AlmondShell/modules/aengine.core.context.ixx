@@ -82,6 +82,8 @@ export namespace almondnamespace::core
 
     export [[nodiscard]] constexpr ClearColor clear_color_for_context(ContextType type) noexcept
     {
+        // Palette: Vulkan = cyan, OpenGL = blue, Raylib = deep red, SDL = amber,
+        // SFML = blue, Software = violet.
         switch (type)
         {
         case ContextType::Vulkan:
@@ -95,7 +97,7 @@ export namespace almondnamespace::core
         case ContextType::SFML:
             return { 0.0f, 0.0f, 1.0f, 1.0f };
         case ContextType::Software:
-            return { 0.235f, 0.235f, 0.235f, 1.0f };
+            return { 0.5f, 0.0f, 1.0f, 1.0f };
         default:
             return { 0.0f, 0.0f, 0.0f, 1.0f };
         }
