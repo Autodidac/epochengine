@@ -407,7 +407,13 @@ export namespace almondnamespace::sdlcontext
             static_cast<std::int64_t>(sdlcontext.framebufferHeight),
             telemetry::RendererTelemetryTags{ backendType, windowId, "height" });
 
-        SDL_SetRenderDrawColor(sdl_renderer.renderer, 124, 0, 255, 255);
+        const auto color = core::clear_color_for_context(core::ContextType::SDL);
+        SDL_SetRenderDrawColor(
+            sdl_renderer.renderer,
+            static_cast<std::uint8_t>(color[0] * 255.0f),
+            static_cast<std::uint8_t>(color[1] * 255.0f),
+            static_cast<std::uint8_t>(color[2] * 255.0f),
+            static_cast<std::uint8_t>(color[3] * 255.0f));
         SDL_RenderClear(sdl_renderer.renderer);
 
         const std::size_t depth = queue.depth();

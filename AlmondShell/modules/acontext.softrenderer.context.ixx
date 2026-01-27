@@ -417,7 +417,21 @@ export namespace almondnamespace::anativecontext
             : 0;
 
         // Clear
-        std::fill(sr.framebuffer.begin(), sr.framebuffer.end(), 0xFF000000u);
+        const auto clearColor = core::clear_color_for_context(core::ContextType::Software);
+        const auto clearR = static_cast<std::uint8_t>(
+            std::clamp(clearColor[0], 0.0f, 1.0f) * 255.0f);
+        const auto clearG = static_cast<std::uint8_t>(
+            std::clamp(clearColor[1], 0.0f, 1.0f) * 255.0f);
+        const auto clearB = static_cast<std::uint8_t>(
+            std::clamp(clearColor[2], 0.0f, 1.0f) * 255.0f);
+        const auto clearA = static_cast<std::uint8_t>(
+            std::clamp(clearColor[3], 0.0f, 1.0f) * 255.0f);
+        const std::uint32_t packedColor =
+            (std::uint32_t(clearA) << 24)
+            | (std::uint32_t(clearR) << 16)
+            | (std::uint32_t(clearG) << 8)
+            | std::uint32_t(clearB);
+        std::fill(sr.framebuffer.begin(), sr.framebuffer.end(), packedColor);
 
         telemetry::emit_gauge(
             "renderer.framebuffer.size",
