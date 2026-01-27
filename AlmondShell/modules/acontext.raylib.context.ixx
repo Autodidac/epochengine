@@ -451,8 +451,13 @@ namespace almondnamespace::raylibcontext
 #endif
     }
 
-    export inline void raylib_clear(float r, float g, float b, float /*a*/)
+    export inline void raylib_clear(float r, float g, float b, float a)
     {
+        (void)r;
+        (void)g;
+        (void)b;
+        (void)a;
+
         auto& st = almondnamespace::raylibstate::s_raylibstate;
         if (!st.running)
             return;
@@ -463,12 +468,13 @@ namespace almondnamespace::raylibcontext
 #endif
 
         detail::ensure_frame_started(st);
+        const auto clearColor = core::clear_color_for_context(core::ContextType::RayLib);
         almondnamespace::raylib_api::clear_background(
             almondnamespace::raylib_api::Color{
-                static_cast<unsigned char>(std::clamp(r, 0.0f, 1.0f) * 255.0f),
-                static_cast<unsigned char>(std::clamp(g, 0.0f, 1.0f) * 255.0f),
-                static_cast<unsigned char>(std::clamp(b, 0.0f, 1.0f) * 255.0f),
-                255
+                static_cast<unsigned char>(std::clamp(clearColor[0], 0.0f, 1.0f) * 255.0f),
+                static_cast<unsigned char>(std::clamp(clearColor[1], 0.0f, 1.0f) * 255.0f),
+                static_cast<unsigned char>(std::clamp(clearColor[2], 0.0f, 1.0f) * 255.0f),
+                static_cast<unsigned char>(std::clamp(clearColor[3], 0.0f, 1.0f) * 255.0f)
             });
     }
 

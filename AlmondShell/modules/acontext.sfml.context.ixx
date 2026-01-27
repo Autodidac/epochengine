@@ -37,14 +37,12 @@ export module acontext.sfml.context;
 import aengine.core.context;
 import aengine.context.window;
 import aengine.context.commandqueue;
-import aengine.core.time;
 import aengine.context.multiplexer;
 import aatlas.manager;
 import acontext.sfml.state;
 import acontext.sfml.textures;
 
 import <algorithm>;
-import <cmath>;
 import <functional>;
 import <iostream>;
 import <memory>;
@@ -347,16 +345,10 @@ export namespace almondnamespace::sfmlcontext
             return false;
         }
 
-        static auto* bgTimer = almondnamespace::timing::getTimer("menu", "bg_color");
-        if (!bgTimer)
-            bgTimer = &almondnamespace::timing::createNamedTimer("menu", "bg_color");
-
-        const double t = almondnamespace::timing::elapsed(*bgTimer);
-        (void)t;
-
-        const unsigned char r = static_cast<unsigned char>((0.5 + 0.5 * std::sin(1.0)) * 255);
-        const unsigned char g = static_cast<unsigned char>((0.5 + 0.5 * std::sin(0.7 + 2.0)) * 255);
-        const unsigned char b = static_cast<unsigned char>((0.5 + 0.5 * std::sin(1.3 + 4.0)) * 255);
+        const auto clearColor = core::clear_color_for_context(core::ContextType::SFML);
+        const auto r = static_cast<sf::Uint8>(clearColor[0] * 255.0f);
+        const auto g = static_cast<sf::Uint8>(clearColor[1] * 255.0f);
+        const auto b = static_cast<sf::Uint8>(clearColor[2] * 255.0f);
 
         sfmlcontext.window->clear(sf::Color(r, g, b));
 
