@@ -4,6 +4,8 @@ module;
 #include <cstring>
 #include <stdexcept>
 
+#include <include/acontext.vulkan.hpp>
+
 export module acontext.vulkan.context:buffers;
 
 import :shared_context;

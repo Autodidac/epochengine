@@ -620,5 +620,8 @@
     <ClCompile Include="$(MSBuildThisFileDirectory)modules\almondshell.ixx">
       <Filter>Module Files\ixx\core</Filter>
     </ClCompile>
+    <ClCompile Include="$(MSBuildThisFileDirectory)modules\acontext.vulkan.context-buffers.ixx">
+      <Filter>Module Files\ixx\core\context\backends\vulkan\contextcore\partitions</Filter>
+    </ClCompile>
   </ItemGroup>
 </Project>
