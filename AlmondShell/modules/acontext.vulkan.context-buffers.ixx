@@ -4,7 +4,7 @@ module;
 #include <cstring>
 #include <stdexcept>
 
-module acontext.vulkan.context:buffers;
+export module acontext.vulkan.context:buffers;
 
 import :shared_context;
 import :meshcube;
@@ -19,10 +19,14 @@ namespace almondnamespace::vulkancontext
 
         const vk::DeviceSize bufferSize = sizeof(vertices[0]) * vertices.size();
 
+        const auto stagingUsage = vk::BufferUsageFlags{ vk::BufferUsageFlagBits::eTransferSrc };
+        const auto stagingProperties = vk::MemoryPropertyFlags{ vk::MemoryPropertyFlagBits::eHostVisible }
+            | vk::MemoryPropertyFlags{ vk::MemoryPropertyFlagBits::eHostCoherent };
+
         auto [stagingBuffer, stagingBufferMemory] = createBuffer(
             bufferSize,
-            vk::BufferUsageFlagBits::eTransferSrc,
-            vk::MemoryPropertyFlagBits::eHostVisible | vk::MemoryPropertyFlagBits::eHostCoherent
+            stagingUsage,
+            stagingProperties
         );
 
         void* mapped = nullptr;
@@ -30,10 +34,14 @@ namespace almondnamespace::vulkancontext
         std::memcpy(mapped, vertices.data(), static_cast<std::size_t>(bufferSize));
         device->unmapMemory(*stagingBufferMemory);
 
+        const auto vertexUsage = vk::BufferUsageFlags{ vk::BufferUsageFlagBits::eTransferDst }
+            | vk::BufferUsageFlags{ vk::BufferUsageFlagBits::eVertexBuffer };
+        const auto deviceLocal = vk::MemoryPropertyFlags{ vk::MemoryPropertyFlagBits::eDeviceLocal };
+
         auto [vb, vbMem] = createBuffer(
             bufferSize,
-            vk::BufferUsageFlagBits::eTransferDst | vk::BufferUsageFlagBits::eVertexBuffer,
-            vk::MemoryPropertyFlagBits::eDeviceLocal
+            vertexUsage,
+            deviceLocal
         );
 
         copyBuffer(*stagingBuffer, *vb, bufferSize);
@@ -53,10 +61,14 @@ namespace almondnamespace::vulkancontext
 
         const vk::DeviceSize bufferSize = sizeof(indices[0]) * indices.size();
 
+        const auto stagingUsage = vk::BufferUsageFlags{ vk::BufferUsageFlagBits::eTransferSrc };
+        const auto stagingProperties = vk::MemoryPropertyFlags{ vk::MemoryPropertyFlagBits::eHostVisible }
+            | vk::MemoryPropertyFlags{ vk::MemoryPropertyFlagBits::eHostCoherent };
+
         auto [stagingBuffer, stagingBufferMemory] = createBuffer(
             bufferSize,
-            vk::BufferUsageFlagBits::eTransferSrc,
-            vk::MemoryPropertyFlagBits::eHostVisible | vk::MemoryPropertyFlagBits::eHostCoherent
+            stagingUsage,
+            stagingProperties
         );
 
         void* mapped = nullptr;
@@ -64,10 +76,14 @@ namespace almondnamespace::vulkancontext
         std::memcpy(mapped, indices.data(), static_cast<std::size_t>(bufferSize));
         device->unmapMemory(*stagingBufferMemory);
 
+        const auto indexUsage = vk::BufferUsageFlags{ vk::BufferUsageFlagBits::eTransferDst }
+            | vk::BufferUsageFlags{ vk::BufferUsageFlagBits::eIndexBuffer };
+        const auto deviceLocal = vk::MemoryPropertyFlags{ vk::MemoryPropertyFlagBits::eDeviceLocal };
+
         auto [ib, ibMem] = createBuffer(
             bufferSize,
-            vk::BufferUsageFlagBits::eTransferDst | vk::BufferUsageFlagBits::eIndexBuffer,
-            vk::MemoryPropertyFlagBits::eDeviceLocal
+            indexUsage,
+            deviceLocal
         );
 
         copyBuffer(*stagingBuffer, *ib, bufferSize);
