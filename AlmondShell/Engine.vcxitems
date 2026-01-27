@@ -69,6 +69,7 @@
     <ClCompile Include="$(MSBuildThisFileDirectory)modules\acontext.vulkan.context-api.ixx" />
     <ClCompile Include="$(MSBuildThisFileDirectory)modules\acontext.vulkan.camera.ixx" />
     <ClCompile Include="$(MSBuildThisFileDirectory)modules\acontext.vulkan.context-api_unit.ixx" />
+    <ClCompile Include="$(MSBuildThisFileDirectory)modules\acontext.vulkan.context-buffers.ixx" />
     <ClCompile Include="$(MSBuildThisFileDirectory)modules\acontext.vulkan.context-commands.ixx" />
     <ClCompile Include="$(MSBuildThisFileDirectory)modules\acontext.vulkan.context-runtime.ixx" />
     <ClCompile Include="$(MSBuildThisFileDirectory)modules\acontext.vulkan.context-shared_context.ixx" />

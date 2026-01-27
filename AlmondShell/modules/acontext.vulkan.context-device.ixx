@@ -86,7 +86,7 @@ namespace almondnamespace::vulkancontext {
         return indices.isComplete() && extensionsSupported && swapChainAdequate;
     }
 
-    inline void Application::createLogicalDevice()
+    void Application::createLogicalDevice()
     {
         physicalDevice = pickPhysicalDevice();
         queueFamilyIndices = findQueueFamilies(physicalDevice);
@@ -152,7 +152,7 @@ namespace almondnamespace::vulkancontext {
         presentQueue = device->getQueue(queueFamilyIndices.presentFamily.value(), 0);
     }
 
-    inline void Application::createCommandPool()
+    void Application::createCommandPool()
     {
         if (!queueFamilyIndices.graphicsFamily.has_value())
             throw std::runtime_error("[Vulkan] Graphics family index not set.");

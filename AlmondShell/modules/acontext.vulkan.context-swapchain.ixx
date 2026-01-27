@@ -177,4 +177,54 @@ namespace almondnamespace::vulkancontext
         }
     }
 
+    void Application::cleanupSwapChain()
+    {
+        if (commandPool && device)
+        {
+            device->resetCommandPool(*commandPool);
+            commandBuffers.clear();
+        }
+
+        framebuffers.clear();
+
+        depthImageView.reset();
+        depthImage.reset();
+        depthImageMemory.reset();
+
+        graphicsPipeline.reset();
+        pipelineLayout.reset();
+        renderPass.reset();
+
+        swapChainImageViews.clear();
+        swapChain.reset();
+
+        descriptorPool.reset();
+        descriptorSets.clear();
+
+        uniformBuffers.clear();
+        uniformBuffersMemory.clear();
+        uniformBuffersMapped.clear();
+    }
+
+    void Application::recreateSwapChain()
+    {
+        if (!device)
+            throw std::runtime_error("[Vulkan] recreateSwapChain called without a device.");
+
+        (void)device->waitIdle();
+
+        cleanupSwapChain();
+
+        createSwapChain();
+        createImageViews();
+        createRenderPass();
+        createGraphicsPipeline();
+        createDepthResources();
+        createFramebuffers();
+        createUniformBuffers();
+        createDescriptorPool();
+        createDescriptorSets();
+        createCommandBuffers();
+    }
+
 } // namespace almondnamespace::vulkancontext
