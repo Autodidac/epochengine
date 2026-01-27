@@ -13,11 +13,12 @@ module;
 
 export module acontext.vulkan.context:api;
 
-import <functional>;
-import <memory>;
 
 import aengine.core.context;
 import aengine.context.commandqueue;
+
+import <functional>;
+import <memory>;
 
 namespace almondnamespace::vulkancontext
 {
