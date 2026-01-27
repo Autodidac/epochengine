@@ -9,6 +9,7 @@ export module acontext.vulkan.context:runtime;
 
 import :shared_context;
 import :commands;
+import :buffers;
 import :depth;
 import :descriptor;
 import :device;
@@ -21,9 +22,18 @@ import :window;
 import <algorithm>;
 import <chrono>;
 import <stdexcept>;
+import <vector>;
 
 namespace almondnamespace::vulkancontext
 {
+    const std::vector<const char*> validationLayers = {
+        "VK_LAYER_KHRONOS_validation"
+    };
+
+    const std::vector<const char*> deviceExtensions = {
+        VK_KHR_SWAPCHAIN_EXTENSION_NAME
+    };
+
     // SINGLE definition lives here.
     // (Declaration is exported from :shared_context.)
     Application& vulkan_app()

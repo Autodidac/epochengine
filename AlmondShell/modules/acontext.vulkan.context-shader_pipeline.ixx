@@ -86,7 +86,7 @@ export namespace almondnamespace::vulkancontext
         renderPass = std::move(rp.value);
     }
 
-    inline void Application::createDescriptorSetLayout()
+    void Application::createDescriptorSetLayout()
     {
         vk::DescriptorSetLayoutBinding uboLayoutBinding{};
         uboLayoutBinding.binding = 0;
@@ -125,7 +125,7 @@ export namespace almondnamespace::vulkancontext
         return buffer;
     }
 
-    inline void Application::createGraphicsPipeline()
+    void Application::createGraphicsPipeline()
     {
         const auto vertShaderCode = readFile("shaders/vert.spv");
         const auto fragShaderCode = readFile("shaders/frag.spv");

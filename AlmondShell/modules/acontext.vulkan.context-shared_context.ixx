@@ -61,13 +61,8 @@ namespace almondnamespace::vulkancontext
     inline const bool enableValidationLayers = true;
 #endif
 
-    inline const std::vector<const char*> validationLayers = {
-        "VK_LAYER_KHRONOS_validation"
-    };
-
-    inline const std::vector<const char*> deviceExtensions = {
-        VK_KHR_SWAPCHAIN_EXTENSION_NAME
-    };
+    export extern const std::vector<const char*> validationLayers;
+    export extern const std::vector<const char*> deviceExtensions;
 
     struct UniformBufferObject
     {
