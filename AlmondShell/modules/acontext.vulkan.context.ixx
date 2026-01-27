@@ -6,4 +6,3 @@ export module acontext.vulkan.context;
 export import :api;
 
 import :runtime;
-import :buffers;                // implementation only
