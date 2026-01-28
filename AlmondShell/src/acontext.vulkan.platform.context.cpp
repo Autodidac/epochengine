@@ -84,9 +84,6 @@ import :texture;
 import :descriptor;
 import :commands;
 
-import aatlas.manager;
-import aatlas.texture;
-
 import aengine.context.commandqueue;
 import aengine.core.context;
 import aengine.input;
@@ -335,95 +332,3 @@ namespace almondnamespace::vulkancontext
     }
 
 } // namespace almondnamespace::vulkancontext
-
-// -----------------------------------------------------------------------------
-// Engine-facing wrapper API (matches your exported declarations)
-// -----------------------------------------------------------------------------
-namespace almondnamespace::vulkancontext
-{
-    namespace
-    {
-        detail::Application s_app{};
-    }
-
-    bool vulkan_initialize(std::shared_ptr<core::Context> ctx,
-        void* parentWindowOpaque,
-        unsigned int w,
-        unsigned int h,
-        std::function<void(int, int)> onResize)
-    {
-        if (!ctx)
-            throw std::runtime_error("[Vulkan] vulkan_initialize requires non-null Context");
-
-        void* nativeWindow = parentWindowOpaque;
-
-#if defined(_WIN32) && !defined(ALMOND_MAIN_HEADLESS)
-        if (ctx->windowData && ctx->windowData->hwnd)
-            nativeWindow = ctx->windowData->hwnd;
-        else if (ctx->get_hwnd())
-            nativeWindow = ctx->get_hwnd();
-#endif
-
-        s_app.set_framebuffer_size(static_cast<int>(w), static_cast<int>(h));
-        s_app.set_context(ctx, nativeWindow);
-
-        ctx->get_width = vulkan_get_width;
-        ctx->get_height = vulkan_get_height;
-
-        ctx->is_key_held = [](almondnamespace::input::Key key) { return almondnamespace::input::is_key_held(key); };
-        ctx->is_key_down = [](almondnamespace::input::Key key) { return almondnamespace::input::is_key_down(key); };
-        ctx->is_mouse_button_held = [](almondnamespace::input::MouseButton b) { return almondnamespace::input::is_mouse_button_held(b); };
-        ctx->is_mouse_button_down = [](almondnamespace::input::MouseButton b) { return almondnamespace::input::is_mouse_button_down(b); };
-
-        ctx->onResize = [resize = std::move(onResize)](int newWidth, int newHeight) mutable
-            {
-                s_app.set_framebuffer_size(newWidth, newHeight);
-                if (resize)
-                    resize(newWidth, newHeight);
-            };
-
-        s_app.initWindow();
-        s_app.initVulkan();
-
-        almondnamespace::atlasmanager::register_backend_uploader(
-            almondnamespace::core::ContextType::Vulkan,
-            [](const almondnamespace::TextureAtlas& atlas)
-            {
-                almondnamespace::vulkantextures::ensure_uploaded(atlas);
-            });
-
-        return true;
-    }
-
-    bool vulkan_process(std::shared_ptr<core::Context> ctx, core::CommandQueue& queue)
-    {
-        return s_app.process(ctx, queue);
-    }
-
-    void vulkan_present()
-    {
-        // Present is handled by drawFrame() currently.
-    }
-
-    void vulkan_cleanup(std::shared_ptr<core::Context> ctx)
-    {
-        (void)ctx;
-
-        almondnamespace::atlasmanager::unregister_backend_uploader(
-            almondnamespace::core::ContextType::Vulkan);
-
-        almondnamespace::vulkantextures::clear_gpu_atlases();
-
-        s_app.cleanup();
-    }
-
-    int vulkan_get_width()
-    {
-        return s_app.get_framebuffer_width();
-    }
-
-    int vulkan_get_height()
-    {
-        return s_app.get_framebuffer_height();
-    }
-}
