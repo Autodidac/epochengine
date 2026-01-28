@@ -554,6 +554,7 @@ namespace almondnamespace::core
 
                     HDC hdc = ::GetDC(hwnd);
                     HGLRC glrc = nullptr;
+                    bool usesSharedContext = false;
 
 #if defined(ALMOND_USING_OPENGL)
                     if (type == ContextType::OpenGL
@@ -563,10 +564,19 @@ namespace almondnamespace::core
                         )
                     {
                         glrc = CreateSharedGLContext(hdc);
+                        usesSharedContext = (glrc != nullptr);
+                    }
+#if defined(ALMOND_USING_VULKAN)
+                    else if (type == ContextType::Vulkan)
+                    {
+                        // Vulkan GUI overlay uses OpenGL via a shared HGLRC when available.
+                        glrc = CreateSharedGLContext(hdc);
+                        usesSharedContext = (glrc != nullptr);
                     }
 #endif
+#endif
 
-                    auto winPtr = std::make_unique<WindowData>(hwnd, hdc, glrc, true, type);
+                    auto winPtr = std::make_unique<WindowData>(hwnd, hdc, glrc, usesSharedContext, type);
                     winPtr->running = true;
                     winPtr->titleWide = windowTitle;
                     winPtr->titleNarrow = narrowTitle;
@@ -791,6 +801,13 @@ namespace almondnamespace::core
                 ::wglMakeCurrent(nullptr, nullptr);
             }
         }
+#if defined(ALMOND_USING_VULKAN)
+        if (type == ContextType::Vulkan && !glContext)
+        {
+            glContext = CreateSharedGLContext(hdc);
+            usesSharedContext = (glContext != nullptr);
+        }
+#endif
 #endif
 
         if (parentWnd) MakeDockable(hwnd, parentWnd);
