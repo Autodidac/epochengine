@@ -5,7 +5,7 @@
 //
 // It also MUST be the single TU that provides:
 //  - STB_IMAGE_IMPLEMENTATION
-//  - VULKAN_HPP_DEFAULT_DISPATCH_LOADER_DYNAMIC_STORAGE
+//  - Vulkan-Hpp dynamic dispatch storage (see acontext.vulkan.dispatch_storage.cpp)
 //
 // If you keep vulkan.hpp in the module interface BMI, the safest way to guarantee
 // the dispatch storage exists is to include vulkan.hpp textually here (with the
@@ -28,11 +28,6 @@ module;
 #endif
 #ifndef VULKAN_HPP_NO_EXCEPTIONS
 #   define VULKAN_HPP_NO_EXCEPTIONS
-#endif
-
-// Define the dynamic dispatcher storage exactly once in the whole program:
-#ifndef VULKAN_HPP_DEFAULT_DISPATCH_LOADER_DYNAMIC_STORAGE
-#   define VULKAN_HPP_DEFAULT_DISPATCH_LOADER_DYNAMIC_STORAGE
 #endif
 
 #include <include/aengine.config.hpp>
