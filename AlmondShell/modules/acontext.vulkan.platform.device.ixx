@@ -12,6 +12,7 @@ module;
 
 export module acontext.vulkan.platform.device;
 
+#if ALMOND_VULKAN_CUSTOM_LOADER
 import acontext.vulkan.platform.dispatcher;
 
 export namespace almondnamespace::vulkancontext::platform
@@ -38,3 +39,9 @@ export namespace almondnamespace::vulkancontext::platform
             table.vkDestroyDevice(device, nullptr);
     }
 } // namespace almondnamespace::vulkancontext::platform
+#else
+export namespace almondnamespace::vulkancontext::platform
+{
+    // Custom loader disabled: no device entry points are exported.
+}
+#endif

@@ -16,6 +16,7 @@ module;
 
 export module acontext.vulkan.platform.dispatcher;
 
+#if ALMOND_VULKAN_CUSTOM_LOADER
 import acontext.vulkan.platform.loader; // almondnamespace::vulkan::LoadLibrary / LoadFunction wrappers
 
 export namespace almondnamespace::vulkancontext::platform
@@ -99,3 +100,9 @@ export namespace almondnamespace::vulkancontext::platform
         return table;
     }
 } // namespace almondnamespace::vulkancontext::platform
+#else
+export namespace almondnamespace::vulkancontext::platform
+{
+    // Custom loader disabled: no dispatcher entry points are exported.
+}
+#endif
