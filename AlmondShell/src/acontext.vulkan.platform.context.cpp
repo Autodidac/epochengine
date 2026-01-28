@@ -36,6 +36,13 @@ module;
 #   ifndef VK_USE_PLATFORM_WIN32_KHR
 #       define VK_USE_PLATFORM_WIN32_KHR
 #   endif
+#   ifndef WIN32_LEAN_AND_MEAN
+#       define WIN32_LEAN_AND_MEAN
+#   endif
+#   ifndef NOMINMAX
+#       define NOMINMAX
+#   endif
+#   include <windows.h>
 #endif
 
 #if defined(ALMOND_VULKAN_STANDALONE)
@@ -250,7 +257,27 @@ namespace almondnamespace::vulkancontext
 
         updateCamera(deltaTime);
 
+        // Vulkan scene rendering stays native; GUI overlays (when enabled) are drawn via a shared OpenGL HGLRC.
+#if defined(_WIN32)
+        if (ctx && ctx->windowData && ctx->windowData->hdc && ctx->windowData->glContext)
+        {
+            if (::wglMakeCurrent(ctx->windowData->hdc, ctx->windowData->glContext))
+            {
+                queue.drain();
+                ::wglMakeCurrent(nullptr, nullptr);
+            }
+            else
+            {
+                queue.drain();
+            }
+        }
+        else
+        {
+            queue.drain();
+        }
+#else
         queue.drain();
+#endif
         if (framebufferMinimized)
         {
             std::this_thread::sleep_for(std::chrono::milliseconds(16));
