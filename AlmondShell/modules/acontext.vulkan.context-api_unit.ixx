@@ -46,14 +46,18 @@ namespace almondnamespace::vulkancontext
         auto& app = vulkan_app();
 
         app.set_framebuffer_size(static_cast<int>(w), static_cast<int>(h));
+        ctx->framebufferWidth = static_cast<int>(w);
+        ctx->framebufferHeight = static_cast<int>(h);
         app.set_context(ctx, nativeWindow);
 
         ctx->get_width  = &vulkan_get_width;
         ctx->get_height = &vulkan_get_height;
 
-        ctx->onResize = [&app, resize = std::move(onResize)](int nw, int nh) mutable
+        ctx->onResize = [&app, ctx, resize = std::move(onResize)](int nw, int nh) mutable
         {
             app.set_framebuffer_size(nw, nh);
+            ctx->framebufferWidth = nw;
+            ctx->framebufferHeight = nh;
             if (resize) resize(nw, nh);
         };
 
