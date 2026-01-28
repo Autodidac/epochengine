@@ -250,6 +250,7 @@ namespace almondnamespace::vulkancontext
 
         updateCamera(deltaTime);
 
+        // Vulkan uses a Vulkan-native GUI backend; no OpenGL context is shared on this path.
         queue.drain();
         if (framebufferMinimized)
         {

@@ -554,6 +554,7 @@ namespace almondnamespace::core
 
                     HDC hdc = ::GetDC(hwnd);
                     HGLRC glrc = nullptr;
+                    bool usesSharedContext = false;
 
 #if defined(ALMOND_USING_OPENGL)
                     if (type == ContextType::OpenGL
@@ -563,10 +564,11 @@ namespace almondnamespace::core
                         )
                     {
                         glrc = CreateSharedGLContext(hdc);
+                        usesSharedContext = (glrc != nullptr);
                     }
 #endif
 
-                    auto winPtr = std::make_unique<WindowData>(hwnd, hdc, glrc, true, type);
+                    auto winPtr = std::make_unique<WindowData>(hwnd, hdc, glrc, usesSharedContext, type);
                     winPtr->running = true;
                     winPtr->titleWide = windowTitle;
                     winPtr->titleNarrow = narrowTitle;
