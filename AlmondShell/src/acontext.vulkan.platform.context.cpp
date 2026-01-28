@@ -46,8 +46,6 @@ module;
 #       define GLFW_INCLUDE_VULKAN
 #   endif
 #   include <GLFW/glfw3.h>
-#else
-struct GLFWwindow;
 #endif
 
 #include <vulkan/vulkan.hpp>
