@@ -19,6 +19,7 @@ module;
 export module acontext.vulkan.context:instance;
 
 import :shared_context;
+import :shared_vk;
 
 import <algorithm>;
 import <cstring>;

@@ -15,6 +15,7 @@
 export module acontext.vulkan.context:descriptor;
 
 import :shared_context;
+import :shared_vk;
 import acontext.vulkan.camera;
 
 namespace almondnamespace::vulkancontext

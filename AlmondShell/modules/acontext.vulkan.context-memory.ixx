@@ -13,7 +13,7 @@ module;
 
 export module acontext.vulkan.context:memory;
 
-import :shared_context;
+import :shared_vk;
 
 namespace almondnamespace::vulkancontext
 {

@@ -8,7 +8,7 @@ module;
 
 export module acontext.vulkan.context:meshcube;
 
-import :shared_context;
+import :shared_vk;
 
 import <array>;
 import <cstdint>;

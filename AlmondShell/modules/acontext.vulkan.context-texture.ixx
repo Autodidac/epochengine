@@ -10,7 +10,7 @@ import <cstring>;
 import <stdexcept>;
 import <utility>;
 
-import :shared_context;
+import :shared_vk;
 
 namespace almondnamespace::vulkancontext
 {
