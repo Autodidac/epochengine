@@ -33,8 +33,9 @@ namespace almondnamespace::vulkancontext
 
         auto [stagingBuffer, stagingBufferMemory] = createBuffer(bufferSize, stagingUsage, stagingProps);
 
-        void* mapped = nullptr;
-        device->mapMemory(*stagingBufferMemory, 0, bufferSize, {}, &mapped);
+        auto [mapRes, mapped] = device->mapMemory(*stagingBufferMemory, 0, bufferSize);
+        if (mapRes != vk::Result::eSuccess)
+            throw std::runtime_error("Failed to map vertex staging buffer memory.");
         std::memcpy(mapped, vertices.data(), static_cast<std::size_t>(bufferSize));
         device->unmapMemory(*stagingBufferMemory);
 
@@ -69,8 +70,9 @@ namespace almondnamespace::vulkancontext
 
         auto [stagingBuffer, stagingBufferMemory] = createBuffer(bufferSize, stagingUsage, stagingProps);
 
-        void* mapped = nullptr;
-        device->mapMemory(*stagingBufferMemory, 0, bufferSize, {}, &mapped);
+        auto [mapRes, mapped] = device->mapMemory(*stagingBufferMemory, 0, bufferSize);
+        if (mapRes != vk::Result::eSuccess)
+            throw std::runtime_error("Failed to map index staging buffer memory.");
         std::memcpy(mapped, indices.data(), static_cast<std::size_t>(bufferSize));
         device->unmapMemory(*stagingBufferMemory);
 
