@@ -36,6 +36,13 @@ module;
 #   ifndef VK_USE_PLATFORM_WIN32_KHR
 #       define VK_USE_PLATFORM_WIN32_KHR
 #   endif
+#   ifndef WIN32_LEAN_AND_MEAN
+#       define WIN32_LEAN_AND_MEAN
+#   endif
+#   ifndef NOMINMAX
+#       define NOMINMAX
+#   endif
+#   include <windows.h>
 #endif
 
 #if defined(ALMOND_VULKAN_STANDALONE)
@@ -252,6 +259,7 @@ namespace almondnamespace::vulkancontext
 
         // Vulkan uses a Vulkan-native GUI backend; no OpenGL context is shared on this path.
         queue.drain();
+#endif
         if (framebufferMinimized)
         {
             std::this_thread::sleep_for(std::chrono::milliseconds(16));
