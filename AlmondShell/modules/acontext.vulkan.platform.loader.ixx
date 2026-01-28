@@ -1,6 +1,5 @@
 module;
 
-
 #include <include/acontext.vulkan.hpp>
 
 #include <cstdlib>
@@ -24,6 +23,7 @@ module;
 
 export module acontext.vulkan.platform.loader;
 
+#if ALMOND_VULKAN_CUSTOM_LOADER
 export namespace almondnamespace::vulkan {
 
     // OS/dynamic-loader calls are runtime by definition: NOT constexpr.
@@ -61,3 +61,9 @@ export namespace almondnamespace::vulkan {
     }
 
 } // namespace almondnamespace::vulkan
+#else
+export namespace almondnamespace::vulkan
+{
+    // Custom loader disabled: no dynamic loader entry points are exported.
+}
+#endif

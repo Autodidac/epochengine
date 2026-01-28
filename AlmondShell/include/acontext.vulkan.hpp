@@ -9,9 +9,20 @@
 #endif
 
 
+// Static Vulkan-Hpp dispatch is the single source of truth for loading.
+// The custom dynamic loader/dispatcher modules are intentionally disabled.
+#ifndef ALMOND_VULKAN_CUSTOM_LOADER
+#  define ALMOND_VULKAN_CUSTOM_LOADER 0
+#endif
+
 // If anyone enabled dynamic dispatch, kill the build immediately.
 #if defined(VULKAN_HPP_DISPATCH_LOADER_DYNAMIC) && (VULKAN_HPP_DISPATCH_LOADER_DYNAMIC != 0)
 #  error "Do not enable VULKAN_HPP_DISPATCH_LOADER_DYNAMIC; use static dispatch across all module units."
+#endif
+
+// If anyone tries to re-enable the custom loader, stop the build.
+#if defined(ALMOND_VULKAN_CUSTOM_LOADER) && (ALMOND_VULKAN_CUSTOM_LOADER != 0)
+#  error "Custom Vulkan loader is disabled. Use Vulkan-Hpp static dispatch only."
 #endif
 
 // Pin it off (some headers check for definition, not just value).
