@@ -1,17 +1,19 @@
 // ============================================================================
-// src/acontext.vulkan.context-buffers.cpp
-// Buffer creation implementation (compiled as a normal TU).
+// modules/acontext.vulkan.context-buffers.cpp   (or .ixx)
+// Partition implementation unit
 // ============================================================================
 
-#include <include/acontext.vulkan.hpp> // heavy stuff lives here (vulkan.hpp etc.)
+module;
 
+#include <include/acontext.vulkan.hpp> // vk::, vk::Unique*, etc.
 #include <cstdint>
 #include <cstring>
 #include <stdexcept>
 
-import acontext.vulkan.context;         // ensures module is built/available
-import acontext.vulkan.context:shared_vk;
-import acontext.vulkan.context:meshcube;
+module acontext.vulkan.context:buffers;
+
+import :shared_vk;
+import :meshcube;
 
 namespace almondnamespace::vulkancontext
 {
@@ -21,17 +23,18 @@ namespace almondnamespace::vulkancontext
         if (vertices.empty())
             throw std::runtime_error("[Vulkan] No vertex data available.");
 
-        const vk::DeviceSize bufferSize = sizeof(vertices[0]) * vertices.size();
+        const vk::DeviceSize bufferSize =
+            static_cast<vk::DeviceSize>(sizeof(vertices[0]) * vertices.size());
 
         const auto stagingUsage = vk::BufferUsageFlags{ vk::BufferUsageFlagBits::eTransferSrc };
-        const auto stagingProperties =
+        const auto stagingProps =
             vk::MemoryPropertyFlags{ vk::MemoryPropertyFlagBits::eHostVisible } |
             vk::MemoryPropertyFlags{ vk::MemoryPropertyFlagBits::eHostCoherent };
 
-        auto [stagingBuffer, stagingBufferMemory] = createBuffer(bufferSize, stagingUsage, stagingProperties);
+        auto [stagingBuffer, stagingBufferMemory] = createBuffer(bufferSize, stagingUsage, stagingProps);
 
         void* mapped = nullptr;
-        (void)device->mapMemory(*stagingBufferMemory, 0, bufferSize, {}, &mapped);
+        device->mapMemory(*stagingBufferMemory, 0, bufferSize, {}, &mapped);
         std::memcpy(mapped, vertices.data(), static_cast<std::size_t>(bufferSize));
         device->unmapMemory(*stagingBufferMemory);
 
@@ -56,17 +59,18 @@ namespace almondnamespace::vulkancontext
         if (indices.empty())
             throw std::runtime_error("[Vulkan] No index data available.");
 
-        const vk::DeviceSize bufferSize = sizeof(indices[0]) * indices.size();
+        const vk::DeviceSize bufferSize =
+            static_cast<vk::DeviceSize>(sizeof(indices[0]) * indices.size());
 
         const auto stagingUsage = vk::BufferUsageFlags{ vk::BufferUsageFlagBits::eTransferSrc };
-        const auto stagingProperties =
+        const auto stagingProps =
             vk::MemoryPropertyFlags{ vk::MemoryPropertyFlagBits::eHostVisible } |
             vk::MemoryPropertyFlags{ vk::MemoryPropertyFlagBits::eHostCoherent };
 
-        auto [stagingBuffer, stagingBufferMemory] = createBuffer(bufferSize, stagingUsage, stagingProperties);
+        auto [stagingBuffer, stagingBufferMemory] = createBuffer(bufferSize, stagingUsage, stagingProps);
 
         void* mapped = nullptr;
-        (void)device->mapMemory(*stagingBufferMemory, 0, bufferSize, {}, &mapped);
+        device->mapMemory(*stagingBufferMemory, 0, bufferSize, {}, &mapped);
         std::memcpy(mapped, indices.data(), static_cast<std::size_t>(bufferSize));
         device->unmapMemory(*stagingBufferMemory);
 

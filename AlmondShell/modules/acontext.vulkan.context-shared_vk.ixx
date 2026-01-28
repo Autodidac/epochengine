@@ -15,6 +15,8 @@ module;
 #   include <GLFW/glfw3.h>
 #endif
 
+#include <glm/glm.hpp>
+
 export module acontext.vulkan.context:shared_vk;
 
 #if !defined(ALMOND_VULKAN_STANDALONE)

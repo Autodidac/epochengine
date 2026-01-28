@@ -19,7 +19,7 @@ namespace almondnamespace::vulkancontext
     using Vertex = Application::Vertex;
 
     // Keep data local to this partition (NOT exported as symbols)
-    inline constexpr std::array<Vertex, 24> kCubeVertices = { {
+    constinit inline std::array<Vertex, 24> kCubeVertices = { {
         {{-0.5f, -0.5f,  0.5f}, {0, 0, 1}, {0, 0}},
         {{ 0.5f, -0.5f,  0.5f}, {0, 0, 1}, {1, 0}},
         {{ 0.5f,  0.5f,  0.5f}, {0, 0, 1}, {1, 1}},
@@ -61,12 +61,12 @@ namespace almondnamespace::vulkancontext
     } };
 
     // Exported accessors (cheap, BMI-safe)
-    std::span<const Vertex> cube_vertices() noexcept
+    export std::span<const Vertex> cube_vertices() noexcept
     {
         return { kCubeVertices.data(), kCubeVertices.size() };
     }
 
-    std::span<const std::uint16_t> cube_indices() noexcept
+    export std::span<const std::uint16_t> cube_indices() noexcept
     {
         return { kCubeIndices.data(), kCubeIndices.size() };
     }

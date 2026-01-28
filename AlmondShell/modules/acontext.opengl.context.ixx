@@ -83,6 +83,7 @@ export module acontext.opengl.context;
 // Core engine modules
 // ------------------------------------------------------------
 import aengine.core.context;
+import aengine.context.multiplexer;
 import aengine.context.commandqueue;
 import aengine.context.window;
 import aengine.input;

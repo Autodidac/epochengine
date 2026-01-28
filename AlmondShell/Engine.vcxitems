@@ -73,6 +73,7 @@
     <ClCompile Include="$(MSBuildThisFileDirectory)modules\acontext.vulkan.context-commands.ixx" />
     <ClCompile Include="$(MSBuildThisFileDirectory)modules\acontext.vulkan.context-runtime.ixx" />
     <ClCompile Include="$(MSBuildThisFileDirectory)modules\acontext.vulkan.context-shared_context.ixx" />
+    <ClCompile Include="$(MSBuildThisFileDirectory)modules\acontext.vulkan.context-shared_vk.ixx" />
     <ClCompile Include="$(MSBuildThisFileDirectory)modules\acontext.vulkan.context.ixx" />
     <ClCompile Include="$(MSBuildThisFileDirectory)modules\acontext.vulkan.meshcube.ixx" />
     <ClCompile Include="$(MSBuildThisFileDirectory)modules\acontext.vulkan.platform.device.ixx" />
@@ -204,7 +205,7 @@
     <ClCompile Include="$(MSBuildThisFileDirectory)modules\acontext.vulkan.context-swapchain.ixx" />
     <ClCompile Include="$(MSBuildThisFileDirectory)modules\acontext.vulkan.context-texture.ixx" />
     <ClCompile Include="$(MSBuildThisFileDirectory)modules\acontext.vulkan.triangle.ixx" />
-    <ClCompile Include="$(MSBuildThisFileDirectory)src\acontext.vulkan.context-texture.cppm" />
+    <ClCompile Include="$(MSBuildThisFileDirectory)src\acontext.vulkan.context-texture.cpp" />
     <ClCompile Include="$(MSBuildThisFileDirectory)src\acontext.raylib.bridge.cpp" />
     <ClCompile Include="$(MSBuildThisFileDirectory)src\acontext.vulkan.context_buffers.cpp" />
     <ClCompile Include="$(MSBuildThisFileDirectory)src\acontext.vulkan.platform.context.cpp">

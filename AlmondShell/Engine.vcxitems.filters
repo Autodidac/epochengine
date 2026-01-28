@@ -608,9 +608,6 @@
     <ClCompile Include="$(MSBuildThisFileDirectory)modules\acontext.vulkan.context-texture.ixx">
       <Filter>Module Files\ixx\core\context\backends\vulkan\contextcore\partitions</Filter>
     </ClCompile>
-    <ClCompile Include="$(MSBuildThisFileDirectory)src\acontext.vulkan.context-texture.cppm">
-      <Filter>Source Files\core</Filter>
-    </ClCompile>
     <ClCompile Include="$(MSBuildThisFileDirectory)modules\acontext.vulkan.context-window.ixx">
       <Filter>Module Files\ixx\core\context\backends\vulkan\contextcore\partitions</Filter>
     </ClCompile>
@@ -627,6 +624,12 @@
       <Filter>Source Files\core</Filter>
     </ClCompile>
     <ClCompile Include="$(MSBuildThisFileDirectory)src\aengine.cpp">
+      <Filter>Source Files\core</Filter>
+    </ClCompile>
+    <ClCompile Include="$(MSBuildThisFileDirectory)modules\acontext.vulkan.context-shared_vk.ixx">
+      <Filter>Module Files\ixx\core\context\backends\vulkan\contextcore</Filter>
+    </ClCompile>
+    <ClCompile Include="$(MSBuildThisFileDirectory)src\acontext.vulkan.context-texture.cpp">
       <Filter>Source Files\core</Filter>
     </ClCompile>
   </ItemGroup>

@@ -30,14 +30,20 @@ export namespace almondnamespace::vulkancontext
 {
     bool Application::checkValidationLayerSupport()
     {
-        auto [res, props] = vk::enumerateInstanceLayerProperties();
-        if (res != vk::Result::eSuccess)
+        uint32_t count = 0;
+        VkResult vr = vkEnumerateInstanceLayerProperties(&count, nullptr);
+        if (vr != VK_SUCCESS || count == 0)
+            return false;
+
+        std::vector<VkLayerProperties> props(count);
+        vr = vkEnumerateInstanceLayerProperties(&count, props.data());
+        if (vr != VK_SUCCESS)
             return false;
 
         for (const char* layerName : validationLayers)
         {
             const bool found = std::any_of(props.begin(), props.end(),
-                [&](const vk::LayerProperties& p)
+                [&](const VkLayerProperties& p)
                 {
                     return std::strcmp(p.layerName, layerName) == 0;
                 });
