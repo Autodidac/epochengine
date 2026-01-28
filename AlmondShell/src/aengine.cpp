@@ -334,7 +334,9 @@ namespace almondnamespace::core
 
                                 ctx->clear_safe();
                                 gui::begin_frame(ctx, dt, mouse_pos, mouse_left_down);
-                                if (almondnamespace::editor_run())
+                                gui::WidgetBounds editor_bounds{};
+                                const bool editor_clicked = almondnamespace::editor_run(ctx, &editor_bounds);
+                                if (editor_clicked)
                                     show_games_popup = !show_games_popup;
 
                                 const bool draw_editor_overlay = !show_games_popup;
@@ -349,7 +351,8 @@ namespace almondnamespace::core
                                         menu_has_focus ? up_pressed : false,
                                         menu_has_focus ? down_pressed : false,
                                         menu_has_focus ? enter_pressed : false,
-                                        menu_has_focus);
+                                        menu_has_focus,
+                                        editor_bounds);
                                 }
 
                                 if (command_choice)

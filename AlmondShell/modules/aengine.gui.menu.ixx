@@ -435,7 +435,7 @@ export namespace almondnamespace::menu
         bool prevEnter = false;
         bool initialized = false;
 
-        gui::Vec2 windowPosition{ 24.0f, 24.0f };
+        gui::Vec2 windowPosition{};
         float windowPadding = 16.0f;
         float itemSpacing = 12.0f;
 
@@ -464,11 +464,11 @@ export namespace almondnamespace::menu
             bool upPressed,
             bool downPressed,
             bool enterPressed,
-            bool allowMouse = true)
+            bool allowMouse = true,
+            std::optional<gui::WidgetBounds> avoidBounds = std::nullopt)
         {
             if (!initialized) return std::nullopt;
 
-            std::ignore = ctx;
             std::ignore = win;
             std::ignore = dt;
 
@@ -499,6 +499,56 @@ export namespace almondnamespace::menu
                 maxWidth + windowPadding * 2,
                 totalHeight + windowPadding * 2
             };
+
+            const float viewportWidth = ctx ? static_cast<float>(ctx->get_width_safe()) : 0.0f;
+            const float viewportHeight = ctx ? static_cast<float>(ctx->get_height_safe()) : 0.0f;
+            constexpr float margin = 24.0f;
+
+            if (viewportWidth > 0.0f && viewportHeight > 0.0f)
+            {
+                windowPosition = {
+                    viewportWidth - windowSize.x - margin,
+                    margin
+                };
+
+                auto clamp_to_viewport = [&](gui::Vec2 pos)
+                    {
+                        pos.x = std::clamp(pos.x, 0.0f, (std::max)(0.0f, viewportWidth - windowSize.x));
+                        pos.y = std::clamp(pos.y, 0.0f, (std::max)(0.0f, viewportHeight - windowSize.y));
+                        return pos;
+                    };
+
+                auto intersects = [](const gui::WidgetBounds& a, const gui::WidgetBounds& b)
+                    {
+                        return !(a.position.x + a.size.x <= b.position.x ||
+                            b.position.x + b.size.x <= a.position.x ||
+                            a.position.y + a.size.y <= b.position.y ||
+                            b.position.y + b.size.y <= a.position.y);
+                    };
+
+                windowPosition = clamp_to_viewport(windowPosition);
+
+                if (avoidBounds)
+                {
+                    gui::WidgetBounds current{ windowPosition, windowSize };
+                    if (intersects(current, *avoidBounds))
+                    {
+                        gui::Vec2 candidate{ windowPosition.x, avoidBounds->position.y + avoidBounds->size.y + margin };
+                        if (candidate.y + windowSize.y > viewportHeight)
+                            candidate.y = avoidBounds->position.y - windowSize.y - margin;
+
+                        if (candidate.y < 0.0f || candidate.y + windowSize.y > viewportHeight)
+                        {
+                            candidate = {
+                                avoidBounds->position.x - windowSize.x - margin,
+                                windowPosition.y
+                            };
+                        }
+
+                        windowPosition = clamp_to_viewport(candidate);
+                    }
+                }
+            }
 
             gui::begin_window(
                 "Editor Commands",
