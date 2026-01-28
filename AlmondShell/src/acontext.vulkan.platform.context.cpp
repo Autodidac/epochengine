@@ -257,25 +257,7 @@ namespace almondnamespace::vulkancontext
 
         updateCamera(deltaTime);
 
-        // Vulkan scene rendering stays native; GUI overlays (when enabled) are drawn via a shared OpenGL HGLRC.
-#if defined(_WIN32)
-        if (ctx && ctx->windowData && ctx->windowData->hdc && ctx->windowData->glContext)
-        {
-            if (::wglMakeCurrent(ctx->windowData->hdc, ctx->windowData->glContext))
-            {
-                queue.drain();
-                ::wglMakeCurrent(nullptr, nullptr);
-            }
-            else
-            {
-                queue.drain();
-            }
-        }
-        else
-        {
-            queue.drain();
-        }
-#else
+        // Vulkan uses a Vulkan-native GUI backend; no OpenGL context is shared on this path.
         queue.drain();
 #endif
         if (framebufferMinimized)
