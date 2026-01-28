@@ -523,10 +523,17 @@ namespace almondnamespace::gui
     {
         const auto& metrics = g_resources.font.metrics;
         const float baseHeight = base_line_height(scale);
-        if (metrics.ascent > 0.0f || metrics.descent > 0.0f || metrics.lineGap > 0.0f)
+        const bool hasMetrics = (metrics.ascent > 0.0f || metrics.descent > 0.0f);
+        if (hasMetrics)
         {
-            const float advance = (metrics.ascent + metrics.descent + metrics.lineGap) * scale;
-            return (std::max)(advance, baseHeight) + baseHeight * kLineSpacingFactor;
+            const float lineHeight = (metrics.lineHeight > 0.0f)
+                ? metrics.lineHeight
+                : (metrics.ascent + metrics.descent + metrics.lineGap);
+            const float advance = lineHeight * scale;
+            const float minimumAdvance = (std::max)(advance, baseHeight);
+            if (metrics.lineGap > 0.0f)
+                return minimumAdvance;
+            return minimumAdvance + baseHeight * kLineSpacingFactor;
         }
         return baseHeight + baseHeight * kLineSpacingFactor;
     }
