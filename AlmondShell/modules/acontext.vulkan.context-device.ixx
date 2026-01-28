@@ -6,6 +6,9 @@ module;
 #include <vector>
 
 #include <include/acontext.vulkan.hpp>
+// Include Vulkan-Hpp after config.
+#include <vulkan/vulkan.hpp>
+#include <vulkan/vulkan_handles.hpp>
 
 export module acontext.vulkan.context:device;
 

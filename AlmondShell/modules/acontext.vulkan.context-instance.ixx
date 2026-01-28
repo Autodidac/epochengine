@@ -1,5 +1,8 @@
 module;
 
+
+#include <include/acontext.vulkan.hpp>
+
 #if defined(ALMOND_VULKAN_STANDALONE)
 #   include <GLFW/glfw3.h>
 #endif
@@ -14,7 +17,8 @@ module;
 #   include <include/aframework.hpp>
 #endif
 
-#include <include/acontext.vulkan.hpp>
+// Include Vulkan-Hpp after config.
+#include <vulkan/vulkan.hpp>
 
 export module acontext.vulkan.context:instance;
 

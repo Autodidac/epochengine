@@ -1,6 +1,11 @@
 module;
 
+
 #include <include/acontext.vulkan.hpp>
+
+// Include Vulkan-Hpp after config.
+#include <vulkan/vulkan.hpp>
+
 #include <src/stb/stb_image.h>
 
 module acontext.vulkan.context:texture;

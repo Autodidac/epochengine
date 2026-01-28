@@ -5,7 +5,11 @@
 
 module;
 
-#include <include/acontext.vulkan.hpp> // vk::, vk::Unique*, etc.
+#include <include/acontext.vulkan.hpp>
+
+// Include Vulkan-Hpp after config.
+#include <vulkan/vulkan.hpp>
+
 #include <cstdint>
 #include <cstring>
 #include <stdexcept>

@@ -4,8 +4,9 @@ module;
 //#ifndef _CRT_SECURE_NO_WARNINGS
 //#   define _CRT_SECURE_NO_WARNINGS
 //#endif
-
 #include <include/acontext.vulkan.hpp>
+// Include Vulkan-Hpp after config.
+#include <vulkan/vulkan.hpp>
 
 #include <array>
 #include <cassert>

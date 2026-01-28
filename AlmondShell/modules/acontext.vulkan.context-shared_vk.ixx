@@ -15,6 +15,9 @@ module;
 #   include <GLFW/glfw3.h>
 #endif
 
+// Include Vulkan-Hpp after config.
+#include <vulkan/vulkan.hpp>
+
 #include <glm/glm.hpp>
 
 export module acontext.vulkan.context:shared_vk;
@@ -89,7 +92,6 @@ namespace almondnamespace::vulkancontext
             return *commandBuffers[currentFrame];
         }
 
-        // Public for now because you already use it externally.
         std::vector<vk::Image> swapChainImages;
 
         // Window
@@ -112,7 +114,7 @@ namespace almondnamespace::vulkancontext
                 vk::BufferUsageFlags usage,
                 vk::MemoryPropertyFlags properties);
 
-        std::uint32_t indexCount = 0; // set when you create/fill the index buffer
+        std::uint32_t indexCount = 0;
 
     private:
         std::weak_ptr<almondnamespace::core::Context> context;
@@ -120,34 +122,26 @@ namespace almondnamespace::vulkancontext
         int framebufferWidth = 800;
         int framebufferHeight = 600;
 
-        // Vulkan core objects
         vk::UniqueInstance instance;
-
-        // Raw messenger handle
         vk::DebugUtilsMessengerEXT debugMessenger = VK_NULL_HANDLE;
-
         vk::UniqueSurfaceKHR surface;
 
         vk::Queue graphicsQueue;
         vk::Queue presentQueue;
         QueueFamilyIndices queueFamilyIndices;
 
-        // Swap chain
         vk::UniqueSwapchainKHR swapChain;
         vk::Format swapChainImageFormat{};
         vk::Extent2D swapChainExtent{};
         std::vector<vk::UniqueImageView> swapChainImageViews;
 
-        // Render pass and pipeline
         vk::UniqueRenderPass renderPass;
         vk::UniqueDescriptorSetLayout descriptorSetLayout;
         vk::UniquePipelineLayout pipelineLayout;
         vk::UniquePipeline graphicsPipeline;
 
-        // Framebuffers
         std::vector<vk::UniqueFramebuffer> framebuffers;
 
-        // Buffers
         vk::UniqueBuffer vertexBuffer;
         vk::UniqueDeviceMemory vertexBufferMemory;
 
@@ -158,11 +152,9 @@ namespace almondnamespace::vulkancontext
         std::vector<vk::UniqueDeviceMemory> uniformBuffersMemory;
         std::vector<void*> uniformBuffersMapped;
 
-        // Descriptor sets
         vk::UniqueDescriptorPool descriptorPool;
         std::vector<vk::UniqueDescriptorSet> descriptorSets;
 
-        // Synchronization
         std::vector<vk::UniqueSemaphore> imageAvailableSemaphores;
         std::vector<vk::UniqueSemaphore> renderFinishedSemaphores;
         std::vector<vk::UniqueFence> inFlightFences;
@@ -170,18 +162,15 @@ namespace almondnamespace::vulkancontext
         std::size_t currentFrame = 0;
         bool framebufferResized = false;
 
-        // Depth resources
         vk::UniqueImage depthImage;
         vk::UniqueDeviceMemory depthImageMemory;
         vk::UniqueImageView depthImageView;
 
-        // Texture resources
         vk::UniqueImage textureImage;
         vk::UniqueDeviceMemory textureImageMemory;
         vk::UniqueImageView textureImageView;
         vk::UniqueSampler textureSampler;
 
-        // Camera
         inline static almondnamespace::vulkancamera::State cam =
             almondnamespace::vulkancamera::create(
                 glm::vec3(0.0f, 0.0f, 5.0f),
@@ -192,14 +181,12 @@ namespace almondnamespace::vulkancontext
         float lastY = 300.0f;
         bool firstMouse = true;
 
-        // Callbacks / camera
         static void framebufferResizeCallback(GLFWwindow* window, int width, int height);
         static void mouseCallback(GLFWwindow* window, double xpos, double ypos);
 
         void processMouseInput(double xpos, double ypos);
         void updateCamera(float deltaTime);
 
-        // Vulkan setup
         void createInstance();
         std::vector<const char*> getRequiredExtensions();
 
@@ -211,7 +198,6 @@ namespace almondnamespace::vulkancontext
         void createLogicalDevice();
         void createCommandPool();
 
-        // Swapchain
         SwapChainSupportDetails querySwapChainSupport(vk::PhysicalDevice device);
         vk::SurfaceFormatKHR chooseSwapSurfaceFormat(const std::vector<vk::SurfaceFormatKHR>& formats);
         vk::PresentModeKHR chooseSwapPresentMode(const std::vector<vk::PresentModeKHR>& presentModes);
@@ -225,7 +211,6 @@ namespace almondnamespace::vulkancontext
         void createDescriptorSetLayout();
         void createGraphicsPipeline();
 
-        // Depth
         void createDepthResources();
         bool hasStencilComponent(vk::Format format) noexcept;
         vk::Format findDepthFormat();
@@ -235,7 +220,6 @@ namespace almondnamespace::vulkancontext
 
         void createFramebuffers();
 
-        // Texture upload helpers
         void createTextureImage();
         void transitionImageLayout(vk::Image image, vk::Format format,
             vk::ImageLayout oldLayout, vk::ImageLayout newLayout);
@@ -244,7 +228,6 @@ namespace almondnamespace::vulkancontext
         void createTextureImageView();
         void createTextureSampler();
 
-        // Buffer helpers
         std::uint32_t findMemoryType(std::uint32_t typeFilter, vk::MemoryPropertyFlags properties);
 
         vk::UniqueCommandBuffer beginSingleTimeCommands();
@@ -252,16 +235,13 @@ namespace almondnamespace::vulkancontext
 
         void copyBuffer(vk::Buffer srcBuffer, vk::Buffer dstBuffer, vk::DeviceSize size);
 
-        // Uniforms
         void createUniformBuffers();
         void updateUniformBuffer(std::uint32_t currentImage,
             const almondnamespace::vulkancamera::State& camera);
 
-        // Descriptors
         void createDescriptorPool();
         void createDescriptorSets();
 
-        // Command buffers / sync
         void createCommandBuffers();
         void createSyncObjects();
 
@@ -271,9 +251,6 @@ namespace almondnamespace::vulkancontext
         static std::vector<char> readFile(const std::string& filename);
 
     public:
-        // NOTE:
-        // Keep Vertex public so other internal modules (like acontext.vulkan.meshcube)
-        // can provide mesh data without bloating this BMI.
         struct Vertex
         {
             glm::vec3 pos{};
@@ -296,11 +273,8 @@ namespace almondnamespace::vulkancontext
         };
     };
 
-    // Mesh accessors (implemented in modules/acontext.vulkan.meshcube.ixx)
     export std::span<const Application::Vertex> cube_vertices() noexcept;
     export std::span<const std::uint16_t>       cube_indices()  noexcept;
 
-    // Exported accessor used by :api to obtain the singleton app.
-    // DECLARATION ONLY. Definition must live in exactly one TU/partition (use :runtime).
     export Application& vulkan_app();
 }

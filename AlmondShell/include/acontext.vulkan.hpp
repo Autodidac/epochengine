@@ -1,49 +1,44 @@
 #pragma once
 #include <include/aengine.config.hpp>
-// ---- Vulkan-Hpp configuration must be identical everywhere ----
-#ifdef ALMOND_USING_VULKAN
-#	ifdef _WIN32
 
-#if defined(_WIN32) && !defined(VK_USE_PLATFORM_WIN32_KHR)
-#  define VK_USE_PLATFORM_WIN32_KHR
-#endif
+// ============================================================================
+// include/avulkan.config.hpp
+//
+// Vulkan macro configuration (single source of truth).
+//
+// This configuration enables Vulkan-Hpp DYNAMIC dispatch (custom loader mode).
+// Every TU/module unit that includes <vulkan/vulkan.hpp> MUST include this header
+// first (in the global module fragment or before any Vulkan headers).
+//
+// IMPORTANT:
+//   - Do NOT define VULKAN_HPP_DEFAULT_DISPATCH_LOADER_DYNAMIC_STORAGE here.
+//     Define it in exactly ONE TU (see src/acontext.vulkan.platform.context.cpp).
+// ============================================================================
 
+#if defined(ALMOND_USING_VULKAN)
 
-// Static Vulkan-Hpp dispatch is the single source of truth for loading.
-// The custom dynamic loader/dispatcher modules are intentionally disabled.
-#ifndef ALMOND_VULKAN_CUSTOM_LOADER
-#  define ALMOND_VULKAN_CUSTOM_LOADER 0
-#endif
+#  if defined(_WIN32)
+#    ifndef VK_USE_PLATFORM_WIN32_KHR
+#      define VK_USE_PLATFORM_WIN32_KHR 1
+#    endif
+#  endif
 
-// If anyone enabled dynamic dispatch, kill the build immediately.
-#if defined(VULKAN_HPP_DISPATCH_LOADER_DYNAMIC) && (VULKAN_HPP_DISPATCH_LOADER_DYNAMIC != 0)
-#  error "Do not enable VULKAN_HPP_DISPATCH_LOADER_DYNAMIC; use static dispatch across all module units."
-#endif
+// Enforce dynamic dispatcher everywhere for custom loader mode.
+#  ifndef VULKAN_HPP_DISPATCH_LOADER_DYNAMIC
+#    define VULKAN_HPP_DISPATCH_LOADER_DYNAMIC 1
+#  else
+#    if VULKAN_HPP_DISPATCH_LOADER_DYNAMIC != 1
+#      error "VULKAN_HPP_DISPATCH_LOADER_DYNAMIC must be 1 for Almond custom-loader mode."
+#    endif
+#  endif
 
-// If anyone tries to re-enable the custom loader, stop the build.
-#if defined(ALMOND_VULKAN_CUSTOM_LOADER) && (ALMOND_VULKAN_CUSTOM_LOADER != 0)
-#  error "Custom Vulkan loader is disabled. Use Vulkan-Hpp static dispatch only."
-#endif
+// Keep exceptions off unless you intentionally want them.
+#  ifndef VULKAN_HPP_NO_EXCEPTIONS
+#    define VULKAN_HPP_NO_EXCEPTIONS 1
+#  endif
 
-// Pin it off (some headers check for definition, not just value).
-#ifndef VULKAN_HPP_DISPATCH_LOADER_DYNAMIC
-#  define VULKAN_HPP_DISPATCH_LOADER_DYNAMIC 0
-#endif
+#  ifndef ALMOND_VULKAN_CUSTOM_LOADER
+#    define ALMOND_VULKAN_CUSTOM_LOADER 1
+#  endif
 
-#ifdef VULKAN_HPP_DEFAULT_DISPATCH_LOADER_DYNAMIC_STORAGE
-#  undef VULKAN_HPP_DEFAULT_DISPATCH_LOADER_DYNAMIC_STORAGE
-#endif
-
-#ifndef VULKAN_HPP_NO_EXCEPTIONS
-#  define VULKAN_HPP_NO_EXCEPTIONS
-#endif
-
-// Stop Vulkan-Hpp from generating old-style ctors
-//#ifndef VULKAN_HPP_NO_STRUCT_CONSTRUCTORS
-//#   define VULKAN_HPP_NO_STRUCT_CONSTRUCTORS 1
-//#endif
-
-#include <vulkan/vulkan.hpp>
-
-#	endif // _WIN32
 #endif // ALMOND_USING_VULKAN

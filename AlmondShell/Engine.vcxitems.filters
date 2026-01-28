@@ -124,6 +124,15 @@
     <Filter Include="Module Files\ixx\core\context\backends\vulkan\contextcore\partitions">
       <UniqueIdentifier>{e35079dd-c82f-4d0b-a6bf-054d3aeeb548}</UniqueIdentifier>
     </Filter>
+    <Filter Include="Source Files\core\crossplatform\backends\raylib">
+      <UniqueIdentifier>{6fe6d8a2-cc75-436b-87da-2d7f99c25d09}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source Files\core\crossplatform\backends\vulkan">
+      <UniqueIdentifier>{3c65a8f8-cf11-41f2-8599-d9c4f469f3e2}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source Files\core\context">
+      <UniqueIdentifier>{036670d7-91d1-49ed-b675-64e52335355d}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="$(MSBuildThisFileDirectory)src\pch.h">
@@ -524,23 +533,11 @@
     <ClCompile Include="$(MSBuildThisFileDirectory)src\renderer_smoke_harness.cpp">
       <Filter>Source Files\core</Filter>
     </ClCompile>
-    <ClCompile Include="$(MSBuildThisFileDirectory)src\aengine.context.cpp">
-      <Filter>Source Files\core</Filter>
-    </ClCompile>
     <ClCompile Include="$(MSBuildThisFileDirectory)src\aengine.context.multiplexer.linux.cpp">
       <Filter>Source Files\core\crossplatform</Filter>
     </ClCompile>
     <ClCompile Include="$(MSBuildThisFileDirectory)src\aengine.context.multiplexer.win.cpp">
       <Filter>Source Files\core\crossplatform</Filter>
-    </ClCompile>
-    <ClCompile Include="$(MSBuildThisFileDirectory)src\acontext.raylib.bridge.cpp">
-      <Filter>Source Files\core\crossplatform\backends</Filter>
-    </ClCompile>
-    <ClCompile Include="$(MSBuildThisFileDirectory)src\acontext.vulkan.platform.context.cpp">
-      <Filter>Source Files\core\crossplatform\backends</Filter>
-    </ClCompile>
-    <ClCompile Include="$(MSBuildThisFileDirectory)src\acontext.vulkan.platform.descriptors.cpp">
-      <Filter>Source Files\core\crossplatform\backends</Filter>
     </ClCompile>
     <ClCompile Include="$(MSBuildThisFileDirectory)modules\aengine.saveload.system.ixx">
       <Filter>Module Files\ixx\events</Filter>
@@ -620,17 +617,29 @@
     <ClCompile Include="$(MSBuildThisFileDirectory)modules\acontext.vulkan.context-buffers.ixx">
       <Filter>Module Files\ixx\core\context\backends\vulkan\contextcore\partitions</Filter>
     </ClCompile>
-    <ClCompile Include="$(MSBuildThisFileDirectory)src\acontext.vulkan.context_buffers.cpp">
-      <Filter>Source Files\core</Filter>
-    </ClCompile>
     <ClCompile Include="$(MSBuildThisFileDirectory)src\aengine.cpp">
       <Filter>Source Files\core</Filter>
     </ClCompile>
     <ClCompile Include="$(MSBuildThisFileDirectory)modules\acontext.vulkan.context-shared_vk.ixx">
       <Filter>Module Files\ixx\core\context\backends\vulkan\contextcore</Filter>
     </ClCompile>
+    <ClCompile Include="$(MSBuildThisFileDirectory)src\acontext.raylib.bridge.cpp">
+      <Filter>Source Files\core\crossplatform\backends\raylib</Filter>
+    </ClCompile>
+    <ClCompile Include="$(MSBuildThisFileDirectory)src\acontext.vulkan.platform.descriptors.cpp">
+      <Filter>Source Files\core\crossplatform\backends\vulkan</Filter>
+    </ClCompile>
+    <ClCompile Include="$(MSBuildThisFileDirectory)src\acontext.vulkan.platform.context.cpp">
+      <Filter>Source Files\core\crossplatform\backends\vulkan</Filter>
+    </ClCompile>
+    <ClCompile Include="$(MSBuildThisFileDirectory)src\acontext.vulkan.context_buffers.cpp">
+      <Filter>Source Files\core\context</Filter>
+    </ClCompile>
     <ClCompile Include="$(MSBuildThisFileDirectory)src\acontext.vulkan.context-texture.cpp">
-      <Filter>Source Files\core</Filter>
+      <Filter>Source Files\core\context</Filter>
+    </ClCompile>
+    <ClCompile Include="$(MSBuildThisFileDirectory)src\aengine.context.cpp">
+      <Filter>Source Files\core\context</Filter>
     </ClCompile>
   </ItemGroup>
 </Project>

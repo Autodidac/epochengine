@@ -7,6 +7,8 @@
 module;
 
 #include <include/acontext.vulkan.hpp>
+// Include Vulkan-Hpp after config.
+#include <vulkan/vulkan.hpp>
 
 export module acontext.vulkan.context:swapchain;
 
