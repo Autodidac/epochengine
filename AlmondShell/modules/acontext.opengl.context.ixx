@@ -651,6 +651,9 @@ export namespace almondnamespace::openglcontext
                 return false;
         }
 
+        const auto previousContext = core::MultiContextManager::GetCurrent();
+        core::MultiContextManager::SetCurrent(ctx);
+
         atlasmanager::process_pending_uploads(core::ContextType::OpenGL);
 
         int fbW = (std::max)(1, opengl_get_width());
@@ -700,7 +703,15 @@ export namespace almondnamespace::openglcontext
             static_cast<std::int64_t>(depth),
             telemetry::RendererTelemetryTags{ core::ContextType::OpenGL, windowId });
 
-        queue.drain();
+        {
+            struct ScopedCurrentContext
+            {
+                std::shared_ptr<core::Context> previous;
+                ~ScopedCurrentContext() { core::MultiContextManager::SetCurrent(std::move(previous)); }
+            } scoped{ previousContext };
+
+            queue.drain();
+        }
 
         PlatformGL::swap_buffers(guard.target());
 
