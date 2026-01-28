@@ -8,7 +8,7 @@ import <array>;
 import <cstdint>;
 import <vector>;
 
-import :shared_context;
+import :shared_vk;
 
 export namespace almondnamespace::vulkancontext {
 

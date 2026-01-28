@@ -17,7 +17,7 @@ module;
 
 export module acontext.vulkan.context:shader_pipeline;
 
-import :shared_context;
+import :shared_vk;
 
 export namespace almondnamespace::vulkancontext
 {

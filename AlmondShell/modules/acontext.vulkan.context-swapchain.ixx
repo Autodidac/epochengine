@@ -10,7 +10,7 @@ module;
 
 export module acontext.vulkan.context:swapchain;
 
-import :shared_context;
+import :shared_vk;
 
 import <algorithm>;
 import <cstdint>;

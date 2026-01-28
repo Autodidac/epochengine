@@ -3,7 +3,7 @@ module;
 export module acontext.vulkan.context;
 
 import :api;            // brings in declarations for vulkan_* funcs
-import :shared_context; // brings in vulkan_app() / Application
+import :shared_vk; // brings in vulkan_app() / Application
 
 import <functional>;
 import <stdexcept>;

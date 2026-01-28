@@ -10,6 +10,7 @@ module;
 export module acontext.vulkan.context:device;
 
 import :shared_context;
+import :shared_vk;
 import :swapchain;
 
 namespace almondnamespace::vulkancontext {

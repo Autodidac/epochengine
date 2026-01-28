@@ -10,7 +10,7 @@ module;
 
 export module acontext.vulkan.context:commands;
 
-import :shared_context;
+import :shared_vk;
 import aengine.core.context;
 
 import <array>;

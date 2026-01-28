@@ -3,7 +3,7 @@ module;
 
 export module acontext.vulkan.context:window;
 
-import :shared_context;
+import :shared_vk;
 import acontext.vulkan.camera;
 import aengine.input;
 

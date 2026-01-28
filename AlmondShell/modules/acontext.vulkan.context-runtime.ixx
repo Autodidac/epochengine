@@ -8,6 +8,7 @@ module;
 export module acontext.vulkan.context:runtime;
 
 import :shared_context;
+import :shared_vk;
 import :commands;
 import :buffers;
 import :depth;

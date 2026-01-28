@@ -10,7 +10,7 @@
 #include <stdexcept>
 
 import acontext.vulkan.context;         // ensures module is built/available
-import acontext.vulkan.context:shared_context;
+import acontext.vulkan.context:shared_vk;
 import acontext.vulkan.context:meshcube;
 
 namespace almondnamespace::vulkancontext
