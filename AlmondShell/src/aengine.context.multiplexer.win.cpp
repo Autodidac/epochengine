@@ -729,6 +729,11 @@ namespace almondnamespace::core
                         std::cerr << "[Init] Deferring SDL init to render thread. host=" << hwnd << "\n";
                         break;
 #endif
+#if defined(ALMOND_USING_VULKAN)
+                    case ContextType::Vulkan:
+                        std::cerr << "[Init] Deferring Vulkan init to render thread. host=" << hwnd << "\n";
+                        break;
+#endif
 #if defined(ALMOND_USING_SFML)
                     case ContextType::SFML:
                         std::cerr << "[Init] Deferring SFML init to render thread. host=" << hwnd << "\n";
