@@ -60,6 +60,7 @@ module;
 #include <memory>
 #include <optional>
 #include <stdexcept>
+#include <thread>
 #include <utility>
 #include <vector>
 
@@ -227,9 +228,34 @@ namespace almondnamespace::vulkancontext
         }
 #endif
 
+        bool framebufferMinimized = false;
+        if (ctx)
+        {
+            const int fbWidth = (std::max)(1, ctx->framebufferWidth);
+            const int fbHeight = (std::max)(1, ctx->framebufferHeight);
+            if (fbWidth != framebufferWidth || fbHeight != framebufferHeight)
+                set_framebuffer_size(fbWidth, fbHeight);
+
+            framebufferMinimized = ctx->framebufferWidth == 0 || ctx->framebufferHeight == 0;
+        }
+#if defined(ALMOND_VULKAN_STANDALONE)
+        else if (window)
+        {
+            int fbWidth = 0;
+            int fbHeight = 0;
+            glfwGetFramebufferSize(window, &fbWidth, &fbHeight);
+            framebufferMinimized = fbWidth == 0 || fbHeight == 0;
+        }
+#endif
+
         updateCamera(deltaTime);
 
         queue.drain();
+        if (framebufferMinimized)
+        {
+            std::this_thread::sleep_for(std::chrono::milliseconds(16));
+            return true;
+        }
         drawFrame();
         return true;
     }
