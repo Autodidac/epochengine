@@ -31,7 +31,9 @@ module;
 #endif
 
 // Define the dynamic dispatcher storage exactly once in the whole program:
+#ifndef VULKAN_HPP_DEFAULT_DISPATCH_LOADER_DYNAMIC_STORAGE
 #define VULKAN_HPP_DEFAULT_DISPATCH_LOADER_DYNAMIC_STORAGE
+#endif
 
 #include <include/aengine.config.hpp>
 
