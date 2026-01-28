@@ -1,5 +1,13 @@
-module;
+// ============================================================================
+// modules/acontext.vulkan.context-instance.ixx
+// Partition: acontext.vulkan.context:instance
+// Vulkan instance + surface creation.
+// Fix: avoid calling an invalid global vk* entrypoint by dynamically resolving
+// vkEnumerateInstanceLayerProperties via the Vulkan loader at runtime.
+// This works whether you're linked to vulkan-1.lib or using VK_NO_PROTOTYPES/volk.
+// ============================================================================
 
+module;
 
 #include <include/acontext.vulkan.hpp>
 
@@ -14,7 +22,10 @@ module;
 #   ifndef NOMINMAX
 #       define NOMINMAX
 #   endif
+#   include <windows.h> // for LoadLibrary/GetProcAddress
 #   include <include/aframework.hpp>
+#else
+#   include <dlfcn.h> // dlopen/dlsym
 #endif
 
 // Include Vulkan-Hpp after config.
@@ -26,22 +37,106 @@ import :shared_context;
 import :shared_vk;
 
 import <algorithm>;
+import <cstdint>;
 import <cstring>;
 import <stdexcept>;
 import <vector>;
+
+namespace almondnamespace::vulkancontext::detail
+{
+    using PFN_EnumLayers = VkResult(VKAPI_PTR*)(uint32_t*, VkLayerProperties*);
+    using PFN_GetInstanceProcAddr = PFN_vkGetInstanceProcAddr;
+
+    struct Loader
+    {
+#if defined(_WIN32)
+        HMODULE dll{};
+#else
+        void* so{};
+#endif
+        PFN_GetInstanceProcAddr getInstanceProcAddr{};
+        PFN_EnumLayers enumLayers{};
+
+        static Loader& instance() noexcept
+        {
+            static Loader g{};
+            return g;
+        }
+
+        bool ensure_loaded() noexcept
+        {
+            if (enumLayers) return true;
+
+#if defined(_WIN32)
+            if (!dll)
+                dll = ::LoadLibraryW(L"vulkan-1.dll");
+            if (!dll)
+                return false;
+
+            auto gp = reinterpret_cast<PFN_GetInstanceProcAddr>(::GetProcAddress(dll, "vkGetInstanceProcAddr"));
+            if (!gp)
+                return false;
+
+            getInstanceProcAddr = gp;
+
+            enumLayers = reinterpret_cast<PFN_EnumLayers>(
+                getInstanceProcAddr(VkInstance(VK_NULL_HANDLE), "vkEnumerateInstanceLayerProperties"));
+
+            return enumLayers != nullptr;
+#else
+            if (!so)
+            {
+                // Most common loader name on Linux
+                so = ::dlopen("libvulkan.so.1", RTLD_NOW | RTLD_LOCAL);
+                if (!so)
+                {
+                    // Fallback
+                    so = ::dlopen("libvulkan.so", RTLD_NOW | RTLD_LOCAL);
+                }
+            }
+            if (!so)
+                return false;
+
+            auto gp = reinterpret_cast<PFN_GetInstanceProcAddr>(::dlsym(so, "vkGetInstanceProcAddr"));
+            if (!gp)
+                return false;
+
+            getInstanceProcAddr = gp;
+
+            enumLayers = reinterpret_cast<PFN_EnumLayers>(
+                getInstanceProcAddr(VkInstance(VK_NULL_HANDLE), "vkEnumerateInstanceLayerProperties"));
+
+            return enumLayers != nullptr;
+#endif
+        }
+
+        bool enumerate_layers(std::vector<VkLayerProperties>& out) noexcept
+        {
+            if (!ensure_loaded())
+                return false;
+
+            uint32_t count = 0;
+            VkResult vr = enumLayers(&count, nullptr);
+            if (vr != VK_SUCCESS || count == 0)
+                return false;
+
+            out.resize(static_cast<std::size_t>(count));
+            vr = enumLayers(&count, out.data());
+            if (vr != VK_SUCCESS)
+                return false;
+
+            out.resize(static_cast<std::size_t>(count));
+            return true;
+        }
+    };
+}
 
 export namespace almondnamespace::vulkancontext
 {
     bool Application::checkValidationLayerSupport()
     {
-        uint32_t count = 0;
-        VkResult vr = vkEnumerateInstanceLayerProperties(&count, nullptr);
-        if (vr != VK_SUCCESS || count == 0)
-            return false;
-
-        std::vector<VkLayerProperties> props(count);
-        vr = vkEnumerateInstanceLayerProperties(&count, props.data());
-        if (vr != VK_SUCCESS)
+        std::vector<VkLayerProperties> props;
+        if (!detail::Loader::instance().enumerate_layers(props))
             return false;
 
         for (const char* layerName : validationLayers)
@@ -83,8 +178,10 @@ export namespace almondnamespace::vulkancontext
 
     void Application::createInstance()
     {
+        // Important: this now uses the Vulkan loader safely (no invalid vk* call)
+        // so it won’t AV if you forgot vulkan-1.lib or you’re in VK_NO_PROTOTYPES mode.
         if (enableValidationLayers && !checkValidationLayerSupport())
-            throw std::runtime_error("Validation layers requested, but not available.");
+            throw std::runtime_error("Validation layers requested, but not available (or Vulkan loader not found).");
 
         vk::ApplicationInfo appInfo{};
         appInfo.pApplicationName = "AlmondEngine Vulkan";
@@ -118,8 +215,8 @@ export namespace almondnamespace::vulkancontext
 
         instance = std::move(inst);
 
-        // You are using DispatchLoaderStatic (confirmed by your log). No init() exists.
-        // Do NOT call any dispatcher init here.
+        // If you later adopt DispatchLoaderDynamic or volk, initialize it AFTER instance creation.
+        // With DispatchLoaderStatic, do nothing here.
     }
 
     void Application::createSurface()

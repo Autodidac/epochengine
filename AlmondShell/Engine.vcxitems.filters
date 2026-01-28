@@ -641,5 +641,8 @@
     <ClCompile Include="$(MSBuildThisFileDirectory)src\aengine.context.cpp">
       <Filter>Source Files\core\context</Filter>
     </ClCompile>
+    <ClCompile Include="$(MSBuildThisFileDirectory)src\acontext.vulkan.dispatch_storage.cpp">
+      <Filter>Source Files\core\context</Filter>
+    </ClCompile>
   </ItemGroup>
 </Project>
