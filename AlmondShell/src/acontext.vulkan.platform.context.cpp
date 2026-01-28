@@ -334,65 +334,6 @@ namespace almondnamespace::vulkancontext
 #endif
     }
 
-    void Application::createVertexBuffer()
-    {
-        const vk::DeviceSize bufferSize = sizeof(vertices[0]) * vertices.size();
-
-        auto staging = createBuffer(
-            bufferSize,
-            vk::BufferUsageFlagBits::eTransferSrc,
-            vk::MemoryPropertyFlagBits::eHostVisible | vk::MemoryPropertyFlagBits::eHostCoherent);
-
-        void* mapped = nullptr;
-        (void)device->mapMemory(*staging.second, 0, bufferSize, {}, &mapped);
-        std::memcpy(mapped, vertices.data(), static_cast<std::size_t>(bufferSize));
-        device->unmapMemory(*staging.second);
-
-        auto vb = createBuffer(
-            bufferSize,
-            vk::BufferUsageFlagBits::eTransferDst | vk::BufferUsageFlagBits::eVertexBuffer,
-            vk::MemoryPropertyFlagBits::eDeviceLocal);
-
-        copyBuffer(*staging.first, *vb.first, bufferSize);
-
-        staging.first.reset();
-        staging.second.reset();
-
-        vertexBuffer = std::move(vb.first);
-        vertexBufferMemory = std::move(vb.second);
-    }
-
-    void Application::createIndexBuffer()
-    {
-        if (indices.empty())
-            throw std::runtime_error("Error: No index data available!");
-
-        const vk::DeviceSize bufferSize = sizeof(indices[0]) * indices.size();
-
-        auto staging = createBuffer(
-            bufferSize,
-            vk::BufferUsageFlagBits::eTransferSrc,
-            vk::MemoryPropertyFlagBits::eHostVisible | vk::MemoryPropertyFlagBits::eHostCoherent);
-
-        // Prefer the void** overload to avoid ResultValue plumbing under VULKAN_HPP_NO_EXCEPTIONS.
-        void* mapped = nullptr;
-        (void)device->mapMemory(*staging.second, 0, bufferSize, {}, &mapped);
-        std::memcpy(mapped, indices.data(), static_cast<std::size_t>(bufferSize));
-        device->unmapMemory(*staging.second);
-
-        auto ib = createBuffer(
-            bufferSize,
-            vk::BufferUsageFlagBits::eTransferDst | vk::BufferUsageFlagBits::eIndexBuffer,
-            vk::MemoryPropertyFlagBits::eDeviceLocal);
-
-        copyBuffer(*staging.first, *ib.first, bufferSize);
-
-        staging.first.reset();
-        staging.second.reset();
-
-        indexBuffer = std::move(ib.first);
-        indexBufferMemory = std::move(ib.second);
-    }
 } // namespace almondnamespace::vulkancontext
 
 // -----------------------------------------------------------------------------
