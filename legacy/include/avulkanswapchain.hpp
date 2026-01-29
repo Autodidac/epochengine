@@ -31,11 +31,13 @@
 
 #include "aengineconfig.hpp"
 
-#include <iostream>
 #include <stdexcept>
 #include <vector>
 #include <optional>
 #include <algorithm>
+#include <source_location>
+
+import aengine.core.logger;
 
 #if defined(ALMOND_USING_VULKAN)
 
@@ -152,7 +154,10 @@ namespace almondnamespace::vulkan {
         context.swapChainImageFormat = surfaceFormat.format;
         context.swapChainExtent = extent;
 
-        std::cout << "Swap chain created successfully." << std::endl;
+        almondnamespace::logger::get("Legacy.Vulkan").log(
+            almondnamespace::logger::LogLevel::INFO,
+            "Swap chain created successfully.",
+            std::source_location::current());
     }
 
     inline void createImageViews(VulkanContext& context) {
@@ -179,7 +184,10 @@ namespace almondnamespace::vulkan {
             }
         }
 
-        std::cout << "Image views created successfully." << std::endl;
+        almondnamespace::logger::get("Legacy.Vulkan").log(
+            almondnamespace::logger::LogLevel::INFO,
+            "Image views created successfully.",
+            std::source_location::current());
     }
 }
 #endif
