@@ -32,6 +32,10 @@ module;
 
 #include <include/aengine.config.hpp>
 
+#if defined(ALMOND_USING_OPENGL)
+#   include <glad/glad.h>
+#endif
+
 #if defined(_WIN32)
 #   ifndef VK_USE_PLATFORM_WIN32_KHR
 #       define VK_USE_PLATFORM_WIN32_KHR
@@ -92,6 +96,9 @@ import aengine.core.context;
 import aengine.input;
 import :shared_vk;
 
+#if defined(ALMOND_USING_OPENGL)
+import acontext.opengl.platform;
+#endif
 
 // -----------------------------------------------------------------------------
 // Correct namespace for the exported type declared in the interface:
@@ -259,15 +266,56 @@ namespace almondnamespace::vulkancontext
 
         updateCamera(deltaTime);
 
-        // Vulkan uses a Vulkan-native GUI backend; no OpenGL context is shared on this path.
-        queue.drain();
-//#endif
         if (framebufferMinimized)
         {
+            queue.drain();
             std::this_thread::sleep_for(std::chrono::milliseconds(16));
             return true;
         }
         drawFrame();
+
+        bool drained = false;
+#if defined(ALMOND_USING_OPENGL)
+        if (ctx && ctx->native_gl_context)
+        {
+            almondnamespace::openglcontext::PlatformGL::PlatformGLContext glContext{};
+#if defined(_WIN32)
+            glContext.device = static_cast<HDC>(ctx->native_drawable);
+            glContext.context = static_cast<HGLRC>(ctx->native_gl_context);
+#elif defined(__linux__)
+            glContext.display = static_cast<Display*>(ctx->native_drawable);
+            glContext.drawable = static_cast<GLXDrawable>(reinterpret_cast<std::uintptr_t>(ctx->native_window));
+            glContext.context = static_cast<GLXContext>(ctx->native_gl_context);
+#endif
+
+            almondnamespace::openglcontext::PlatformGL::ScopedContext guard;
+            if (glContext.valid() && guard.set(glContext))
+            {
+                static bool s_gladInitialized = false;
+                if (!s_gladInitialized)
+                {
+                    s_gladInitialized = (gladLoadGLLoader(reinterpret_cast<GLADloadproc>(
+                        almondnamespace::openglcontext::PlatformGL::get_proc_address)) != 0);
+                }
+
+                if (s_gladInitialized)
+                {
+                    glEnable(GL_BLEND);
+                    glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+                    queue.drain();
+                    glDisable(GL_BLEND);
+                }
+                else
+                {
+                    queue.clear();
+                }
+                drained = true;
+            }
+        }
+#endif
+
+        if (!drained)
+            queue.drain();
         return true;
     }
 
