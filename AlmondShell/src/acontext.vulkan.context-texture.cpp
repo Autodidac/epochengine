@@ -10,8 +10,11 @@ module;
 
 module acontext.vulkan.context:texture;
 
+import <array>;
 import <cstdint>;
 import <cstring>;
+import <filesystem>;
+import <sstream>;
 import <stdexcept>;
 import <utility>;
 
@@ -19,12 +22,42 @@ import :shared_vk;
 
 namespace almondnamespace::vulkancontext
 {
+    namespace
+    {
+        std::filesystem::path resolve_texture_path()
+        {
+            namespace fs = std::filesystem;
+            const fs::path target = "texture.ppm";
+            const std::array<fs::path, 6> candidates = {
+                target,
+                fs::path("AlmondShell") / target,
+                fs::path("..") / "AlmondShell" / target,
+                fs::path("assets") / "vulkan" / target,
+                fs::path("AlmondShell") / "assets" / "vulkan" / target,
+                fs::path("..") / "AlmondShell" / "assets" / "vulkan" / target,
+            };
+
+            for (const auto& path : candidates)
+            {
+                if (fs::exists(path) && fs::is_regular_file(path))
+                    return path;
+            }
+
+            std::ostringstream message;
+            message << "Failed to load texture image! Tried paths:";
+            for (const auto& path : candidates)
+                message << "\n  - " << path.string();
+            throw std::runtime_error(message.str());
+        }
+    }
+
     void Application::createTextureImage()
     {
         int texWidth = 0, texHeight = 0, texChannels = 0;
 
         stbi_set_flip_vertically_on_load(true);
-        stbi_uc* pixels = stbi_load("texture.jpg", &texWidth, &texHeight, &texChannels, STBI_rgb_alpha);
+        const std::string texturePath = resolve_texture_path().string();
+        stbi_uc* pixels = stbi_load(texturePath.c_str(), &texWidth, &texHeight, &texChannels, STBI_rgb_alpha);
         if (!pixels)
             throw std::runtime_error("Failed to load texture image!");
 

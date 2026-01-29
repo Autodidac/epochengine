@@ -11,7 +11,9 @@ module;
 #include <array>
 #include <cassert>
 #include <cstdint>
+#include <filesystem>
 #include <fstream>
+#include <sstream>
 #include <string>
 #include <vector>
 #include <stdexcept>
@@ -115,15 +117,37 @@ export namespace almondnamespace::vulkancontext
 
     inline std::vector<char> Application::readFile(const std::string& filename)
     {
-        std::ifstream file(filename, std::ios::binary | std::ios::ate);
-        if (!file.is_open())
-            throw std::runtime_error("[Vulkan] Failed to open file: " + filename);
+        namespace fs = std::filesystem;
 
-        const auto fileSize = static_cast<std::size_t>(file.tellg());
-        std::vector<char> buffer(fileSize);
-        file.seekg(0);
-        file.read(buffer.data(), static_cast<std::streamsize>(fileSize));
-        return buffer;
+        const fs::path target = filename;
+        const std::array<fs::path, 6> candidates = {
+            target,
+            fs::path("AlmondShell") / target,
+            fs::path("..") / "AlmondShell" / target,
+            fs::path("assets") / "vulkan" / target,
+            fs::path("AlmondShell") / "assets" / "vulkan" / target,
+            fs::path("..") / "AlmondShell" / "assets" / "vulkan" / target,
+        };
+
+        for (const auto& path : candidates)
+        {
+            std::ifstream file(path, std::ios::binary | std::ios::ate);
+            if (!file.is_open())
+                continue;
+
+            const auto fileSize = static_cast<std::size_t>(file.tellg());
+            std::vector<char> buffer(fileSize);
+            file.seekg(0);
+            file.read(buffer.data(), static_cast<std::streamsize>(fileSize));
+            return buffer;
+        }
+
+        std::ostringstream message;
+        message << "[Vulkan] Failed to open file: " << filename << "\n"
+                << "Tried paths:";
+        for (const auto& path : candidates)
+            message << "\n  - " << path.string();
+        throw std::runtime_error(message.str());
     }
 
     void Application::createGraphicsPipeline()
