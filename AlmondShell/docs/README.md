@@ -9,7 +9,7 @@ Use this index to find the most relevant docs quickly.
 - `wsl_vcpkg_setup.md` – WSL + vcpkg setup for Linux builds on Windows.
 
 ## Runtime & configuration
-- `runtime_operations.md` – updater flow, hot-reload loop, and diagnostics.
+- `runtime_operations.md` – updater flow, hot-reload loop, diagnostics, and logging guidance.
 - `aengineconfig_flags.md` – build-time configuration flags.
 
 ## Architecture & analysis
