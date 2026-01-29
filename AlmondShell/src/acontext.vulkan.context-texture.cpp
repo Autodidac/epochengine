@@ -412,12 +412,12 @@ namespace almondnamespace::vulkancontext
 
         std::vector<vk::DescriptorSetLayout> layouts(count, *descriptorSetLayout);
 
-        vk::DescriptorSetAllocateInfo allocInfo{};
-        allocInfo.descriptorPool = *entry.descriptorPool;
-        allocInfo.descriptorSetCount = count;
-        allocInfo.pSetLayouts = layouts.data();
+        vk::DescriptorSetAllocateInfo descriptorAllocInfo{};
+        descriptorAllocInfo.descriptorPool = *entry.descriptorPool;
+        descriptorAllocInfo.descriptorSetCount = count;
+        descriptorAllocInfo.pSetLayouts = layouts.data();
 
-        auto [setRes, sets] = device->allocateDescriptorSetsUnique(allocInfo);
+        auto [setRes, sets] = device->allocateDescriptorSetsUnique(descriptorAllocInfo);
         if (setRes != vk::Result::eSuccess)
             throw std::runtime_error("[Vulkan] Failed to allocate GUI atlas descriptor sets.");
 
