@@ -32,10 +32,6 @@ module;
 
 #include <include/aengine.config.hpp>
 
-#if defined(ALMOND_USING_OPENGL)
-#   include <glad/glad.h>
-#endif
-
 #if defined(_WIN32)
 #   ifndef VK_USE_PLATFORM_WIN32_KHR
 #       define VK_USE_PLATFORM_WIN32_KHR
@@ -47,6 +43,10 @@ module;
 #       define NOMINMAX
 #   endif
 #   include <windows.h>
+#endif
+
+#if defined(ALMOND_USING_OPENGL)
+#   include <glad/glad.h>
 #endif
 
 #if defined(ALMOND_VULKAN_STANDALONE)
