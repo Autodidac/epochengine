@@ -54,17 +54,18 @@ namespace almondnamespace::vulkancontext
     void Application::createTextureImage()
     {
         const std::filesystem::path texturePath = resolve_texture_path();
-        ImageData texture{};
-        try
-        {
-            texture = a_loadImage(texturePath, true);
-        }
-        catch (const std::exception& ex)
-        {
-            std::ostringstream message;
-            message << "Failed to load texture image at '" << texturePath.string() << "': " << ex.what();
-            throw std::runtime_error(message.str());
-        }
+
+        ImageData texture = [&]() {
+            try {
+                return a_loadImage(texturePath, true);
+            }
+            catch (const std::exception& ex) {
+                std::ostringstream message;
+                message << "Failed to load texture image at '" << texturePath.string() << "': " << ex.what();
+                throw std::runtime_error(message.str());
+            }
+            }();
+
 
         const vk::DeviceSize imageSize = static_cast<vk::DeviceSize>(texture.pixels.size());
 
