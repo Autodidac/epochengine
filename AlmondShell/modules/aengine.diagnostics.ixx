@@ -67,15 +67,15 @@ export namespace almond::diagnostics {
             lastMs = std::chrono::duration<double, std::milli>(end - start).count();
             finished = true;
 
-            telemetry::emit_histogram_ms(
+            almondnamespace::telemetry::emit_histogram_ms(
                 "renderer.frame.time_ms",
                 lastMs,
-                telemetry::RendererTelemetryTags{ backendType, windowId });
+                almondnamespace::telemetry::RendererTelemetryTags{ backendType, windowId });
 
             if (lastMs > slowFrameMs)
             {
                 const std::string_view backend = backendName.empty() ? "Unknown" : backendName;
-                logger::warn(
+                almondnamespace::logger::warn(
                     "Renderer",
                     std::format("[{}] Slow frame {:.2f} ms (> {:.2f} ms)", backend, lastMs, slowFrameMs));
             }
