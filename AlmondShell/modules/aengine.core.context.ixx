@@ -278,6 +278,11 @@ export namespace almondnamespace::core
 
             if (!windowData) return;
 
+            const core::RenderPath renderPath =
+                (type == core::ContextType::OpenGL) ? core::RenderPath::OpenGL
+                : (type == core::ContextType::SFML) ? core::RenderPath::SFML
+                : core::RenderPath::Unknown;
+
             std::weak_ptr<Context> weak = windowData->context;
 
             // Do NOT capture `atlases` (span may reference transient storage).
@@ -291,7 +296,7 @@ export namespace almondnamespace::core
                     auto av = almondnamespace::atlasmanager::get_atlas_vector_snapshot();
                     std::span<const TextureAtlas* const> span(av.data(), av.size());
                     self->draw_sprite(sprite, span, x, y, w, hgt);
-                }, core::RenderPath::SFML);
+                }, renderPath);
         }
 
         std::uint32_t add_texture_safe(TextureAtlas& atlas,

@@ -25,9 +25,13 @@ export namespace almondnamespace::core
 {
     enum class RenderPath : std::uint8_t
     {
+        // Bitmask flags that describe how queued commands touch GPU state.
+        // Unknown means "no explicit render path" (e.g., Vulkan or non-draw work).
         Unknown = 0,
         SFML = 1,
-        OpenGL = 2
+        // OpenGL indicates explicit OpenGL calls that should avoid SFML state resets.
+        OpenGL = 2,
+        Vulkan = 4
     };
 
     struct CommandQueue
@@ -104,6 +108,11 @@ export namespace almondnamespace::core
         [[nodiscard]] bool has_opengl_draws_snapshot() const noexcept
         {
             return (render_flags_snapshot() & static_cast<std::uint8_t>(RenderPath::OpenGL)) != 0u;
+        }
+
+        [[nodiscard]] bool has_vulkan_draws_snapshot() const noexcept
+        {
+            return (render_flags_snapshot() & static_cast<std::uint8_t>(RenderPath::Vulkan)) != 0u;
         }
 
         // Optional: run at most one command (useful for budgeted pumping)
