@@ -5,6 +5,13 @@ export module acontext.vulkan.context;
 import :api;            // brings in declarations for vulkan_* funcs
 import :shared_vk; // brings in vulkan_app() / Application
 
+import aengine.core.context;
+import aengine.diagnostics;
+import aengine.telemetry;
+
+import <algorithm>;
+import <cstddef>;
+import <cstdint>;
 import <functional>;
 import <stdexcept>;
 import <utility>;
@@ -72,7 +79,38 @@ namespace almondnamespace::vulkancontext
 
     bool vulkan_process(std::shared_ptr<core::Context> ctx, core::CommandQueue& queue)
     {
-        return vulkan_app().process(ctx, queue);
+        if (!ctx)
+            return false;
+
+        const std::uintptr_t windowId = ctx->windowData
+            ? reinterpret_cast<std::uintptr_t>(ctx->windowData->hwnd)
+            : reinterpret_cast<std::uintptr_t>(ctx->native_window);
+
+        almond::diagnostics::FrameTiming frameTimer{ core::ContextType::Vulkan, windowId, "Vulkan" };
+
+        const int fbW = (std::max)(1, vulkan_get_width());
+        const int fbH = (std::max)(1, vulkan_get_height());
+
+        telemetry::emit_gauge(
+            "renderer.framebuffer.size",
+            static_cast<std::int64_t>(fbW),
+            telemetry::RendererTelemetryTags{ core::ContextType::Vulkan, windowId, "width" });
+        telemetry::emit_gauge(
+            "renderer.framebuffer.size",
+            static_cast<std::int64_t>(fbH),
+            telemetry::RendererTelemetryTags{ core::ContextType::Vulkan, windowId, "height" });
+
+        const std::size_t depth = queue.depth();
+        telemetry::emit_gauge(
+            "renderer.command_queue.depth",
+            static_cast<std::int64_t>(depth),
+            telemetry::RendererTelemetryTags{ core::ContextType::Vulkan, windowId });
+
+        const bool result = vulkan_app().process(ctx, queue);
+
+        frameTimer.finish();
+
+        return result;
     }
 
     void vulkan_present()

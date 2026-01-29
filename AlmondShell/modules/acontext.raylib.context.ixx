@@ -30,13 +30,13 @@ module;
 #   include <wingdi.h> // HGLRC + wgl*
 #endif
 
-#include <iostream>
-
 export module acontext.raylib.context;
 
 import aengine.core.context;
 import aengine.core.commandline;
+import aengine.core.logger;
 import aengine.context.multiplexer;
+import aengine.diagnostics;
 import aatlas.manager;
 
 import acontext.raylib.state;
@@ -49,6 +49,7 @@ import <algorithm>;
 import <cmath>;
 import <cstdint>;
 import <chrono>;
+import <format>;
 import <functional>;
 import <memory>;
 import <string>;
@@ -98,8 +99,9 @@ namespace almondnamespace::raylibcontext
             const auto rc = current_context();
             if (dc != st.hdc || rc != st.hglrc)
             {
-                std::cerr << "[Raylib] WARNING: raylib context not current at " << where
-                    << " (current dc/rc != raylib dc/rc)\n";
+                logger::warn(
+                    "Raylib",
+                    std::format("raylib context not current at {} (current dc/rc != raylib dc/rc)", where));
             }
 #else
             (void)st; (void)where;
@@ -150,7 +152,7 @@ namespace almondnamespace::raylibcontext
         {
             if (!raylibHwnd)
             {
-                std::cerr << "[Raylib] WARNING: Raylib returned a null window handle.\n";
+                logger::warn("Raylib", "Raylib returned a null window handle.");
                 return;
             }
 
@@ -267,7 +269,7 @@ namespace almondnamespace::raylibcontext
 
         if (!st.hdc || !st.hglrc)
         {
-            std::cerr << "[Raylib] Missing host OpenGL context; raylib will create its own.\n";
+            logger::warn("Raylib", "Missing host OpenGL context; raylib will create its own.");
         }
 #else
         st.hwnd = parent ? parent : (ctx ? ctx->hwnd : nullptr);
@@ -295,7 +297,7 @@ namespace almondnamespace::raylibcontext
         st.hglrc = detail::current_context();
         if (!st.hdc || !st.hglrc)
         {
-            std::cerr << "[Raylib] Failed to capture Raylib OpenGL context after initialization.\n";
+            logger::warn("Raylib", "Failed to capture Raylib OpenGL context after initialization.");
             st.running = false;
             st.cleanupIssued = false;
             return false;
@@ -307,8 +309,9 @@ namespace almondnamespace::raylibcontext
             ctx->windowData->usesSharedContext = false;
         }
 #if defined(_DEBUG)
-        std::cerr << "[Raylib] Updated raylib GL context dc=" << st.hdc
-            << " rc=" << st.hglrc << "\n";
+        logger::info(
+            "Raylib",
+            std::format("Updated raylib GL context dc={} rc={}", st.hdc, st.hglrc));
 #endif
 
         const HWND raylibHwnd = static_cast<HWND>(almondnamespace::raylib_api::get_window_handle());
@@ -327,7 +330,7 @@ namespace almondnamespace::raylibcontext
         }
         else if (parentHwnd)
         {
-            std::cerr << "[Raylib] WARNING: Failed to acquire Raylib window handle for docking.\n";
+            logger::warn("Raylib", "Failed to acquire Raylib window handle for docking.");
         }
 #endif
 
@@ -403,10 +406,24 @@ namespace almondnamespace::raylibcontext
         if (!st.running)
             return;
 
+        const std::uintptr_t windowId = st.hwnd
+            ? reinterpret_cast<std::uintptr_t>(st.hwnd)
+            : (st.owner_ctx && st.owner_ctx->windowData
+                ? reinterpret_cast<std::uintptr_t>(st.owner_ctx->windowData->hwnd)
+                : 0);
+
+        almond::diagnostics::FrameTiming frameTimer{
+            almondnamespace::core::ContextType::RayLib,
+            windowId,
+            "Raylib"
+        };
+
 #if defined(_WIN32)
         if (!raylib_make_current())
         {
-            std::cerr << "[Raylib] WARNING: failed to make raylib context current during process; shutting down.\n";
+            logger::warn(
+                "Raylib",
+                "Failed to make raylib context current during process; shutting down.");
             st.running = false;
             return;
         }
@@ -422,6 +439,8 @@ namespace almondnamespace::raylibcontext
         // Expect the multiplexer to have activated this backend before calling process.
         detail::debug_expect_raylib_current(st, "raylib_process");
 #endif
+
+        frameTimer.finish();
     }
 
     export inline void raylib_idle_frame()
