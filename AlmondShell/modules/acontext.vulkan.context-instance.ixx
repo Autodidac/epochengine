@@ -188,7 +188,6 @@ export namespace almondnamespace::vulkancontext
                          "continuing with validation disabled.\n";
             validationLayersEnabled = false;
         }
-        if (validationLayersEnabled)
 
         vk::ApplicationInfo appInfo{};
         appInfo.pApplicationName = "AlmondEngine Vulkan";
@@ -205,7 +204,7 @@ export namespace almondnamespace::vulkancontext
         createInfo.enabledExtensionCount = static_cast<std::uint32_t>(extensions.size());
         createInfo.ppEnabledExtensionNames = extensions.data();
 
-        if (enableValidationLayers)
+        if (validationLayersEnabled)
         {
             createInfo.enabledLayerCount = static_cast<std::uint32_t>(validationLayers.size());
             createInfo.ppEnabledLayerNames = validationLayers.data();
