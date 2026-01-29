@@ -136,6 +136,9 @@
     <Filter Include="Source Files\core\context\vulkan">
       <UniqueIdentifier>{935dc56f-1177-4c94-9d79-86b7267ac932}</UniqueIdentifier>
     </Filter>
+    <Filter Include="Module Files\ixx\core\context\backends\vulkan\shaders">
+      <UniqueIdentifier>{15a92cca-160f-4aa8-a203-ebf784dd753d}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="$(MSBuildThisFileDirectory)src\pch.h">
@@ -174,6 +177,12 @@
     </None>
     <None Include="$(MSBuildThisFileDirectory)modules\.gitkeep">
       <Filter>Module Files</Filter>
+    </None>
+    <None Include="$(MSBuildThisFileDirectory)assets\vulkan\shaders\frag.spv">
+      <Filter>Module Files\ixx\core\context\backends\vulkan\shaders</Filter>
+    </None>
+    <None Include="$(MSBuildThisFileDirectory)assets\vulkan\shaders\vert.spv">
+      <Filter>Module Files\ixx\core\context\backends\vulkan\shaders</Filter>
     </None>
   </ItemGroup>
   <ItemGroup>
