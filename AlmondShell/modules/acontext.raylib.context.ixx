@@ -311,7 +311,10 @@ namespace almondnamespace::raylibcontext
 #if defined(_DEBUG)
         logger::info(
             "Raylib",
-            std::format("Updated raylib GL context dc={} rc={}", st.hdc, st.hglrc));
+            std::format(
+                "Updated raylib GL context dc={:p} rc={:p}",
+                static_cast<const void*>(st.hdc),
+                static_cast<const void*>(st.hglrc)));
 #endif
 
         const HWND raylibHwnd = static_cast<HWND>(almondnamespace::raylib_api::get_window_handle());
