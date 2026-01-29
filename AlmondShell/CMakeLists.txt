@@ -71,6 +71,46 @@ target_include_directories(almondshell_renderer_smoke PRIVATE
     ${CMAKE_CURRENT_SOURCE_DIR}/src/stb
 )
 
+find_program(GLSLANG_VALIDATOR glslangValidator)
+set(ALMOND_VULKAN_ASSET_DIR ${CMAKE_CURRENT_BINARY_DIR}/assets/vulkan)
+set(ALMOND_VULKAN_SHADER_DIR ${ALMOND_VULKAN_ASSET_DIR}/shaders)
+
+file(MAKE_DIRECTORY ${ALMOND_VULKAN_SHADER_DIR})
+configure_file(
+    ${CMAKE_CURRENT_SOURCE_DIR}/assets/vulkan/texture.ppm
+    ${ALMOND_VULKAN_ASSET_DIR}/texture.ppm
+    COPYONLY
+)
+
+if(GLSLANG_VALIDATOR)
+    add_custom_command(
+        OUTPUT
+            ${ALMOND_VULKAN_SHADER_DIR}/vert.spv
+            ${ALMOND_VULKAN_SHADER_DIR}/frag.spv
+        COMMAND ${GLSLANG_VALIDATOR} -V -S vert
+            ${CMAKE_CURRENT_SOURCE_DIR}/assets/vulkan/shaders/vert.glsl
+            -o ${ALMOND_VULKAN_SHADER_DIR}/vert.spv
+        COMMAND ${GLSLANG_VALIDATOR} -V -S frag
+            ${CMAKE_CURRENT_SOURCE_DIR}/assets/vulkan/shaders/frag.glsl
+            -o ${ALMOND_VULKAN_SHADER_DIR}/frag.spv
+        DEPENDS
+            ${CMAKE_CURRENT_SOURCE_DIR}/assets/vulkan/shaders/vert.glsl
+            ${CMAKE_CURRENT_SOURCE_DIR}/assets/vulkan/shaders/frag.glsl
+        COMMENT "Compiling Vulkan GLSL shaders to SPIR-V"
+    )
+
+    add_custom_target(almond_vulkan_shaders
+        DEPENDS
+            ${ALMOND_VULKAN_SHADER_DIR}/vert.spv
+            ${ALMOND_VULKAN_SHADER_DIR}/frag.spv
+    )
+
+    add_dependencies(almondshell almond_vulkan_shaders)
+    add_dependencies(almondshell_renderer_smoke almond_vulkan_shaders)
+else()
+    message(WARNING "glslangValidator not found; Vulkan SPIR-V shaders will not be generated.")
+endif()
+
 if(CMAKE_CXX_COMPILER_ID STREQUAL "MSVC")
     # Modern MSVC releases provide standard module support without the
     # deprecated /experimental:module switch; keep the latest standard
