@@ -291,7 +291,7 @@ export namespace almondnamespace::core
                     auto av = almondnamespace::atlasmanager::get_atlas_vector_snapshot();
                     std::span<const TextureAtlas* const> span(av.data(), av.size());
                     self->draw_sprite(sprite, span, x, y, w, hgt);
-                });
+                }, core::RenderPath::SFML);
         }
 
         std::uint32_t add_texture_safe(TextureAtlas& atlas,
