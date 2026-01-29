@@ -15,6 +15,11 @@
 - `load_or_reload_script` schedules a coroutine that compiles the updated source into a DLL, unloads any previously mapped handle, and executes the exported `run_script` symbol once the new library is resident.【F:AlmondShell/modules/ascripting.system.ixx†L103-L235】
 - The scheduler waits for all tasks to finish and prunes completed nodes so your tooling observes a deterministic runtime state after each reload.【F:AlmondShell/modules/ascripting.system.ixx†L206-L235】
 
+## Logging
+- Pull a logger for a subsystem with `logger::get("<system>")`, then call `log` or `logf` on the returned `SystemLogger` to emit lines tagged with your system name and optional source metadata.【F:AlmondShell/modules/aengine.core.logger.ixx†L109-L235】【F:AlmondShell/modules/aengine.core.logger.ixx†L299-L315】
+- Logs go to the console and to `Logs/<system>.log` (the path comes from the `LogConfig::root_dir`, which defaults to `logs/`, so update it if you prefer a `Logs/` directory).【F:AlmondShell/modules/aengine.core.logger.ixx†L53-L99】【F:AlmondShell/modules/aengine.core.logger.ixx†L125-L168】
+- Severity levels are `INFO`, `WARN`, `ALMOND_ERROR`, and `OFF`; set the minimum level by configuring the logger hub with `logger::init(LogConfig{ .level = LogLevel::WARN })` (or by passing a different `LogConfig` when configuring systems).【F:AlmondShell/modules/aengine.core.logger.ixx†L35-L83】【F:AlmondShell/modules/aengine.core.logger.ixx†L254-L284】
+
 ## Multi-Context Troubleshooting
 - Releasing the previous library handle (`FreeLibrary`/`dlclose`) before loading the replacement prevents Windows and POSIX backends from pinning stale code when multiple contexts request the same script in quick succession.【F:AlmondShell/modules/ascripting.system.ixx†L120-L175】
 - Windows builds that embed alternate front ends (SDL, Raylib) may route through dedicated entry points; ensure headless overrides are disabled when you expect the shared `RunEngine` path to initialise every context.【F:AlmondShell/examples/ConsoleApplication1/main.cpp†L39-L107】【F:AlmondShell/include/aengineconfig.hpp†L26-L35】
