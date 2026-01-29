@@ -344,6 +344,8 @@ export namespace almondnamespace::core
         int virtualWidth = 400;
         int virtualHeight = 300;
 
+        bool init_failed = false;
+
         ContextType type = ContextType::Custom;
         std::string backendName{};
 

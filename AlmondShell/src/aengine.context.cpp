@@ -172,13 +172,16 @@ namespace
         const unsigned w = static_cast<unsigned>((std::max)(1, ctx->width));
         const unsigned h = static_cast<unsigned>((std::max)(1, ctx->height));
 
+        ctx->init_failed = false;
         try {
             (void)almondnamespace::vulkancontext::vulkan_initialize(ctx, native, w, h, ctx->onResize);
         }
         catch (const std::exception& e) {
+            ctx->init_failed = true;
             std::cerr << "[Vulkan] init exception: " << e.what() << "\n";
         }
         catch (...) {
+            ctx->init_failed = true;
             std::cerr << "[Vulkan] init unknown exception\n";
         }
     }

@@ -1341,6 +1341,13 @@ namespace almondnamespace::core
             }
         }
 
+        if (ctx->init_failed)
+        {
+            std::cerr << "[RenderThread] Backend init failed for " << ctx->backendName
+                << ". Keeping window alive with no-op process.\n";
+            ctx->process = nullptr;
+        }
+
         while (running.load(std::memory_order_acquire) && win.running)
         {
             bool keepRunning = true;
