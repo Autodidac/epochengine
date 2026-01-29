@@ -24,6 +24,21 @@ import <iostream>;
 
 namespace almondnamespace::vulkancontext
 {
+    void vulkan_draw_sprite(
+        SpriteHandle sprite,
+        std::span<const TextureAtlas* const> atlases,
+        float x,
+        float y,
+        float w,
+        float h)
+    {
+        auto ctx = core::get_current_render_context();
+        if (!ctx)
+            return;
+
+        vulkan_app().enqueue_gui_draw(ctx.get(), sprite, atlases, x, y, w, h);
+    }
+
     // Small ones first so they're visible no matter what.
     int vulkan_get_width()
     {
@@ -78,12 +93,7 @@ namespace almondnamespace::vulkancontext
         //vulkan_initialize
 		std::cout << "[Vulkan] Initialized successfully.\n";
 
-        ctx->draw_sprite = [ctx](SpriteHandle sprite,
-            std::span<const TextureAtlas* const> atlases,
-            float x, float y, float w, float h)
-        {
-            vulkan_app().enqueue_gui_draw(ctx.get(), sprite, atlases, x, y, w, h);
-        };
+        ctx->draw_sprite = &vulkan_draw_sprite;
 
         atlasmanager::register_backend_uploader(core::ContextType::Vulkan,
             [](const TextureAtlas& atlas) { vulkantextures::ensure_uploaded(atlas); });
