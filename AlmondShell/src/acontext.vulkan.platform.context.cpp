@@ -90,6 +90,8 @@ import :commands;
 import aengine.context.commandqueue;
 import aengine.core.context;
 import aengine.input;
+import :shared_vk;
+
 
 // -----------------------------------------------------------------------------
 // Correct namespace for the exported type declared in the interface:
@@ -259,7 +261,7 @@ namespace almondnamespace::vulkancontext
 
         // Vulkan uses a Vulkan-native GUI backend; no OpenGL context is shared on this path.
         queue.drain();
-#endif
+//#endif
         if (framebufferMinimized)
         {
             std::this_thread::sleep_for(std::chrono::milliseconds(16));
