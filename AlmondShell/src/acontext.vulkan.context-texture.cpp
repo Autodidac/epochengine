@@ -273,7 +273,8 @@ namespace almondnamespace::vulkancontext
         if (!device)
             return;
 
-        auto& entry = guiAtlases[&atlas];
+        auto& guiState = gui_state_for_context(activeGuiContext);
+        auto& entry = guiState.guiAtlases[&atlas];
         if (entry.version == atlas.version && entry.image)
             return;
 
@@ -387,7 +388,7 @@ namespace almondnamespace::vulkancontext
 
         entry.sampler = std::move(sampler);
 
-        if (guiUniformBuffers.empty())
+        if (guiState.guiUniformBuffers.empty())
             createGuiUniformBuffers();
 
         const std::uint32_t count = static_cast<std::uint32_t>(swapChainImages.size());
@@ -426,7 +427,7 @@ namespace almondnamespace::vulkancontext
         for (std::size_t i = 0; i < count; ++i)
         {
             vk::DescriptorBufferInfo bufferInfo{};
-            bufferInfo.buffer = *guiUniformBuffers[i];
+            bufferInfo.buffer = *guiState.guiUniformBuffers[i];
             bufferInfo.offset = 0;
             bufferInfo.range = sizeof(UniformBufferObject);
 

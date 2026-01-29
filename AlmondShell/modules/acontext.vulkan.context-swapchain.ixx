@@ -195,7 +195,6 @@ namespace almondnamespace::vulkancontext
 
         graphicsPipeline.reset();
         pipelineLayout.reset();
-        guiPipeline.reset();
         renderPass.reset();
 
         swapChainImageViews.clear();
@@ -207,11 +206,8 @@ namespace almondnamespace::vulkancontext
         uniformBuffers.clear();
         uniformBuffersMemory.clear();
         uniformBuffersMapped.clear();
-        guiUniformBuffers.clear();
-        guiUniformBuffersMemory.clear();
-        guiUniformBuffersMapped.clear();
-
-        guiAtlases.clear();
+        if (auto* guiState = find_gui_state(activeGuiContext))
+            reset_gui_swapchain_state(*guiState);
     }
 
     void Application::recreateSwapChain()

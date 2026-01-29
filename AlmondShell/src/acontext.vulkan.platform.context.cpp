@@ -224,6 +224,8 @@ namespace almondnamespace::vulkancontext
         if (!device)
             return false;
 
+        set_active_context(ctx.get());
+
         static auto lastTime = std::chrono::high_resolution_clock::now();
         const auto currentTime = std::chrono::high_resolution_clock::now();
         const float deltaTime = std::chrono::duration<float>(currentTime - lastTime).count();
@@ -270,12 +272,14 @@ namespace almondnamespace::vulkancontext
 
         if (framebufferMinimized)
         {
-            guiDraws.clear();
+            if (auto* guiState = find_gui_state(ctx.get()))
+                guiState->guiDraws.clear();
             queue.drain();
             std::this_thread::sleep_for(std::chrono::milliseconds(16));
             return true;
         }
-        guiDraws.clear();
+        if (auto* guiState = find_gui_state(ctx.get()))
+            guiState->guiDraws.clear();
         queue.drain();
         drawFrame();
         return true;
@@ -285,6 +289,46 @@ namespace almondnamespace::vulkancontext
     {
         context = std::move(ctx);
         nativeWindowHandle = nativeWindow;
+        activeGuiContext = context.lock().get();
+    }
+
+    void Application::set_active_context(const almondnamespace::core::Context* ctx)
+    {
+        activeGuiContext = ctx;
+    }
+
+    void Application::cleanup_gui_context(const almondnamespace::core::Context* ctx)
+    {
+        if (!ctx)
+            return;
+
+        guiContexts.erase(ctx);
+        if (activeGuiContext == ctx)
+            activeGuiContext = nullptr;
+    }
+
+    Application::GuiContextState& Application::gui_state_for_context(
+        const almondnamespace::core::Context* ctx)
+    {
+        return guiContexts[ctx];
+    }
+
+    Application::GuiContextState* Application::find_gui_state(
+        const almondnamespace::core::Context* ctx) noexcept
+    {
+        auto it = guiContexts.find(ctx);
+        if (it == guiContexts.end())
+            return nullptr;
+        return &it->second;
+    }
+
+    void Application::reset_gui_swapchain_state(GuiContextState& guiState)
+    {
+        guiState.guiPipeline.reset();
+        guiState.guiUniformBuffers.clear();
+        guiState.guiUniformBuffersMemory.clear();
+        guiState.guiUniformBuffersMapped.clear();
+        guiState.guiAtlases.clear();
     }
 
     void Application::set_framebuffer_size(int width, int height)
@@ -328,20 +372,12 @@ namespace almondnamespace::vulkancontext
         uniformBuffers.clear();
         uniformBuffersMemory.clear();
         uniformBuffersMapped.clear();
-        guiUniformBuffers.clear();
-        guiUniformBuffersMemory.clear();
-        guiUniformBuffersMapped.clear();
 
         indexBuffer.reset();
         indexBufferMemory.reset();
         vertexBuffer.reset();
         vertexBufferMemory.reset();
-        guiIndexBuffer.reset();
-        guiIndexBufferMemory.reset();
-        guiVertexBuffer.reset();
-        guiVertexBufferMemory.reset();
-        guiVertexCapacity = 0;
-        guiIndexCapacity = 0;
+        guiContexts.clear();
 
         textureSampler.reset();
         textureImageView.reset();
@@ -350,7 +386,6 @@ namespace almondnamespace::vulkancontext
 
         pipelineLayout.reset();
         graphicsPipeline.reset();
-        guiPipeline.reset();
         descriptorSetLayout.reset();
         renderPass.reset();
 
@@ -361,9 +396,6 @@ namespace almondnamespace::vulkancontext
         commandPool.reset();
 
         device.reset();
-
-        guiAtlases.clear();
-        guiDraws.clear();
 
         // surface is a UniqueSurfaceKHR; do not manually destroy it.
         surface.reset();

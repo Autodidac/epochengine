@@ -112,8 +112,11 @@ namespace almondnamespace::vulkancontext
 
         cmd.nextSubpass(vk::SubpassContents::eInline);
 
-        if (!guiDraws.empty())
-            recordGuiCommands(cmd, imageIndex);
+        if (auto* guiState = find_gui_state(activeGuiContext))
+        {
+            if (!guiState->guiDraws.empty())
+                recordGuiCommands(cmd, imageIndex, *guiState);
+        }
 
         cmd.endRenderPass();
 
@@ -122,6 +125,7 @@ namespace almondnamespace::vulkancontext
     }
 
     void Application::enqueue_gui_draw(
+        const almondnamespace::core::Context* ctx,
         const almondnamespace::SpriteHandle& sprite,
         std::span<const almondnamespace::TextureAtlas* const> atlases,
         float x,
@@ -139,7 +143,8 @@ namespace almondnamespace::vulkancontext
         if (!atlas)
             return;
 
-        guiDraws.push_back(GuiDrawCommand{
+        auto& guiState = gui_state_for_context(ctx);
+        guiState.guiDraws.push_back(GuiDrawCommand{
             atlas,
             sprite.localIndex,
             x,
@@ -149,28 +154,28 @@ namespace almondnamespace::vulkancontext
             });
     }
 
-    void Application::recordGuiCommands(vk::CommandBuffer cmd, std::uint32_t imageIndex)
+    void Application::recordGuiCommands(vk::CommandBuffer cmd, std::uint32_t imageIndex, GuiContextState& guiState)
     {
-        if (guiDraws.empty() || !device)
+        if (guiState.guiDraws.empty() || !device)
             return;
 
-        if (!guiPipeline)
+        if (!guiState.guiPipeline)
             createGuiPipeline();
 
-        if (guiUniformBuffers.empty())
+        if (guiState.guiUniformBuffers.empty())
             createGuiUniformBuffers();
 
         std::vector<Vertex> vertices{};
         std::vector<std::uint32_t> indices{};
         std::vector<GuiBatch> batches{};
 
-        vertices.reserve(guiDraws.size() * 4u);
-        indices.reserve(guiDraws.size() * 6u);
-        batches.reserve(guiDraws.size());
+        vertices.reserve(guiState.guiDraws.size() * 4u);
+        indices.reserve(guiState.guiDraws.size() * 6u);
+        batches.reserve(guiState.guiDraws.size());
 
         const TextureAtlas* currentAtlas = nullptr;
 
-        for (const auto& draw : guiDraws)
+        for (const auto& draw : guiState.guiDraws)
         {
             if (!draw.atlas)
                 continue;
@@ -213,55 +218,55 @@ namespace almondnamespace::vulkancontext
 
         if (vertices.empty() || indices.empty())
         {
-            guiDraws.clear();
+            guiState.guiDraws.clear();
             return;
         }
 
         const std::size_t vertexCount = vertices.size();
         const std::size_t indexCount = indices.size();
 
-        if (vertexCount > guiVertexCapacity)
+        if (vertexCount > guiState.guiVertexCapacity)
         {
-            guiVertexCapacity = vertexCount;
-            std::tie(guiVertexBuffer, guiVertexBufferMemory) = createBuffer(
-                sizeof(Vertex) * guiVertexCapacity,
+            guiState.guiVertexCapacity = vertexCount;
+            std::tie(guiState.guiVertexBuffer, guiState.guiVertexBufferMemory) = createBuffer(
+                sizeof(Vertex) * guiState.guiVertexCapacity,
                 vk::BufferUsageFlagBits::eVertexBuffer,
                 vk::MemoryPropertyFlagBits::eHostVisible | vk::MemoryPropertyFlagBits::eHostCoherent);
         }
 
-        if (indexCount > guiIndexCapacity)
+        if (indexCount > guiState.guiIndexCapacity)
         {
-            guiIndexCapacity = indexCount;
-            std::tie(guiIndexBuffer, guiIndexBufferMemory) = createBuffer(
-                sizeof(std::uint32_t) * guiIndexCapacity,
+            guiState.guiIndexCapacity = indexCount;
+            std::tie(guiState.guiIndexBuffer, guiState.guiIndexBufferMemory) = createBuffer(
+                sizeof(std::uint32_t) * guiState.guiIndexCapacity,
                 vk::BufferUsageFlagBits::eIndexBuffer,
                 vk::MemoryPropertyFlagBits::eHostVisible | vk::MemoryPropertyFlagBits::eHostCoherent);
         }
 
         {
             const vk::DeviceSize vertexBytes = sizeof(Vertex) * vertexCount;
-            auto [mapRes, mapped] = device->mapMemory(*guiVertexBufferMemory, 0, vertexBytes);
+            auto [mapRes, mapped] = device->mapMemory(*guiState.guiVertexBufferMemory, 0, vertexBytes);
             if (mapRes != vk::Result::eSuccess || !mapped)
                 throw std::runtime_error("[Vulkan] Failed to map GUI vertex buffer.");
             std::memcpy(mapped, vertices.data(), static_cast<std::size_t>(vertexBytes));
-            device->unmapMemory(*guiVertexBufferMemory);
+            device->unmapMemory(*guiState.guiVertexBufferMemory);
         }
 
         {
             const vk::DeviceSize indexBytes = sizeof(std::uint32_t) * indexCount;
-            auto [mapRes, mapped] = device->mapMemory(*guiIndexBufferMemory, 0, indexBytes);
+            auto [mapRes, mapped] = device->mapMemory(*guiState.guiIndexBufferMemory, 0, indexBytes);
             if (mapRes != vk::Result::eSuccess || !mapped)
                 throw std::runtime_error("[Vulkan] Failed to map GUI index buffer.");
             std::memcpy(mapped, indices.data(), static_cast<std::size_t>(indexBytes));
-            device->unmapMemory(*guiIndexBufferMemory);
+            device->unmapMemory(*guiState.guiIndexBufferMemory);
         }
 
-        cmd.bindPipeline(vk::PipelineBindPoint::eGraphics, *guiPipeline);
+        cmd.bindPipeline(vk::PipelineBindPoint::eGraphics, *guiState.guiPipeline);
 
-        const vk::Buffer vb[] = { *guiVertexBuffer };
+        const vk::Buffer vb[] = { *guiState.guiVertexBuffer };
         const vk::DeviceSize offsets[] = { 0 };
         cmd.bindVertexBuffers(0, 1, vb, offsets);
-        cmd.bindIndexBuffer(*guiIndexBuffer, 0, vk::IndexType::eUint32);
+        cmd.bindIndexBuffer(*guiState.guiIndexBuffer, 0, vk::IndexType::eUint32);
 
         for (const auto& batch : batches)
         {
@@ -269,8 +274,8 @@ namespace almondnamespace::vulkancontext
                 continue;
 
             ensure_gui_atlas(*batch.atlas);
-            auto it = guiAtlases.find(batch.atlas);
-            if (it == guiAtlases.end() || it->second.descriptorSets.empty())
+            auto it = guiState.guiAtlases.find(batch.atlas);
+            if (it == guiState.guiAtlases.end() || it->second.descriptorSets.empty())
                 continue;
 
             if (imageIndex >= it->second.descriptorSets.size())
@@ -290,7 +295,7 @@ namespace almondnamespace::vulkancontext
             cmd.drawIndexed(batch.indexCount, 1u, batch.indexOffset, 0, 0);
         }
 
-        guiDraws.clear();
+        guiState.guiDraws.clear();
     }
 
     void Application::createSyncObjects()
