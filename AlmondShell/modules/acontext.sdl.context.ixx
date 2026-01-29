@@ -289,9 +289,9 @@ export namespace almondnamespace::sdlcontext
 
         SDL_SetWindowTitle(sdlcontext.window, windowTitle.c_str());
 
-        auto create_renderer_with_flags = [&](Uint32 flags, const char* label) -> SDL_Renderer*
+        auto create_renderer = [&](const char* name, const char* label) -> SDL_Renderer*
         {
-            SDL_Renderer* renderer = SDL_CreateRenderer(sdlcontext.window, nullptr, flags);
+            SDL_Renderer* renderer = SDL_CreateRenderer(sdlcontext.window, name);
             if (renderer)
             {
                 std::cerr << "[SDL] Created renderer with " << label << ".\n";
@@ -303,20 +303,10 @@ export namespace almondnamespace::sdlcontext
             return nullptr;
         };
 
-        sdlcontext.renderer = create_renderer_with_flags(
-            SDL_RENDERER_ACCELERATED | SDL_RENDERER_PRESENTVSYNC,
-            "SDL_RENDERER_ACCELERATED | SDL_RENDERER_PRESENTVSYNC");
+        sdlcontext.renderer = create_renderer(nullptr, "default renderer");
         if (!sdlcontext.renderer)
         {
-            sdlcontext.renderer = create_renderer_with_flags(
-                SDL_RENDERER_ACCELERATED,
-                "SDL_RENDERER_ACCELERATED");
-        }
-        if (!sdlcontext.renderer)
-        {
-            sdlcontext.renderer = create_renderer_with_flags(
-                SDL_RENDERER_SOFTWARE,
-                "SDL_RENDERER_SOFTWARE");
+            sdlcontext.renderer = create_renderer("software", "software renderer");
         }
         if (!sdlcontext.renderer)
         {
