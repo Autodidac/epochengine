@@ -288,6 +288,7 @@ export namespace almondnamespace::vulkancontext
 
     void Application::createGuiPipeline()
     {
+        auto& guiState = gui_state_for_context(activeGuiContext);
         const auto vertShaderCode = readFile("shaders/vert.spv");
         const auto fragShaderCode = readFile("shaders/frag.spv");
 
@@ -400,6 +401,6 @@ export namespace almondnamespace::vulkancontext
         auto gp = device->createGraphicsPipelineUnique(vk::PipelineCache{}, pipelineInfo);
         if (gp.result != vk::Result::eSuccess)
             throw std::runtime_error("[Vulkan] createGuiPipeline failed.");
-        guiPipeline = std::move(gp.value);
+        guiState.guiPipeline = std::move(gp.value);
     }
 }

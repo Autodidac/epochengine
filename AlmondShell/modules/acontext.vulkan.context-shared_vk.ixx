@@ -69,6 +69,8 @@ namespace almondnamespace::vulkancontext
     export class Application
     {
     public:
+        struct GuiContextState;
+
         void run();
 
         void initWindow();
@@ -85,7 +87,7 @@ namespace almondnamespace::vulkancontext
         void updateGuiUniformBuffer(std::uint32_t currentImage);
         void createGuiPipeline();
         void recordCommandBuffer(std::uint32_t imageIndex);
-        void recordGuiCommands(vk::CommandBuffer cmd, std::uint32_t imageIndex);
+        void recordGuiCommands(vk::CommandBuffer cmd, std::uint32_t imageIndex, struct GuiContextState& guiState);
 
         void drawFrame();
 
@@ -94,6 +96,8 @@ namespace almondnamespace::vulkancontext
         int get_framebuffer_height() const noexcept;
 
         void set_context(std::shared_ptr<almondnamespace::core::Context> ctx, void* nativeWindow);
+        void set_active_context(const almondnamespace::core::Context* ctx);
+        void cleanup_gui_context(const almondnamespace::core::Context* ctx);
 
         vk::CommandBuffer getCurrentCommandBuffer() const
         {
@@ -101,6 +105,7 @@ namespace almondnamespace::vulkancontext
         }
 
         void enqueue_gui_draw(
+            const almondnamespace::core::Context* ctx,
             const almondnamespace::SpriteHandle& sprite,
             std::span<const almondnamespace::TextureAtlas* const> atlases,
             float x,
@@ -171,9 +176,6 @@ namespace almondnamespace::vulkancontext
 
         vk::UniqueDescriptorPool descriptorPool;
         std::vector<vk::UniqueDescriptorSet> descriptorSets;
-        std::vector<vk::UniqueBuffer> guiUniformBuffers;
-        std::vector<vk::UniqueDeviceMemory> guiUniformBuffersMemory;
-        std::vector<void*> guiUniformBuffersMapped;
 
         std::vector<vk::UniqueSemaphore> imageAvailableSemaphores;
         std::vector<vk::UniqueSemaphore> renderFinishedSemaphores;
@@ -190,7 +192,6 @@ namespace almondnamespace::vulkancontext
         vk::UniqueDeviceMemory textureImageMemory;
         vk::UniqueImageView textureImageView;
         vk::UniqueSampler textureSampler;
-        vk::UniquePipeline guiPipeline;
 
         bool validationLayersEnabled = false;
 
@@ -261,6 +262,9 @@ namespace almondnamespace::vulkancontext
         void createUniformBuffers();
         void updateUniformBuffer(std::uint32_t currentImage,
             const almondnamespace::vulkancamera::State& camera);
+        GuiContextState& gui_state_for_context(const almondnamespace::core::Context* ctx);
+        GuiContextState* find_gui_state(const almondnamespace::core::Context* ctx) noexcept;
+        void reset_gui_swapchain_state(GuiContextState& guiState);
 
         void createDescriptorPool();
         void createDescriptorSets();
@@ -318,16 +322,26 @@ namespace almondnamespace::vulkancontext
             std::uint32_t height{ 0 };
         };
 
-        std::unordered_map<const TextureAtlas*, GuiAtlasResources> guiAtlases{};
+        struct GuiContextState
+        {
+            std::unordered_map<const TextureAtlas*, GuiAtlasResources> guiAtlases{};
 
-        vk::UniqueBuffer guiVertexBuffer{};
-        vk::UniqueDeviceMemory guiVertexBufferMemory{};
-        vk::UniqueBuffer guiIndexBuffer{};
-        vk::UniqueDeviceMemory guiIndexBufferMemory{};
-        std::size_t guiVertexCapacity = 0;
-        std::size_t guiIndexCapacity = 0;
+            vk::UniqueBuffer guiVertexBuffer{};
+            vk::UniqueDeviceMemory guiVertexBufferMemory{};
+            vk::UniqueBuffer guiIndexBuffer{};
+            vk::UniqueDeviceMemory guiIndexBufferMemory{};
+            std::size_t guiVertexCapacity = 0;
+            std::size_t guiIndexCapacity = 0;
 
-        std::vector<GuiDrawCommand> guiDraws{};
+            std::vector<vk::UniqueBuffer> guiUniformBuffers;
+            std::vector<vk::UniqueDeviceMemory> guiUniformBuffersMemory;
+            std::vector<void*> guiUniformBuffersMapped;
+            vk::UniquePipeline guiPipeline;
+            std::vector<GuiDrawCommand> guiDraws{};
+        };
+
+        std::unordered_map<const almondnamespace::core::Context*, GuiContextState> guiContexts{};
+        const almondnamespace::core::Context* activeGuiContext = nullptr;
     };
 
     export std::span<const Application::Vertex> cube_vertices() noexcept;

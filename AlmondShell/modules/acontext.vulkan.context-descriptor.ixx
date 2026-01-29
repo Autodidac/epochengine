@@ -131,11 +131,12 @@ namespace almondnamespace::vulkancontext
 
     void Application::createGuiUniformBuffers()
     {
+        auto& guiState = gui_state_for_context(activeGuiContext);
         const std::size_t n = swapChainImages.size();
 
-        guiUniformBuffers.resize(n);
-        guiUniformBuffersMemory.resize(n);
-        guiUniformBuffersMapped.resize(n);
+        guiState.guiUniformBuffers.resize(n);
+        guiState.guiUniformBuffersMemory.resize(n);
+        guiState.guiUniformBuffersMapped.resize(n);
 
         const vk::DeviceSize bufferSize = sizeof(UniformBufferObject);
 
@@ -147,14 +148,14 @@ namespace almondnamespace::vulkancontext
                 vk::MemoryPropertyFlagBits::eHostVisible | vk::MemoryPropertyFlagBits::eHostCoherent
             );
 
-            guiUniformBuffers[i] = std::move(buf);
-            guiUniformBuffersMemory[i] = std::move(mem);
+            guiState.guiUniformBuffers[i] = std::move(buf);
+            guiState.guiUniformBuffersMemory[i] = std::move(mem);
 
-            auto [mapRes, ptr] = device->mapMemory(*guiUniformBuffersMemory[i], 0, bufferSize);
+            auto [mapRes, ptr] = device->mapMemory(*guiState.guiUniformBuffersMemory[i], 0, bufferSize);
             if (mapRes != vk::Result::eSuccess || ptr == nullptr)
                 throw std::runtime_error("[Vulkan] Failed to map GUI uniform buffer memory.");
 
-            guiUniformBuffersMapped[i] = ptr;
+            guiState.guiUniformBuffersMapped[i] = ptr;
         }
     }
 
@@ -186,7 +187,11 @@ namespace almondnamespace::vulkancontext
 
     void Application::updateGuiUniformBuffer(std::uint32_t currentImage)
     {
-        if (guiUniformBuffersMapped.empty() || currentImage >= guiUniformBuffersMapped.size())
+        auto* guiState = find_gui_state(activeGuiContext);
+        if (!guiState)
+            return;
+        if (guiState->guiUniformBuffersMapped.empty()
+            || currentImage >= guiState->guiUniformBuffersMapped.size())
             return;
 
         UniformBufferObject ubo{};
@@ -200,6 +205,6 @@ namespace almondnamespace::vulkancontext
         proj[1][1] *= -1.0f;
         ubo.proj = proj;
 
-        std::memcpy(guiUniformBuffersMapped[currentImage], &ubo, sizeof(ubo));
+        std::memcpy(guiState->guiUniformBuffersMapped[currentImage], &ubo, sizeof(ubo));
     }
 } // namespace almondnamespace::vulkancontext
