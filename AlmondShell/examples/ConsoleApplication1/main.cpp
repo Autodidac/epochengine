@@ -32,7 +32,7 @@
 //#include "aengine.hpp"
 #include <chrono>
 #include <filesystem>
-#include <iostream>
+#include <source_location>
 #include <string_view>
 #include <thread>
 #include <vector>
@@ -40,6 +40,7 @@
 //#include "aengine.hpp"
 
 import almondshell; // import the module
+import aengine.core.logger;
 
 #define RAYLIB_STATIC
 
@@ -81,7 +82,12 @@ inline auto sanity() {
     // Lets Begin
     //TaskScheduler scheduler;
 
-    std::cout << "[Engine] Starting up...\n";
+    constexpr std::string_view kLogSystem = "Example.ConsoleApp";
+    auto& log = almondnamespace::logger::get(kLogSystem);
+
+    log.log(almondnamespace::logger::LogLevel::INFO,
+        "[Engine] Starting up...",
+        std::source_location::current());
 
 
 
@@ -115,6 +121,8 @@ inline auto sanity() {
         if (std::chrono::duration_cast<std::chrono::minutes>(std::chrono::steady_clock::now() - start).count() > 10) break;
     }
 */
-    std::cout << "[Engine] Session ended.\n";
+    log.log(almondnamespace::logger::LogLevel::INFO,
+        "[Engine] Session ended.",
+        std::source_location::current());
     //return 0;
 }
