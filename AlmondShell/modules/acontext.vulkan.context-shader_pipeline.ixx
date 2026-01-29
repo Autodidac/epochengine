@@ -149,7 +149,7 @@ export namespace almondnamespace::vulkancontext
             message << "\n  - " << path.string();
         throw std::runtime_error(message.str());
     }
-
+    
     void Application::createGraphicsPipeline()
     {
         const auto vertShaderCode = readFile("shaders/vert.spv");
