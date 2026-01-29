@@ -122,7 +122,7 @@ namespace almondnamespace::vulkancontext
         createInstance();
         createSurface();
 
-        if (enableValidationLayers)
+        if (validationLayersEnabled)
         {
             // setupDebugMessenger(); // if you implement it
         }
@@ -343,7 +343,7 @@ namespace almondnamespace::vulkancontext
         // surface is a UniqueSurfaceKHR; do not manually destroy it.
         surface.reset();
 
-        if (enableValidationLayers && debugMessenger && instance)
+        if (validationLayersEnabled && debugMessenger && instance)
         {
             instance->destroyDebugUtilsMessengerEXT(debugMessenger, nullptr);
             debugMessenger = VK_NULL_HANDLE;
