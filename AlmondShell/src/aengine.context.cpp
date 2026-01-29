@@ -705,9 +705,15 @@ namespace almondnamespace::core
             ctx->is_mouse_button_held = [](input::MouseButton b) { return input::is_mouse_button_held(b); };
             ctx->is_mouse_button_down = [](input::MouseButton b) { return input::is_mouse_button_down(b); };
 
-           // ctx->draw_sprite = almondnamespace::vulkancontext::draw_sprite;
-            //ctx->add_texture = almondnamespace::vulkantextures::add_texture;
-            //ctx->add_atlas = almondnamespace::vulkantextures::add_atlas;
+#if defined(ALMOND_USING_OPENGL)
+            ctx->draw_sprite = almondnamespace::opengltextures::draw_sprite;
+            ctx->add_texture = &add_texture_default;
+            ctx->add_atlas = +[](const TextureAtlas& a) { return add_atlas_default(a, ContextType::OpenGL); };
+#else
+            ctx->draw_sprite = nullptr;
+            ctx->add_texture = &add_texture_default;
+            ctx->add_atlas = +[](const TextureAtlas& a) { return add_atlas_default(a, ContextType::Vulkan); };
+#endif
 
             AddContextForBackend(ContextType::Vulkan, std::move(ctx));
         }
