@@ -20,12 +20,6 @@ import <vector>;
 
 namespace almondnamespace::vulkancontext
 {
-#ifdef NDEBUG
-    inline const bool enableValidationLayers = false;
-#else
-    inline const bool enableValidationLayers = true;
-#endif
-
     export extern const std::vector<const char*> validationLayers;
     export extern const std::vector<const char*> deviceExtensions;
 

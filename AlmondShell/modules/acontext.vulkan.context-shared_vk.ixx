@@ -171,6 +171,8 @@ namespace almondnamespace::vulkancontext
         vk::UniqueImageView textureImageView;
         vk::UniqueSampler textureSampler;
 
+        bool validationLayersEnabled = false;
+
         inline static almondnamespace::vulkancamera::State cam =
             almondnamespace::vulkancamera::create(
                 glm::vec3(0.0f, 0.0f, 5.0f),

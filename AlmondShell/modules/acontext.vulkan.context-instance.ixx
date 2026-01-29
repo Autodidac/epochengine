@@ -35,10 +35,12 @@ export module acontext.vulkan.context:instance;
 
 import :shared_context;
 import :shared_vk;
+import :renderer;
 
 import <algorithm>;
 import <cstdint>;
 import <cstring>;
+import <iostream>;
 import <stdexcept>;
 import <vector>;
 
@@ -170,7 +172,7 @@ export namespace almondnamespace::vulkancontext
 #   endif
 #endif
 
-        if (enableValidationLayers)
+        if (validationLayersEnabled)
             extensions.push_back(VK_EXT_DEBUG_UTILS_EXTENSION_NAME);
 
         return extensions;
@@ -179,9 +181,14 @@ export namespace almondnamespace::vulkancontext
     void Application::createInstance()
     {
         // Important: this now uses the Vulkan loader safely (no invalid vk* call)
-        // so it won’t AV if you forgot vulkan-1.lib or you’re in VK_NO_PROTOTYPES mode.
-        if (enableValidationLayers && !checkValidationLayerSupport())
-            throw std::runtime_error("Validation layers requested, but not available (or Vulkan loader not found).");
+        validationLayersEnabled = almondnamespace::vulkanrenderer::vulkan_config.enable_validation_layers;
+        if (validationLayersEnabled && !checkValidationLayerSupport())
+        {
+            std::cerr << "[Vulkan] Validation layers requested but not available; "
+                         "continuing with validation disabled.\n";
+            validationLayersEnabled = false;
+        }
+        if (validationLayersEnabled)
 
         vk::ApplicationInfo appInfo{};
         appInfo.pApplicationName = "AlmondEngine Vulkan";
