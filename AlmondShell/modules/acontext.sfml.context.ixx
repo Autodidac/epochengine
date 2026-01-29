@@ -340,8 +340,11 @@ export namespace almondnamespace::sfmlcontext
             (renderFlags & static_cast<std::uint8_t>(core::RenderPath::SFML)) != 0u;
         const bool hasOpenGLDraws =
             (renderFlags & static_cast<std::uint8_t>(core::RenderPath::OpenGL)) != 0u;
+        const bool hasVulkanDraws =
+            (renderFlags & static_cast<std::uint8_t>(core::RenderPath::Vulkan)) != 0u;
         const bool hasQueuedCommands = queue.depth() > 0;
-        const bool useOpenGLPath = hasOpenGLDraws || (hasQueuedCommands && !hasSfmlDraws);
+        const bool useOpenGLPath =
+            hasOpenGLDraws || (hasQueuedCommands && !hasSfmlDraws && !hasVulkanDraws);
         const bool shouldResetSfmlState = hasSfmlDraws;
 
 #if !defined(NDEBUG)
