@@ -221,8 +221,7 @@ export namespace almondnamespace::vulkancontext
 
         instance = std::move(inst);
 
-        // If you later adopt DispatchLoaderDynamic or volk, initialize it AFTER instance creation.
-        // With DispatchLoaderStatic, do nothing here.
+        VULKAN_HPP_DEFAULT_DISPATCHER.init(instance.get());
     }
 
     void Application::createSurface()
