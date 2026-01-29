@@ -6,8 +6,6 @@ module;
 // Include Vulkan-Hpp after config.
 #include <vulkan/vulkan.hpp>
 
-#include <src/stb/stb_image.h>
-
 module acontext.vulkan.context:texture;
 
 import <array>;
@@ -18,6 +16,7 @@ import <sstream>;
 import <stdexcept>;
 import <utility>;
 
+import aimage.loader;
 import :shared_vk;
 
 namespace almondnamespace::vulkancontext
@@ -39,38 +38,35 @@ namespace almondnamespace::vulkancontext
 
             for (const auto& path : candidates)
             {
-                if (fs::exists(path) && fs::is_regular_file(path))
-                    return path;
+                fs::path absolute = fs::absolute(path).lexically_normal();
+                if (fs::exists(absolute) && fs::is_regular_file(absolute))
+                    return absolute;
             }
 
             std::ostringstream message;
             message << "Failed to load texture image! Tried paths:";
             for (const auto& path : candidates)
-                message << "\n  - " << path.string();
+                message << "\n  - " << fs::absolute(path).lexically_normal().string();
             throw std::runtime_error(message.str());
         }
     }
 
     void Application::createTextureImage()
     {
-        int texWidth = 0, texHeight = 0, texChannels = 0;
-
-        stbi_set_flip_vertically_on_load(true);
-        const std::string texturePath = resolve_texture_path().string();
-        stbi_uc* pixels = stbi_load(texturePath.c_str(), &texWidth, &texHeight, &texChannels, STBI_rgb_alpha);
-        if (!pixels)
+        const std::filesystem::path texturePath = resolve_texture_path();
+        ImageData texture{};
+        try
         {
-            const char* failure = stbi_failure_reason();
+            texture = a_loadImage(texturePath, true);
+        }
+        catch (const std::exception& ex)
+        {
             std::ostringstream message;
-            message << "Failed to load texture image at '" << texturePath << "'";
-            if (failure && *failure)
-                message << ": " << failure;
+            message << "Failed to load texture image at '" << texturePath.string() << "': " << ex.what();
             throw std::runtime_error(message.str());
         }
 
-        const vk::DeviceSize imageSize =
-            static_cast<vk::DeviceSize>(texWidth) *
-            static_cast<vk::DeviceSize>(texHeight) * 4u;
+        const vk::DeviceSize imageSize = static_cast<vk::DeviceSize>(texture.pixels.size());
 
         vk::UniqueBuffer stagingBuffer;
         vk::UniqueDeviceMemory stagingBufferMemory;
@@ -84,18 +80,16 @@ namespace almondnamespace::vulkancontext
         auto [mapRes, data] = device->mapMemory(*stagingBufferMemory, 0, imageSize);
         if (mapRes != vk::Result::eSuccess)
             throw std::runtime_error("Failed to map staging buffer memory.");
-        std::memcpy(data, pixels, static_cast<std::size_t>(imageSize));
+        std::memcpy(data, texture.pixels.data(), static_cast<std::size_t>(imageSize));
         device->unmapMemory(*stagingBufferMemory);
-
-        stbi_image_free(pixels);
 
         vk::ImageCreateInfo imageInfo{};
         imageInfo.flags = {};
         imageInfo.imageType = vk::ImageType::e2D;
         imageInfo.format = vk::Format::eR8G8B8A8Srgb;
         imageInfo.extent = vk::Extent3D{
-            static_cast<std::uint32_t>(texWidth),
-            static_cast<std::uint32_t>(texHeight),
+            static_cast<std::uint32_t>(texture.width),
+            static_cast<std::uint32_t>(texture.height),
             1u
         };
         imageInfo.mipLevels = 1u;
@@ -134,8 +128,8 @@ namespace almondnamespace::vulkancontext
             vk::ImageLayout::eUndefined, vk::ImageLayout::eTransferDstOptimal);
 
         copyBufferToImage(*stagingBuffer, *textureImage,
-            static_cast<std::uint32_t>(texWidth),
-            static_cast<std::uint32_t>(texHeight));
+            static_cast<std::uint32_t>(texture.width),
+            static_cast<std::uint32_t>(texture.height));
 
         transitionImageLayout(*textureImage, vk::Format::eR8G8B8A8Srgb,
             vk::ImageLayout::eTransferDstOptimal, vk::ImageLayout::eShaderReadOnlyOptimal);
