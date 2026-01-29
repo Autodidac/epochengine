@@ -59,7 +59,14 @@ namespace almondnamespace::vulkancontext
         const std::string texturePath = resolve_texture_path().string();
         stbi_uc* pixels = stbi_load(texturePath.c_str(), &texWidth, &texHeight, &texChannels, STBI_rgb_alpha);
         if (!pixels)
-            throw std::runtime_error("Failed to load texture image!");
+        {
+            const char* failure = stbi_failure_reason();
+            std::ostringstream message;
+            message << "Failed to load texture image at '" << texturePath << "'";
+            if (failure && *failure)
+                message << ": " << failure;
+            throw std::runtime_error(message.str());
+        }
 
         const vk::DeviceSize imageSize =
             static_cast<vk::DeviceSize>(texWidth) *
