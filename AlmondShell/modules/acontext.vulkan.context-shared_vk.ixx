@@ -35,6 +35,7 @@ import <functional>;
 import <optional>;
 import <span>;
 import <string>;
+import <unordered_map>;
 import <utility>;
 import <vector>;
 
@@ -42,6 +43,8 @@ import aengine.context.commandqueue;
 import aengine.core.context;
 import aengine.input;
 import acontext.vulkan.camera;
+import aatlas.texture;
+import aspritehandle;
 
 namespace almondnamespace::vulkancontext
 {
@@ -78,6 +81,11 @@ namespace almondnamespace::vulkancontext
 
         void createVertexBuffer();
         void createIndexBuffer();
+        void createGuiUniformBuffers();
+        void updateGuiUniformBuffer(std::uint32_t currentImage);
+        void createGuiPipeline();
+        void recordCommandBuffer(std::uint32_t imageIndex);
+        void recordGuiCommands(vk::CommandBuffer cmd, std::uint32_t imageIndex);
 
         void drawFrame();
 
@@ -91,6 +99,15 @@ namespace almondnamespace::vulkancontext
         {
             return *commandBuffers[currentFrame];
         }
+
+        void enqueue_gui_draw(
+            const almondnamespace::SpriteHandle& sprite,
+            std::span<const almondnamespace::TextureAtlas* const> atlases,
+            float x,
+            float y,
+            float w,
+            float h);
+        void ensure_gui_atlas(const almondnamespace::TextureAtlas& atlas);
 
         std::vector<vk::Image> swapChainImages;
 
@@ -154,6 +171,9 @@ namespace almondnamespace::vulkancontext
 
         vk::UniqueDescriptorPool descriptorPool;
         std::vector<vk::UniqueDescriptorSet> descriptorSets;
+        std::vector<vk::UniqueBuffer> guiUniformBuffers;
+        std::vector<vk::UniqueDeviceMemory> guiUniformBuffersMemory;
+        std::vector<void*> guiUniformBuffersMapped;
 
         std::vector<vk::UniqueSemaphore> imageAvailableSemaphores;
         std::vector<vk::UniqueSemaphore> renderFinishedSemaphores;
@@ -170,6 +190,7 @@ namespace almondnamespace::vulkancontext
         vk::UniqueDeviceMemory textureImageMemory;
         vk::UniqueImageView textureImageView;
         vk::UniqueSampler textureSampler;
+        vk::UniquePipeline guiPipeline;
 
         bool validationLayersEnabled = false;
 
@@ -273,6 +294,40 @@ namespace almondnamespace::vulkancontext
                 } };
             }
         };
+
+        struct GuiDrawCommand
+        {
+            const TextureAtlas* atlas{};
+            std::uint32_t localIndex{};
+            float x{};
+            float y{};
+            float w{};
+            float h{};
+        };
+
+        struct GuiAtlasResources
+        {
+            vk::UniqueImage image{};
+            vk::UniqueDeviceMemory memory{};
+            vk::UniqueImageView view{};
+            vk::UniqueSampler sampler{};
+            vk::UniqueDescriptorPool descriptorPool{};
+            std::vector<vk::UniqueDescriptorSet> descriptorSets{};
+            std::uint64_t version{ 0 };
+            std::uint32_t width{ 0 };
+            std::uint32_t height{ 0 };
+        };
+
+        std::unordered_map<const TextureAtlas*, GuiAtlasResources> guiAtlases{};
+
+        vk::UniqueBuffer guiVertexBuffer{};
+        vk::UniqueDeviceMemory guiVertexBufferMemory{};
+        vk::UniqueBuffer guiIndexBuffer{};
+        vk::UniqueDeviceMemory guiIndexBufferMemory{};
+        std::size_t guiVertexCapacity = 0;
+        std::size_t guiIndexCapacity = 0;
+
+        std::vector<GuiDrawCommand> guiDraws{};
     };
 
     export std::span<const Application::Vertex> cube_vertices() noexcept;

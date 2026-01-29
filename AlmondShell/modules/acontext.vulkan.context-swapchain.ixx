@@ -195,6 +195,7 @@ namespace almondnamespace::vulkancontext
 
         graphicsPipeline.reset();
         pipelineLayout.reset();
+        guiPipeline.reset();
         renderPass.reset();
 
         swapChainImageViews.clear();
@@ -206,6 +207,11 @@ namespace almondnamespace::vulkancontext
         uniformBuffers.clear();
         uniformBuffersMemory.clear();
         uniformBuffersMapped.clear();
+        guiUniformBuffers.clear();
+        guiUniformBuffersMemory.clear();
+        guiUniformBuffersMapped.clear();
+
+        guiAtlases.clear();
     }
 
     void Application::recreateSwapChain()
@@ -221,9 +227,11 @@ namespace almondnamespace::vulkancontext
         createImageViews();
         createRenderPass();
         createGraphicsPipeline();
+        createGuiPipeline();
         createDepthResources();
         createFramebuffers();
         createUniformBuffers();
+        createGuiUniformBuffers();
         createDescriptorPool();
         createDescriptorSets();
         createCommandBuffers();

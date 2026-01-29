@@ -63,6 +63,15 @@ export namespace almondnamespace::vulkancontext
         subpass.pResolveAttachments = nullptr;
         subpass.pDepthStencilAttachment = &depthAttachmentRef;
 
+        vk::SubpassDescription guiSubpass{};
+        guiSubpass.pipelineBindPoint = vk::PipelineBindPoint::eGraphics;
+        guiSubpass.colorAttachmentCount = 1;
+        guiSubpass.pColorAttachments = &colorAttachmentRef;
+        guiSubpass.pResolveAttachments = nullptr;
+        guiSubpass.pDepthStencilAttachment = nullptr;
+
+        const std::array<vk::SubpassDescription, 2> subpasses = { subpass, guiSubpass };
+
         vk::SubpassDependency dependency{};
         dependency.srcSubpass = VK_SUBPASS_EXTERNAL;
         dependency.dstSubpass = 0;
@@ -75,13 +84,24 @@ export namespace almondnamespace::vulkancontext
             vk::AccessFlagBits::eDepthStencilAttachmentWrite;
         dependency.dependencyFlags = vk::DependencyFlagBits::eByRegion;
 
+        vk::SubpassDependency guiDependency{};
+        guiDependency.srcSubpass = 0;
+        guiDependency.dstSubpass = 1;
+        guiDependency.srcStageMask = vk::PipelineStageFlagBits::eColorAttachmentOutput;
+        guiDependency.dstStageMask = vk::PipelineStageFlagBits::eColorAttachmentOutput;
+        guiDependency.srcAccessMask = vk::AccessFlagBits::eColorAttachmentWrite;
+        guiDependency.dstAccessMask = vk::AccessFlagBits::eColorAttachmentRead |
+            vk::AccessFlagBits::eColorAttachmentWrite;
+        guiDependency.dependencyFlags = vk::DependencyFlagBits::eByRegion;
+
         vk::RenderPassCreateInfo renderPassInfo{};
         renderPassInfo.attachmentCount = static_cast<std::uint32_t>(attachments.size());
         renderPassInfo.pAttachments = attachments.data();
-        renderPassInfo.subpassCount = 1;
-        renderPassInfo.pSubpasses = &subpass;
-        renderPassInfo.dependencyCount = 1;
-        renderPassInfo.pDependencies = &dependency;
+        renderPassInfo.subpassCount = static_cast<std::uint32_t>(subpasses.size());
+        renderPassInfo.pSubpasses = subpasses.data();
+        const std::array<vk::SubpassDependency, 2> dependencies = { dependency, guiDependency };
+        renderPassInfo.dependencyCount = static_cast<std::uint32_t>(dependencies.size());
+        renderPassInfo.pDependencies = dependencies.data();
 
         auto rp = device->createRenderPassUnique(renderPassInfo);
         if (rp.result != vk::Result::eSuccess)
@@ -264,5 +284,122 @@ export namespace almondnamespace::vulkancontext
         auto gp = device->createGraphicsPipelineUnique(vk::PipelineCache{}, pipelineInfo);
         if (gp.result != vk::Result::eSuccess) throw std::runtime_error("[Vulkan] createGraphicsPipelineUnique failed.");
         graphicsPipeline = std::move(gp.value);
+    }
+
+    void Application::createGuiPipeline()
+    {
+        const auto vertShaderCode = readFile("shaders/vert.spv");
+        const auto fragShaderCode = readFile("shaders/frag.spv");
+
+        vk::ShaderModuleCreateInfo vInfo{};
+        vInfo.codeSize = vertShaderCode.size();
+        vInfo.pCode = reinterpret_cast<const std::uint32_t*>(vertShaderCode.data());
+
+        vk::ShaderModuleCreateInfo fInfo{};
+        fInfo.codeSize = fragShaderCode.size();
+        fInfo.pCode = reinterpret_cast<const std::uint32_t*>(fragShaderCode.data());
+
+        auto vMod = device->createShaderModuleUnique(vInfo);
+        if (vMod.result != vk::Result::eSuccess)
+            throw std::runtime_error("[Vulkan] createShaderModuleUnique(vert) failed.");
+        auto fMod = device->createShaderModuleUnique(fInfo);
+        if (fMod.result != vk::Result::eSuccess)
+            throw std::runtime_error("[Vulkan] createShaderModuleUnique(frag) failed.");
+
+        vk::PipelineShaderStageCreateInfo shaderStages[2]{};
+        shaderStages[0].stage = vk::ShaderStageFlagBits::eVertex;
+        shaderStages[0].module = *vMod.value;
+        shaderStages[0].pName = "main";
+        shaderStages[1].stage = vk::ShaderStageFlagBits::eFragment;
+        shaderStages[1].module = *fMod.value;
+        shaderStages[1].pName = "main";
+
+        const auto bindingDescription = Vertex::getBindingDescription();
+        const auto attributeDescriptions = Vertex::getAttributeDescriptions();
+
+        vk::PipelineVertexInputStateCreateInfo vertexInputInfo{};
+        vertexInputInfo.vertexBindingDescriptionCount = 1;
+        vertexInputInfo.pVertexBindingDescriptions = &bindingDescription;
+        vertexInputInfo.vertexAttributeDescriptionCount = static_cast<std::uint32_t>(attributeDescriptions.size());
+        vertexInputInfo.pVertexAttributeDescriptions = attributeDescriptions.data();
+
+        vk::PipelineInputAssemblyStateCreateInfo inputAssembly{};
+        inputAssembly.topology = vk::PrimitiveTopology::eTriangleList;
+        inputAssembly.primitiveRestartEnable = VK_FALSE;
+
+        vk::Viewport viewport{};
+        viewport.x = 0.f;
+        viewport.y = 0.f;
+        viewport.width = static_cast<float>(swapChainExtent.width);
+        viewport.height = static_cast<float>(swapChainExtent.height);
+        viewport.minDepth = 0.f;
+        viewport.maxDepth = 1.f;
+
+        vk::Rect2D scissor{};
+        scissor.offset = vk::Offset2D{ 0, 0 };
+        scissor.extent = swapChainExtent;
+
+        vk::PipelineViewportStateCreateInfo viewportState{};
+        viewportState.viewportCount = 1;
+        viewportState.pViewports = &viewport;
+        viewportState.scissorCount = 1;
+        viewportState.pScissors = &scissor;
+
+        vk::PipelineRasterizationStateCreateInfo rasterizer{};
+        rasterizer.depthClampEnable = VK_FALSE;
+        rasterizer.rasterizerDiscardEnable = VK_FALSE;
+        rasterizer.polygonMode = vk::PolygonMode::eFill;
+        rasterizer.cullMode = vk::CullModeFlagBits::eNone;
+        rasterizer.frontFace = vk::FrontFace::eCounterClockwise;
+        rasterizer.depthBiasEnable = VK_FALSE;
+        rasterizer.lineWidth = 1.0f;
+
+        vk::PipelineMultisampleStateCreateInfo multisampling{};
+        multisampling.sampleShadingEnable = VK_FALSE;
+        multisampling.rasterizationSamples = vk::SampleCountFlagBits::e1;
+
+        vk::PipelineDepthStencilStateCreateInfo depthStencil{};
+        depthStencil.depthTestEnable = VK_FALSE;
+        depthStencil.depthWriteEnable = VK_FALSE;
+        depthStencil.depthCompareOp = vk::CompareOp::eAlways;
+        depthStencil.depthBoundsTestEnable = VK_FALSE;
+        depthStencil.stencilTestEnable = VK_FALSE;
+
+        vk::PipelineColorBlendAttachmentState colorBlendAttachment{};
+        colorBlendAttachment.colorWriteMask =
+            vk::ColorComponentFlagBits::eR | vk::ColorComponentFlagBits::eG |
+            vk::ColorComponentFlagBits::eB | vk::ColorComponentFlagBits::eA;
+        colorBlendAttachment.blendEnable = VK_TRUE;
+        colorBlendAttachment.srcColorBlendFactor = vk::BlendFactor::eSrcAlpha;
+        colorBlendAttachment.dstColorBlendFactor = vk::BlendFactor::eOneMinusSrcAlpha;
+        colorBlendAttachment.colorBlendOp = vk::BlendOp::eAdd;
+        colorBlendAttachment.srcAlphaBlendFactor = vk::BlendFactor::eOne;
+        colorBlendAttachment.dstAlphaBlendFactor = vk::BlendFactor::eOneMinusSrcAlpha;
+        colorBlendAttachment.alphaBlendOp = vk::BlendOp::eAdd;
+
+        vk::PipelineColorBlendStateCreateInfo colorBlending{};
+        colorBlending.logicOpEnable = VK_FALSE;
+        colorBlending.attachmentCount = 1;
+        colorBlending.pAttachments = &colorBlendAttachment;
+
+        assert(pipelineLayout && *pipelineLayout);
+        vk::GraphicsPipelineCreateInfo pipelineInfo{};
+        pipelineInfo.stageCount = 2;
+        pipelineInfo.pStages = shaderStages;
+        pipelineInfo.pVertexInputState = &vertexInputInfo;
+        pipelineInfo.pInputAssemblyState = &inputAssembly;
+        pipelineInfo.pViewportState = &viewportState;
+        pipelineInfo.pRasterizationState = &rasterizer;
+        pipelineInfo.pMultisampleState = &multisampling;
+        pipelineInfo.pDepthStencilState = &depthStencil;
+        pipelineInfo.pColorBlendState = &colorBlending;
+        pipelineInfo.layout = *pipelineLayout;
+        pipelineInfo.renderPass = *renderPass;
+        pipelineInfo.subpass = 1;
+
+        auto gp = device->createGraphicsPipelineUnique(vk::PipelineCache{}, pipelineInfo);
+        if (gp.result != vk::Result::eSuccess)
+            throw std::runtime_error("[Vulkan] createGuiPipeline failed.");
+        guiPipeline = std::move(gp.value);
     }
 }
