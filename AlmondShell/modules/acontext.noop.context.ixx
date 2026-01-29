@@ -12,6 +12,7 @@ import <memory>;
 
 import aengine.context.commandqueue;
 import aengine.core.context;
+import aengine.diagnostics;
 
 namespace almondnamespace::noopcontext
 {
@@ -30,6 +31,8 @@ export namespace almondnamespace::noopcontext
 
     inline bool noop_process(std::shared_ptr<core::Context> ctx, core::CommandQueue& queue)
     {
+        almond::diagnostics::FrameTiming frameTimer{ core::ContextType::Noop, 0, "Noop" };
+
         if (ctx)
         {
             ctx->width = 1;
@@ -41,6 +44,8 @@ export namespace almondnamespace::noopcontext
         }
 
         queue.drain();
+
+        frameTimer.finish();
 
         return running.load(std::memory_order_acquire);
     }
