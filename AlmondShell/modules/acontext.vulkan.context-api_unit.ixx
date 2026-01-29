@@ -4,13 +4,13 @@ export module acontext.vulkan.context;
 
 import :api;            // brings in declarations for vulkan_* funcs
 import :shared_vk; // brings in vulkan_app() / Application
+import :texture;
 
 import aengine.core.context;
 import aengine.diagnostics;
 import aengine.telemetry;
 import aatlas.manager;
 import aatlas.texture;
-import acontext.vulkan.context:texture;
 import aspritehandle;
 
 import <algorithm>;
