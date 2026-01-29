@@ -460,7 +460,7 @@ namespace almondnamespace::core
             const int clientH = rows * cellH;
 
             RECT want{ 0, 0, clientW, clientH };
-            const DWORD style = WS_OVERLAPPEDWINDOW | WS_VISIBLE;
+            const DWORD style = WS_OVERLAPPEDWINDOW | WS_VISIBLE | WS_CLIPCHILDREN;
             ::AdjustWindowRect(&want, style, FALSE);
 
             parent = ::CreateWindowExW(
@@ -548,7 +548,9 @@ namespace almondnamespace::core
                         0,
                         L"AlmondChild",
                         windowTitle.c_str(),
-                        (parent ? (WS_CHILD | WS_VISIBLE) : (WS_OVERLAPPEDWINDOW | WS_VISIBLE)),
+                        (parent
+                            ? (WS_CHILD | WS_VISIBLE | WS_CLIPSIBLINGS)
+                            : (WS_OVERLAPPEDWINDOW | WS_VISIBLE)),
                         0, 0, 800, 600,
                         parent,
                         nullptr,

@@ -25,6 +25,7 @@ module;
 #endif
 
 #include <chrono> 
+#include <thread>
 
 #include <SDL3/SDL.h>    // keep in GMF because it’s a C header with macros
 
@@ -82,6 +83,9 @@ export namespace almondnamespace::sdlcontext
         int virtualHeight = 300;
 
         std::function<void(int, int)> onResize;
+
+        bool useFrameLimiter = false;
+        std::chrono::steady_clock::time_point lastFrameTime{};
     };
 
     inline SDLState sdlcontext{};
@@ -294,10 +298,19 @@ export namespace almondnamespace::sdlcontext
             return false;
         }
 
-        if (!sdlcontext.parent)
+        const int vsyncResult = SDL_SetRenderVSync(sdlcontext.renderer, 1);
+        if (vsyncResult != 0)
         {
-            if (SDL_SetRenderVSync(sdlcontext.renderer, 1) != 0)
-                std::cerr << "[SDL] SDL_SetRenderVSync failed: " << SDL_GetError() << "\n";
+            std::cerr << "[SDL] SDL_SetRenderVSync failed: " << SDL_GetError() << "\n";
+            if (sdlcontext.parent)
+            {
+                sdlcontext.useFrameLimiter = true;
+                sdlcontext.lastFrameTime = std::chrono::steady_clock::now();
+            }
+        }
+        else
+        {
+            sdlcontext.useFrameLimiter = false;
         }
 
         init_renderer(sdlcontext.renderer);
@@ -426,6 +439,19 @@ export namespace almondnamespace::sdlcontext
         queue.drain();
 
         SDL_RenderPresent(sdl_renderer.renderer);
+
+        if (sdlcontext.parent && sdlcontext.useFrameLimiter)
+        {
+            using clock = std::chrono::steady_clock;
+            constexpr auto frameDuration = std::chrono::milliseconds(16);
+            const auto now = clock::now();
+            const auto elapsed = now - sdlcontext.lastFrameTime;
+            if (elapsed < frameDuration)
+            {
+                std::this_thread::sleep_for(frameDuration - elapsed);
+            }
+            sdlcontext.lastFrameTime = clock::now();
+        }
 
         frameTimer.finish();
 
