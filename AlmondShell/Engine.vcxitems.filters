@@ -133,6 +133,9 @@
     <Filter Include="Source Files\core\context">
       <UniqueIdentifier>{036670d7-91d1-49ed-b675-64e52335355d}</UniqueIdentifier>
     </Filter>
+    <Filter Include="Source Files\core\context\vulkan">
+      <UniqueIdentifier>{935dc56f-1177-4c94-9d79-86b7267ac932}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="$(MSBuildThisFileDirectory)src\pch.h">
@@ -632,17 +635,17 @@
     <ClCompile Include="$(MSBuildThisFileDirectory)src\acontext.vulkan.platform.context.cpp">
       <Filter>Source Files\core\crossplatform\backends\vulkan</Filter>
     </ClCompile>
-    <ClCompile Include="$(MSBuildThisFileDirectory)src\acontext.vulkan.context_buffers.cpp">
-      <Filter>Source Files\core\context</Filter>
-    </ClCompile>
-    <ClCompile Include="$(MSBuildThisFileDirectory)src\acontext.vulkan.context-texture.cpp">
-      <Filter>Source Files\core\context</Filter>
-    </ClCompile>
     <ClCompile Include="$(MSBuildThisFileDirectory)src\aengine.context.cpp">
       <Filter>Source Files\core\context</Filter>
     </ClCompile>
+    <ClCompile Include="$(MSBuildThisFileDirectory)src\acontext.vulkan.context_buffers.cpp">
+      <Filter>Source Files\core\context\vulkan</Filter>
+    </ClCompile>
+    <ClCompile Include="$(MSBuildThisFileDirectory)src\acontext.vulkan.context-texture.cpp">
+      <Filter>Source Files\core\context\vulkan</Filter>
+    </ClCompile>
     <ClCompile Include="$(MSBuildThisFileDirectory)src\acontext.vulkan.dispatch_storage.cpp">
-      <Filter>Source Files\core\context</Filter>
+      <Filter>Source Files\core\context\vulkan</Filter>
     </ClCompile>
   </ItemGroup>
 </Project>
