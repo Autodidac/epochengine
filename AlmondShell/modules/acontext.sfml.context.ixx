@@ -41,8 +41,11 @@ import aengine.context.multiplexer;
 import aatlas.manager;
 import acontext.sfml.state;
 import acontext.sfml.textures;
+import aengine.diagnostics;
+import aengine.telemetry;
 
 import <algorithm>;
+import <cstdint>;
 import <functional>;
 import <iostream>;
 import <memory>;
@@ -289,10 +292,25 @@ export namespace almondnamespace::sfmlcontext
 
     inline bool sfml_process(std::shared_ptr<core::Context> ctx, core::CommandQueue& queue)
     {
-        (void)ctx;
-
         if (!sfmlcontext.running || !sfmlcontext.window || !sfmlcontext.window->isOpen())
             return false;
+
+        const core::ContextType backendType = ctx ? ctx->type : core::ContextType::SFML;
+
+        std::uintptr_t windowId = 0u;
+#if defined(_WIN32)
+        if (ctx && ctx->windowData)
+            windowId = reinterpret_cast<std::uintptr_t>(ctx->windowData->hwnd);
+        else
+            windowId = reinterpret_cast<std::uintptr_t>(sfmlcontext.hwnd);
+#else
+        if (ctx && ctx->windowData)
+            windowId = reinterpret_cast<std::uintptr_t>(ctx->windowData->hwnd);
+        else
+            windowId = 0u;
+#endif
+
+        almond::diagnostics::FrameTiming frameTimer{ backendType, windowId, "SFML" };
 
         // If the HWND is already dead (e.g., external teardown), bail before any GL calls.
 #if defined(_WIN32)
@@ -345,6 +363,25 @@ export namespace almondnamespace::sfmlcontext
             return false;
         }
 
+        refresh_dimensions(ctx);
+
+        const int framebufferWidth = ctx
+            ? ctx->framebufferWidth
+            : static_cast<int>((std::max)(1u, sfmlcontext.width));
+        const int framebufferHeight = ctx
+            ? ctx->framebufferHeight
+            : static_cast<int>((std::max)(1u, sfmlcontext.height));
+
+        telemetry::emit_gauge(
+            "renderer.framebuffer.size",
+            static_cast<std::int64_t>(framebufferWidth),
+            telemetry::RendererTelemetryTags{ backendType, windowId, "width" });
+
+        telemetry::emit_gauge(
+            "renderer.framebuffer.size",
+            static_cast<std::int64_t>(framebufferHeight),
+            telemetry::RendererTelemetryTags{ backendType, windowId, "height" });
+
         const auto clearColor = core::clear_color_for_context(core::ContextType::SFML);
         const auto r = static_cast<sf::Uint8>(clearColor[0] * 255.0f);
         const auto g = static_cast<sf::Uint8>(clearColor[1] * 255.0f);
@@ -355,6 +392,8 @@ export namespace almondnamespace::sfmlcontext
         queue.drain();
 
         sfmlcontext.window->display();
+
+        frameTimer.finish();
 
         (void)sfmlcontext.window->setActive(false);
         return sfmlcontext.running;

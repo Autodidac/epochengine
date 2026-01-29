@@ -41,6 +41,7 @@ import acontext.sdl.state;
 import acontext.sdl.renderer;
 import acontext.sdl.textures;
 import aengine.context.multiplexer;   // MakeDockable(...)
+import aengine.diagnostics;
 import aengine.telemetry;
 
 // Std
@@ -364,8 +365,6 @@ export namespace almondnamespace::sdlcontext
 
     inline bool sdl_process(std::shared_ptr<core::Context> ctx, core::CommandQueue& queue)
     {
-        const auto frameStart = std::chrono::steady_clock::now();
-
         const core::ContextType backendType = ctx ? ctx->type : core::ContextType::SDL;
 
         std::uintptr_t windowId = 0u;
@@ -380,6 +379,8 @@ export namespace almondnamespace::sdlcontext
         else
             windowId = 0u;
 #endif
+
+        almond::diagnostics::FrameTiming frameTimer{ backendType, windowId, "SDL" };
 
         SDL_Event sdl_event{};
         while (SDL_PollEvent(&sdl_event))
@@ -426,15 +427,7 @@ export namespace almondnamespace::sdlcontext
 
         SDL_RenderPresent(sdl_renderer.renderer);
 
-        const auto frameEnd = std::chrono::steady_clock::now();
-
-        // This form is correct and tends to avoid MSVC IntelliSense chrono bugs.
-        const double frameMs = std::chrono::duration<double, std::milli>(frameEnd - frameStart).count();
-
-        telemetry::emit_histogram_ms(
-            "renderer.frame.time_ms",
-            frameMs,
-            telemetry::RendererTelemetryTags{ backendType, windowId });
+        frameTimer.finish();
 
         return true;
     }
