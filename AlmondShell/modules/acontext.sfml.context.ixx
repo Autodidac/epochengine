@@ -184,6 +184,8 @@ export namespace almondnamespace::sfmlcontext
         }
 
         sfmlcontext.window->setVerticalSyncEnabled(true);
+        if (sfmlcontext.parent)
+            sfmlcontext.window->setFramerateLimit(60);
 
         auto* windowPtr = sfmlcontext.window.get();
 
