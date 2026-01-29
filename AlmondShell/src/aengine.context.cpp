@@ -19,15 +19,17 @@
 
 import <algorithm>;
 import <cstdint>;
-import <iostream>;
+import <format>;
 import <map>;
 import <memory>;
 import <mutex>;
 import <queue>;
 import <shared_mutex>;
 import <span>;
+import <source_location>;
 import <stdexcept>;
 import <string>;
+import <string_view>;
 import <utility>;
 import <vector>;
 
@@ -36,6 +38,7 @@ import aengine.platform;
 import aengine.input;
 import aengine.context.type;
 import aengine.core.context;
+import aengine.core.logger;
 //import aengine.context.window;
 import aengine.context.multiplexer;
 
@@ -86,6 +89,13 @@ import acontext.noop.context;
 
 namespace
 {
+    constexpr std::string_view kLogOpenGL = "Context.OpenGL";
+    constexpr std::string_view kLogVulkan = "Context.Vulkan";
+    constexpr std::string_view kLogSoftRenderer = "Context.SoftRenderer";
+    constexpr std::string_view kLogSfml = "Context.SFML";
+    constexpr std::string_view kLogSdl = "Context.SDL";
+    constexpr std::string_view kLogRaylib = "Context.Raylib";
+
     // ------------------------------------------------------------
     // Atlas helpers that do NOT depend on removed backend APIs.
     // ------------------------------------------------------------
@@ -136,10 +146,17 @@ namespace
             (void)almondnamespace::openglcontext::opengl_initialize(ctx, native, w, h, ctx->onResize);
         }
         catch (const std::exception& e) {
-            std::cerr << "[OpenGL] init exception: " << e.what() << "\n";
+            almondnamespace::logger::get(kLogOpenGL).logf(
+                almondnamespace::logger::LogLevel::ALMOND_ERROR,
+                std::source_location::current(),
+                "init exception: {}",
+                e.what());
         }
         catch (...) {
-            std::cerr << "[OpenGL] init unknown exception\n";
+            almondnamespace::logger::get(kLogOpenGL).log(
+                almondnamespace::logger::LogLevel::ALMOND_ERROR,
+                "init unknown exception",
+                std::source_location::current());
         }
     }
 
@@ -149,8 +166,19 @@ namespace
         if (!ctx) return;
 
         try { almondnamespace::openglcontext::opengl_cleanup(ctx); }
-        catch (const std::exception& e) { std::cerr << "[OpenGL] cleanup exception: " << e.what() << "\n"; }
-        catch (...) { std::cerr << "[OpenGL] cleanup unknown exception\n"; }
+        catch (const std::exception& e) {
+            almondnamespace::logger::get(kLogOpenGL).logf(
+                almondnamespace::logger::LogLevel::ALMOND_ERROR,
+                std::source_location::current(),
+                "cleanup exception: {}",
+                e.what());
+        }
+        catch (...) {
+            almondnamespace::logger::get(kLogOpenGL).log(
+                almondnamespace::logger::LogLevel::ALMOND_ERROR,
+                "cleanup unknown exception",
+                std::source_location::current());
+        }
     }
 
     bool opengl_process_adapter(std::shared_ptr<almondnamespace::core::Context> ctx,
@@ -178,11 +206,18 @@ namespace
         }
         catch (const std::exception& e) {
             ctx->init_failed = true;
-            std::cerr << "[Vulkan] init exception: " << e.what() << "\n";
+            almondnamespace::logger::get(kLogVulkan).logf(
+                almondnamespace::logger::LogLevel::ALMOND_ERROR,
+                std::source_location::current(),
+                "init exception: {}",
+                e.what());
         }
         catch (...) {
             ctx->init_failed = true;
-            std::cerr << "[Vulkan] init unknown exception\n";
+            almondnamespace::logger::get(kLogVulkan).log(
+                almondnamespace::logger::LogLevel::ALMOND_ERROR,
+                "init unknown exception",
+                std::source_location::current());
         }
     }
 
@@ -192,8 +227,19 @@ namespace
         if (!ctx) return;
 
         try { almondnamespace::vulkancontext::vulkan_cleanup(ctx); }
-        catch (const std::exception& e) { std::cerr << "[Vulkan] cleanup exception: " << e.what() << "\n"; }
-        catch (...) { std::cerr << "[Vulkan] cleanup unknown exception\n"; }
+        catch (const std::exception& e) {
+            almondnamespace::logger::get(kLogVulkan).logf(
+                almondnamespace::logger::LogLevel::ALMOND_ERROR,
+                std::source_location::current(),
+                "cleanup exception: {}",
+                e.what());
+        }
+        catch (...) {
+            almondnamespace::logger::get(kLogVulkan).log(
+                almondnamespace::logger::LogLevel::ALMOND_ERROR,
+                "cleanup unknown exception",
+                std::source_location::current());
+        }
     }
 
     bool vulkan_process_adapter(std::shared_ptr<almondnamespace::core::Context> ctx,
@@ -220,10 +266,17 @@ namespace
             );
         }
         catch (const std::exception& e) {
-            std::cerr << "[SoftRenderer] init exception: " << e.what() << "\n";
+            almondnamespace::logger::get(kLogSoftRenderer).logf(
+                almondnamespace::logger::LogLevel::ALMOND_ERROR,
+                std::source_location::current(),
+                "init exception: {}",
+                e.what());
         }
         catch (...) {
-            std::cerr << "[SoftRenderer] init unknown exception\n";
+            almondnamespace::logger::get(kLogSoftRenderer).log(
+                almondnamespace::logger::LogLevel::ALMOND_ERROR,
+                "init unknown exception",
+                std::source_location::current());
         }
     }
 
@@ -237,10 +290,17 @@ namespace
             almondnamespace::anativecontext::softrenderer_cleanup(copy);
         }
         catch (const std::exception& e) {
-            std::cerr << "[SoftRenderer] cleanup exception: " << e.what() << "\n";
+            almondnamespace::logger::get(kLogSoftRenderer).logf(
+                almondnamespace::logger::LogLevel::ALMOND_ERROR,
+                std::source_location::current(),
+                "cleanup exception: {}",
+                e.what());
         }
         catch (...) {
-            std::cerr << "[SoftRenderer] cleanup unknown exception\n";
+            almondnamespace::logger::get(kLogSoftRenderer).log(
+                almondnamespace::logger::LogLevel::ALMOND_ERROR,
+                "cleanup unknown exception",
+                std::source_location::current());
         }
     }
 
@@ -277,10 +337,17 @@ namespace
             );
         }
         catch (const std::exception& e) {
-            std::cerr << "[SFML] init exception: " << e.what() << "\n";
+            almondnamespace::logger::get(kLogSfml).logf(
+                almondnamespace::logger::LogLevel::ALMOND_ERROR,
+                std::source_location::current(),
+                "init exception: {}",
+                e.what());
         }
         catch (...) {
-            std::cerr << "[SFML] init unknown exception\n";
+            almondnamespace::logger::get(kLogSfml).log(
+                almondnamespace::logger::LogLevel::ALMOND_ERROR,
+                "init unknown exception",
+                std::source_location::current());
         }
     }
 
@@ -320,10 +387,17 @@ namespace
             );
         }
         catch (const std::exception& e) {
-            std::cerr << "[SDL] init exception: " << e.what() << "\n";
+            almondnamespace::logger::get(kLogSdl).logf(
+                almondnamespace::logger::LogLevel::ALMOND_ERROR,
+                std::source_location::current(),
+                "init exception: {}",
+                e.what());
         }
         catch (...) {
-            std::cerr << "[SDL] init unknown exception\n";
+            almondnamespace::logger::get(kLogSdl).log(
+                almondnamespace::logger::LogLevel::ALMOND_ERROR,
+                "init unknown exception",
+                std::source_location::current());
         }
     }
 
@@ -337,10 +411,17 @@ namespace
             almondnamespace::sdlcontext::sdl_cleanup(copy);
         }
         catch (const std::exception& e) {
-            std::cerr << "[SDL] cleanup exception: " << e.what() << "\n";
+            almondnamespace::logger::get(kLogSdl).logf(
+                almondnamespace::logger::LogLevel::ALMOND_ERROR,
+                std::source_location::current(),
+                "cleanup exception: {}",
+                e.what());
         }
         catch (...) {
-            std::cerr << "[SDL] cleanup unknown exception\n";
+            almondnamespace::logger::get(kLogSdl).log(
+                almondnamespace::logger::LogLevel::ALMOND_ERROR,
+                "cleanup unknown exception",
+                std::source_location::current());
         }
     }
 
@@ -551,10 +632,17 @@ namespace almondnamespace::core
                     );
                 }
                 catch (const std::exception& e) {
-                    std::cerr << "[RayLib] init exception: " << e.what() << "\n";
+                    almondnamespace::logger::get(kLogRaylib).logf(
+                        almondnamespace::logger::LogLevel::ALMOND_ERROR,
+                        std::source_location::current(),
+                        "init exception: {}",
+                        e.what());
                 }
                 catch (...) {
-                    std::cerr << "[RayLib] init unknown exception\n";
+                    almondnamespace::logger::get(kLogRaylib).log(
+                        almondnamespace::logger::LogLevel::ALMOND_ERROR,
+                        "init unknown exception",
+                        std::source_location::current());
                 }
                 };
 
@@ -563,8 +651,19 @@ namespace almondnamespace::core
                 if (!current) return;
 
                 try { almondnamespace::raylibcontext::raylib_cleanup(current); }
-                catch (const std::exception& e) { std::cerr << "[RayLib] cleanup exception: " << e.what() << "\n"; }
-                catch (...) { std::cerr << "[RayLib] cleanup unknown exception\n"; }
+                catch (const std::exception& e) {
+                    almondnamespace::logger::get(kLogRaylib).logf(
+                        almondnamespace::logger::LogLevel::ALMOND_ERROR,
+                        std::source_location::current(),
+                        "cleanup exception: {}",
+                        e.what());
+                }
+                catch (...) {
+                    almondnamespace::logger::get(kLogRaylib).log(
+                        almondnamespace::logger::LogLevel::ALMOND_ERROR,
+                        "cleanup unknown exception",
+                        std::source_location::current());
+                }
                 };
 
             ctx->process = raylib_process_adapter;

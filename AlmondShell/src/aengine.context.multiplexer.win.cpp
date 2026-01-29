@@ -45,10 +45,12 @@
 #   include <algorithm>
 #   include <chrono>
 #   include <cstdint>
+#   include <format>
 #   include <functional>
 #   include <iostream>
 #   include <memory>
 #   include <shared_mutex>
+#   include <source_location>
 #   include <stdexcept>
 #   include <string>
 #   include <string_view>
@@ -65,6 +67,7 @@ import autility.string.converter;
 
 import aengine.cli;
 import aengine.core.context;
+import aengine.core.logger;
 
 import aengine.context.commandqueue;
 import aengine.context.multiplexer;
@@ -102,6 +105,7 @@ namespace
         std::unique_ptr<almondnamespace::core::WindowData> window{};
     };
     std::vector<PendingWindowCleanup> g_pendingCleanups;
+    constexpr std::string_view kLogSys = "Context.Multiplexer.Win";
 
    // [[nodiscard]] inline int clamp_positive(int v) noexcept { return (v < 1) ? 1 : v; }
 
@@ -513,7 +517,10 @@ namespace almondnamespace::core
             if (!gladInitialized)
             {
                 gladInitialized = (gladLoadGL() != 0);
-                std::cerr << "[Init] GLAD loaded on dummy context\n";
+                almondnamespace::logger::get(kLogSys).log(
+                    almondnamespace::logger::LogLevel::WARN,
+                    "GLAD loaded on dummy context",
+                    std::source_location::current());
             }
 
             ::wglMakeCurrent(nullptr, nullptr);
@@ -603,7 +610,11 @@ namespace almondnamespace::core
                     auto it = g_backends.find(type);
                     if (it == g_backends.end() || !it->second.master)
                     {
-                        std::cerr << "[Init] Missing prototype context for backend type " << static_cast<int>(type) << "\n";
+                        almondnamespace::logger::get(kLogSys).logf(
+                            almondnamespace::logger::LogLevel::ALMOND_ERROR,
+                            std::source_location::current(),
+                            "Missing prototype context for backend type {}",
+                            static_cast<int>(type));
                         return;
                     }
 
@@ -692,11 +703,19 @@ namespace almondnamespace::core
                         {
                             if (!::wglMakeCurrent(ctx->hdc, ctx->hglrc))
                             {
-                                std::cerr << "[Init] wglMakeCurrent failed for hwnd=" << hwnd << "\n";
+                                almondnamespace::logger::get(kLogSys).logf(
+                                    almondnamespace::logger::LogLevel::ALMOND_ERROR,
+                                    std::source_location::current(),
+                                    "wglMakeCurrent failed for hwnd={}",
+                                    hwnd);
                             }
                             else
                             {
-                                std::cerr << "[Init] Running OpenGL init for hwnd=" << hwnd << "\n";
+                                almondnamespace::logger::get(kLogSys).logf(
+                                    almondnamespace::logger::LogLevel::WARN,
+                                    std::source_location::current(),
+                                    "Running OpenGL init for hwnd={}",
+                                    hwnd);
                                 almondnamespace::openglcontext::opengl_initialize(
                                     ctx,
                                     hwnd,
@@ -710,7 +729,11 @@ namespace almondnamespace::core
 #endif
 #if defined(ALMOND_USING_SOFTWARE_RENDERER)
                     case ContextType::Software:
-                        std::cerr << "[Init] Initializing Software renderer for hwnd=" << hwnd << "\n";
+                        almondnamespace::logger::get(kLogSys).logf(
+                            almondnamespace::logger::LogLevel::WARN,
+                            std::source_location::current(),
+                            "Initializing Software renderer for hwnd={}",
+                            hwnd);
                         almondnamespace::anativecontext::softrenderer_initialize(
                             ctx,
                             hwnd,
@@ -721,22 +744,38 @@ namespace almondnamespace::core
 #endif
 #if defined(ALMOND_USING_RAYLIB)
                     case ContextType::RayLib:
-                        std::cerr << "[Init] Deferring Raylib init to render thread. host=" << hwnd << "\n";
+                        almondnamespace::logger::get(kLogSys).logf(
+                            almondnamespace::logger::LogLevel::WARN,
+                            std::source_location::current(),
+                            "Deferring Raylib init to render thread. host={}",
+                            hwnd);
                         break;
 #endif
 #if defined(ALMOND_USING_SDL)
                     case ContextType::SDL:
-                        std::cerr << "[Init] Deferring SDL init to render thread. host=" << hwnd << "\n";
+                        almondnamespace::logger::get(kLogSys).logf(
+                            almondnamespace::logger::LogLevel::WARN,
+                            std::source_location::current(),
+                            "Deferring SDL init to render thread. host={}",
+                            hwnd);
                         break;
 #endif
 #if defined(ALMOND_USING_VULKAN)
                     case ContextType::Vulkan:
-                        std::cerr << "[Init] Deferring Vulkan init to render thread. host=" << hwnd << "\n";
+                        almondnamespace::logger::get(kLogSys).logf(
+                            almondnamespace::logger::LogLevel::WARN,
+                            std::source_location::current(),
+                            "Deferring Vulkan init to render thread. host={}",
+                            hwnd);
                         break;
 #endif
 #if defined(ALMOND_USING_SFML)
                     case ContextType::SFML:
-                        std::cerr << "[Init] Deferring SFML init to render thread. host=" << hwnd << "\n";
+                        almondnamespace::logger::get(kLogSys).logf(
+                            almondnamespace::logger::LogLevel::WARN,
+                            std::source_location::current(),
+                            "Deferring SFML init to render thread. host={}",
+                            hwnd);
                         break;
 #endif
 
@@ -1148,7 +1187,11 @@ namespace almondnamespace::core
 #if defined(ALMOND_USING_SDL)
         if (ctx->type == ContextType::SDL)
         {
-            std::cerr << "[RenderThread] SDL init. host=" << win.hwnd << "\n";
+            almondnamespace::logger::get(kLogSys).logf(
+                almondnamespace::logger::LogLevel::WARN,
+                std::source_location::current(),
+                "SDL init. host={}",
+                win.hwnd);
             almondnamespace::sdlcontext::sdl_initialize(
                 ctx,
                 win.hwnd,
@@ -1161,7 +1204,11 @@ namespace almondnamespace::core
 #if defined(ALMOND_USING_SFML)
         if (ctx->type == ContextType::SFML)
         {
-            std::cerr << "[RenderThread] SFML init. host=" << win.hwnd << "\n";
+            almondnamespace::logger::get(kLogSys).logf(
+                almondnamespace::logger::LogLevel::WARN,
+                std::source_location::current(),
+                "SFML init. host={}",
+                win.hwnd);
             const bool ok = almondnamespace::sfmlcontext::sfml_initialize(
                 ctx,
                 win.hwnd,
@@ -1177,7 +1224,11 @@ namespace almondnamespace::core
 #if defined(ALMOND_USING_RAYLIB)
         if (ctx->type == ContextType::RayLib)
         {
-            std::cerr << "[RenderThread] Raylib init. host=" << win.hwnd << "\n";
+            almondnamespace::logger::get(kLogSys).logf(
+                almondnamespace::logger::LogLevel::WARN,
+                std::source_location::current(),
+                "Raylib init. host={}",
+                win.hwnd);
             const bool initialized = almondnamespace::raylibcontext::raylib_initialize(
                 ctx,
                 win.hwnd,
@@ -1216,8 +1267,11 @@ namespace almondnamespace::core
 
         if (ctx->init_failed)
         {
-            std::cerr << "[RenderThread] Backend init failed for " << ctx->backendName
-                << ". Keeping window alive with no-op process.\n";
+            almondnamespace::logger::get(kLogSys).logf(
+                almondnamespace::logger::LogLevel::ALMOND_ERROR,
+                std::source_location::current(),
+                "Backend init failed for {}. Keeping window alive with no-op process.",
+                ctx->backendName);
             ctx->process = nullptr;
         }
 

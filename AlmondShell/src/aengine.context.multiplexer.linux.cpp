@@ -44,11 +44,12 @@
 #include <cstdint>
 #include <cstring>
 #include <exception>
+#include <format>
 #include <functional>
-#include <iostream>
 #include <memory>
 #include <mutex>
 #include <shared_mutex>
+#include <source_location>
 #include <stdexcept>
 #include <string>
 #include <string_view>
@@ -60,6 +61,7 @@
 // ---- engine interfaces/types (modules you already own) ----
 import aengine.context.multiplexer;   // MultiContextManager (decls)
 import aengine.core.context;          // Context, InitializeAllContexts(), CloneContext(), g_backends, etc.
+import aengine.core.logger;
 import aengine.context.window;        // WindowData
 import aengine.context.type;          // ContextType
 import aengine.core.commandline;
@@ -118,6 +120,7 @@ namespace almondnamespace::core
 
     namespace
     {
+        constexpr std::string_view kLogSys = "Context.Multiplexer.Linux";
         constexpr int kDefaultWidth = 800;
         constexpr int kDefaultHeight = 600;
 
@@ -240,7 +243,10 @@ namespace almondnamespace::core
 
         if (!g_xlibInitialized)
         {
-            std::cerr << "[Init] XInitThreads failed; aborting X11 initialization\n";
+            almondnamespace::logger::get(kLogSys).log(
+                almondnamespace::logger::LogLevel::ALMOND_ERROR,
+                "XInitThreads failed; aborting X11 initialization",
+                std::source_location::current());
             return false;
         }
 
@@ -250,7 +256,10 @@ namespace almondnamespace::core
         display = XOpenDisplay(nullptr);
         if (!display)
         {
-            std::cerr << "[Init] Failed to open X display\n";
+            almondnamespace::logger::get(kLogSys).log(
+                almondnamespace::logger::LogLevel::ALMOND_ERROR,
+                "Failed to open X display",
+                std::source_location::current());
             return false;
         }
 
@@ -275,7 +284,10 @@ namespace almondnamespace::core
         GLXFBConfig* configs = glXChooseFBConfig(display, screen, visualAttribs, &fbCount);
         if (!configs || fbCount == 0)
         {
-            std::cerr << "[Init] glXChooseFBConfig failed\n";
+            almondnamespace::logger::get(kLogSys).log(
+                almondnamespace::logger::LogLevel::ALMOND_ERROR,
+                "glXChooseFBConfig failed",
+                std::source_location::current());
             if (configs) XFree(configs);
             return false;
         }
@@ -290,14 +302,20 @@ namespace almondnamespace::core
         }
         else
         {
-            std::cerr << "[Init] glXGetVisualFromFBConfig failed\n";
+            almondnamespace::logger::get(kLogSys).log(
+                almondnamespace::logger::LogLevel::ALMOND_ERROR,
+                "glXGetVisualFromFBConfig failed",
+                std::source_location::current());
             return false;
         }
 
         colormap = XCreateColormap(display, RootWindow(display, screen), visualInfo.visual, AllocNone);
         if (!colormap)
         {
-            std::cerr << "[Init] Failed to create X colormap\n";
+            almondnamespace::logger::get(kLogSys).log(
+                almondnamespace::logger::LogLevel::ALMOND_ERROR,
+                "Failed to create X colormap",
+                std::source_location::current());
             return false;
         }
 
@@ -342,7 +360,10 @@ namespace almondnamespace::core
 
                     if (!win)
                     {
-                        std::cerr << "[Init] Failed to create X11 window\n";
+                        almondnamespace::logger::get(kLogSys).log(
+                            almondnamespace::logger::LogLevel::WARN,
+                            "Failed to create X11 window",
+                            std::source_location::current());
                         continue;
                     }
 
@@ -395,8 +416,11 @@ namespace almondnamespace::core
                     auto it = g_backends.find(type);
                     if (it == g_backends.end() || !it->second.master)
                     {
-                        std::cerr << "[Init] Missing prototype context for backend type "
-                            << static_cast<int>(type) << '\n';
+                        almondnamespace::logger::get(kLogSys).logf(
+                            almondnamespace::logger::LogLevel::ALMOND_ERROR,
+                            std::source_location::current(),
+                            "Missing prototype context for backend type {}",
+                            static_cast<int>(type));
                         return;
                     }
 
@@ -468,7 +492,10 @@ namespace almondnamespace::core
                                 auto target = liveCtx ? liveCtx : ctxWeak.lock();
                                 if (!target)
                                 {
-                                    std::cerr << "[Init] OpenGL context unavailable during thread initialization\n";
+                                    almondnamespace::logger::get(kLogSys).log(
+                                        almondnamespace::logger::LogLevel::ALMOND_ERROR,
+                                        "OpenGL context unavailable during thread initialization",
+                                        std::source_location::current());
                                     return false;
                                 }
 
@@ -477,21 +504,31 @@ namespace almondnamespace::core
                                     if (!almondnamespace::openglcontext::opengl_initialize(
                                         target, nullptr, width, height, std::move(resize)))
                                     {
-                                        std::cerr << "[Init] Failed to initialize OpenGL context for hwnd="
-                                            << target->hwnd << '\n';
+                                        almondnamespace::logger::get(kLogSys).logf(
+                                            almondnamespace::logger::LogLevel::ALMOND_ERROR,
+                                            std::source_location::current(),
+                                            "Failed to initialize OpenGL context for hwnd={}",
+                                            target->hwnd);
                                         return false;
                                     }
                                 }
                                 catch (const std::exception& e)
                                 {
-                                    std::cerr << "[Init] Exception during OpenGL initialization for hwnd="
-                                        << target->hwnd << ": " << e.what() << '\n';
+                                    almondnamespace::logger::get(kLogSys).logf(
+                                        almondnamespace::logger::LogLevel::ALMOND_ERROR,
+                                        std::source_location::current(),
+                                        "Exception during OpenGL initialization for hwnd={}: {}",
+                                        target->hwnd,
+                                        e.what());
                                     return false;
                                 }
                                 catch (...)
                                 {
-                                    std::cerr << "[Init] Unknown exception during OpenGL initialization for hwnd="
-                                        << target->hwnd << '\n';
+                                    almondnamespace::logger::get(kLogSys).logf(
+                                        almondnamespace::logger::LogLevel::ALMOND_ERROR,
+                                        std::source_location::current(),
+                                        "Unknown exception during OpenGL initialization for hwnd={}",
+                                        target->hwnd);
                                     return false;
                                 }
 
@@ -509,8 +546,11 @@ namespace almondnamespace::core
                         if (!almondnamespace::anativecontext::softrenderer_initialize(
                             ctx, nullptr, width, height, window->onResize))
                         {
-                            std::cerr << "[Init] Failed to initialize Software renderer for hwnd="
-                                << ctx->hwnd << '\n';
+                            almondnamespace::logger::get(kLogSys).logf(
+                                almondnamespace::logger::LogLevel::ALMOND_ERROR,
+                                std::source_location::current(),
+                                "Failed to initialize Software renderer for hwnd={}",
+                                ctx->hwnd);
                             window->running = false;
                         }
                     }
@@ -533,15 +573,21 @@ namespace almondnamespace::core
                                 auto target = liveCtx ? liveCtx : ctxWeak.lock();
                                 if (!target)
                                 {
-                                    std::cerr << "[Init] SDL context unavailable during thread initialization\n";
+                                    almondnamespace::logger::get(kLogSys).log(
+                                        almondnamespace::logger::LogLevel::ALMOND_ERROR,
+                                        "SDL context unavailable during thread initialization",
+                                        std::source_location::current());
                                     return false;
                                 }
 
                                 if (!almondnamespace::sdlcontext::sdl_initialize(
                                     target, nullptr, width, height, std::move(resize), title))
                                 {
-                                    std::cerr << "[Init] Failed to initialize SDL context for hwnd="
-                                        << target->hwnd << '\n';
+                                    almondnamespace::logger::get(kLogSys).logf(
+                                        almondnamespace::logger::LogLevel::ALMOND_ERROR,
+                                        std::source_location::current(),
+                                        "Failed to initialize SDL context for hwnd={}",
+                                        target->hwnd);
                                     return false;
                                 }
 
@@ -567,15 +613,21 @@ namespace almondnamespace::core
                                 auto target = liveCtx ? liveCtx : ctxWeak.lock();
                                 if (!target)
                                 {
-                                    std::cerr << "[Init] RayLib context unavailable during thread initialization\n";
+                                    almondnamespace::logger::get(kLogSys).log(
+                                        almondnamespace::logger::LogLevel::ALMOND_ERROR,
+                                        "RayLib context unavailable during thread initialization",
+                                        std::source_location::current());
                                     return false;
                                 }
 
                                 if (!almondnamespace::raylibcontext::raylib_initialize(
                                     target, nullptr, width, height, std::move(resize), title))
                                 {
-                                    std::cerr << "[Init] Failed to initialize RayLib context for hwnd="
-                                        << target->hwnd << '\n';
+                                    almondnamespace::logger::get(kLogSys).logf(
+                                        almondnamespace::logger::LogLevel::ALMOND_ERROR,
+                                        std::source_location::current(),
+                                        "Failed to initialize RayLib context for hwnd={}",
+                                        target->hwnd);
                                     return false;
                                 }
 
@@ -601,15 +653,21 @@ namespace almondnamespace::core
                                 auto target = liveCtx ? liveCtx : ctxWeak.lock();
                                 if (!target)
                                 {
-                                    std::cerr << "[Init] SFML context unavailable during thread initialization\n";
+                                    almondnamespace::logger::get(kLogSys).log(
+                                        almondnamespace::logger::LogLevel::ALMOND_ERROR,
+                                        "SFML context unavailable during thread initialization",
+                                        std::source_location::current());
                                     return false;
                                 }
 
                                 if (!almondnamespace::sfmlcontext::sfml_initialize(
                                     target, nullptr, width, height, std::move(resize), title))
                                 {
-                                    std::cerr << "[Init] Failed to initialize SFML context for hwnd="
-                                        << target->hwnd << '\n';
+                                    almondnamespace::logger::get(kLogSys).logf(
+                                        almondnamespace::logger::LogLevel::ALMOND_ERROR,
+                                        std::source_location::current(),
+                                        "Failed to initialize SFML context for hwnd={}",
+                                        target->hwnd);
                                     return false;
                                 }
 
@@ -851,7 +909,10 @@ namespace almondnamespace::core
                     auto target = liveCtx ? liveCtx : ctxWeak.lock();
                     if (!target)
                     {
-                        std::cerr << "[Init] OpenGL context unavailable during thread initialization\n";
+                        almondnamespace::logger::get(kLogSys).log(
+                            almondnamespace::logger::LogLevel::ALMOND_ERROR,
+                            "OpenGL context unavailable during thread initialization",
+                            std::source_location::current());
                         return false;
                     }
 
@@ -860,21 +921,31 @@ namespace almondnamespace::core
                         if (!almondnamespace::openglcontext::opengl_initialize(
                             target, nullptr, width, height, std::move(resize)))
                         {
-                            std::cerr << "[Init] Failed to initialize OpenGL context for hwnd="
-                                << target->hwnd << '\n';
+                            almondnamespace::logger::get(kLogSys).logf(
+                                almondnamespace::logger::LogLevel::ALMOND_ERROR,
+                                std::source_location::current(),
+                                "Failed to initialize OpenGL context for hwnd={}",
+                                target->hwnd);
                             return false;
                         }
                     }
                     catch (const std::exception& e)
                     {
-                        std::cerr << "[Init] Exception during OpenGL initialization for hwnd="
-                            << target->hwnd << ": " << e.what() << '\n';
+                        almondnamespace::logger::get(kLogSys).logf(
+                            almondnamespace::logger::LogLevel::ALMOND_ERROR,
+                            std::source_location::current(),
+                            "Exception during OpenGL initialization for hwnd={}: {}",
+                            target->hwnd,
+                            e.what());
                         return false;
                     }
                     catch (...)
                     {
-                        std::cerr << "[Init] Unknown exception during OpenGL initialization for hwnd="
-                            << target->hwnd << '\n';
+                        almondnamespace::logger::get(kLogSys).logf(
+                            almondnamespace::logger::LogLevel::ALMOND_ERROR,
+                            std::source_location::current(),
+                            "Unknown exception during OpenGL initialization for hwnd={}",
+                            target->hwnd);
                         return false;
                     }
 
@@ -901,15 +972,21 @@ namespace almondnamespace::core
                     auto target = liveCtx ? liveCtx : ctxWeak.lock();
                     if (!target)
                     {
-                        std::cerr << "[Init] SDL context unavailable during thread initialization\n";
+                        almondnamespace::logger::get(kLogSys).log(
+                            almondnamespace::logger::LogLevel::ALMOND_ERROR,
+                            "SDL context unavailable during thread initialization",
+                            std::source_location::current());
                         return false;
                     }
 
                     if (!almondnamespace::sdlcontext::sdl_initialize(
                         target, nullptr, width, height, std::move(resize), title))
                     {
-                        std::cerr << "[Init] Failed to initialize SDL context for hwnd="
-                            << target->hwnd << '\n';
+                        almondnamespace::logger::get(kLogSys).logf(
+                            almondnamespace::logger::LogLevel::ALMOND_ERROR,
+                            std::source_location::current(),
+                            "Failed to initialize SDL context for hwnd={}",
+                            target->hwnd);
                         return false;
                     }
 
@@ -936,15 +1013,21 @@ namespace almondnamespace::core
                     auto target = liveCtx ? liveCtx : ctxWeak.lock();
                     if (!target)
                     {
-                        std::cerr << "[Init] RayLib context unavailable during thread initialization\n";
+                        almondnamespace::logger::get(kLogSys).log(
+                            almondnamespace::logger::LogLevel::ALMOND_ERROR,
+                            "RayLib context unavailable during thread initialization",
+                            std::source_location::current());
                         return false;
                     }
 
                     if (!almondnamespace::raylibcontext::raylib_initialize(
                         target, nullptr, width, height, std::move(resize), title))
                     {
-                        std::cerr << "[Init] Failed to initialize RayLib context for hwnd="
-                            << target->hwnd << '\n';
+                        almondnamespace::logger::get(kLogSys).logf(
+                            almondnamespace::logger::LogLevel::ALMOND_ERROR,
+                            std::source_location::current(),
+                            "Failed to initialize RayLib context for hwnd={}",
+                            target->hwnd);
                         return false;
                     }
 
@@ -971,15 +1054,21 @@ namespace almondnamespace::core
                     auto target = liveCtx ? liveCtx : ctxWeak.lock();
                     if (!target)
                     {
-                        std::cerr << "[Init] SFML context unavailable during thread initialization\n";
+                        almondnamespace::logger::get(kLogSys).log(
+                            almondnamespace::logger::LogLevel::ALMOND_ERROR,
+                            "SFML context unavailable during thread initialization",
+                            std::source_location::current());
                         return false;
                     }
 
                     if (!almondnamespace::sfmlcontext::sfml_initialize(
                         target, nullptr, width, height, std::move(resize), title))
                     {
-                        std::cerr << "[Init] Failed to initialize SFML context for hwnd="
-                            << target->hwnd << '\n';
+                        almondnamespace::logger::get(kLogSys).logf(
+                            almondnamespace::logger::LogLevel::ALMOND_ERROR,
+                            std::source_location::current(),
+                            "Failed to initialize SFML context for hwnd={}",
+                            target->hwnd);
                         return false;
                     }
 
@@ -1275,7 +1364,10 @@ namespace almondnamespace::core
                 almondnamespace::openglcontext::PlatformGL::ScopedContext contextGuard{ finalCtx };
                 if (!contextGuard.ok())
                 {
-                    std::cerr << "[Init] PlatformGL::make_current(final) failed on Linux\n";
+                    almondnamespace::logger::get(kLogSys).log(
+                        almondnamespace::logger::LogLevel::ALMOND_ERROR,
+                        "PlatformGL::make_current(final) failed on Linux",
+                        std::source_location::current());
                 }
                 else if (gladLoadGLLoader(reinterpret_cast<GLADloadproc>(
                     almondnamespace::openglcontext::PlatformGL::get_proc_address)))
@@ -1284,7 +1376,10 @@ namespace almondnamespace::core
                 }
                 else
                 {
-                    std::cerr << "[Init] Failed to load OpenGL functions via GLAD on Linux\n";
+                    almondnamespace::logger::get(kLogSys).log(
+                        almondnamespace::logger::LogLevel::ALMOND_ERROR,
+                        "Failed to load OpenGL functions via GLAD on Linux",
+                        std::source_location::current());
                 }
             }
 #endif
@@ -1343,8 +1438,11 @@ namespace almondnamespace::core
 
         if (ctx->init_failed)
         {
-            std::cerr << "[RenderThread] Backend init failed for " << ctx->backendName
-                << ". Keeping window alive with no-op process.\n";
+            almondnamespace::logger::get(kLogSys).logf(
+                almondnamespace::logger::LogLevel::ALMOND_ERROR,
+                std::source_location::current(),
+                "Backend init failed for {}. Keeping window alive with no-op process.",
+                ctx->backendName);
             ctx->process = nullptr;
         }
 
