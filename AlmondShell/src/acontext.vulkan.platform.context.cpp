@@ -148,6 +148,7 @@ namespace almondnamespace::vulkancontext
         createRenderPass();
         createDescriptorSetLayout();
         createGraphicsPipeline();
+        createGuiPipeline();
         createCommandPool();
         createDepthResources();
         createFramebuffers();
@@ -157,6 +158,7 @@ namespace almondnamespace::vulkancontext
         createVertexBuffer();
         createIndexBuffer();
         createUniformBuffers();
+        createGuiUniformBuffers();
         createDescriptorPool();
         createDescriptorSets();
         createCommandBuffers();
@@ -268,54 +270,14 @@ namespace almondnamespace::vulkancontext
 
         if (framebufferMinimized)
         {
+            guiDraws.clear();
             queue.drain();
             std::this_thread::sleep_for(std::chrono::milliseconds(16));
             return true;
         }
+        guiDraws.clear();
+        queue.drain();
         drawFrame();
-
-        bool drained = false;
-#if defined(ALMOND_USING_OPENGL)
-        if (ctx && ctx->native_gl_context)
-        {
-            almondnamespace::openglcontext::PlatformGL::PlatformGLContext glContext{};
-#if defined(_WIN32)
-            glContext.device = static_cast<HDC>(ctx->native_drawable);
-            glContext.context = static_cast<HGLRC>(ctx->native_gl_context);
-#elif defined(__linux__)
-            glContext.display = static_cast<Display*>(ctx->native_drawable);
-            glContext.drawable = static_cast<GLXDrawable>(reinterpret_cast<std::uintptr_t>(ctx->native_window));
-            glContext.context = static_cast<GLXContext>(ctx->native_gl_context);
-#endif
-
-            almondnamespace::openglcontext::PlatformGL::ScopedContext guard;
-            if (glContext.valid() && guard.set(glContext))
-            {
-                static bool s_gladInitialized = false;
-                if (!s_gladInitialized)
-                {
-                    s_gladInitialized = (gladLoadGLLoader(reinterpret_cast<GLADloadproc>(
-                        almondnamespace::openglcontext::PlatformGL::get_proc_address)) != 0);
-                }
-
-                if (s_gladInitialized)
-                {
-                    glEnable(GL_BLEND);
-                    glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
-                    queue.drain();
-                    glDisable(GL_BLEND);
-                }
-                else
-                {
-                    queue.clear();
-                }
-                drained = true;
-            }
-        }
-#endif
-
-        if (!drained)
-            queue.drain();
         return true;
     }
 
@@ -366,11 +328,20 @@ namespace almondnamespace::vulkancontext
         uniformBuffers.clear();
         uniformBuffersMemory.clear();
         uniformBuffersMapped.clear();
+        guiUniformBuffers.clear();
+        guiUniformBuffersMemory.clear();
+        guiUniformBuffersMapped.clear();
 
         indexBuffer.reset();
         indexBufferMemory.reset();
         vertexBuffer.reset();
         vertexBufferMemory.reset();
+        guiIndexBuffer.reset();
+        guiIndexBufferMemory.reset();
+        guiVertexBuffer.reset();
+        guiVertexBufferMemory.reset();
+        guiVertexCapacity = 0;
+        guiIndexCapacity = 0;
 
         textureSampler.reset();
         textureImageView.reset();
@@ -379,6 +350,7 @@ namespace almondnamespace::vulkancontext
 
         pipelineLayout.reset();
         graphicsPipeline.reset();
+        guiPipeline.reset();
         descriptorSetLayout.reset();
         renderPass.reset();
 
@@ -389,6 +361,9 @@ namespace almondnamespace::vulkancontext
         commandPool.reset();
 
         device.reset();
+
+        guiAtlases.clear();
+        guiDraws.clear();
 
         // surface is a UniqueSurfaceKHR; do not manually destroy it.
         surface.reset();

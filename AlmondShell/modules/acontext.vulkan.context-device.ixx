@@ -164,7 +164,7 @@ namespace almondnamespace::vulkancontext {
         vk::CommandPoolCreateInfo poolInfo{};
         poolInfo.sType = vk::StructureType::eCommandPoolCreateInfo;
         poolInfo.pNext = nullptr;
-        poolInfo.flags = {};
+        poolInfo.flags = vk::CommandPoolCreateFlagBits::eResetCommandBuffer;
         poolInfo.queueFamilyIndex = queueFamilyIndices.graphicsFamily.value();
 
         auto [res, pool] = device->createCommandPoolUnique(poolInfo);

@@ -8,6 +8,10 @@ import :shared_vk; // brings in vulkan_app() / Application
 import aengine.core.context;
 import aengine.diagnostics;
 import aengine.telemetry;
+import aatlas.manager;
+import aatlas.texture;
+import acontext.vulkan.context:texture;
+import aspritehandle;
 
 import <algorithm>;
 import <cstddef>;
@@ -74,6 +78,16 @@ namespace almondnamespace::vulkancontext
         //vulkan_initialize
 		std::cout << "[Vulkan] Initialized successfully.\n";
 
+        ctx->draw_sprite = [](SpriteHandle sprite,
+            std::span<const TextureAtlas* const> atlases,
+            float x, float y, float w, float h)
+        {
+            vulkan_app().enqueue_gui_draw(sprite, atlases, x, y, w, h);
+        };
+
+        atlasmanager::register_backend_uploader(core::ContextType::Vulkan,
+            [](const TextureAtlas& atlas) { vulkantextures::ensure_uploaded(atlas); });
+
         return true;
     }
 
@@ -106,6 +120,8 @@ namespace almondnamespace::vulkancontext
             static_cast<std::int64_t>(depth),
             telemetry::RendererTelemetryTags{ core::ContextType::Vulkan, windowId });
 
+        atlasmanager::process_pending_uploads(core::ContextType::Vulkan);
+
         const bool result = vulkan_app().process(ctx, queue);
 
         frameTimer.finish();
@@ -121,6 +137,7 @@ namespace almondnamespace::vulkancontext
     void vulkan_cleanup(std::shared_ptr<core::Context> ctx)
     {
         (void)ctx;
+        atlasmanager::unregister_backend_uploader(core::ContextType::Vulkan);
         vulkan_app().cleanup();
     }
 }

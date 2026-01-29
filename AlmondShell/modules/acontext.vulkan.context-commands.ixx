@@ -17,12 +17,25 @@ import aengine.core.context;
 
 import <array>;
 import <cstdint>;
+import <cstring>;
 import <limits>;
+import <span>;
 import <stdexcept>;
+import <vector>;
 
 namespace almondnamespace::vulkancontext
 {
     inline constexpr std::size_t kMaxFramesInFlight = 2;
+
+    namespace
+    {
+        struct GuiBatch
+        {
+            const TextureAtlas* atlas = nullptr;
+            std::uint32_t indexOffset = 0;
+            std::uint32_t indexCount = 0;
+        };
+    }
 
     void Application::createCommandBuffers()
     {
@@ -35,6 +48,19 @@ namespace almondnamespace::vulkancontext
         if (allocRes != vk::Result::eSuccess)
             throw std::runtime_error("[Vulkan] allocateCommandBuffersUnique failed.");
         commandBuffers = std::move(bufs);
+    }
+
+    void Application::recordCommandBuffer(std::uint32_t imageIndex)
+    {
+        if (imageIndex >= commandBuffers.size())
+            throw std::runtime_error("[Vulkan] recordCommandBuffer image index out of range.");
+
+        vk::CommandBuffer cmd = *commandBuffers[imageIndex];
+        (void)cmd.reset();
+
+        vk::CommandBufferBeginInfo beginInfo{};
+        if (cmd.begin(beginInfo) != vk::Result::eSuccess)
+            throw std::runtime_error("[Vulkan] CommandBuffer::begin failed.");
 
         std::array<vk::ClearValue, 2> clearValues{};
         const auto clearColor = almondnamespace::core::clear_color_for_context(
@@ -43,59 +69,228 @@ namespace almondnamespace::vulkancontext
             vk::ClearColorValue{ std::array<float, 4>{ clearColor[0], clearColor[1], clearColor[2], clearColor[3] } });
         clearValues[1].setDepthStencil(vk::ClearDepthStencilValue{ 1.0f, 0 });
 
+        vk::RenderPassBeginInfo renderPassInfo{};
+        renderPassInfo.renderPass = *renderPass;
+        renderPassInfo.framebuffer = *framebuffers[imageIndex];
+        renderPassInfo.renderArea = vk::Rect2D{ vk::Offset2D{0, 0}, swapChainExtent };
+        renderPassInfo.clearValueCount = static_cast<std::uint32_t>(clearValues.size());
+        renderPassInfo.pClearValues = clearValues.data();
+
+        cmd.beginRenderPass(renderPassInfo, vk::SubpassContents::eInline);
+
+        cmd.bindPipeline(vk::PipelineBindPoint::eGraphics, *graphicsPipeline);
+
+        const vk::Buffer vb[] = { *vertexBuffer };
+        const vk::DeviceSize offsets[] = { 0 };
+        cmd.bindVertexBuffers(0, 1, vb, offsets);
+
+        cmd.bindDescriptorSets(
+            vk::PipelineBindPoint::eGraphics,
+            *pipelineLayout,
+            0,
+            1,
+            &*descriptorSets[imageIndex],
+            0,
+            nullptr
+        );
+
+        cmd.bindIndexBuffer(*indexBuffer, 0, vk::IndexType::eUint16);
+
         // You MUST have this set when you create/fill the index buffer.
         const std::uint32_t safeIndexCount = indexCount;
         if (safeIndexCount == 0)
             throw std::runtime_error("[Vulkan] indexCount is 0. Set Application::indexCount when creating the index buffer.");
 
-        for (std::size_t i = 0; i < commandBuffers.size(); ++i)
+        cmd.drawIndexed(
+            safeIndexCount,
+            1u,
+            0u,
+            0,
+            0u,
+            VULKAN_HPP_DEFAULT_DISPATCHER
+        );
+
+        cmd.nextSubpass(vk::SubpassContents::eInline);
+
+        if (!guiDraws.empty())
+            recordGuiCommands(cmd, imageIndex);
+
+        cmd.endRenderPass();
+
+        if (cmd.end() != vk::Result::eSuccess)
+            throw std::runtime_error("[Vulkan] CommandBuffer::end failed.");
+    }
+
+    void Application::enqueue_gui_draw(
+        const almondnamespace::SpriteHandle& sprite,
+        std::span<const almondnamespace::TextureAtlas* const> atlases,
+        float x,
+        float y,
+        float w,
+        float h)
+    {
+        if (!sprite.is_valid())
+            return;
+
+        if (sprite.atlasIndex >= atlases.size())
+            return;
+
+        const auto* atlas = atlases[sprite.atlasIndex];
+        if (!atlas)
+            return;
+
+        guiDraws.push_back(GuiDrawCommand{
+            atlas,
+            sprite.localIndex,
+            x,
+            y,
+            w,
+            h
+            });
+    }
+
+    void Application::recordGuiCommands(vk::CommandBuffer cmd, std::uint32_t imageIndex)
+    {
+        if (guiDraws.empty() || !device)
+            return;
+
+        if (!guiPipeline)
+            createGuiPipeline();
+
+        if (guiUniformBuffers.empty())
+            createGuiUniformBuffers();
+
+        std::vector<Vertex> vertices{};
+        std::vector<std::uint32_t> indices{};
+        std::vector<GuiBatch> batches{};
+
+        vertices.reserve(guiDraws.size() * 4u);
+        indices.reserve(guiDraws.size() * 6u);
+        batches.reserve(guiDraws.size());
+
+        const TextureAtlas* currentAtlas = nullptr;
+
+        for (const auto& draw : guiDraws)
         {
-            vk::CommandBufferBeginInfo beginInfo{};
-            if (commandBuffers[i]->begin(beginInfo) != vk::Result::eSuccess)
-                throw std::runtime_error("[Vulkan] CommandBuffer::begin failed.");
+            if (!draw.atlas)
+                continue;
 
-            vk::RenderPassBeginInfo renderPassInfo{};
-            renderPassInfo.renderPass = *renderPass;
-            renderPassInfo.framebuffer = *framebuffers[i];
-            renderPassInfo.renderArea = vk::Rect2D{ vk::Offset2D{0, 0}, swapChainExtent };
-            renderPassInfo.clearValueCount = static_cast<std::uint32_t>(clearValues.size());
-            renderPassInfo.pClearValues = clearValues.data();
+            AtlasRegion region{};
+            if (!draw.atlas->try_get_entry_info(static_cast<int>(draw.localIndex), region))
+                continue;
 
-            commandBuffers[i]->beginRenderPass(renderPassInfo, vk::SubpassContents::eInline);
+            const float x0 = draw.x;
+            const float y0 = draw.y;
+            const float x1 = draw.x + draw.w;
+            const float y1 = draw.y + draw.h;
 
-            commandBuffers[i]->bindPipeline(vk::PipelineBindPoint::eGraphics, *graphicsPipeline);
+            const std::uint32_t baseIndex = static_cast<std::uint32_t>(vertices.size());
 
-            const vk::Buffer vb[] = { *vertexBuffer };
-            const vk::DeviceSize offsets[] = { 0 };
-            commandBuffers[i]->bindVertexBuffers(0, 1, vb, offsets);
+            vertices.push_back(Vertex{ { x0, y0, 0.0f }, { 0.0f, 0.0f, 1.0f }, { region.u1, region.v1 } });
+            vertices.push_back(Vertex{ { x1, y0, 0.0f }, { 0.0f, 0.0f, 1.0f }, { region.u2, region.v1 } });
+            vertices.push_back(Vertex{ { x1, y1, 0.0f }, { 0.0f, 0.0f, 1.0f }, { region.u2, region.v2 } });
+            vertices.push_back(Vertex{ { x0, y1, 0.0f }, { 0.0f, 0.0f, 1.0f }, { region.u1, region.v2 } });
 
-            commandBuffers[i]->bindDescriptorSets(
+            if (draw.atlas != currentAtlas)
+            {
+                currentAtlas = draw.atlas;
+                batches.push_back(GuiBatch{
+                    currentAtlas,
+                    static_cast<std::uint32_t>(indices.size()),
+                    0u
+                    });
+            }
+
+            indices.push_back(baseIndex + 0u);
+            indices.push_back(baseIndex + 1u);
+            indices.push_back(baseIndex + 2u);
+            indices.push_back(baseIndex + 2u);
+            indices.push_back(baseIndex + 3u);
+            indices.push_back(baseIndex + 0u);
+
+            batches.back().indexCount += 6u;
+        }
+
+        if (vertices.empty() || indices.empty())
+        {
+            guiDraws.clear();
+            return;
+        }
+
+        const std::size_t vertexCount = vertices.size();
+        const std::size_t indexCount = indices.size();
+
+        if (vertexCount > guiVertexCapacity)
+        {
+            guiVertexCapacity = vertexCount;
+            std::tie(guiVertexBuffer, guiVertexBufferMemory) = createBuffer(
+                sizeof(Vertex) * guiVertexCapacity,
+                vk::BufferUsageFlagBits::eVertexBuffer,
+                vk::MemoryPropertyFlagBits::eHostVisible | vk::MemoryPropertyFlagBits::eHostCoherent);
+        }
+
+        if (indexCount > guiIndexCapacity)
+        {
+            guiIndexCapacity = indexCount;
+            std::tie(guiIndexBuffer, guiIndexBufferMemory) = createBuffer(
+                sizeof(std::uint32_t) * guiIndexCapacity,
+                vk::BufferUsageFlagBits::eIndexBuffer,
+                vk::MemoryPropertyFlagBits::eHostVisible | vk::MemoryPropertyFlagBits::eHostCoherent);
+        }
+
+        {
+            const vk::DeviceSize vertexBytes = sizeof(Vertex) * vertexCount;
+            auto [mapRes, mapped] = device->mapMemory(*guiVertexBufferMemory, 0, vertexBytes);
+            if (mapRes != vk::Result::eSuccess || !mapped)
+                throw std::runtime_error("[Vulkan] Failed to map GUI vertex buffer.");
+            std::memcpy(mapped, vertices.data(), static_cast<std::size_t>(vertexBytes));
+            device->unmapMemory(*guiVertexBufferMemory);
+        }
+
+        {
+            const vk::DeviceSize indexBytes = sizeof(std::uint32_t) * indexCount;
+            auto [mapRes, mapped] = device->mapMemory(*guiIndexBufferMemory, 0, indexBytes);
+            if (mapRes != vk::Result::eSuccess || !mapped)
+                throw std::runtime_error("[Vulkan] Failed to map GUI index buffer.");
+            std::memcpy(mapped, indices.data(), static_cast<std::size_t>(indexBytes));
+            device->unmapMemory(*guiIndexBufferMemory);
+        }
+
+        cmd.bindPipeline(vk::PipelineBindPoint::eGraphics, *guiPipeline);
+
+        const vk::Buffer vb[] = { *guiVertexBuffer };
+        const vk::DeviceSize offsets[] = { 0 };
+        cmd.bindVertexBuffers(0, 1, vb, offsets);
+        cmd.bindIndexBuffer(*guiIndexBuffer, 0, vk::IndexType::eUint32);
+
+        for (const auto& batch : batches)
+        {
+            if (!batch.atlas)
+                continue;
+
+            ensure_gui_atlas(*batch.atlas);
+            auto it = guiAtlases.find(batch.atlas);
+            if (it == guiAtlases.end() || it->second.descriptorSets.empty())
+                continue;
+
+            if (imageIndex >= it->second.descriptorSets.size())
+                continue;
+
+            vk::DescriptorSet set = *it->second.descriptorSets[imageIndex];
+            cmd.bindDescriptorSets(
                 vk::PipelineBindPoint::eGraphics,
                 *pipelineLayout,
                 0,
                 1,
-                &*descriptorSets[i],
+                &set,
                 0,
                 nullptr
             );
 
-            commandBuffers[i]->bindIndexBuffer(*indexBuffer, 0, vk::IndexType::eUint16);
-
-            // Dispatcher-aware overload (matches the signature MSVC showed you).
-            commandBuffers[i]->drawIndexed(
-                safeIndexCount,
-                1u,
-                0u,
-                0,
-                0u,
-                VULKAN_HPP_DEFAULT_DISPATCHER
-            );
-
-            commandBuffers[i]->endRenderPass();
-
-            if (commandBuffers[i]->end() != vk::Result::eSuccess)
-                throw std::runtime_error("[Vulkan] CommandBuffer::end failed.");
+            cmd.drawIndexed(batch.indexCount, 1u, batch.indexOffset, 0, 0);
         }
+
+        guiDraws.clear();
     }
 
     void Application::createSyncObjects()
@@ -176,6 +371,8 @@ namespace almondnamespace::vulkancontext
         }
 
         updateUniformBuffer(imageIndex, cam);
+        updateGuiUniformBuffer(imageIndex);
+        recordCommandBuffer(imageIndex);
 
         const vk::Semaphore waitSems[] = { *imageAvailableSemaphores[currentFrame] };
         const vk::PipelineStageFlags waitStages[] = { vk::PipelineStageFlagBits::eColorAttachmentOutput };

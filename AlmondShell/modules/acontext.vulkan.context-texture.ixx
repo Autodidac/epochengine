@@ -12,6 +12,12 @@ import <stdexcept>;
 import <utility>;
 
 import :shared_vk;
+import aatlas.texture;
+
+export namespace almondnamespace::vulkantextures
+{
+    void ensure_uploaded(const almondnamespace::TextureAtlas& atlas);
+}
 
 namespace almondnamespace::vulkancontext
 {

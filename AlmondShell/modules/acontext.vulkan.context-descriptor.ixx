@@ -129,6 +129,35 @@ namespace almondnamespace::vulkancontext
         }
     }
 
+    void Application::createGuiUniformBuffers()
+    {
+        const std::size_t n = swapChainImages.size();
+
+        guiUniformBuffers.resize(n);
+        guiUniformBuffersMemory.resize(n);
+        guiUniformBuffersMapped.resize(n);
+
+        const vk::DeviceSize bufferSize = sizeof(UniformBufferObject);
+
+        for (std::size_t i = 0; i < n; ++i)
+        {
+            auto [buf, mem] = createBuffer(
+                bufferSize,
+                vk::BufferUsageFlagBits::eUniformBuffer,
+                vk::MemoryPropertyFlagBits::eHostVisible | vk::MemoryPropertyFlagBits::eHostCoherent
+            );
+
+            guiUniformBuffers[i] = std::move(buf);
+            guiUniformBuffersMemory[i] = std::move(mem);
+
+            auto [mapRes, ptr] = device->mapMemory(*guiUniformBuffersMemory[i], 0, bufferSize);
+            if (mapRes != vk::Result::eSuccess || ptr == nullptr)
+                throw std::runtime_error("[Vulkan] Failed to map GUI uniform buffer memory.");
+
+            guiUniformBuffersMapped[i] = ptr;
+        }
+    }
+
     void Application::updateUniformBuffer(std::uint32_t currentImage, const vulkancamera::State& camera)
     {
         static auto startTime = std::chrono::high_resolution_clock::now();
@@ -153,5 +182,24 @@ namespace almondnamespace::vulkancontext
         ubo.proj = proj;
 
         std::memcpy(uniformBuffersMapped[currentImage], &ubo, sizeof(ubo));
+    }
+
+    void Application::updateGuiUniformBuffer(std::uint32_t currentImage)
+    {
+        if (guiUniformBuffersMapped.empty() || currentImage >= guiUniformBuffersMapped.size())
+            return;
+
+        UniformBufferObject ubo{};
+        ubo.model = glm::mat4(1.0f);
+        ubo.view = glm::mat4(1.0f);
+
+        const float width = swapChainExtent.width ? static_cast<float>(swapChainExtent.width) : 1.0f;
+        const float height = swapChainExtent.height ? static_cast<float>(swapChainExtent.height) : 1.0f;
+
+        glm::mat4 proj = glm::ortho(0.0f, width, height, 0.0f);
+        proj[1][1] *= -1.0f;
+        ubo.proj = proj;
+
+        std::memcpy(guiUniformBuffersMapped[currentImage], &ubo, sizeof(ubo));
     }
 } // namespace almondnamespace::vulkancontext
