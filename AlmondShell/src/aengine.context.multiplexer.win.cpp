@@ -707,7 +707,7 @@ namespace almondnamespace::core
                                     almondnamespace::logger::LogLevel::ALMOND_ERROR,
                                     std::source_location::current(),
                                     "wglMakeCurrent failed for hwnd={}",
-                                    hwnd);
+                                    static_cast<void*>(hwnd));
                             }
                             else
                             {
@@ -715,7 +715,7 @@ namespace almondnamespace::core
                                     almondnamespace::logger::LogLevel::WARN,
                                     std::source_location::current(),
                                     "Running OpenGL init for hwnd={}",
-                                    hwnd);
+                                    static_cast<void*>(hwnd));
                                 almondnamespace::openglcontext::opengl_initialize(
                                     ctx,
                                     hwnd,
@@ -733,7 +733,7 @@ namespace almondnamespace::core
                             almondnamespace::logger::LogLevel::WARN,
                             std::source_location::current(),
                             "Initializing Software renderer for hwnd={}",
-                            hwnd);
+                            static_cast<void*>(hwnd));
                         almondnamespace::anativecontext::softrenderer_initialize(
                             ctx,
                             hwnd,
@@ -748,7 +748,7 @@ namespace almondnamespace::core
                             almondnamespace::logger::LogLevel::WARN,
                             std::source_location::current(),
                             "Deferring Raylib init to render thread. host={}",
-                            hwnd);
+                            static_cast<void*>(hwnd));
                         break;
 #endif
 #if defined(ALMOND_USING_SDL)
@@ -757,7 +757,7 @@ namespace almondnamespace::core
                             almondnamespace::logger::LogLevel::WARN,
                             std::source_location::current(),
                             "Deferring SDL init to render thread. host={}",
-                            hwnd);
+                            static_cast<void*>(hwnd));
                         break;
 #endif
 #if defined(ALMOND_USING_VULKAN)
@@ -766,7 +766,7 @@ namespace almondnamespace::core
                             almondnamespace::logger::LogLevel::WARN,
                             std::source_location::current(),
                             "Deferring Vulkan init to render thread. host={}",
-                            hwnd);
+                            static_cast<void*>(hwnd));
                         break;
 #endif
 #if defined(ALMOND_USING_SFML)
@@ -775,7 +775,7 @@ namespace almondnamespace::core
                             almondnamespace::logger::LogLevel::WARN,
                             std::source_location::current(),
                             "Deferring SFML init to render thread. host={}",
-                            hwnd);
+                            static_cast<void*>(hwnd));
                         break;
 #endif
 
@@ -1191,7 +1191,7 @@ namespace almondnamespace::core
                 almondnamespace::logger::LogLevel::WARN,
                 std::source_location::current(),
                 "SDL init. host={}",
-                win.hwnd);
+                static_cast<void*>(win.hwnd));
             almondnamespace::sdlcontext::sdl_initialize(
                 ctx,
                 win.hwnd,
@@ -1208,7 +1208,7 @@ namespace almondnamespace::core
                 almondnamespace::logger::LogLevel::WARN,
                 std::source_location::current(),
                 "SFML init. host={}",
-                win.hwnd);
+                static_cast<void*>(win.hwnd));
             const bool ok = almondnamespace::sfmlcontext::sfml_initialize(
                 ctx,
                 win.hwnd,
@@ -1228,7 +1228,7 @@ namespace almondnamespace::core
                 almondnamespace::logger::LogLevel::WARN,
                 std::source_location::current(),
                 "Raylib init. host={}",
-                win.hwnd);
+                static_cast<void*>(win.hwnd));
             const bool initialized = almondnamespace::raylibcontext::raylib_initialize(
                 ctx,
                 win.hwnd,
