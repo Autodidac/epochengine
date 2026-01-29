@@ -289,10 +289,39 @@ export namespace almondnamespace::sdlcontext
 
         SDL_SetWindowTitle(sdlcontext.window, windowTitle.c_str());
 
-        sdlcontext.renderer = SDL_CreateRenderer(sdlcontext.window, nullptr);
+        auto create_renderer_with_flags = [&](Uint32 flags, const char* label) -> SDL_Renderer*
+        {
+            SDL_Renderer* renderer = SDL_CreateRenderer(sdlcontext.window, nullptr, flags);
+            if (renderer)
+            {
+                std::cerr << "[SDL] Created renderer with " << label << ".\n";
+                return renderer;
+            }
+
+            std::cerr << "[SDL] SDL_CreateRenderer (" << label << ") failed: "
+                      << SDL_GetError() << "\n";
+            return nullptr;
+        };
+
+        sdlcontext.renderer = create_renderer_with_flags(
+            SDL_RENDERER_ACCELERATED | SDL_RENDERER_PRESENTVSYNC,
+            "SDL_RENDERER_ACCELERATED | SDL_RENDERER_PRESENTVSYNC");
         if (!sdlcontext.renderer)
         {
-            std::cerr << "[SDL] SDL_CreateRenderer failed: " << SDL_GetError() << "\n";
+            sdlcontext.renderer = create_renderer_with_flags(
+                SDL_RENDERER_ACCELERATED,
+                "SDL_RENDERER_ACCELERATED");
+        }
+        if (!sdlcontext.renderer)
+        {
+            sdlcontext.renderer = create_renderer_with_flags(
+                SDL_RENDERER_SOFTWARE,
+                "SDL_RENDERER_SOFTWARE");
+        }
+        if (!sdlcontext.renderer)
+        {
+            std::cerr << "[SDL] SDL_CreateRenderer failed after fallbacks: "
+                      << SDL_GetError() << "\n";
             SDL_DestroyWindow(sdlcontext.window);
             SDL_Quit();
             return false;
