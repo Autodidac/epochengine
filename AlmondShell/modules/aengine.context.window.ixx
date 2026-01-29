@@ -106,6 +106,11 @@ export namespace almondnamespace::core
             commandQueue.enqueue(std::move(cmd));
         }
 
+        void EnqueueCommand(RenderCommand cmd, core::RenderPath path)
+        {
+            commandQueue.enqueue(std::move(cmd), path);
+        }
+
         inline static WindowData* s_instance = nullptr;
 
         WindowData() = default;

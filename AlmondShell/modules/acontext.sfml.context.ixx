@@ -31,6 +31,7 @@ module;
 #include <SFML/Window/VideoMode.hpp>
 #include <SFML/Window/WindowStyle.hpp>
 #include <SFML/Graphics.hpp>
+#include <glad/glad.h>
 
 export module acontext.sfml.context;
 
@@ -42,6 +43,7 @@ import aatlas.manager;
 import acontext.sfml.state;
 import acontext.sfml.textures;
 import aengine.diagnostics;
+import aengine.core.logger;
 import aengine.telemetry;
 
 import <algorithm>;
@@ -333,14 +335,33 @@ export namespace almondnamespace::sfmlcontext
             return false;
         }
 
-        // Reset before doing any SFML draw calls.
-        sfmlcontext.window->resetGLStates();
+        const auto renderFlags = queue.render_flags_snapshot();
+        const bool hasSfmlDraws =
+            (renderFlags & static_cast<std::uint8_t>(core::RenderPath::SFML)) != 0u;
+        const bool hasOpenGLDraws =
+            (renderFlags & static_cast<std::uint8_t>(core::RenderPath::OpenGL)) != 0u;
+        const bool hasQueuedCommands = queue.depth() > 0;
+        const bool useOpenGLPath = hasOpenGLDraws || (hasQueuedCommands && !hasSfmlDraws);
+        const bool shouldResetSfmlState = hasSfmlDraws;
+
+#if !defined(NDEBUG)
+        almondnamespace::logger::info(
+            "SFML",
+            useOpenGLPath ? "Frame render path: OpenGL" : "Frame render path: SFML");
+#endif
+
+        if (shouldResetSfmlState)
+        {
+            // Reset before doing any SFML draw calls.
+            sfmlcontext.window->resetGLStates();
+        }
 
         // If uploads use OpenGL, they must run while the SFML context is current.
         atlasmanager::process_pending_uploads(core::ContextType::SFML);
 
         // Reset again in case uploads touched state.
-        sfmlcontext.window->resetGLStates();
+        if (shouldResetSfmlState)
+            sfmlcontext.window->resetGLStates();
 
         sf::Event event{};
         while (sfmlcontext.window->pollEvent(event))
@@ -389,7 +410,15 @@ export namespace almondnamespace::sfmlcontext
         const auto g = static_cast<sf::Uint8>(clearColor[1] * 255.0f);
         const auto b = static_cast<sf::Uint8>(clearColor[2] * 255.0f);
 
-        sfmlcontext.window->clear(sf::Color(r, g, b));
+        if (useOpenGLPath)
+        {
+            glClearColor(clearColor[0], clearColor[1], clearColor[2], clearColor[3]);
+            glClear(GL_COLOR_BUFFER_BIT);
+        }
+        else
+        {
+            sfmlcontext.window->clear(sf::Color(r, g, b));
+        }
 
         queue.drain();
 
