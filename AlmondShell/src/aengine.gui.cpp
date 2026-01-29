@@ -66,6 +66,7 @@ namespace almondnamespace::gui
     constexpr float       kFontScale = 1.0f;
     constexpr float       kTitleScale = 1.4f;
     constexpr float       kLineSpacingFactor = 0.15f;
+    constexpr float       kLetterSpacingFactor = 0.05f;
     constexpr float       kBoxInnerPadding = 6.0f;
     constexpr float       kTitleBarPadding = 6.0f;
     constexpr float       kCaretBlinkPeriod = 1.0f;
@@ -557,6 +558,14 @@ namespace almondnamespace::gui
         return 8.0f * scale;
     }
 
+    [[nodiscard]] static float letter_spacing(float scale) noexcept
+    {
+        const float average = g_resources.font.metrics.averageAdvance;
+        if (average <= 0.0f || kLetterSpacingFactor <= 0.0f)
+            return 0.0f;
+        return average * scale * kLetterSpacingFactor;
+    }
+
     [[nodiscard]] static const font::Glyph* lookup_glyph(unsigned char ch) noexcept
     {
         if (!g_resources.font.asset)
@@ -620,6 +629,8 @@ namespace almondnamespace::gui
         float advance = glyph_advance(ch, scale);
         if (next)
             advance += kerning_adjust(ch, *next, scale);
+        if (ch != ' ' && ch != '\t')
+            advance += letter_spacing(scale);
         return advance;
     }
 
@@ -913,10 +924,11 @@ namespace almondnamespace::gui
 
         draw_sprite(g_resources.windowBackground, position.x, position.y, size.x, size.y);
 
-        const float titleHeight = base_line_height(kTitleScale);
+        const float titleHeight = line_advance_amount(kTitleScale);
         const float titleBarHeight = titleHeight + 2.0f * kTitleBarPadding;
+        const float titleTextY = position.y + (titleBarHeight - titleHeight) * 0.5f;
         draw_sprite(g_resources.titleBar, position.x, position.y, size.x, titleBarHeight);
-        draw_text_line(title, position.x + kContentPadding, position.y + kTitleBarPadding, kTitleScale);
+        draw_text_line(title, position.x + kContentPadding, titleTextY, kTitleScale);
 
         set_cursor({ position.x + kContentPadding, position.y + titleBarHeight + kContentPadding });
     }
@@ -932,6 +944,7 @@ namespace almondnamespace::gui
 
         const Vec2 pos = g_frame.cursor;
         const float baseHeight = base_line_height(kFontScale);
+        const float lineAdvance = line_advance_amount(kFontScale);
         const float minWidth = space_advance(kFontScale) + 2.0f * kContentPadding;
         const float width = (std::max)(static_cast<float>(size.x), minWidth);
         const float height = (std::max)(static_cast<float>(size.y), baseHeight + 2.0f * kContentPadding);
@@ -945,7 +958,7 @@ namespace almondnamespace::gui
         draw_sprite(background, pos.x, pos.y, width, height);
 
         const float textWidth = measure_text_width(label, kFontScale);
-        const float textHeight = baseHeight;
+        const float textHeight = lineAdvance;
         const float textX = pos.x + (std::max)(0.0f, (width - textWidth) * 0.5f);
         const float textY = pos.y + (std::max)(0.0f, (height - textHeight) * 0.5f);
 
