@@ -6,9 +6,14 @@ module;
 export module aengine.diagnostics;
 
 import aengine.context.type;
+import aengine.core.logger;
+import aengine.telemetry;
 
 import <array>;
+import <chrono>;
 import <cstddef>;
+import <cstdint>;
+import <format>;
 import <iostream>;
 import <mutex>;
 import <string>;
@@ -28,6 +33,62 @@ import <vector>;
 
 export namespace almond::diagnostics {
     using almondnamespace::core::ContextType;
+
+    struct FrameTiming
+    {
+        using Clock = std::chrono::steady_clock;
+
+        ContextType backendType{ ContextType::None };
+        std::uintptr_t windowId{};
+        std::string_view backendName{};
+        double slowFrameMs{ 33.0 };
+
+        Clock::time_point start{ Clock::now() };
+        bool finished{ false };
+        double lastMs{ 0.0 };
+
+        FrameTiming(ContextType type,
+            std::uintptr_t window,
+            std::string_view name,
+            double slowMs = 33.0)
+            : backendType(type)
+            , windowId(window)
+            , backendName(name)
+            , slowFrameMs(slowMs)
+        {
+        }
+
+        double finish()
+        {
+            if (finished)
+                return lastMs;
+
+            const auto end = Clock::now();
+            lastMs = std::chrono::duration<double, std::milli>(end - start).count();
+            finished = true;
+
+            telemetry::emit_histogram_ms(
+                "renderer.frame.time_ms",
+                lastMs,
+                telemetry::RendererTelemetryTags{ backendType, windowId });
+
+            if (lastMs > slowFrameMs)
+            {
+                const std::string_view backend = backendName.empty() ? "Unknown" : backendName;
+                logger::warn(
+                    "Renderer",
+                    std::format("[{}] Slow frame {:.2f} ms (> {:.2f} ms)", backend, lastMs, slowFrameMs));
+            }
+
+            return lastMs;
+        }
+
+        ~FrameTiming()
+        {
+            if (!finished)
+                finish();
+        }
+    };
 
     struct EngineConfigurationSnapshot
     {

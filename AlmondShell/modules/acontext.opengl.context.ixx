@@ -90,6 +90,7 @@ import aengine.input;
 import aplatformpump;
 import aatlas.manager;
 import aengine.core.commandline;
+import aengine.diagnostics;
 import aengine.telemetry;
 
 // ------------------------------------------------------------
@@ -635,13 +636,14 @@ export namespace almondnamespace::openglcontext
     {
         if (!ctx) return false;
 
-        const auto frameStart = std::chrono::steady_clock::now();
         auto& backend = opengltextures::get_opengl_backend();
         auto& glState = backend.glState;
 
         const std::uintptr_t windowId = ctx->windowData
             ? reinterpret_cast<std::uintptr_t>(ctx->windowData->hwnd)
             : 0;
+
+        almond::diagnostics::FrameTiming frameTimer{ core::ContextType::OpenGL, windowId, "OpenGL" };
 
         PlatformGL::ScopedContext guard;
         auto desired = detail::context_to_platform_context(ctx.get());
@@ -716,12 +718,7 @@ export namespace almondnamespace::openglcontext
 
         PlatformGL::swap_buffers(guard.target());
 
-        const auto frameEnd = std::chrono::steady_clock::now();
-        const auto frameMs = std::chrono::duration<double, std::milli>(frameEnd - frameStart).count();
-        telemetry::emit_histogram_ms(
-            "renderer.frame.time_ms",
-            frameMs,
-            telemetry::RendererTelemetryTags{ core::ContextType::OpenGL, windowId });
+        frameTimer.finish();
 
         return true;
     }

@@ -66,6 +66,7 @@ import acontext.softrenderer.state;      // s_softrendererstate, SoftRendState
 import acontext.softrenderer.textures;   // Texture, TexturePtr (as in your project)
 import acontext.softrenderer.renderer;   // SoftwareRenderer (as in your project)
 import aatlas.manager;                  // atlasmanager::atlas_vector (as in your header)
+import aengine.diagnostics;
 import aengine.telemetry;
 
 namespace almondnamespace::anativecontext
@@ -411,10 +412,11 @@ export namespace almondnamespace::anativecontext
     {
         auto& sr = s_softrendererstate;
         almondnamespace::anativecontext::detail::refresh_dimensions(ctx);
-        const auto frameStart = std::chrono::steady_clock::now();
         const std::uintptr_t windowId = ctx.windowData
             ? reinterpret_cast<std::uintptr_t>(ctx.windowData->hwnd)
             : 0;
+
+        almond::diagnostics::FrameTiming frameTimer{ ctx.type, windowId, "Software" };
 
         // Clear
         const auto clearColor = core::clear_color_for_context(core::ContextType::Software);
@@ -492,12 +494,7 @@ export namespace almondnamespace::anativecontext
         }
 #endif
 
-        const auto frameEnd = std::chrono::steady_clock::now();
-        const auto frameMs = std::chrono::duration<double, std::milli>(frameEnd - frameStart).count();
-        telemetry::emit_histogram_ms(
-            "renderer.frame.time_ms",
-            frameMs,
-            telemetry::RendererTelemetryTags{ ctx.type, windowId });
+        frameTimer.finish();
         return true;
     }
 
