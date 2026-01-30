@@ -159,6 +159,9 @@
     <ClInclude Include="$(MSBuildThisFileDirectory)include\acontext.vulkan.hpp">
       <Filter>Header Files</Filter>
     </ClInclude>
+    <ClInclude Include="$(MSBuildThisFileDirectory)include\aengine.backend_counts.hpp">
+      <Filter>Header Files</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <Image Include="$(MSBuildThisFileDirectory)src\icon.ico">
@@ -175,14 +178,42 @@
     <None Include="$(MSBuildThisFileDirectory)modules\.gitkeep">
       <Filter>Module Files</Filter>
     </None>
+    <None Include="$(MSBuildThisFileDirectory)examples\ConsoleApplication1\assets\vulkan\shaders\frag.glsl">
+      <Filter>Module Files\ixx\core\context\backends\vulkan\shaders</Filter>
+    </None>
+    <None Include="$(MSBuildThisFileDirectory)examples\ConsoleApplication1\assets\vulkan\shaders\frag.spv">
+      <Filter>Module Files\ixx\core\context\backends\vulkan\shaders</Filter>
+    </None>
+    <None Include="$(MSBuildThisFileDirectory)examples\ConsoleApplication1\assets\vulkan\shaders\gui_frag.spv">
+      <Filter>Module Files\ixx\core\context\backends\vulkan\shaders</Filter>
+    </None>
+    <None Include="$(MSBuildThisFileDirectory)examples\ConsoleApplication1\assets\vulkan\shaders\gui_vert.spv">
+      <Filter>Module Files\ixx\core\context\backends\vulkan\shaders</Filter>
+    </None>
+    <None Include="$(MSBuildThisFileDirectory)examples\ConsoleApplication1\assets\vulkan\shaders\vert.glsl">
+      <Filter>Module Files\ixx\core\context\backends\vulkan\shaders</Filter>
+    </None>
+    <None Include="$(MSBuildThisFileDirectory)examples\ConsoleApplication1\assets\vulkan\shaders\vert.spv">
+      <Filter>Module Files\ixx\core\context\backends\vulkan\shaders</Filter>
+    </None>
+    <None Include="$(MSBuildThisFileDirectory)assets\vulkan\shaders\frag.glsl">
+      <Filter>Module Files\ixx\core\context\backends\vulkan\shaders</Filter>
+    </None>
     <None Include="$(MSBuildThisFileDirectory)assets\vulkan\shaders\frag.spv">
+      <Filter>Module Files\ixx\core\context\backends\vulkan\shaders</Filter>
+    </None>
+    <None Include="$(MSBuildThisFileDirectory)assets\vulkan\shaders\gui_frag.spv">
+      <Filter>Module Files\ixx\core\context\backends\vulkan\shaders</Filter>
+    </None>
+    <None Include="$(MSBuildThisFileDirectory)assets\vulkan\shaders\gui_vert.spv">
+      <Filter>Module Files\ixx\core\context\backends\vulkan\shaders</Filter>
+    </None>
+    <None Include="$(MSBuildThisFileDirectory)assets\vulkan\shaders\vert.glsl">
       <Filter>Module Files\ixx\core\context\backends\vulkan\shaders</Filter>
     </None>
     <None Include="$(MSBuildThisFileDirectory)assets\vulkan\shaders\vert.spv">
       <Filter>Module Files\ixx\core\context\backends\vulkan\shaders</Filter>
     </None>
-    <None Include="$(MSBuildThisFileDirectory)assets\vulkan\shaders\gui_frag.spv" />
-    <None Include="$(MSBuildThisFileDirectory)assets\vulkan\shaders\gui_vert.spv" />
   </ItemGroup>
   <ItemGroup>
     <ResourceCompile Include="$(MSBuildThisFileDirectory)src\WinResource.rc">
@@ -654,6 +685,9 @@
     </ClCompile>
     <ClCompile Include="$(MSBuildThisFileDirectory)src\acontext.vulkan.dispatch_storage.cpp">
       <Filter>Source Files\core\context\vulkan</Filter>
+    </ClCompile>
+    <ClCompile Include="$(MSBuildThisFileDirectory)src\aengine.loops.cpp">
+      <Filter>Source Files\core</Filter>
     </ClCompile>
   </ItemGroup>
 </Project>
