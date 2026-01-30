@@ -16,6 +16,7 @@ export namespace almondnamespace::filewatch
         file_time last_write{};      // correct type for last_write_time()
         std::uintmax_t size{};       // file size snapshot
         std::uint64_t hash{};        // content hash snapshot (optional but useful)
+        bool exists{};               // last known existence state
         bool dirty{};                // mark-dirty flag for consumers
     };
 

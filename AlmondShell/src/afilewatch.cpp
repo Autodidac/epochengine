@@ -46,6 +46,7 @@ namespace almondnamespace::filewatch
         if (!std::filesystem::exists(p, ec) || ec)
             return s;
 
+        s.exists = true;
         s.last_write = std::filesystem::last_write_time(p, ec);
         if (ec) s.last_write = file_time{};
 
@@ -114,14 +115,30 @@ namespace almondnamespace::filewatch
 
             if (!exists)
             {
-                out.removed.push_back(p);
+                const bool was_present = st.exists;
+                if (was_present)
+                    out.removed.push_back(p);
+
                 st = file_state{};
-                st.dirty = true;
+                st.dirty = was_present;
                 continue;
             }
 
             const auto new_write = std::filesystem::last_write_time(p, ec);
             const auto new_size = std::filesystem::file_size(p, ec);
+
+            if (!st.exists)
+            {
+                std::uint64_t new_hash = ec ? 0 : compute_file_hash(p);
+
+                st.last_write = ec ? file_time{} : new_write;
+                st.size = ec ? 0 : new_size;
+                st.hash = new_hash;
+                st.exists = true;
+                st.dirty = true;
+                out.added.push_back(p);
+                continue;
+            }
 
             bool changed = false;
 
@@ -145,12 +162,14 @@ namespace almondnamespace::filewatch
                 st.size = ec ? 0 : new_size;
                 st.hash = new_hash;
                 st.dirty = true;
+                st.exists = true;
 
                 out.changed.push_back(p);
             }
             else
             {
                 st.dirty = false;
+                st.exists = true;
             }
         }
 
