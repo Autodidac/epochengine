@@ -278,8 +278,24 @@ namespace almondnamespace::vulkancontext
         if (entry.version == atlas.version && entry.image)
             return;
 
-        if (atlas.width == 0 || atlas.height == 0 || atlas.pixel_data.empty())
+        if (atlas.pixel_data.empty())
+        {
+            log_warn(std::format("GUI atlas '{}' has no pixel data; rebuilding.", atlas.name));
+            const_cast<TextureAtlas&>(atlas).rebuild_pixels();
+        }
+
+        if (atlas.pixel_data.empty())
+        {
+            log_warn(std::format("GUI atlas '{}' is still empty after rebuild; skipping upload.", atlas.name));
             return;
+        }
+
+        if (atlas.width == 0 || atlas.height == 0)
+        {
+            log_warn(std::format("GUI atlas '{}' has invalid dimensions {}x{}; skipping upload.",
+                atlas.name, atlas.width, atlas.height));
+            return;
+        }
 
         entry.image.reset();
         entry.memory.reset();
