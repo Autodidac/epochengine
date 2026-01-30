@@ -196,8 +196,8 @@ export namespace almondnamespace::vulkancontext
         shaderStages[1].module = *fMod.value;
         shaderStages[1].pName = "main";
 
-        const auto bindingDescription = Vertex::getBindingDescription();
-        const auto attributeDescriptions = Vertex::getAttributeDescriptions();
+        const auto bindingDescription = GuiVertex::getBindingDescription();
+        const auto attributeDescriptions = GuiVertex::getAttributeDescriptions();
 
         vk::PipelineVertexInputStateCreateInfo vertexInputInfo{};
         vertexInputInfo.vertexBindingDescriptionCount = 1;
@@ -289,8 +289,8 @@ export namespace almondnamespace::vulkancontext
     void Application::createGuiPipeline()
     {
         auto& guiState = gui_state_for_context(activeGuiContext);
-        const auto vertShaderCode = readFile("shaders/gui_vert.spv");
-        const auto fragShaderCode = readFile("shaders/gui_frag.spv");
+        const auto vertShaderCode = readFile("shaders/gui_vert.spv.txt");
+        const auto fragShaderCode = readFile("shaders/gui_frag.spv.txt");
 
         vk::ShaderModuleCreateInfo vInfo{};
         vInfo.codeSize = vertShaderCode.size();
@@ -315,8 +315,8 @@ export namespace almondnamespace::vulkancontext
         shaderStages[1].module = *fMod.value;
         shaderStages[1].pName = "main";
 
-        const auto bindingDescription = Vertex::getBindingDescription();
-        const auto attributeDescriptions = Vertex::getAttributeDescriptions();
+        const auto bindingDescription = GuiVertex::getBindingDescription();
+        const auto attributeDescriptions = GuiVertex::getAttributeDescriptions();
 
         vk::PipelineVertexInputStateCreateInfo vertexInputInfo{};
         vertexInputInfo.vertexBindingDescriptionCount = 1;

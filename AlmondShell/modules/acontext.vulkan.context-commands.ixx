@@ -165,7 +165,7 @@ namespace almondnamespace::vulkancontext
         if (guiState.guiUniformBuffers.empty())
             createGuiUniformBuffers();
 
-        std::vector<Vertex> vertices{};
+        std::vector<GuiVertex> vertices{};
         std::vector<std::uint32_t> indices{};
         std::vector<GuiBatch> batches{};
 
@@ -194,10 +194,10 @@ namespace almondnamespace::vulkancontext
             const float v0 = region.v2;
             const float v1 = region.v1;
 
-            vertices.push_back(Vertex{ { x0, y0, 0.0f }, { 0.0f, 0.0f, 1.0f }, { region.u1, v0 } });
-            vertices.push_back(Vertex{ { x1, y0, 0.0f }, { 0.0f, 0.0f, 1.0f }, { region.u2, v0 } });
-            vertices.push_back(Vertex{ { x1, y1, 0.0f }, { 0.0f, 0.0f, 1.0f }, { region.u2, v1 } });
-            vertices.push_back(Vertex{ { x0, y1, 0.0f }, { 0.0f, 0.0f, 1.0f }, { region.u1, v1 } });
+            vertices.push_back(GuiVertex{ { x0, y0 }, { region.u1, v0 } });
+            vertices.push_back(GuiVertex{ { x1, y0 }, { region.u2, v0 } });
+            vertices.push_back(GuiVertex{ { x1, y1 }, { region.u2, v1 } });
+            vertices.push_back(GuiVertex{ { x0, y1 }, { region.u1, v1 } });
 
             if (draw.atlas != currentAtlas)
             {
@@ -232,7 +232,7 @@ namespace almondnamespace::vulkancontext
         {
             guiState.guiVertexCapacity = vertexCount;
             std::tie(guiState.guiVertexBuffer, guiState.guiVertexBufferMemory) = createBuffer(
-                sizeof(Vertex) * guiState.guiVertexCapacity,
+                sizeof(GuiVertex) * guiState.guiVertexCapacity,
                 vk::BufferUsageFlagBits::eVertexBuffer,
                 vk::MemoryPropertyFlagBits::eHostVisible | vk::MemoryPropertyFlagBits::eHostCoherent);
         }
@@ -247,7 +247,7 @@ namespace almondnamespace::vulkancontext
         }
 
         {
-            const vk::DeviceSize vertexBytes = sizeof(Vertex) * vertexCount;
+            const vk::DeviceSize vertexBytes = sizeof(GuiVertex) * vertexCount;
             auto [mapRes, mapped] = device->mapMemory(*guiState.guiVertexBufferMemory, 0, vertexBytes);
             if (mapRes != vk::Result::eSuccess || !mapped)
                 throw std::runtime_error("[Vulkan] Failed to map GUI vertex buffer.");
