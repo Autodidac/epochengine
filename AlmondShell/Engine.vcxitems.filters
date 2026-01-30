@@ -156,9 +156,6 @@
     <ClInclude Include="$(MSBuildThisFileDirectory)include\aengine.hpp">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="$(MSBuildThisFileDirectory)include\aframework_wgl.hpp">
-      <Filter>Header Files</Filter>
-    </ClInclude>
     <ClInclude Include="$(MSBuildThisFileDirectory)include\acontext.vulkan.hpp">
       <Filter>Header Files</Filter>
     </ClInclude>

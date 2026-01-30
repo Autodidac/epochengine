@@ -26,12 +26,6 @@
     <ClInclude Include="$(MSBuildThisFileDirectory)include\aengine.config.hpp" />
     <ClInclude Include="$(MSBuildThisFileDirectory)include\aengine.hpp" />
     <ClInclude Include="$(MSBuildThisFileDirectory)include\aframework.hpp" />
-    <ClInclude Include="$(MSBuildThisFileDirectory)include\aframework_wgl.hpp">
-      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">true</ExcludedFromBuild>
-      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">true</ExcludedFromBuild>
-      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">true</ExcludedFromBuild>
-      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|x64'">true</ExcludedFromBuild>
-    </ClInclude>
     <ClInclude Include="$(MSBuildThisFileDirectory)src\pch.h" />
     <ClInclude Include="$(MSBuildThisFileDirectory)src\resource.h" />
   </ItemGroup>
