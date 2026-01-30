@@ -47,6 +47,7 @@ import <limits>;
 import <memory>;
 import <mutex>;
 import <optional>;
+import <shared_mutex>;
 import <stdexcept>;
 import <string>;
 import <string_view>;
@@ -468,6 +469,29 @@ namespace almondnamespace::gui
         perform_backend_upload(ctx);
     }
 
+    static std::shared_ptr<core::Context> select_shared_gui_context(
+        const std::shared_ptr<core::Context>& active)
+    {
+        if (!active)
+            return active;
+
+        if (active->type == core::ContextType::OpenGL)
+            return active;
+
+        std::shared_ptr<core::Context> shared;
+        {
+            std::shared_lock lock(core::g_backendsMutex);
+            auto it = core::g_backends.find(core::ContextType::OpenGL);
+            if (it != core::g_backends.end())
+                shared = it->second.master;
+        }
+
+        if (shared)
+            return shared;
+
+        return active;
+    }
+
     static void draw_sprite(const SpriteHandle& handle, float x, float y, float w, float h)
     {
         if (!handle.is_valid())
@@ -477,12 +501,17 @@ namespace almondnamespace::gui
         if (!ctx)
             return;
 
-        // Queue onto the window render thread if we have one.
-        if (ctx->windowData && g_frame.ctxShared)
-        {
-            auto ctxShared = g_frame.ctxShared;
+        auto ctxShared = g_frame.ctxShared;
+        Context* queueCtx = nullptr;
+        if (ctxShared && ctxShared->windowData)
+            queueCtx = ctxShared.get();
+        else if (ctx->windowData)
+            queueCtx = ctx;
 
-            ctx->windowData->commandQueue.enqueue([ctxShared, handle, x, y, w, h]()
+        // Queue onto the window render thread if we have one.
+        if (queueCtx && ctxShared)
+        {
+            queueCtx->windowData->commandQueue.enqueue([ctxShared, handle, x, y, w, h]()
                 {
                     if (!ctxShared)
                         return;
@@ -861,9 +890,16 @@ namespace almondnamespace::gui
             catch (...) { /* GUI optional */ }
         }
 
-        g_frame.ctxShared = ctx;
+        auto sharedCtx = select_shared_gui_context(ctx);
+        g_frame.ctxShared = sharedCtx;
         g_frame.ctx = rawCtx;
         g_frame.deltaTime = dt;
+
+        if (sharedCtx && sharedCtx.get() != rawCtx)
+        {
+            try { ensure_backend_upload(*sharedCtx); }
+            catch (...) { /* GUI optional */ }
+        }
 
         g_frame.caretTimer += dt;
         while (g_frame.caretTimer >= kCaretBlinkPeriod)
