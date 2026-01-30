@@ -299,6 +299,25 @@ namespace almondnamespace::vulkancontext
             }
         };
 
+        struct GuiVertex
+        {
+            glm::vec2 pos{};
+            glm::vec2 texCoord{};
+
+            static vk::VertexInputBindingDescription getBindingDescription()
+            {
+                return { 0u, static_cast<std::uint32_t>(sizeof(GuiVertex)), vk::VertexInputRate::eVertex };
+            }
+
+            static std::array<vk::VertexInputAttributeDescription, 2> getAttributeDescriptions()
+            {
+                return { {
+                    { 0u, 0u, vk::Format::eR32G32Sfloat, static_cast<std::uint32_t>(offsetof(GuiVertex, pos)) },
+                    { 1u, 0u, vk::Format::eR32G32Sfloat, static_cast<std::uint32_t>(offsetof(GuiVertex, texCoord)) },
+                } };
+            }
+        };
+
         struct GuiDrawCommand
         {
             const TextureAtlas* atlas{};
