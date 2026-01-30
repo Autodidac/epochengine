@@ -67,9 +67,9 @@ module;
 #include <cstdint>
 #include <cstring>
 #include <functional>
-#include <iostream>
 #include <memory>
 #include <optional>
+#include <source_location>
 #include <stdexcept>
 #include <thread>
 #include <utility>
@@ -93,6 +93,7 @@ import :commands;
 
 import aengine.context.commandqueue;
 import aengine.core.context;
+import aengine.core.logger;
 import aengine.input;
 import :shared_vk;
 
@@ -106,17 +107,31 @@ import acontext.opengl.platform;
 // -----------------------------------------------------------------------------
 namespace almondnamespace::vulkancontext
 {
+    namespace
+    {
+        constexpr const char* kLogSys = "Context.Vulkan";
+    }
+
     void Application::run()
     {
         almondnamespace::core::CommandQueue queue;
         initWindow();
         initVulkan();
 
-#ifdef _DEBUG
-        std::cout << "Vertex struct size: " << sizeof(Vertex) << "\n";
-        std::cout << "Position offset: " << offsetof(Vertex, pos) << "\n";
-        std::cout << "Normal offset: " << offsetof(Vertex, normal) << "\n";
-        std::cout << "TexCoord offset: " << offsetof(Vertex, texCoord) << "\n";
+#if defined(_DEBUG)
+        auto& log = almondnamespace::logger::get(kLogSys);
+        log.logf(almondnamespace::logger::LogLevel::INFO,
+            std::source_location::current(),
+            "Vertex struct size: {}", sizeof(Vertex));
+        log.logf(almondnamespace::logger::LogLevel::INFO,
+            std::source_location::current(),
+            "Position offset: {}", offsetof(Vertex, pos));
+        log.logf(almondnamespace::logger::LogLevel::INFO,
+            std::source_location::current(),
+            "Normal offset: {}", offsetof(Vertex, normal));
+        log.logf(almondnamespace::logger::LogLevel::INFO,
+            std::source_location::current(),
+            "TexCoord offset: {}", offsetof(Vertex, texCoord));
 #endif
 
         while (process(nullptr, queue)) {}
@@ -125,8 +140,11 @@ namespace almondnamespace::vulkancontext
 
     void Application::initVulkan()
     {
-#ifdef _DEBUG
-        std::cout << "initVulkan() called\n";
+#if defined(_DEBUG)
+        almondnamespace::logger::get(kLogSys).logf(
+            almondnamespace::logger::LogLevel::INFO,
+            std::source_location::current(),
+            "initVulkan() called");
 #endif
         createInstance();
         createSurface();
@@ -193,8 +211,11 @@ namespace almondnamespace::vulkancontext
         // in THIS TU, this init call is valid and links cleanly.
         VULKAN_HPP_DEFAULT_DISPATCHER.init();
 
-#ifdef _DEBUG
-        std::cout << "Window configured\n";
+#if defined(_DEBUG)
+        almondnamespace::logger::get(kLogSys).logf(
+            almondnamespace::logger::LogLevel::INFO,
+            std::source_location::current(),
+            "Window configured");
 #endif
     }
 
