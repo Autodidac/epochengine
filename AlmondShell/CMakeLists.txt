@@ -81,6 +81,16 @@ configure_file(
     ${ALMOND_VULKAN_ASSET_DIR}/texture.ppm
     COPYONLY
 )
+foreach(shader_name gui_vert.spv gui_frag.spv)
+    set(shader_source ${CMAKE_CURRENT_SOURCE_DIR}/assets/vulkan/shaders/${shader_name})
+    if(EXISTS ${shader_source})
+        configure_file(
+            ${shader_source}
+            ${ALMOND_VULKAN_SHADER_DIR}/${shader_name}
+            COPYONLY
+        )
+    endif()
+endforeach()
 
 if(GLSLANG_VALIDATOR)
     add_custom_command(
