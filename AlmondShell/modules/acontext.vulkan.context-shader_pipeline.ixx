@@ -12,6 +12,7 @@ module;
 #include <cassert>
 #include <cstdint>
 #include <filesystem>
+#include <format>
 #include <fstream>
 #include <sstream>
 #include <string>
@@ -21,6 +22,7 @@ module;
 export module acontext.vulkan.context:shader_pipeline;
 
 import :shared_vk;
+import aengine.core.logger;
 
 export namespace almondnamespace::vulkancontext
 {
@@ -184,9 +186,31 @@ export namespace almondnamespace::vulkancontext
         fInfo.pCode = reinterpret_cast<const std::uint32_t*>(fragShaderCode.data());
 
         auto vMod = device->createShaderModuleUnique(vInfo);
-        if (vMod.result != vk::Result::eSuccess) throw std::runtime_error("[Vulkan] createShaderModuleUnique(vert) failed.");
+        if (vMod.result != vk::Result::eSuccess)
+        {
+#if defined(_DEBUG)
+            logger::warn(
+                "Vulkan",
+                std::format(
+                    "createShaderModuleUnique(vert) failed: {} (codeSize={})",
+                    vk::to_string(vMod.result),
+                    vInfo.codeSize));
+#endif
+            throw std::runtime_error("[Vulkan] createShaderModuleUnique(vert) failed.");
+        }
         auto fMod = device->createShaderModuleUnique(fInfo);
-        if (fMod.result != vk::Result::eSuccess) throw std::runtime_error("[Vulkan] createShaderModuleUnique(frag) failed.");
+        if (fMod.result != vk::Result::eSuccess)
+        {
+#if defined(_DEBUG)
+            logger::warn(
+                "Vulkan",
+                std::format(
+                    "createShaderModuleUnique(frag) failed: {} (codeSize={})",
+                    vk::to_string(fMod.result),
+                    fInfo.codeSize));
+#endif
+            throw std::runtime_error("[Vulkan] createShaderModuleUnique(frag) failed.");
+        }
 
         vk::PipelineShaderStageCreateInfo shaderStages[2]{};
         shaderStages[0].stage = vk::ShaderStageFlagBits::eVertex;
@@ -281,8 +305,35 @@ export namespace almondnamespace::vulkancontext
         pipelineInfo.renderPass = *renderPass;
         pipelineInfo.subpass = 0;
 
+#if defined(_DEBUG)
+        logger::info(
+            "Vulkan",
+            std::format(
+                "Creating graphics pipeline (swapChainExtent={}x{}, renderPassValid={}, vertSpv={}, fragSpv={})",
+                swapChainExtent.width,
+                swapChainExtent.height,
+                static_cast<bool>(renderPass && *renderPass),
+                vInfo.codeSize,
+                fInfo.codeSize));
+#endif
         auto gp = device->createGraphicsPipelineUnique(vk::PipelineCache{}, pipelineInfo);
-        if (gp.result != vk::Result::eSuccess) throw std::runtime_error("[Vulkan] createGraphicsPipelineUnique failed.");
+        if (gp.result != vk::Result::eSuccess)
+        {
+#if defined(_DEBUG)
+            logger::warn(
+                "Vulkan",
+                std::format(
+                    "createGraphicsPipelineUnique failed: {} (swapChainExtent={}x{}, renderPassValid={})",
+                    vk::to_string(gp.result),
+                    swapChainExtent.width,
+                    swapChainExtent.height,
+                    static_cast<bool>(renderPass && *renderPass)));
+#endif
+            throw std::runtime_error("[Vulkan] createGraphicsPipelineUnique failed.");
+        }
+#if defined(_DEBUG)
+        logger::info("Vulkan", "Graphics pipeline created successfully.");
+#endif
         graphicsPipeline = std::move(gp.value);
     }
 
@@ -302,10 +353,30 @@ export namespace almondnamespace::vulkancontext
 
         auto vMod = device->createShaderModuleUnique(vInfo);
         if (vMod.result != vk::Result::eSuccess)
+        {
+#if defined(_DEBUG)
+            logger::warn(
+                "Vulkan",
+                std::format(
+                    "createShaderModuleUnique(gui_vert) failed: {} (codeSize={})",
+                    vk::to_string(vMod.result),
+                    vInfo.codeSize));
+#endif
             throw std::runtime_error("[Vulkan] createShaderModuleUnique(vert) failed.");
+        }
         auto fMod = device->createShaderModuleUnique(fInfo);
         if (fMod.result != vk::Result::eSuccess)
+        {
+#if defined(_DEBUG)
+            logger::warn(
+                "Vulkan",
+                std::format(
+                    "createShaderModuleUnique(gui_frag) failed: {} (codeSize={})",
+                    vk::to_string(fMod.result),
+                    fInfo.codeSize));
+#endif
             throw std::runtime_error("[Vulkan] createShaderModuleUnique(frag) failed.");
+        }
 
         vk::PipelineShaderStageCreateInfo shaderStages[2]{};
         shaderStages[0].stage = vk::ShaderStageFlagBits::eVertex;
@@ -398,9 +469,35 @@ export namespace almondnamespace::vulkancontext
         pipelineInfo.renderPass = *renderPass;
         pipelineInfo.subpass = 1;
 
+#if defined(_DEBUG)
+        logger::info(
+            "Vulkan",
+            std::format(
+                "Creating GUI pipeline (swapChainExtent={}x{}, renderPassValid={}, vertSpv={}, fragSpv={})",
+                swapChainExtent.width,
+                swapChainExtent.height,
+                static_cast<bool>(renderPass && *renderPass),
+                vInfo.codeSize,
+                fInfo.codeSize));
+#endif
         auto gp = device->createGraphicsPipelineUnique(vk::PipelineCache{}, pipelineInfo);
         if (gp.result != vk::Result::eSuccess)
+        {
+#if defined(_DEBUG)
+            logger::warn(
+                "Vulkan",
+                std::format(
+                    "createGuiPipeline failed: {} (swapChainExtent={}x{}, renderPassValid={})",
+                    vk::to_string(gp.result),
+                    swapChainExtent.width,
+                    swapChainExtent.height,
+                    static_cast<bool>(renderPass && *renderPass)));
+#endif
             throw std::runtime_error("[Vulkan] createGuiPipeline failed.");
+        }
+#if defined(_DEBUG)
+        logger::info("Vulkan", "GUI pipeline created successfully.");
+#endif
         guiState.guiPipeline = std::move(gp.value);
     }
 }
