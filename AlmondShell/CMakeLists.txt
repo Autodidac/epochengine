@@ -16,6 +16,7 @@ set(CMAKE_CXX_EXTENSIONS OFF)
 
 set(ALMONDSHELL_SOURCES
     src/aengine.cpp
+    src/aengine.loops.cpp
     src/aengine.context.cpp
     src/aengine.gui.cpp
     src/aengine.scripting.compiler.cpp
