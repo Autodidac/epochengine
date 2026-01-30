@@ -266,6 +266,11 @@ namespace almondnamespace::raylibcontext
         st.hdc = ctx ? ctx->hdc : detail::current_dc();
         st.hglrc = ctx ? ctx->hglrc : detail::current_context();
         st.ownsDC = false;
+        if (ctx && ctx->windowData && ctx->windowData->glContext)
+        {
+            st.sharedHdc = ctx->windowData->hdc;
+            st.sharedHglrc = ctx->windowData->glContext;
+        }
 
         if (!st.hdc || !st.hglrc)
         {
@@ -304,9 +309,21 @@ namespace almondnamespace::raylibcontext
         }
         if (ctx && ctx->windowData)
         {
+            if (st.sharedHglrc && st.hglrc && st.sharedHglrc != st.hglrc)
+            {
+                if (::wglShareLists(st.sharedHglrc, st.hglrc) == FALSE)
+                {
+                    logger::warn(
+                        "Raylib",
+                        std::format(
+                            "Failed to share GL resources between shared context {:p} and raylib context {:p}.",
+                            static_cast<const void*>(st.sharedHglrc),
+                            static_cast<const void*>(st.hglrc)));
+                }
+            }
             ctx->windowData->hdc = st.hdc;
             ctx->windowData->glContext = st.hglrc;
-            ctx->windowData->usesSharedContext = false;
+            ctx->windowData->usesSharedContext = (st.sharedHglrc != nullptr);
         }
 #if defined(_DEBUG)
         logger::info(

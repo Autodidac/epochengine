@@ -48,11 +48,15 @@ export namespace almondnamespace::raylibstate
         HWND  hwnd = nullptr;
         HDC   hdc = nullptr;
         HGLRC hglrc = nullptr;
+        HDC   sharedHdc = nullptr;
+        HGLRC sharedHglrc = nullptr;
         HWND  parent = nullptr;
 #else
         void* hwnd = nullptr;
         void* hdc = nullptr;
         void* hglrc = nullptr;
+        void* sharedHdc = nullptr;
+        void* sharedHglrc = nullptr;
         void* parent = nullptr;
 #endif
 
