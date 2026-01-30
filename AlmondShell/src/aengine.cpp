@@ -160,6 +160,48 @@ namespace almondnamespace::core
 
     inline std::vector<std::unique_ptr<TextureUploadQueue>> uploadQueues;
 
+    struct BackendWindowCounts
+    {
+        int raylib = 0;
+        int sdl = 1;
+        int sfml = 1;
+        int vulkan = 1;
+        int opengl = 1;
+        int software = 1;
+    };
+
+    BackendWindowCounts ResolveBackendWindowCounts()
+    {
+        BackendWindowCounts counts{};
+        if (!cli::backend_filter)
+            return counts;
+
+        const std::string& backend = *cli::backend_filter;
+        counts = BackendWindowCounts{
+            .raylib = 0,
+            .sdl = 0,
+            .sfml = 0,
+            .vulkan = 0,
+            .opengl = 0,
+            .software = 0
+        };
+
+        if (backend == "raylib" || backend == "raylib_nogl")
+            counts.raylib = 1;
+        else if (backend == "sdl")
+            counts.sdl = 1;
+        else if (backend == "sfml")
+            counts.sfml = 1;
+        else if (backend == "vulkan")
+            counts.vulkan = 1;
+        else if (backend == "software")
+            counts.software = 1;
+        else if (backend == "opengl")
+            counts.opengl = 1;
+
+        return counts;
+    }
+
 #if defined(_WIN32)
     inline void ShowConsole()
     {
@@ -898,14 +940,15 @@ namespace almondnamespace::core
 
                 HINSTANCE hi = hInstance ? hInstance : GetModuleHandleW(nullptr);
 
+                const BackendWindowCounts counts = ResolveBackendWindowCounts();
                 const bool ok = mgr.Initialize(
                     hi,
-                    /*RayLib*/   1,
-                    /*SDL*/      1,
-                    /*SFML*/     1,
-                    /*Vulkan*/   1,
-                    /*OpenGL*/   1,
-                    /*Software*/ 1,
+                    /*RayLib*/   counts.raylib,
+                    /*SDL*/      counts.sdl,
+                    /*SFML*/     counts.sfml,
+                    /*Vulkan*/   counts.vulkan,
+                    /*OpenGL*/   counts.opengl,
+                    /*Software*/ counts.software,
                     ALMOND_SINGLE_PARENT == 1
                 );
 
@@ -956,14 +999,15 @@ namespace almondnamespace::core
             {
                 almondnamespace::core::MultiContextManager mgr;
 
+                const BackendWindowCounts counts = ResolveBackendWindowCounts();
                 const bool ok = mgr.Initialize(
                     nullptr,
-                    /*RayLib*/   1,
-                    /*SDL*/      1,
-                    /*SFML*/     1,
-                    /*Vulkan*/   1,
-                    /*OpenGL*/   1,
-                    /*Software*/ 1,
+                    /*RayLib*/   counts.raylib,
+                    /*SDL*/      counts.sdl,
+                    /*SFML*/     counts.sfml,
+                    /*Vulkan*/   counts.vulkan,
+                    /*OpenGL*/   counts.opengl,
+                    /*Software*/ counts.software,
                     ALMOND_SINGLE_PARENT == 1
                 );
 
@@ -1025,14 +1069,15 @@ namespace almondnamespace::core
 
             const HINSTANCE hi = GetModuleHandleW(nullptr);
 
+            const BackendWindowCounts counts = ResolveBackendWindowCounts();
             const bool ok = mgr.Initialize(
                 hi,
-                /*RayLib*/   1,
-                /*SDL*/      1,
-                /*SFML*/     1,
-                    /*Vulkan*/   1,
-                /*OpenGL*/   1,
-                /*Software*/ 1,
+                /*RayLib*/   counts.raylib,
+                /*SDL*/      counts.sdl,
+                /*SFML*/     counts.sfml,
+                /*Vulkan*/   counts.vulkan,
+                /*OpenGL*/   counts.opengl,
+                /*Software*/ counts.software,
                 ALMOND_SINGLE_PARENT == 1
             );
 
@@ -1081,14 +1126,15 @@ namespace almondnamespace::core
         {
             almondnamespace::core::MultiContextManager mgr;
 
+            const BackendWindowCounts counts = ResolveBackendWindowCounts();
             const bool ok = mgr.Initialize(
                 nullptr,
-                /*RayLib*/   1,
-                /*SDL*/      1,
-                /*SFML*/     1,
-                    /*Vulkan*/   1,
-                /*OpenGL*/   1,
-                /*Software*/ 1,
+                /*RayLib*/   counts.raylib,
+                /*SDL*/      counts.sdl,
+                /*SFML*/     counts.sfml,
+                /*Vulkan*/   counts.vulkan,
+                /*OpenGL*/   counts.opengl,
+                /*Software*/ counts.software,
                 ALMOND_SINGLE_PARENT == 1
             );
 

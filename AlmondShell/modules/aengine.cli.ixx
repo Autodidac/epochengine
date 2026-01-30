@@ -17,4 +17,5 @@ export namespace almondnamespace::core::cli
     export using ::almondnamespace::core::cli::trace_raylib_design_metrics;
     export using ::almondnamespace::core::cli::exe_path;
     export using ::almondnamespace::core::cli::print_engine_info;
+    export using ::almondnamespace::core::cli::backend_filter;
 }
