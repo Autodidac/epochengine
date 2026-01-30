@@ -31,6 +31,7 @@
     <ClInclude Include="$(MSBuildThisFileDirectory)include\aengine.backend_counts.hpp" />
     <ClInclude Include="$(MSBuildThisFileDirectory)include\aengine.config.hpp" />
     <ClInclude Include="$(MSBuildThisFileDirectory)include\aengine.hpp" />
+    <ClInclude Include="$(MSBuildThisFileDirectory)include\aengine.scene_factories.hpp" />
     <ClInclude Include="$(MSBuildThisFileDirectory)include\aframework.hpp" />
     <ClInclude Include="$(MSBuildThisFileDirectory)src\pch.h" />
     <ClInclude Include="$(MSBuildThisFileDirectory)src\resource.h" />
@@ -310,6 +311,7 @@
     <ClCompile Include="$(MSBuildThisFileDirectory)src\aengine.cpp" />
     <ClCompile Include="$(MSBuildThisFileDirectory)src\aengine.gui.cpp" />
     <ClCompile Include="$(MSBuildThisFileDirectory)src\aengine.loops.cpp" />
+    <ClCompile Include="$(MSBuildThisFileDirectory)src\aengine.scene_factories.cpp" />
     <ClCompile Include="$(MSBuildThisFileDirectory)src\aengine.scripting.compiler.cpp" />
     <ClCompile Include="$(MSBuildThisFileDirectory)src\afilewatch.cpp" />
     <ClCompile Include="$(MSBuildThisFileDirectory)src\afont.renderer.cpp" />

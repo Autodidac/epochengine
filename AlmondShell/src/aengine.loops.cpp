@@ -27,7 +27,7 @@
 
 #include "..\include\aengine.config.hpp"
 #include "..\include\aengine.scene_factories.hpp"
-#include "aengine.backend_counts.hpp"
+#include "..\include\aengine.backend_counts.hpp"
 
 #if defined(_WIN32)
 #  ifndef WIN32_LEAN_AND_MEAN
@@ -61,7 +61,7 @@ import <vector>;
 // Engine/module imports
 // -----------------------------
 import aengine.platform;
-import almondshell;
+//import almondshell;
 
 import aengine.cli;
 import aengine.input;

@@ -162,6 +162,9 @@
     <ClInclude Include="$(MSBuildThisFileDirectory)include\aengine.backend_counts.hpp">
       <Filter>Header Files</Filter>
     </ClInclude>
+    <ClInclude Include="$(MSBuildThisFileDirectory)include\aengine.scene_factories.hpp">
+      <Filter>Header Files</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <Image Include="$(MSBuildThisFileDirectory)src\icon.ico">
@@ -687,6 +690,9 @@
       <Filter>Source Files\core\context\vulkan</Filter>
     </ClCompile>
     <ClCompile Include="$(MSBuildThisFileDirectory)src\aengine.loops.cpp">
+      <Filter>Source Files\core</Filter>
+    </ClCompile>
+    <ClCompile Include="$(MSBuildThisFileDirectory)src\aengine.scene_factories.cpp">
       <Filter>Source Files\core</Filter>
     </ClCompile>
   </ItemGroup>
