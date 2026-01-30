@@ -162,7 +162,7 @@ namespace almondnamespace::core
 
     struct BackendWindowCounts
     {
-        int raylib = 0;
+        int raylib = 1;
         int sdl = 1;
         int sfml = 1;
         int vulkan = 1;
