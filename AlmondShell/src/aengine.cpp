@@ -163,74 +163,41 @@ namespace almondnamespace::core
     struct BackendWindowCounts
     {
         int raylib = 0;
-        int sdl = 0;
-        int sfml = 0;
-        int vulkan = 0;
-        int opengl = 0;
-        int software = 0;
+        int sdl = 1;
+        int sfml = 1;
+        int vulkan = 1;
+        int opengl = 1;
+        int software = 1;
     };
 
     BackendWindowCounts ResolveBackendWindowCounts()
     {
         BackendWindowCounts counts{};
         if (!cli::backend_filter)
-        {
-#if defined(ALMOND_USING_OPENGL)
-            counts.opengl = 1;
-#endif
-#if defined(ALMOND_USING_SDL)
-            counts.sdl = 1;
-#endif
-#if defined(ALMOND_USING_SFML)
-            counts.sfml = 1;
-#endif
-#if defined(ALMOND_USING_VULKAN)
-            counts.vulkan = 1;
-#endif
-#if defined(ALMOND_USING_SOFTWARE_RENDERER)
-            counts.software = 1;
-#endif
             return counts;
-        }
 
         const std::string& backend = *cli::backend_filter;
+        counts = BackendWindowCounts{
+            .raylib = 0,
+            .sdl = 0,
+            .sfml = 0,
+            .vulkan = 0,
+            .opengl = 0,
+            .software = 0
+        };
 
         if (backend == "raylib" || backend == "raylib_nogl")
-        {
-#if defined(ALMOND_USING_RAYLIB)
             counts.raylib = 1;
-#endif
-        }
         else if (backend == "sdl")
-        {
-#if defined(ALMOND_USING_SDL)
             counts.sdl = 1;
-#endif
-        }
         else if (backend == "sfml")
-        {
-#if defined(ALMOND_USING_SFML)
             counts.sfml = 1;
-#endif
-        }
         else if (backend == "vulkan")
-        {
-#if defined(ALMOND_USING_VULKAN)
             counts.vulkan = 1;
-#endif
-        }
         else if (backend == "software")
-        {
-#if defined(ALMOND_USING_SOFTWARE_RENDERER)
             counts.software = 1;
-#endif
-        }
         else if (backend == "opengl")
-        {
-#if defined(ALMOND_USING_OPENGL)
             counts.opengl = 1;
-#endif
-        }
 
         return counts;
     }
