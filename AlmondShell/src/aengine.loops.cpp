@@ -26,6 +26,7 @@
  //
 
 #include "..\include\aengine.config.hpp"
+#include "..\include\aengine.scene_factories.hpp"
 #include "aengine.backend_counts.hpp"
 
 #if defined(_WIN32)
@@ -76,20 +77,6 @@ import aengine.gui.menu;
 import aeditor;
 
 import ascene;
-
-import asnakelike;
-import atetrislike;
-import apacmanlike;
-import afroggerlike;
-import asokobanlike;
-import amatch3like;
-
-import aslidingpuzzlelike;
-import aminesweeperlike;
-import a2048like;
-
-import asandsim;
-import acellularsim;
 
 #if defined(ALMOND_USING_OPENGL)
 import acontext.opengl.context;
@@ -344,27 +331,27 @@ namespace almondnamespace::core::engine
                                     using almondnamespace::menu::Choice;
 
                                     if (*game_choice == Choice::Snake)
-                                        begin_scene([] { return std::make_unique<almondnamespace::snakelike::SnakeLikeScene>(); }, "Snake");
+                                        begin_scene(CreateSnakeScene, "Snake");
                                     else if (*game_choice == Choice::Tetris)
-                                        begin_scene([] { return std::make_unique<almondnamespace::tetrislike::TetrisLikeScene>(); }, "Tetris");
+                                        begin_scene(CreateTetrisScene, "Tetris");
                                     else if (*game_choice == Choice::Frogger)
-                                        begin_scene([] { return std::make_unique<almondnamespace::froggerlike::FroggerLikeScene>(); }, "Frogger");
+                                        begin_scene(CreateFroggerScene, "Frogger");
                                     else if (*game_choice == Choice::Pacman)
-                                        begin_scene([] { return std::make_unique<almondnamespace::pacmanlike::PacmanLikeScene>(); }, "Pacman");
+                                        begin_scene(CreatePacmanScene, "Pacman");
                                     else if (*game_choice == Choice::Sokoban)
-                                        begin_scene([] { return std::make_unique<almondnamespace::sokobanlike::SokobanLikeScene>(); }, "Sokoban");
+                                        begin_scene(CreateSokobanScene, "Sokoban");
                                     else if (*game_choice == Choice::Bejeweled)
-                                        begin_scene([] { return std::make_unique<almondnamespace::match3like::Match3LikeScene>(); }, "Match-3");
+                                        begin_scene(CreateMatch3Scene, "Match-3");
                                     else if (*game_choice == Choice::Puzzle)
-                                        begin_scene([] { return std::make_unique<almondnamespace::slidinglike::SlidingPuzzleLikeScene>(); }, "Sliding Puzzle");
+                                        begin_scene(CreateSlidingPuzzleScene, "Sliding Puzzle");
                                     else if (*game_choice == Choice::Minesweep)
-                                        begin_scene([] { return std::make_unique<almondnamespace::minesweeperlike::MinesweeperLikeScene>(); }, "Minesweeper");
+                                        begin_scene(CreateMinesweeperScene, "Minesweeper");
                                     else if (*game_choice == Choice::Fourty)
-                                        begin_scene([] { return std::make_unique<almondnamespace::a2048like::A2048LikeScene>(); }, "2048");
+                                        begin_scene(Create2048Scene, "2048");
                                     else if (*game_choice == Choice::Sandsim)
-                                        begin_scene([] { return std::make_unique<almondnamespace::sandsim::SandSimScene>(); }, "Sand Sim");
+                                        begin_scene(CreateSandSimScene, "Sand Sim");
                                     else if (*game_choice == Choice::Cellular)
-                                        begin_scene([] { return std::make_unique<almondnamespace::cellularsim::CellularSimScene>(); }, "Cellular");
+                                        begin_scene(CreateCellularSimScene, "Cellular");
                                 }
                             }
 
@@ -654,27 +641,27 @@ namespace almondnamespace::core::engine
                                 using almondnamespace::menu::Choice;
 
                                 if (*choice == Choice::Snake)
-                                    begin_scene([] { return std::make_unique<almondnamespace::snakelike::SnakeLikeScene>(); }, SceneID::Snake);
+                                    begin_scene(CreateSnakeScene, SceneID::Snake);
                                 else if (*choice == Choice::Tetris)
-                                    begin_scene([] { return std::make_unique<almondnamespace::tetrislike::TetrisLikeScene>(); }, SceneID::Tetris);
+                                    begin_scene(CreateTetrisScene, SceneID::Tetris);
                                 else if (*choice == Choice::Frogger)
-                                    begin_scene([] { return std::make_unique<almondnamespace::froggerlike::FroggerLikeScene>(); }, SceneID::Frogger);
+                                    begin_scene(CreateFroggerScene, SceneID::Frogger);
                                 else if (*choice == Choice::Pacman)
-                                    begin_scene([] { return std::make_unique<almondnamespace::pacmanlike::PacmanLikeScene>(); }, SceneID::Pacman);
+                                    begin_scene(CreatePacmanScene, SceneID::Pacman);
                                 else if (*choice == Choice::Sokoban)
-                                    begin_scene([] { return std::make_unique<almondnamespace::sokobanlike::SokobanLikeScene>(); }, SceneID::Sokoban);
+                                    begin_scene(CreateSokobanScene, SceneID::Sokoban);
                                 else if (*choice == Choice::Bejeweled)
-                                    begin_scene([] { return std::make_unique<almondnamespace::match3like::Match3LikeScene>(); }, SceneID::Match3);
+                                    begin_scene(CreateMatch3Scene, SceneID::Match3);
                                 else if (*choice == Choice::Puzzle)
-                                    begin_scene([] { return std::make_unique<almondnamespace::slidinglike::SlidingPuzzleLikeScene>(); }, SceneID::Sliding);
+                                    begin_scene(CreateSlidingPuzzleScene, SceneID::Sliding);
                                 else if (*choice == Choice::Minesweep)
-                                    begin_scene([] { return std::make_unique<almondnamespace::minesweeperlike::MinesweeperLikeScene>(); }, SceneID::Minesweeper);
+                                    begin_scene(CreateMinesweeperScene, SceneID::Minesweeper);
                                 else if (*choice == Choice::Fourty)
-                                    begin_scene([] { return std::make_unique<almondnamespace::a2048like::A2048LikeScene>(); }, SceneID::Game2048);
+                                    begin_scene(Create2048Scene, SceneID::Game2048);
                                 else if (*choice == Choice::Sandsim)
-                                    begin_scene([] { return std::make_unique<almondnamespace::sandsim::SandSimScene>(); }, SceneID::Sandsim);
+                                    begin_scene(CreateSandSimScene, SceneID::Sandsim);
                                 else if (*choice == Choice::Cellular)
-                                    begin_scene([] { return std::make_unique<almondnamespace::cellularsim::CellularSimScene>(); }, SceneID::Cellular);
+                                    begin_scene(CreateCellularSimScene, SceneID::Cellular);
                                 else if (*choice == Choice::Settings)
                                     std::cout << "[Menu] Settings selected.\n";
                                 else if (*choice == Choice::Exit)
