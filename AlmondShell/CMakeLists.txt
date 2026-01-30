@@ -16,7 +16,9 @@ set(CMAKE_CXX_EXTENSIONS OFF)
 
 set(ALMONDSHELL_SOURCES
     src/aengine.cpp
-    src/aengine.loops.cpp
+    src/aengine.loops.editor.cpp
+    src/aengine.loops.menu.cpp
+    src/aengine.loops.main.cpp
     src/aengine.scene_factories.cpp
     src/aengine.context.cpp
     src/aengine.gui.cpp
@@ -128,6 +130,10 @@ if(CMAKE_CXX_COMPILER_ID STREQUAL "MSVC")
     # deprecated /experimental:module switch; keep the latest standard
     # mode enabled so BMI emission stays aligned with scan-for-modules.
     target_compile_options(almondshell PRIVATE /std:c++latest)
+    # Keep debug info out of .obj files to avoid the 4GB object limit
+    # when compiling module-heavy translation units.
+    set_property(TARGET almondshell PROPERTY
+        MSVC_DEBUG_INFORMATION_FORMAT "$<$<CONFIG:Debug,RelWithDebInfo>:ProgramDatabase>")
 elseif(CMAKE_CXX_COMPILER_ID STREQUAL "GNU")
     # GCC 14+ requires the Modules TS flag so the dyn-dep scanner emits
     # BMI build rules correctly when paired with Ninja or Makefiles.
@@ -140,6 +146,8 @@ endif()
 
 if(CMAKE_CXX_COMPILER_ID STREQUAL "MSVC")
     target_compile_options(almondshell_renderer_smoke PRIVATE /std:c++latest)
+    set_property(TARGET almondshell_renderer_smoke PROPERTY
+        MSVC_DEBUG_INFORMATION_FORMAT "$<$<CONFIG:Debug,RelWithDebInfo>:ProgramDatabase>")
 elseif(CMAKE_CXX_COMPILER_ID STREQUAL "GNU")
     target_compile_options(almondshell_renderer_smoke PRIVATE -fmodules-ts)
 elseif(CMAKE_CXX_COMPILER_ID MATCHES "Clang")

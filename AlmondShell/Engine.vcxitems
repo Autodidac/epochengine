@@ -18,6 +18,11 @@
       <AdditionalDependencies Condition="'$(AlmondUseSfml)'=='true'">%(AdditionalDependencies);sfml-graphics.lib;sfml-window.lib;sfml-system.lib</AdditionalDependencies>
     </Link>
   </ItemDefinitionGroup>
+  <ItemDefinitionGroup Condition="'$(Configuration)'=='Debug' Or '$(Configuration)'=='RelWithDebInfo'">
+    <ClCompile>
+      <DebugInformationFormat>ProgramDatabase</DebugInformationFormat>
+    </ClCompile>
+  </ItemDefinitionGroup>
   <ItemGroup>
     <ProjectCapability Include="SourceItemsFromImports" />
   </ItemGroup>
@@ -304,7 +309,9 @@
     <ClCompile Include="$(MSBuildThisFileDirectory)src\aengine.context.multiplexer.win.cpp" />
     <ClCompile Include="$(MSBuildThisFileDirectory)src\aengine.cpp" />
     <ClCompile Include="$(MSBuildThisFileDirectory)src\aengine.gui.cpp" />
-    <ClCompile Include="$(MSBuildThisFileDirectory)src\aengine.loops.cpp" />
+    <ClCompile Include="$(MSBuildThisFileDirectory)src\aengine.loops.editor.cpp" />
+    <ClCompile Include="$(MSBuildThisFileDirectory)src\aengine.loops.menu.cpp" />
+    <ClCompile Include="$(MSBuildThisFileDirectory)src\aengine.loops.main.cpp" />
     <ClCompile Include="$(MSBuildThisFileDirectory)src\aengine.scripting.compiler.cpp" />
     <ClCompile Include="$(MSBuildThisFileDirectory)src\afilewatch.cpp" />
     <ClCompile Include="$(MSBuildThisFileDirectory)src\afont.renderer.cpp" />

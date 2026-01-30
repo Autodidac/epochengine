@@ -686,7 +686,13 @@
     <ClCompile Include="$(MSBuildThisFileDirectory)src\acontext.vulkan.dispatch_storage.cpp">
       <Filter>Source Files\core\context\vulkan</Filter>
     </ClCompile>
-    <ClCompile Include="$(MSBuildThisFileDirectory)src\aengine.loops.cpp">
+    <ClCompile Include="$(MSBuildThisFileDirectory)src\aengine.loops.editor.cpp">
+      <Filter>Source Files\core</Filter>
+    </ClCompile>
+    <ClCompile Include="$(MSBuildThisFileDirectory)src\aengine.loops.menu.cpp">
+      <Filter>Source Files\core</Filter>
+    </ClCompile>
+    <ClCompile Include="$(MSBuildThisFileDirectory)src\aengine.loops.main.cpp">
       <Filter>Source Files\core</Filter>
     </ClCompile>
   </ItemGroup>
