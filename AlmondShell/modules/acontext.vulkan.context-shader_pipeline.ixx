@@ -196,8 +196,8 @@ export namespace almondnamespace::vulkancontext
         shaderStages[1].module = *fMod.value;
         shaderStages[1].pName = "main";
 
-        const auto bindingDescription = GuiVertex::getBindingDescription();
-        const auto attributeDescriptions = GuiVertex::getAttributeDescriptions();
+        const auto bindingDescription = Vertex::getBindingDescription();
+        const auto attributeDescriptions = Vertex::getAttributeDescriptions();
 
         vk::PipelineVertexInputStateCreateInfo vertexInputInfo{};
         vertexInputInfo.vertexBindingDescriptionCount = 1;
