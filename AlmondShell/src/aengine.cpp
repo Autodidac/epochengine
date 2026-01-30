@@ -83,6 +83,7 @@ import aengine.engine_components;
 import aengine.context.multiplexer;
 import aengine.context.type;
 import aengine.core.context;
+import aengine.core.logger;
 
 import aengine.gui;
 import aengine.gui.menu;
@@ -988,6 +989,9 @@ namespace almondnamespace::core
             }
             catch (const std::exception& ex)
             {
+#if defined(_DEBUG)
+                almondnamespace::logger::flush_last_error_to_console();
+#endif
                 MessageBoxA(nullptr, ex.what(), "Error", MB_ICONERROR | MB_OK);
                 return -1;
             }
@@ -1031,6 +1035,9 @@ namespace almondnamespace::core
             }
             catch (const std::exception& ex)
             {
+#if defined(_DEBUG)
+                almondnamespace::logger::flush_last_error_to_console();
+#endif
                 std::cerr << "[Engine] " << ex.what() << '\n';
                 return -1;
             }
@@ -1119,6 +1126,9 @@ namespace almondnamespace::core
         }
         catch (const std::exception& ex)
         {
+#if defined(_DEBUG)
+            almondnamespace::logger::flush_last_error_to_console();
+#endif
             MessageBoxA(nullptr, ex.what(), "Error", MB_ICONERROR | MB_OK);
         }
 #elif defined(__linux__)
@@ -1160,6 +1170,9 @@ namespace almondnamespace::core
         }
         catch (const std::exception& ex)
         {
+#if defined(_DEBUG)
+            almondnamespace::logger::flush_last_error_to_console();
+#endif
             std::cerr << "[Editor] " << ex.what() << '\n';
         }
 #else
@@ -1229,6 +1242,9 @@ int WINAPI wWinMain(
     }
     catch (const std::exception& ex)
     {
+#if defined(_DEBUG)
+        almondnamespace::logger::flush_last_error_to_console();
+#endif
         MessageBoxA(nullptr, ex.what(), "Error", MB_ICONERROR | MB_OK);
         return -1;
     }
@@ -1271,6 +1287,9 @@ int main(int argc, char** argv)
     }
     catch (const std::exception& ex)
     {
+#if defined(_DEBUG)
+        almondnamespace::logger::flush_last_error_to_console();
+#endif
         std::cerr << "[Fatal] " << ex.what() << '\n';
         return -1;
     }

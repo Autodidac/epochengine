@@ -53,7 +53,7 @@ export namespace almondnamespace::logger
         bool flush_each_write = true;
         bool include_source = true;
 
-        bool console_enabled = true;
+        bool console_enabled = false;
         bool file_enabled = true;
     };
 
@@ -103,6 +103,20 @@ export namespace almondnamespace::logger
             static std::mutex m{};
             return m;
         }
+
+#if defined(_DEBUG)
+        inline std::mutex& last_error_mutex()
+        {
+            static std::mutex m{};
+            return m;
+        }
+
+        inline std::string& last_error_line()
+        {
+            static std::string line{};
+            return line;
+        }
+#endif
     } // namespace detail
 
     // ---------------------------------------------------------------------
@@ -193,6 +207,14 @@ export namespace almondnamespace::logger
                     msg
                 );
             }
+
+#if defined(_DEBUG)
+            if (lvl == LogLevel::ALMOND_ERROR)
+            {
+                std::scoped_lock lock(detail::last_error_mutex());
+                detail::last_error_line() = line;
+            }
+#endif
 
             if (m_console_enabled.load(std::memory_order_relaxed))
             {
@@ -332,6 +354,24 @@ export namespace almondnamespace::logger
         std::source_location loc = std::source_location::current())
     {
         hub().system(sys).log(LogLevel::ALMOND_ERROR, msg, loc);
+    }
+
+    inline void flush_last_error_to_console()
+    {
+#if defined(_DEBUG)
+        std::string line;
+        {
+            std::scoped_lock lock(detail::last_error_mutex());
+            line = detail::last_error_line();
+        }
+
+        if (!line.empty())
+        {
+            std::scoped_lock lock(detail::console_mutex());
+            std::cout << line << "\n";
+            std::cout.flush();
+        }
+#endif
     }
 
     // ---------------------------------------------------------------------
