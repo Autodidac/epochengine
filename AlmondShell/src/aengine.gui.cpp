@@ -676,7 +676,7 @@ namespace almondnamespace::gui
 
             const auto next = next_drawable_char(text, i);
             const float advance = glyph_advance_with_kerning(static_cast<unsigned char>(ch), next, scale);
-            if (penX + advance > effectiveWidth + 0.001f)
+            if (penX > 0.0f && penX + advance > effectiveWidth + 0.001f)
             {
                 ++lines;
                 penX = 0.0f;
@@ -710,7 +710,7 @@ namespace almondnamespace::gui
 
             const auto next = next_drawable_char(text, i);
             const float advance = glyph_advance_with_kerning(static_cast<unsigned char>(ch), next, scale);
-            if (penX + advance > x + effectiveWidth + 0.001f)
+            if (penX > x && penX + advance > x + effectiveWidth + 0.001f)
             {
                 penX = x;
                 baseline += lineAdvance;
@@ -751,7 +751,7 @@ namespace almondnamespace::gui
 
             const auto next = next_drawable_char(text, i);
             const float advance = glyph_advance_with_kerning(static_cast<unsigned char>(ch), next, scale);
-            if (penX + advance > x + effectiveWidth + 0.001f)
+            if (penX > x && penX + advance > x + effectiveWidth + 0.001f)
             {
                 penX = x;
                 baseline += lineAdvance;
