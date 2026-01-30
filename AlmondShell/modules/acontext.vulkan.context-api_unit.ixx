@@ -1,3 +1,4 @@
+
 module;
 
 export module acontext.vulkan.context;
@@ -21,6 +22,7 @@ import <stdexcept>;
 import <utility>;
 import <memory>;
 import <iostream>;
+import <span>;
 
 namespace almondnamespace::vulkancontext
 {
