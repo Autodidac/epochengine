@@ -309,7 +309,7 @@ namespace almondnamespace::raylibcontext
         }
         if (ctx && ctx->windowData)
         {
-            if (st.sharedHglrc && st.hglrc && st.sharedHglrc != st.hglrc)
+            if (!st.usesPrivateContext && st.sharedHglrc && st.hglrc && st.sharedHglrc != st.hglrc)
             {
                 if (::wglShareLists(st.sharedHglrc, st.hglrc) == FALSE)
                 {
@@ -321,9 +321,12 @@ namespace almondnamespace::raylibcontext
                             static_cast<const void*>(st.hglrc)));
                 }
             }
-            ctx->windowData->hdc = st.hdc;
-            ctx->windowData->glContext = st.hglrc;
-            ctx->windowData->usesSharedContext = (st.sharedHglrc != nullptr);
+            if (!st.usesPrivateContext)
+            {
+                ctx->windowData->hdc = st.hdc;
+                ctx->windowData->glContext = st.hglrc;
+                ctx->windowData->usesSharedContext = (st.sharedHglrc != nullptr);
+            }
         }
 #if defined(_DEBUG)
         logger::info(
@@ -403,6 +406,11 @@ namespace almondnamespace::raylibcontext
         auto& st = almondnamespace::raylibstate::s_raylibstate;
         if (!st.hdc || !st.hglrc)
             return false;
+        if (auto current = almondnamespace::core::get_current_render_context();
+            current && current->type != almondnamespace::core::ContextType::RayLib)
+        {
+            return false;
+        }
 
         return detail::make_current(st.hdc, st.hglrc);
 #else
@@ -578,7 +586,7 @@ namespace almondnamespace::raylibcontext
                 st.offscreenHeight = 0;
             }
 
-            if (ctx && ctx->windowData)
+            if (ctx && ctx->windowData && !st.usesPrivateContext)
             {
 #if defined(_WIN32)
                 ctx->windowData->hdc = nullptr;

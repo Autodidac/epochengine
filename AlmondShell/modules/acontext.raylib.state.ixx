@@ -61,6 +61,7 @@ export namespace almondnamespace::raylibstate
 #endif
 
         bool ownsDC = false;
+        bool usesPrivateContext = true;
 
         // Owning engine context + thread
         almondnamespace::core::Context* owner_ctx = nullptr;

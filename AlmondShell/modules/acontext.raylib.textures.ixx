@@ -236,6 +236,8 @@ export namespace almondnamespace::raylibtextures
     inline void ensure_raylib_context_current() noexcept
     {
         auto& st = almondnamespace::raylibstate::s_raylibstate;
+        if (!is_raylib_backend_current())
+            return;
         if (st.hdc && st.hglrc)
             (void)::wglMakeCurrent(st.hdc, st.hglrc);
     }
