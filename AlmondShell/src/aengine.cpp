@@ -160,6 +160,81 @@ namespace almondnamespace::core
 
     inline std::vector<std::unique_ptr<TextureUploadQueue>> uploadQueues;
 
+    struct BackendWindowCounts
+    {
+        int raylib = 0;
+        int sdl = 0;
+        int sfml = 0;
+        int vulkan = 0;
+        int opengl = 0;
+        int software = 0;
+    };
+
+    BackendWindowCounts ResolveBackendWindowCounts()
+    {
+        BackendWindowCounts counts{};
+        if (!cli::backend_filter)
+        {
+#if defined(ALMOND_USING_OPENGL)
+            counts.opengl = 1;
+#endif
+#if defined(ALMOND_USING_SDL)
+            counts.sdl = 1;
+#endif
+#if defined(ALMOND_USING_SFML)
+            counts.sfml = 1;
+#endif
+#if defined(ALMOND_USING_VULKAN)
+            counts.vulkan = 1;
+#endif
+#if defined(ALMOND_USING_SOFTWARE_RENDERER)
+            counts.software = 1;
+#endif
+            return counts;
+        }
+
+        const std::string& backend = *cli::backend_filter;
+
+        if (backend == "raylib" || backend == "raylib_nogl")
+        {
+#if defined(ALMOND_USING_RAYLIB)
+            counts.raylib = 1;
+#endif
+        }
+        else if (backend == "sdl")
+        {
+#if defined(ALMOND_USING_SDL)
+            counts.sdl = 1;
+#endif
+        }
+        else if (backend == "sfml")
+        {
+#if defined(ALMOND_USING_SFML)
+            counts.sfml = 1;
+#endif
+        }
+        else if (backend == "vulkan")
+        {
+#if defined(ALMOND_USING_VULKAN)
+            counts.vulkan = 1;
+#endif
+        }
+        else if (backend == "software")
+        {
+#if defined(ALMOND_USING_SOFTWARE_RENDERER)
+            counts.software = 1;
+#endif
+        }
+        else if (backend == "opengl")
+        {
+#if defined(ALMOND_USING_OPENGL)
+            counts.opengl = 1;
+#endif
+        }
+
+        return counts;
+    }
+
 #if defined(_WIN32)
     inline void ShowConsole()
     {
@@ -898,14 +973,15 @@ namespace almondnamespace::core
 
                 HINSTANCE hi = hInstance ? hInstance : GetModuleHandleW(nullptr);
 
+                const BackendWindowCounts counts = ResolveBackendWindowCounts();
                 const bool ok = mgr.Initialize(
                     hi,
-                    /*RayLib*/   1,
-                    /*SDL*/      1,
-                    /*SFML*/     1,
-                    /*Vulkan*/   1,
-                    /*OpenGL*/   1,
-                    /*Software*/ 1,
+                    /*RayLib*/   counts.raylib,
+                    /*SDL*/      counts.sdl,
+                    /*SFML*/     counts.sfml,
+                    /*Vulkan*/   counts.vulkan,
+                    /*OpenGL*/   counts.opengl,
+                    /*Software*/ counts.software,
                     ALMOND_SINGLE_PARENT == 1
                 );
 
@@ -956,14 +1032,15 @@ namespace almondnamespace::core
             {
                 almondnamespace::core::MultiContextManager mgr;
 
+                const BackendWindowCounts counts = ResolveBackendWindowCounts();
                 const bool ok = mgr.Initialize(
                     nullptr,
-                    /*RayLib*/   1,
-                    /*SDL*/      1,
-                    /*SFML*/     1,
-                    /*Vulkan*/   1,
-                    /*OpenGL*/   1,
-                    /*Software*/ 1,
+                    /*RayLib*/   counts.raylib,
+                    /*SDL*/      counts.sdl,
+                    /*SFML*/     counts.sfml,
+                    /*Vulkan*/   counts.vulkan,
+                    /*OpenGL*/   counts.opengl,
+                    /*Software*/ counts.software,
                     ALMOND_SINGLE_PARENT == 1
                 );
 
@@ -1025,14 +1102,15 @@ namespace almondnamespace::core
 
             const HINSTANCE hi = GetModuleHandleW(nullptr);
 
+            const BackendWindowCounts counts = ResolveBackendWindowCounts();
             const bool ok = mgr.Initialize(
                 hi,
-                /*RayLib*/   1,
-                /*SDL*/      1,
-                /*SFML*/     1,
-                    /*Vulkan*/   1,
-                /*OpenGL*/   1,
-                /*Software*/ 1,
+                /*RayLib*/   counts.raylib,
+                /*SDL*/      counts.sdl,
+                /*SFML*/     counts.sfml,
+                /*Vulkan*/   counts.vulkan,
+                /*OpenGL*/   counts.opengl,
+                /*Software*/ counts.software,
                 ALMOND_SINGLE_PARENT == 1
             );
 
@@ -1081,14 +1159,15 @@ namespace almondnamespace::core
         {
             almondnamespace::core::MultiContextManager mgr;
 
+            const BackendWindowCounts counts = ResolveBackendWindowCounts();
             const bool ok = mgr.Initialize(
                 nullptr,
-                /*RayLib*/   1,
-                /*SDL*/      1,
-                /*SFML*/     1,
-                    /*Vulkan*/   1,
-                /*OpenGL*/   1,
-                /*Software*/ 1,
+                /*RayLib*/   counts.raylib,
+                /*SDL*/      counts.sdl,
+                /*SFML*/     counts.sfml,
+                /*Vulkan*/   counts.vulkan,
+                /*OpenGL*/   counts.opengl,
+                /*Software*/ counts.software,
                 ALMOND_SINGLE_PARENT == 1
             );
 

@@ -5,8 +5,11 @@ module;
 export module aengine.core.commandline;
 
 import <algorithm>;
+import <cctype>;
 import <filesystem>;
 import <iostream>;
+import <optional>;
+import <string>;
 import <string_view>;
 
 //import aengine;
@@ -26,6 +29,7 @@ export namespace almondnamespace::core::cli
     inline bool trace_raylib_design_metrics = false;
     inline bool run_menu_loop = false;
     inline std::filesystem::path exe_path;
+    inline std::optional<std::string> backend_filter;
 
     struct ParseResult {
         bool update_requested = false;
@@ -45,10 +49,28 @@ export namespace almondnamespace::core::cli
         run_menu_loop = false;
         window_width_overridden = false;
         window_height_overridden = false;
+        backend_filter.reset();
         if (argc < 1) {
             std::cerr << "No command-line arguments provided.\n";
             return result;
         }
+
+        auto normalize_backend = [](std::string_view value) {
+            std::string normalized{ value };
+            std::transform(normalized.begin(), normalized.end(), normalized.begin(),
+                [](unsigned char ch) { return static_cast<char>(std::tolower(ch)); });
+            return normalized;
+        };
+        auto is_known_backend = [](std::string_view backend) {
+            return backend == "opengl"sv
+                || backend == "sdl"sv
+                || backend == "sfml"sv
+                || backend == "vulkan"sv
+                || backend == "software"sv
+                || backend == "raylib"sv
+                || backend == "raylib_nogl"sv
+                || backend == "all"sv;
+        };
 
         exe_path = argv[0];
         std::cout << "Commandline for " << exe_path.filename().string() << ":\n";
@@ -67,7 +89,8 @@ export namespace almondnamespace::core::cli
                     "  --editor              Start the editor interface\n"
                     "  --menu                Start the menu + games loop\n"
                     "  --update, -u          Check for a newer AlmondShell build\n"
-                    "  --force               Apply the available update immediately\n";
+                    "  --force               Apply the available update immediately\n"
+                    "  --backend <name>      Run a single backend (opengl|sdl|sfml|vulkan|software|raylib)\n";
             }
             else if (arg == "--version"sv || arg == "-v"sv) {
                 print_engine_info();
@@ -100,6 +123,16 @@ export namespace almondnamespace::core::cli
             }
             else if (arg == "--force"sv) {
                 result.force_update = true;
+            }
+            else if (arg == "--backend"sv && i + 1 < argc) {
+                const auto normalized = normalize_backend(argv[++i]);
+                if (!is_known_backend(normalized)) {
+                    std::cerr << "Unknown backend: " << normalized << '\n';
+                } else if (normalized == "all") {
+                    backend_filter.reset();
+                } else {
+                    backend_filter = normalized;
+                }
             }
             else {
                 std::cerr << "Unknown arg: " << arg << '\n';
