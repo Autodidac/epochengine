@@ -146,7 +146,7 @@ namespace almondnamespace::vulkancontext
         ImageData texture = [&]() -> ImageData {
             try
             {
-                return a_loadImage(texturePath, false);
+                return a_loadImage(texturePath, true);
             }
             catch (const std::exception& ex)
             {
